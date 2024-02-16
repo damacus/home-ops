@@ -1,0 +1,12 @@
+---
+k3s_control_node: true
+k3s_server:
+  disable: ["servicelb"] # Using kube-vip instead
+  embedded-registry: true
+  etcd-disable-snapshots: true
+  etcd-expose-metrics: true
+  kube-apiserver-arg: ["anonymous-auth=true"]
+  kubelet-arg: ["image-gc-high-threshold=55", "image-gc-low-threshold=50"]
+  secrets-encryption: true
+  tls-san: ["{{ kube_vip_addr }}"]
+  write-kubeconfig-mode: "0644"
