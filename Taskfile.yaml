@@ -1,0 +1,18 @@
+---
+version: "3"
+
+vars:
+  KUBERNETES_DIR: "{{.ROOT_DIR}}/kubernetes"
+  ANSIBLE_DIR: "{{.ROOT_DIR}}/ansible"
+  TERRAFORM_DIR: "{{.ROOT_DIR}}/terraform"
+
+includes:
+  ansible: .taskfiles/Ansible/Taskfile.yaml
+  flux: .taskfiles/Flux/Taskfile.yaml
+  kubernetes: .taskfiles/Kubernetes/Taskfile.yaml
+  sops: .taskfiles/Sops/Taskfile.yaml
+
+tasks:
+  default:
+    silent: true
+    cmd: task -l

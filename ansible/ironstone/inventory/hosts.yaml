@@ -1,0 +1,22 @@
+---
+kubernetes:
+  vars:
+    ansible_user: pi
+    ansible_ssh_port: 22
+  children:
+    server:
+      hosts:
+        yellow-pi:
+          ansible_host: 192.168.1.103
+        blue-pi:
+          ansible_host: 192.168.1.104
+        purple-pi:
+          ansible_host: 192.168.1.105
+    # worker:
+    #   hosts:
+    #     green-pi:
+    #       ansible_host:
+    #     red-pi:
+    #       ansible_host:
+    #     black-pi:
+    #       ansible_host:
