@@ -4,7 +4,7 @@ kubernetes:
     ansible_user: pi
     ansible_ssh_port: 22
   children:
-    server:
+    controllers:
       hosts:
         yellow-pi:
           ansible_host: 192.168.1.103

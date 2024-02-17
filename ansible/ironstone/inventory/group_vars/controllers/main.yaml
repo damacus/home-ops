@@ -8,5 +8,5 @@ k3s_server:
   kube-apiserver-arg: ["anonymous-auth=true"]
   kubelet-arg: ["image-gc-high-threshold=55", "image-gc-low-threshold=50"]
   secrets-encryption: true
-  tls-san: ["{{ kube_vip_addr }}"]
+  tls-san: ["{{ kube_vip_address }}"]
   write-kubeconfig-mode: "0644"

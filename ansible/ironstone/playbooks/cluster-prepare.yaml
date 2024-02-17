@@ -25,7 +25,7 @@
             name:
               apt-transport-https,ca-certificates,conntrack,curl,hdparm,htop,iptables,
               iputils-ping,ipvsadm,net-tools,nfs-common,nvme-cli,open-iscsi,python3,
-              smartmontools
+              smartmontools,python3-kubernetes,python3-apt
             install_recommends: false
 
     - name: User Configuration

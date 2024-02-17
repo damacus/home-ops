@@ -35,5 +35,5 @@ terraform.rc
 
 secret-template.yaml
 .venv
-
+.envrc
 kubeconfig
