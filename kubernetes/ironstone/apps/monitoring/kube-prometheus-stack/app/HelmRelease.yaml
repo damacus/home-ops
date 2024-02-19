@@ -29,8 +29,8 @@ spec:
         namespace: flux-system
 
   valuesFrom:
-    - kind: Secret
-      name: grafana
+    # - kind: Secret
+    #   name: grafana
     - kind: ConfigMap
       name: prometheus-config
     - kind: ConfigMap
