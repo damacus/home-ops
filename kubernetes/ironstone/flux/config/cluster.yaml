@@ -24,7 +24,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 30m
-  path: ./k8s/ironstone/flux
+  path: ./kubernetes/ironstone/flux
   prune: true
   wait: false
   sourceRef:
