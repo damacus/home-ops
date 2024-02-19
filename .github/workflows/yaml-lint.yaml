@@ -8,10 +8,10 @@ jobs:
   yaml-lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 1
     - name: Lint YAML
-      uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # v3
+      uses: ibiqlik/action-yamllint@v3.1.1
       with:
         config_file: .yamllint.yaml

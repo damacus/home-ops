@@ -37,3 +37,4 @@ secret-template.yaml
 .venv
 .envrc
 kubeconfig
+age.key
