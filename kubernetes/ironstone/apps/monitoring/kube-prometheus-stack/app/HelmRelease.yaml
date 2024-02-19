@@ -1,0 +1,43 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: monitoring
+spec:
+  interval: 30m0s
+  install:
+    remediation:
+      retries: 3
+
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  uninstall:
+    keepHistory: false
+
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      # renovate: datasource=github-releases repos=prometheus-community/helm-charts
+      version: "55.*"
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+
+  valuesFrom:
+    - kind: Secret
+      name: grafana
+    - kind: ConfigMap
+      name: prometheus-config
+    - kind: ConfigMap
+      name: grafana-config
+    - kind: ConfigMap
+      name: alertmanager-config
+
+  values:
+    defaultRules:
+      create: true

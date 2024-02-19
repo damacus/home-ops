@@ -1,0 +1,30 @@
+---
+prometheus:
+  defaultRules:
+    rules:
+      etcd: false
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: nfs-csi
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+    additionalScrapeConfigs:
+      - job_name: vault
+        metrics_path: /v1/sys/metrics
+        scheme: http
+        params:
+          format: ["prometheus"]
+        kubernetes_sd_configs:
+          - role: endpoints
+        tls_config:
+          insecure_skip_verify: true
+        relabel_configs:
+          - source_labels:
+              - __meta_kubernetes_service_name
+              - __meta_kubernetes_pod_container_port_number
+            regex: vault,8200
+            action: keep

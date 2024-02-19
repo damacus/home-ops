@@ -1,0 +1,13 @@
+---
+alertmanager:
+  ingress:
+    enabled: true
+    spec:
+      ingressClassName: traefik
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts: ["alertmanager.${SECRET_DOMAIN}"]
+    paths: ["/"]
+    tls:
+      - hosts: ["alertmanager.${SECRET_DOMAIN}"]
+        secretName: alert-manager-${SECRET_DOMAIN}-cert
