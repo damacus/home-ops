@@ -39,6 +39,20 @@ tasks:
       - { msg: "Cluster secrets not found", sh: "test -f {{.KUBERNETES_DIR}}/{{.cluster}}/flux/vars/cluster-secrets.sops.yaml" }
       - { msg: "Unable to decrypt sops secret", sh: "sops --decrypt {{.KUBERNETES_DIR}}/{{.cluster}}/flux/vars/cluster-secrets.sops.yaml" }
 
+  uninstall:
+    desc: Uninstall Flux from a Kubernetes cluster
+    summary: |
+      Args:
+        cluster: Cluster to run command against (required)
+    prompt: Uninstall Flux from the '{{.cluster}}' cluster... continue?
+    cmds:
+      - flux uninstall --namespace=flux-system
+      - defer: sops --encrypt --in-place {{.KUBERNETES_DIR}}/{{.cluster}}/flux/vars/cluster-secrets.sops.yaml
+    requires:
+      vars: ["cluster"]
+    preconditions:
+      - { msg: "Flux not found", sh: "kubectl --context {{.cluster}} get namespace flux-system &>/dev/null || exit 1" }
+
   reconcile:
     desc: Force update Flux to pull in changes from your Git repository
     cmd: flux reconcile -n flux-system kustomization cluster --with-source
