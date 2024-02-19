@@ -1,0 +1,13 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: persisted
+spec:
+  storage:
+    volumeClaimTemplate:
+      spec:
+        storageClassName: nfs-csi
+        resources:
+          requests:
+            storage: 10Gi

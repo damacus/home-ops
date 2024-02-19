@@ -1,0 +1,13 @@
+---
+grafana:
+  ingress:
+    enabled: true
+    spec:
+      ingressClassName: traefik
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts: ["grafana.${SECRET_DOMAIN}"]
+    paths: ["/"]
+    tls:
+      - hosts: ["grafana.${SECRET_DOMAIN}"]
+        secretName: grafana-${SECRET_DOMAIN}-cert
