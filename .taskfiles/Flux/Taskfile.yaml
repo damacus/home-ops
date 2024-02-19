@@ -6,7 +6,6 @@ vars:
   PROMETHEUS_OPERATOR_VERSION: "v0.71.2"
 
 tasks:
-
   verify:
     desc: Verify flux meets the prerequisites
     cmd: flux check --pre
@@ -33,11 +32,26 @@ tasks:
     requires:
       vars: ["cluster"]
     preconditions:
-      - { msg: "Flux appears already installed", sh: "kubectl --context {{.cluster}} get namespace flux-system &>/dev/null && exit 1 || exit 0" }
-      - { msg: "Age private key not found", sh: "test -f {{.ROOT_DIR}}/age.key" }
-      - { msg: "Cluster settings not found", sh: "test -f {{.KUBERNETES_DIR}}/{{.cluster}}/flux/vars/cluster-settings.yaml" }
-      - { msg: "Cluster secrets not found", sh: "test -f {{.KUBERNETES_DIR}}/{{.cluster}}/flux/vars/cluster-secrets.sops.yaml" }
-      - { msg: "Unable to decrypt sops secret", sh: "sops --decrypt {{.KUBERNETES_DIR}}/{{.cluster}}/flux/vars/cluster-secrets.sops.yaml" }
+      - {
+          msg: "Flux appears already installed",
+          sh: "kubectl --context {{.cluster}} get namespace flux-system &>/dev/null && exit 1 || exit 0",
+        }
+      - {
+          msg: "Age private key not found",
+          sh: "test -f {{.ROOT_DIR}}/age.key",
+        }
+      - {
+          msg: "Cluster settings not found",
+          sh: "test -f {{.KUBERNETES_DIR}}/{{.cluster}}/flux/vars/cluster-settings.yaml",
+        }
+      - {
+          msg: "Cluster secrets not found",
+          sh: "test -f {{.KUBERNETES_DIR}}/{{.cluster}}/flux/vars/cluster-secrets.sops.yaml",
+        }
+      - {
+          msg: "Unable to decrypt sops secret",
+          sh: "sops --decrypt {{.KUBERNETES_DIR}}/{{.cluster}}/flux/vars/cluster-secrets.sops.yaml",
+        }
 
   uninstall:
     desc: Uninstall Flux from a Kubernetes cluster
@@ -51,11 +65,10 @@ tasks:
     requires:
       vars: ["cluster"]
     preconditions:
-      - { msg: "Flux not found", sh: "kubectl --context {{.cluster}} get namespace flux-system &>/dev/null || exit 1" }
-
-  reconcile:
-    desc: Force update Flux to pull in changes from your Git repository
-    cmd: flux reconcile -n flux-system kustomization cluster --with-source
+      - {
+          msg: "Flux not found",
+          sh: "kubectl --context {{.cluster}} get namespace flux-system &>/dev/null || exit 1",
+        }
 
   helm-restart:
     desc: Restart all failed Helm Releases
@@ -86,7 +99,10 @@ tasks:
         sh: flux --kubeconfig {{.KUBECONFIG_FILE}} --namespace {{.ns}} get kustomizations $(basename {{.path}}) 2>&1
     preconditions:
       - { msg: "Missing kubeconfig", sh: "test -f {{.KUBECONFIG_FILE}}" }
-      - { msg: "Missing Flux Kustomization for app {{.path}}", sh: "test -f {{.KUBERNETES_DIR}}/apps/{{.path}}/ks.yaml" }
+      - {
+          msg: "Missing Flux Kustomization for app {{.path}}",
+          sh: "test -f {{.KUBERNETES_DIR}}/apps/{{.path}}/ks.yaml",
+        }
 
   reconcile:
     desc: Force update Flux to pull in changes from your Git repository
@@ -101,4 +117,7 @@ tasks:
     preconditions:
       - { msg: "Missing kubeconfig", sh: "test -f {{.KUBECONFIG_FILE}}" }
       - { msg: "Missing Sops Age key file", sh: "test -f {{.AGE_FILE}}" }
-      - { msg: "Missing Github deploy key file", sh: "test -f {{.GITHUB_DEPLOY_KEY_FILE}}" }
+      - {
+          msg: "Missing Github deploy key file",
+          sh: "test -f {{.GITHUB_DEPLOY_KEY_FILE}}",
+        }
