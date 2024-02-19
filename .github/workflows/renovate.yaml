@@ -19,7 +19,7 @@ on:
   schedule:
     - cron: "0 */6 * * *"
   push:
-    branches: ["master"]
+    branches: ["main"]
     paths:
       - .github/renovate.json5
       - .github/renovate/**.json5
