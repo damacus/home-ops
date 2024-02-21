@@ -9,6 +9,7 @@ spec:
   install:
     remediation:
       retries: 3
+    crds: CreateReplace
 
   upgrade:
     cleanupOnFail: true
