@@ -6,8 +6,8 @@ metadata:
   namespace: kube-system
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: ${SYNOLOGY_IP}
-  share: ${NFS_DIRECTORY}
+  server: ${SECRET_SYNOLOGY_IP}
+  share: ${SECRET_NFS_DIRECTORY}
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 mountOptions:
