@@ -8,7 +8,7 @@ spec:
   targetNamespace: system
   dependsOn:
     - name: node-feature-discovery-rules
-  path: ./kubernetes/main/apps/system/smarter-device-manager/app
+  path: ./kubernetes/ironstone/apps/system/smarter-device-manager/app
   prune: true
   sourceRef:
     kind: GitRepository
