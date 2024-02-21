@@ -1,0 +1,7 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./CustomResourceDefinition.yaml
+  - ./secret.sops.yaml
+  - ./HelmRelease.yaml
