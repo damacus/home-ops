@@ -6,7 +6,7 @@ yaml-files:
   - '*.yml'
 rules:
   brackets:
-    max-spaces-inside: 1
+    max-spaces-inside: 2
   document-start:
     ignore: |
       *.sops.yaml
@@ -24,3 +24,11 @@ rules:
   new-line-at-end-of-file: disable
   truthy:
     check-keys: false
+  braces:
+    forbid: false
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+    min-spaces-inside-empty: -1
+    max-spaces-inside-empty: -1
+  comments:
+    min-spaces-from-content: 1
