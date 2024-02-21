@@ -6,9 +6,6 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: monitoring
-  dependsOn:
-    - name: nfs-csi
-      namespace: storage
   path: ./kubernetes/ironstone/apps/monitoring/kube-prometheus-stack/app
   prune: true
   sourceRef:
