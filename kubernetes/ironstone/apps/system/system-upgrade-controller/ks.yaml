@@ -25,7 +25,7 @@ spec:
   targetNamespace: system
   dependsOn:
     - name: system-upgrade-controller
-  path: ./kubernetes/main/apps/system/system-upgrade-controller/plans
+  path: ./kubernetes/ironstone/apps/system/system-upgrade-controller/plans
   prune: true
   sourceRef:
     kind: GitRepository
