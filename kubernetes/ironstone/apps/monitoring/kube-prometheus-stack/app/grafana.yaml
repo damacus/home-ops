@@ -5,7 +5,7 @@ grafana:
     spec:
       ingressClassName: traefik
     annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
+      cert-manager.io/cluster-issuer: letsencrypt-production
     hosts: ["grafana.${SECRET_DOMAIN}"]
     paths: ["/"]
     tls:
