@@ -6,6 +6,11 @@ metadata:
   namespace: monitoring
 spec:
   interval: 30m0s
+
+  dependsOn:
+    - name: csi-driver-nfs
+      namespace: storage
+
   install:
     remediation:
       retries: 3
