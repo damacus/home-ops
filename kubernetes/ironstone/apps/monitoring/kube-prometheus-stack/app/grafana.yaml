@@ -4,6 +4,7 @@ grafana:
     enabled: true
     spec:
       ingressClassName: traefik
+      loadBalancerIP: ${KUBE_VIP_ADDR}
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-production
     hosts: ["grafana.${SECRET_DOMAIN}"]
