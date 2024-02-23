@@ -7,6 +7,8 @@ grafana:
       loadBalancerIP: ${KUBE_VIP_ADDR}
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-production
+      external-dns.alpha.kubernetes.io/target: grafana.${SECRET_DOMAIN}
+      external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
     hosts: ["grafana.${SECRET_DOMAIN}"]
     paths: ["/"]
     tls:
