@@ -5,6 +5,7 @@ alertmanager:
     spec:
       ingressClassName: traefik
     annotations:
+      reloader.stakater.com/auto: "true"
       cert-manager.io/cluster-issuer: letsencrypt-production
     hosts: ["alertmanager.${SECRET_DOMAIN}"]
     paths: ["/"]
