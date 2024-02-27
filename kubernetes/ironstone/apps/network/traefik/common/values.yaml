@@ -1,0 +1,57 @@
+---
+deployment:
+  kind: Deployment
+  replicas: 1
+
+rollback:
+  recreate: true
+  force: true
+  cleanupOnFail: true
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+
+env:
+  - name: TZ
+    value: "${TIMEZONE}"
+
+logs:
+  general:
+    format: json
+    level: INFO
+  access:
+    enabled: true
+    format: json
+
+ingressClass:
+  enabled: true
+  isDefaultClass: false
+  fallbackApiVersion: v1
+
+ingressRoute:
+  dashboard:
+    enabled: false
+
+pilot:
+  enabled: false
+
+globalArguments:
+  - "--api=true"
+  - "--api.dashboard=true"
+  - "--api.insecure=true"
+  - "--serversTransport.insecureSkipVerify=true"
+  - "--global.sendanonymoususage=false"
+  - "--metrics.prometheus=true"
+  - "--metrics.prometheus.entryPoint=metrics"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 250Mi
+  limits:
+    memory: 500Mi
+
+nodeSelector:
+  node-role.kubernetes.io/control-plane: "true"

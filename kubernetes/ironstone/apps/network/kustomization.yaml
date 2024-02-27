@@ -5,5 +5,5 @@ resources:
   # Pre Flux-Kustomizations
   - ./namespace.yaml
   # Flux-Kustomizations
-  # - ./echo-server/ks.yaml
   - ./external-dns/ks.yaml
+  - ./traefik/ks.yaml
