@@ -4,8 +4,10 @@ kind: Kustomization
 resources: [./HelmRelease.yaml]
 
 configMapGenerator:
-  - name: external-traefik-config
+  - name: ext-traefik-config
     files: [values.yaml=values.yaml]
+  - name: ext-traefik-config-common
+    files: [values.yaml=../common/values.yaml]
 
 configurations: [../common/kustomizeconfig.yaml]
 

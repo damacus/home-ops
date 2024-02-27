@@ -27,6 +27,6 @@ spec:
 
   valuesFrom:
     - kind: ConfigMap
-      name: common-traefik-config
+      name: ext-traefik-config-common
     - kind: ConfigMap
-      name: internal-traefik-config
+      name: ext-traefik-config
