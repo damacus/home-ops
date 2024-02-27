@@ -25,9 +25,9 @@ spec:
     keepHistory: false
   dependsOn:
     - name: traefik-external
-      namespace: networking
+      namespace: network
     - name: traefik-internal
-      namespace: networking
+      namespace: network
   values:
     controllers:
       main:
