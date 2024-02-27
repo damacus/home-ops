@@ -145,9 +145,9 @@ spec:
     metrics:
       prometheus:
         service:
-          enabled: true
+          enabled: false
         serviceMonitor:
-          enabled: true
+          enabled: false
     pilot:
       enabled: false
     providers:
