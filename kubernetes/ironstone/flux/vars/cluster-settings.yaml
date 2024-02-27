@@ -6,4 +6,7 @@ metadata:
   namespace: flux-system
 data:
   TIMEZONE: "Europe/London"
-  KUBE_VIP_ADDR: "192.168.1.220"
+  KUBE_VIP_ADDR: "192.168.3.1"
+  KUBE_VIP_RANGE: "192.168.3.0/25"
+  TRAEFIK_EXTERNAL_ADDR: "192.168.3.10"
+  TRAEFIK_INTERNAL_ADDR: "192.168.3.11"
