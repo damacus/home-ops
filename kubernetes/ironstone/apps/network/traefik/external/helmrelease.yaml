@@ -70,8 +70,8 @@ spec:
       - "--api.insecure=true"
       - "--serversTransport.insecureSkipVerify=true"
       - "--global.sendanonymoususage=false"
-      - "--metrics.prometheus=true"
-      - "--metrics.prometheus.entryPoint=metrics"
+      # - "--metrics.prometheus=true"
+      # - "--metrics.prometheus.entryPoint=metrics"
     ports:
       traefik:
         expose: true
@@ -142,12 +142,7 @@ spec:
         port: 8082
         expose: true
         exposedPort: 8082
-    # metrics:
-    #   prometheus:
-    #     service:
-    #       enabled: false
-    #     serviceMonitor:
-    #       enabled: false
+
     pilot:
       enabled: false
     providers:
