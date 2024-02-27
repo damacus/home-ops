@@ -95,12 +95,12 @@ spec:
         port: 8082
         expose: true
         exposedPort: 8082
-    metrics:
-      prometheus:
-        service:
-          enabled: false
-        serviceMonitor:
-          enabled: false
+    # metrics:
+    #   prometheus:
+    #     service:
+    #       enabled: false
+    #     serviceMonitor:
+    #       enabled: false
     pilot:
       enabled: false
     providers:
