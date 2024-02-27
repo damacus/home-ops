@@ -3,7 +3,7 @@ service:
   enabled: true
   type: LoadBalancer
   annotations:
-    coredns.io/hostname: "ingress-int.${SECRET_DOMAIN_INTERNAL}"
+    coredns.io/hostname: "ingress-internal.${SECRET_DOMAIN_INTERNAL}"
     kube-vip.io/loadbalancerIPs: "${TRAEFIK_INTERNAL_ADDR}"
   spec:
     externalTrafficPolicy: Cluster
