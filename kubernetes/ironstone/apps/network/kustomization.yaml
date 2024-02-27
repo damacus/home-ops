@@ -7,3 +7,12 @@ resources:
   # Flux-Kustomizations
   # - ./echo-server/ks.yaml
   - ./external-dns/ks.yaml
+
+configMapGenerator:
+  - name: common-traefik-config
+    files: [values.yaml=common/values.yaml]
+
+configurations: [./common/kustomizeconfig.yaml]
+
+generatorOptions:
+  disableNameSuffixHash: true
