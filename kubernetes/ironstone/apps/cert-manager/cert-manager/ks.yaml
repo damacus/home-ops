@@ -31,8 +31,6 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  dependsOn:
-    - name: cert-manager
   path: ./kubernetes/ironstone/apps/cert-manager/cert-manager/issuers
   prune: true
   sourceRef:
