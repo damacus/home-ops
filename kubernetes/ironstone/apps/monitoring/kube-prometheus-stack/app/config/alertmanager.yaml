@@ -3,10 +3,11 @@ alertmanager:
   ingress:
     enabled: true
     spec:
-      ingressClassName: traefik
+      ingressClassName: traefik-external
     annotations:
       reloader.stakater.com/auto: "true"
-      cert-manager.io/cluster-issuer: letsencrypt-production
+      external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+      external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
     hosts: ["alertmanager.${SECRET_DOMAIN}"]
     paths: ["/"]
     tls:
