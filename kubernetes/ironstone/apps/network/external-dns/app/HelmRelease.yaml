@@ -34,12 +34,11 @@ spec:
             name: external-dns-secret
             key: api-token
     extraArgs:
-      - --ingress-class=external
       - --cloudflare-proxied
       - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
       - --crd-source-kind=DNSEndpoint
     policy: sync
-    sources: ["crd", "ingress"]
+    sources: ["crd", "ingress", "service"]
     txtPrefix: k8s.
     txtOwnerId: ironstone
     domainFilters: ["${SECRET_DOMAIN}"]
