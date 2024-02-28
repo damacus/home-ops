@@ -7,3 +7,4 @@ resources:
   # Flux-Kustomizations
   - ./external-dns/ks.yaml
   - ./traefik/ks.yaml
+  - ./echo-server/ks.yaml
