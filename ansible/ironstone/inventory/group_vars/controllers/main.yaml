@@ -1,7 +1,7 @@
 ---
 k3s_control_node: true
 k3s_server:
-  disable: ["servicelb"] # Using kube-vip instead
+  disable: ["servicelb", "traefik"] # Using kube-vip instead
   embedded-registry: true
   etcd-disable-snapshots: true
   etcd-expose-metrics: true

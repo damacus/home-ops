@@ -15,10 +15,14 @@ k3s_registries:
     registry.k8s.io:
 # renovate: datasource=github-releases depName=k3s-io/k3s
 k3s_release_version: v1.29.1+k3s2
-k3s_server_manifests_templates: ["kube-vip.yaml.j2"] # Note: includes RBAC
+k3s_server_manifests_templates: ["kube-vip.yaml.j2"]
+k3s_server_manifests_urls:
+  - url: https://raw.githubusercontent.com/kube-vip/website/main/content/manifests/rbac.yaml
+    filename: kube-vip-rbac.yaml
 
 kube_vip_address: 192.168.1.220
-kube_vip_version: v0.6.4
+# renovate: datasource=github-releases depName=kube-vip/kube-vip
+kube_vip_version: v0.7.1
 
 timezone: "Europe/London"
 github_username: damacus
