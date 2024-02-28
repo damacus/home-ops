@@ -38,12 +38,12 @@ ports:
 providers:
   kubernetesCRD:
     enabled: true
-    ingressClass: traefik-internal
+    ingressClass: &class traefik-internal
     allowCrossNamespace: true
     allowExternalNameServices: true
   kubernetesIngress:
     enabled: true
-    ingressClass: traefik-internal
+    ingressClass: *class
     ip: "${TRAEFIK_INTERNAL_ADDR}"
     allowExternalNameServices: true
     publishedService:

@@ -82,12 +82,12 @@ ports:
 providers:
   kubernetesCRD:
     enabled: true
-    ingressClass: traefik-external
+    ingressClass: &class traefik-external
     allowCrossNamespace: true
     allowExternalNameServices: true
   kubernetesIngress:
     enabled: true
-    ingressClass: traefik-external
+    ingressClass: *class
     ip: "${TRAEFIK_EXTERNAL_ADDR}"
     allowExternalNameServices: true
     publishedService:
