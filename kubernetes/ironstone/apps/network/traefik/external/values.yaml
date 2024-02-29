@@ -4,9 +4,11 @@ service:
   type: LoadBalancer
   annotations:
     external-dns.alpha.kubernetes.io/hostname: "ingress.${SECRET_DOMAIN}"
+    external-dns.alpha.kubernetes.io/target: ${TRAEFIK_EXTERNAL_ADDR}
     kube-vip.io/loadbalancerIPs: "${TRAEFIK_EXTERNAL_ADDR}"
   spec:
     externalTrafficPolicy: Cluster
+    loadBalancerIP: "${TRAEFIK_EXTERNAL_ADDR}"
 
 ports:
   traefik:

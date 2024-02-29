@@ -7,7 +7,7 @@ service:
     kube-vip.io/loadbalancerIPs: "${TRAEFIK_INTERNAL_ADDR}"
   spec:
     externalTrafficPolicy: Cluster
-
+    loadBalancerIP: "${TRAEFIK_INTERNAL_ADDR}"
 ports:
   traefik:
     expose: true
