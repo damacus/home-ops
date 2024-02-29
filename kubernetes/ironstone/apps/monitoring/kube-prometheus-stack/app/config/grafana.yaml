@@ -6,7 +6,7 @@ grafana:
       ingressClassName: traefik-external
     annotations:
       reloader.stakater.com/auto: "true"
-      external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+      external-dns.alpha.kubernetes.io/target: ${TRAEFIK_EXTERNAL_ADDR}
     hosts: ["grafana.${SECRET_DOMAIN}"]
     paths: ["/"]
     tls:

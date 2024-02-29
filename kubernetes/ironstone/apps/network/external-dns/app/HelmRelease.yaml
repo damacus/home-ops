@@ -37,6 +37,8 @@ spec:
       - --cloudflare-proxied
       - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
       - --crd-source-kind=DNSEndpoint
+      - --ingress-class=traefik-external
+
     policy: sync
     sources: ["crd", "ingress", "service"]
     txtPrefix: k8s.

@@ -44,7 +44,6 @@ globalArguments:
   - "--serversTransport.insecureSkipVerify=true"
   - "--global.sendanonymoususage=false"
   - "--metrics.prometheus=true"
-  - "--metrics.prometheus.entryPoint=metrics"
 
 resources:
   requests:
