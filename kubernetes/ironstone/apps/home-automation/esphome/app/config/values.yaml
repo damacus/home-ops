@@ -1,0 +1,45 @@
+---
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          repository: ghcr.io/esphome/esphome
+          # renovate: datasource=docker depName=esphome/esphome
+          tag: 2024.2.1
+
+        resources:
+          requests:
+            cpu: 20m
+            memory: 64M
+          limits:
+            memory: 1024M
+
+service:
+  main:
+    ports:
+      http:
+        port: 6052
+
+ingress:
+  main:
+    enabled: true
+    className: "traefik-internal"
+    hosts:
+      - host: &host "esphome.${SECRET_DOMAIN}"
+        paths:
+          - path: /
+            service:
+              name: main
+              port: http
+    tls:
+      - hosts:
+          - *host
+
+persistence:
+  config:
+    enabled: true
+  esphome-cache:
+    type: emptyDir
+    globalMounts:
+      - path: /config/.esphome
