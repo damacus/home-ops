@@ -121,7 +121,7 @@ spec:
     ingress:
       main:
         enabled: true
-        className: internal
+        className: traefik-internal
         hosts:
           - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
             paths:
