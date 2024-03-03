@@ -5,3 +5,4 @@ resources:
   - ./CustomResourceDefinition.yaml
   - ./secret.sops.yaml
   - ./HelmRelease.yaml
+  - ./ExternalSecret.yaml
