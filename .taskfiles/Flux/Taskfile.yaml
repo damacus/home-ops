@@ -1,10 +1,6 @@
 ---
 version: "3"
 
-vars:
-  # renovate: datasource=github-releases depName=prometheus-operator/prometheus-operator
-  PROMETHEUS_OPERATOR_VERSION: "v0.72.0"
-
 tasks:
   verify:
     desc: Verify flux meets the prerequisites
@@ -26,6 +22,7 @@ tasks:
     requires:
       vars: ["cluster"]
     preconditions:
+      - { msg: "Missing kubeconfig", sh: "test -f {{.KUBECONFIG_FILE}}" }
       - {
           msg: "Flux appears already installed",
           sh: "kubectl --context {{.cluster}} get namespace flux-system &>/dev/null && exit 1 || exit 0",
