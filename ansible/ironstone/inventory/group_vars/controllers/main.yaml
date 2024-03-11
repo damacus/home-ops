@@ -1,12 +1,27 @@
 ---
 k3s_control_node: true
 k3s_server:
-  disable: ["servicelb", "traefik"] # Using kube-vip instead
+  disable:
+    - "flannel"
+    - "servicelb"
+    - "traefik"
+  cluster-cidr: "{{ cluster_cidr }}"
+  disable-cloud-controller: true
+  disable-kube-proxy: true
+  disable-network-policy: true
+  docker: false
   embedded-registry: true
   etcd-disable-snapshots: true
   etcd-expose-metrics: true
+  flannel-backend: "none"
+  https-listen-port: 6443
   kube-apiserver-arg: ["anonymous-auth=true"]
+  kube-controller-manager-arg: ["bind-address=0.0.0.0"]
+  kube-scheduler-arg: ["bind-address=0.0.0.0"]
   kubelet-arg: ["image-gc-high-threshold=55", "image-gc-low-threshold=50"]
+  node-ip: "{{ ansible_host }}"
+  pause-image: registry.k8s.io/pause:3.9
   secrets-encryption: true
-  tls-san: ["{{ kube_vip_address }}"]
+  service-cidr: "{{ service_cidr }}"
+  tls-san: ["{{ kube_vip_addr }}"]
   write-kubeconfig-mode: "0644"

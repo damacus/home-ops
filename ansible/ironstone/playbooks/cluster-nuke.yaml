@@ -22,6 +22,11 @@
     # https://github.com/k3s-io/docs/blob/main/docs/installation/network-options.md
     - name: Networking
       block:
+        - name: Networking | Delete Cilium links
+          ansible.builtin.command:
+            cmd: "ip link delete {{ item }}"
+            removes: "/sys/class/net/{{ item }}"
+          loop: ["cilium_host", "cilium_net", "cilium_vxlan"]
         - name: Networking | Flush iptables
           ansible.builtin.iptables:
             table: "{{ item }}"
