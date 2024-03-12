@@ -12,7 +12,7 @@ metadata:
 spec:
   ingressClassName: traefik-internal
   rules:
-    - host: "traefik-external.${SECRET_DOMAIN_INTERNAL}"
+    - host: "traefik-external.${SECRET_DOMAIN}"
       http:
         paths:
           - path: /
@@ -24,7 +24,7 @@ spec:
                   number: 9000
   tls:
     - hosts:
-        - "traefik.${SECRET_DOMAIN_INTERNAL}"
+        - "traefik.${SECRET_DOMAIN}"
       secretName: "${SECRET_DOMAIN/./-}-tls"
 ---
 apiVersion: networking.k8s.io/v1
@@ -40,7 +40,7 @@ metadata:
 spec:
   ingressClassName: traefik-internal
   rules:
-    - host: "traefik-internal.${SECRET_DOMAIN_INTERNAL}"
+    - host: "traefik-internal.${SECRET_DOMAIN}"
       http:
         paths:
           - path: /
@@ -52,5 +52,5 @@ spec:
                   number: 9000
   tls:
     - hosts:
-        - "traefik.${SECRET_DOMAIN_INTERNAL}"
+        - "traefik-internal.${SECRET_DOMAIN}"
       secretName: "${SECRET_DOMAIN/./-}-tls"
