@@ -8,3 +8,4 @@ resources:
   - ./external-dns/ks.yaml
   - ./traefik/ks.yaml
   - ./echo-server/ks.yaml
+  - ./certificates/ks.yaml
