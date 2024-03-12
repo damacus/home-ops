@@ -2,25 +2,6 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: traefik-certificates
-  namespace: flux-system
-spec:
-  targetNamespace: network
-  dependsOn:
-    - name: cert-manager-issuers
-  path: ./kubernetes/ironstone/apps/network/traefik/certificates
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: home-kubernetes
-  wait: true
-  interval: 30m
-  retryInterval: 1m
-  timeout: 5m
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
   name: traefik-external
   namespace: flux-system
 spec:
