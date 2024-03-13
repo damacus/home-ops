@@ -9,3 +9,4 @@ resources:
   - ./traefik/ks.yaml
   - ./echo-server/ks.yaml
   - ./certificates/ks.yaml
+  - ./k8s-gateway/ks.yaml
