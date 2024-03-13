@@ -2,14 +2,16 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app metrics-server
+  name: &app system-upgrade-k3s
   namespace: flux-system
 spec:
-  targetNamespace: kube-system
+  targetNamespace: system-upgrade
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: ./kubernetes/ironstone/apps/kube-system/metrics-server/app
+  dependsOn:
+    - name: system-upgrade-controller
+  path: ./kubernetes/ironstone/apps/system-upgrade/k3s/app
   prune: true
   sourceRef:
     kind: GitRepository
@@ -18,3 +20,7 @@ spec:
   interval: 30m
   retryInterval: 1m
   timeout: 5m
+  postBuild:
+    substitute:
+      # renovate: datasource=github-releases depName=k3s-io/k3s
+      KUBE_VERSION: v1.29.2+k3s1

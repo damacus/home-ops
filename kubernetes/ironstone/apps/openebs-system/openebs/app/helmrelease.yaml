@@ -2,33 +2,33 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta2
 kind: HelmRelease
 metadata:
-  name: reloader
-  namespace: kube-system
+  name: openebs
 spec:
   interval: 30m
   chart:
     spec:
-      chart: reloader
-      version: 1.0.69
+      chart: openebs
+      version: 3.10.0
       sourceRef:
         kind: HelmRepository
-        name: stakater
+        name: openebs
         namespace: flux-system
-  maxHistory: 2
   install:
-    createNamespace: true
     remediation:
       retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
       retries: 3
-  uninstall:
-    keepHistory: false
   values:
-    fullnameOverride: reloader
-    reloader:
-      reloadStrategy: annotations
-      podMonitor:
+    ndm:
+      enabled: false
+    localprovisioner:
+      enabled: true
+      deviceClass:
+        enabled: false
+      hostpathClass:
         enabled: true
-        namespace: kube-system
+        name: openebs-hostpath
+        isDefaultClass: false
+        basePath: /var/openebs/local
