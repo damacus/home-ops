@@ -1,12 +1,10 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "packageRules": [
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  packageRules: [
     {
-      "description": ["Separate PRs for Ironstone cluster"],
-      "matchFileNames": [
-        "**/kubernetes/ironstone/**"
-      ],
-      "additionalBranchPrefix": "ironstone-"
-    }
-  ]
+      description: ["Separate PRs for Ironstone cluster"],
+      matchFileNames: ["**/kubernetes/**"],
+      additionalBranchPrefix: "ironstone-",
+    },
+  ],
 }

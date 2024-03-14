@@ -7,7 +7,7 @@ k3s_server:
     - "traefik"
     - "local-storage"
     - "metrics-server"
-  cluster-cidr: "{{ cluster_cidr }}"
+  cluster-cidr: "10.69.0.0/16"
   disable-cloud-controller: true
   disable-kube-proxy: true
   disable-network-policy: true
@@ -16,7 +16,6 @@ k3s_server:
   etcd-disable-snapshots: true
   etcd-expose-metrics: true
   flannel-backend: "none"
-  https-listen-port: 6443
   kube-apiserver-arg:
     - "anonymous-auth=true"
   kube-controller-manager-arg:
@@ -29,7 +28,7 @@ k3s_server:
   node-ip: "{{ ansible_host }}"
   pause-image: registry.k8s.io/pause:3.9
   secrets-encryption: true
-  service-cidr: "{{ service_cidr }}"
+  service-cidr: "10.96.0.0/16"
   tls-san:
-    - "{{ kube_vip_addr }}"
-  write-kubeconfig-mode: "0644"
+    - "192.168.1.220"
+  write-kubeconfig-mode: "644"
