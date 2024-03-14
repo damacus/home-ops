@@ -4,7 +4,19 @@
   become: true
   gather_facts: true
   any_errors_fatal: true
+  vars_prompt:
+    - name: nuke
+      prompt: |-
+        Are you sure you want to nuke this cluster?
+        Type 'YES I WANT TO DESTROY THIS CLUSTER' to proceed
+      default: "n"
+      private: false
   pre_tasks:
+    - name: Check for confirmation
+      ansible.builtin.fail:
+        msg: Aborted nuking the cluster
+      when: nuke != 'YES I WANT TO DESTROY THIS CLUSTER'
+
     - name: Pausing for 5 seconds...
       ansible.builtin.pause:
         seconds: 5
@@ -69,7 +81,21 @@
       register: k3s_uninstall
       changed_when: k3s_uninstall.rc == 0
 
+    - name: Ensure hard links are removed
+      when:
+        - k3s_install_hard_links
+        - not ansible_check_mode
+      ansible.builtin.file:
+        path: "{{ k3s_install_dir }}/{{ item }}"
+        state: absent
+      loop: ["kubectl", "crictl", "ctr"]
+
+    - name: Remove local storage path
+      ansible.builtin.file:
+        path: /var/openebs/local
+        state: absent
+
     - name: Reboot
       ansible.builtin.reboot:
-        msg: Rebooting nodes
+        msg: Rebooting hosts
         reboot_timeout: 3600
