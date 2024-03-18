@@ -40,7 +40,7 @@ metadata:
 spec:
   ingressClassName: traefik-internal
   rules:
-    - host: "traefik-internal.${SECRET_DOMAIN}"
+    - host: "traefik.internal.${SECRET_DOMAIN}"
       http:
         paths:
           - path: /
@@ -52,5 +52,5 @@ spec:
                   number: 9000
   tls:
     - hosts:
-        - "traefik-internal.${SECRET_DOMAIN}"
+        - "traefik.internal.${SECRET_DOMAIN}"
       secretName: "${SECRET_DOMAIN/./-}-tls"
