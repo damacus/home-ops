@@ -1,0 +1,89 @@
+---
+controllers:
+  home-assistant:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    type: statefulset
+    hostNetwork: true
+    containers:
+      app:
+        image:
+          repository: ghcr.io/home-assistant/home-assistant
+          pullPolicy: IfNotPresent
+          # renovate: datasource=docker depName=home-assistant/core
+          tag: 2024.3.1
+        env:
+          TZ: ${TIMEZONE}
+          HASS_HTTP_TRUSTED_PROXY_1: 192.168.1.0/24
+          HASS_HTTP_TRUSTED_PROXY_2: 10.42.0.0/16
+
+        envFrom:
+          - secretRef:
+              name: home-assistant-secret
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: { drop: ["ALL"] }
+        resources:
+          requests:
+            cpu: 10m
+          limits:
+            memory: 1Gi
+    pod:
+      securityContext:
+        runAsUser: 568
+        runAsGroup: 568
+        runAsNonRoot: true
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+
+service:
+  app:
+    controller: home-assistant
+    ports:
+      http:
+        port: 8123
+
+ingress:
+  app:
+    className: external
+    annotations:
+      external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+    hosts:
+      - host: &host hass.${SECRET_DOMAIN}
+        paths:
+          - path: /
+            service:
+              identifier: app
+              port: http
+    tls:
+      - hosts:
+          - *host
+
+persistence:
+  config:
+    enabled: true
+    # existingClaim: home-assistant-config
+    globalMounts:
+      - path: /config
+
+  logs:
+    type: emptyDir
+    globalMounts:
+      - path: /config/logs
+
+  tts:
+    type: emptyDir
+    globalMounts:
+      - path: /config/tts
+  tmp:
+    type: emptyDir
+
+  backup:
+    enabled: true
+    type: nfs-csi
+    server: ${SECRET_SYNOLOGY_IP}
+    path: ${SECRET_NFS_DIRECTORY}/backups-hass
+    globalMounts:
+      - path: /config/backups

@@ -1,0 +1,75 @@
+---
+controllers:
+  code:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    containers:
+      app:
+        image:
+          repository: ghcr.io/coder/code-server
+          # renovate: datasource=github-releases depName=coder/code-server
+          tag: 4.22.1
+        args:
+          - --auth
+          - "none"
+          - --user-data-dir
+          - "/config/.vscode"
+          - --extensions-dir
+          - "/config/.vscode"
+          - --port
+          - "8080"
+          - "/config"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 100M
+          limits:
+            memory: 500M
+    pod:
+      securityContext:
+        runAsUser: 568
+        runAsGroup: 568
+        fsGroup: 568
+        fsGroupChangePolicy: "OnRootMismatch"
+        supplementalGroups: [100]
+
+service:
+  app:
+    ports:
+      http:
+        port: 8080
+
+ingress:
+  app:
+    className: internal
+    annotations:
+      nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+    hosts:
+      - host: &host "code.internal.${SECRET_DOMAIN}"
+        paths:
+          - path: /
+            service:
+              identifier: app
+              port: http
+    tls:
+      - hosts:
+          - *host
+
+persistence:
+  config:
+    existingClaim: home-assistant-config
+    globalMounts:
+      - path: /config
+
+affinity:
+  podAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values: ["home-assistant"]
+            - key: app.kubernetes.io/instance
+              operator: In
+              values: ["home-assistant"]
+        topologyKey: kubernetes.io/hostname
