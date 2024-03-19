@@ -6,7 +6,7 @@ resources: [HelmRelease.yaml]
 
 configMapGenerator:
   - name: home-assistant-config
-    files: [values.yaml=config/vaules.yaml]
+    files: [values.yaml=config/values.yaml]
 
 configurations: [kustomizeconfig.yaml]
 
