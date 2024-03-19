@@ -30,7 +30,7 @@ spec:
       service:
         annotations:
           external-dns.alpha.kubernetes.io/hostname: "external.${SECRET_DOMAIN}"
-          external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
+          external-dns.alpha.kubernetes.io/cloudflare-proxied: 'false'
           io.cilium/lb-ipam-ips: "${NGINX_EXTERNAL_ADDR}"
         externalTrafficPolicy: Cluster
       ingressClassResource:

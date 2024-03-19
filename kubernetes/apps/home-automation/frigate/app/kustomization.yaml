@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: home-automation
+resources:
+  - ./HelmRelease.yaml
+  - ./media-pvc.yaml
+  - ./config-pvc.yaml
+
+configMapGenerator:
+  - name: frigate-config
+    files: [values.yaml=config/values.yaml]
+
+  - name: frigate-app-config
+    files: [values.yaml=config/config.yaml]
+
+configurations: [kustomizeconfig.yaml]
+
+generatorOptions:
+  disableNameSuffixHash: true

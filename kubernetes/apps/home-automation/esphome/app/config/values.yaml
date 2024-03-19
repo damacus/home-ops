@@ -1,0 +1,63 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.0.4/charts/other/app-template/values.schema.json
+controllers:
+  esphome:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    containers:
+      app:
+        image:
+          repository: ghcr.io/esphome/esphome
+          tag: 2024.2.1
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: { drop: ["ALL"] }
+        resources:
+          requests:
+            cpu: 10m
+          limits:
+            memory: 1Gi
+    pod:
+      securityContext:
+        runAsUser: 568
+        runAsGroup: 568
+        runAsNonRoot: true
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+
+service:
+  app:
+    controller: esphome
+    ports:
+      http:
+        port: 6052
+
+ingress:
+  app:
+    className: internal
+    annotations:
+      external-dns.alpha.kubernetes.io/target: internal.${SECRET_DOMAIN}
+    hosts:
+      - host: &host esphome.internal.${SECRET_DOMAIN}
+        paths:
+          - path: /
+            service:
+              identifier: app
+              port: http
+    tls:
+      - hosts:
+          - *host
+
+persistence:
+  config:
+    accessMode: ReadWriteOnce
+    size: 500Mi
+    globalMounts:
+      - path: /config
+
+  esphome-cache:
+    type: emptyDir
+    globalMounts:
+      - path: /config/.esphome
