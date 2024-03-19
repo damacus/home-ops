@@ -3,11 +3,9 @@ alertmanager:
   ingress:
     enabled: true
     spec:
-      ingressClassName: traefik-internal
+      ingressClassName: internal
     annotations:
       reloader.stakater.com/auto: "true"
-      traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-      traefik.ingress.kubernetes.io/router.middlewares: "networking-traefik-middleware-chain-no-auth@kubernetescrd"
     hosts: ["alertmanager.${SECRET_DOMAIN}"]
     paths: ["/"]
     tls:

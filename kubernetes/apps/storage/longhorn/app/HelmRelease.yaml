@@ -44,6 +44,6 @@ spec:
       nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
     ingress:
       enabled: true
-      ingressClassName: traefik-internal
+      ingressClassName: internal
       host: longhorn.${SECRET_DOMAIN}
       tls: true

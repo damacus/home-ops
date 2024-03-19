@@ -30,5 +30,4 @@ resources:
   - prometheus-community.yaml
   - secrets-store-csi-driver.yaml
   - skater.yaml
-  - traefik.yaml
   - uptime-kuma.yaml

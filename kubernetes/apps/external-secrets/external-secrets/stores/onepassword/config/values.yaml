@@ -103,7 +103,7 @@ service:
 
 ingress:
   app:
-    className: traefik-internal
+    className: internal
     hosts:
       - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
         paths:
