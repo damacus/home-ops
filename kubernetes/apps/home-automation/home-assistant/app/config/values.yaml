@@ -1,10 +1,10 @@
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.0.4/charts/other/app-template/values.schema.json
 controllers:
   home-assistant:
     annotations:
       reloader.stakater.com/auto: "true"
     type: statefulset
-    hostNetwork: true
     containers:
       app:
         image:
@@ -31,6 +31,7 @@ controllers:
           limits:
             memory: 1Gi
     pod:
+      hostNetwork: true
       securityContext:
         runAsUser: 568
         runAsGroup: 568
@@ -63,8 +64,9 @@ ingress:
 
 persistence:
   config:
-    enabled: true
     # existingClaim: home-assistant-config
+    accessMode: ReadWriteOnce
+    size: 1Gi
     globalMounts:
       - path: /config
 
@@ -81,8 +83,7 @@ persistence:
     type: emptyDir
 
   backup:
-    enabled: true
-    type: nfs-csi
+    type: nfs
     server: ${SECRET_SYNOLOGY_IP}
     path: ${SECRET_NFS_DIRECTORY}/backups-hass
     globalMounts:

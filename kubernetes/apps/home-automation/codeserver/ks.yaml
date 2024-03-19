@@ -2,11 +2,11 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: home-assistant-code
+  name: codeserver
   namespace: flux-system
 spec:
   targetNamespace: home-automation
-  path: ./kubernetes/apps/home-automation/home-assistant-code/app
+  path: ./kubernetes/apps/home-automation/codeserver/app
   prune: true
   sourceRef:
     kind: GitRepository

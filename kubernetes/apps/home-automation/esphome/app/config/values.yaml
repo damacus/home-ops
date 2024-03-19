@@ -1,36 +1,50 @@
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.0.4/charts/other/app-template/values.schema.json
 controllers:
   esphome:
+    annotations:
+      reloader.stakater.com/auto: "true"
     containers:
-      esphome:
+      app:
         image:
           repository: ghcr.io/esphome/esphome
-          # renovate: datasource=docker depName=esphome/esphome
           tag: 2024.2.1
 
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: { drop: ["ALL"] }
         resources:
           requests:
-            cpu: 20m
-            memory: 64M
+            cpu: 10m
           limits:
-            memory: 1024M
+            memory: 1Gi
+    pod:
+      securityContext:
+        runAsUser: 568
+        runAsGroup: 568
+        runAsNonRoot: true
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
 
 service:
-  esphome:
+  app:
+    controller: esphome
     ports:
       http:
         port: 6052
 
 ingress:
-  esphome:
-    enabled: true
-    className: "internal"
+  app:
+    className: internal
+    annotations:
+      external-dns.alpha.kubernetes.io/target: internal.${SECRET_DOMAIN}
     hosts:
-      - host: &host "esphome.internal.${SECRET_DOMAIN}"
+      - host: &host esphome.internal.${SECRET_DOMAIN}
         paths:
           - path: /
             service:
-              name: main
+              identifier: app
               port: http
     tls:
       - hosts:
@@ -38,7 +52,11 @@ ingress:
 
 persistence:
   config:
-    enabled: true
+    accessMode: ReadWriteOnce
+    size: 500Mi
+    globalMounts:
+      - path: /config
+
   esphome-cache:
     type: emptyDir
     globalMounts:
