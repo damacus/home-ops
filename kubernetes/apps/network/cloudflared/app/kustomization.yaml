@@ -8,7 +8,7 @@ resources:
 configMapGenerator:
   - name: cloudflared-configmap
     files: [./config/config.yaml]
-  - name: cloudflared-helm-configmap
+  - name: cloudflared-helm-config
     files: [values.yaml=config/values.yaml]
 
 generatorOptions:

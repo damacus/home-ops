@@ -9,6 +9,7 @@ resources:
   - bjws.yaml
   - cilium.yaml
   - csi-driver-nfs.yaml
+  - dex.yaml
   - emqx.yaml
   - external-dns.yaml
   - external-secrets.yaml
@@ -25,6 +26,7 @@ resources:
   - nginx.yaml
   - node-feature-discovery.yaml
   - node-red-chart.yaml
+  - oauth2proxy.yaml
   - onepassword-connect.yaml
   - openebs.yaml
   - prometheus-community.yaml

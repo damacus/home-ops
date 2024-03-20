@@ -83,4 +83,10 @@ spec:
         limits:
           memory: 500Mi
     defaultBackend:
-      enabled: false
+      enabled: true
+      image:
+        repository: ghcr.io/181192/custom-error-pages
+        tag: 1.2.1
+      extraEnvs:
+        - name: ERROR_FILES_PATH
+          value: ./themes/orient
