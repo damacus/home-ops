@@ -31,7 +31,7 @@ spec:
       createPrometheusRules: true
 
     persistence:
-      defaultClass: false
+      defaultClass: true
       defaultClassReplicaCount: 3
       defaultDataLocality: best-effort
       defaultReplicaAutoBalance: best-effort
