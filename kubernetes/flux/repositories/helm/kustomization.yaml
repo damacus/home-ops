@@ -25,6 +25,7 @@ resources:
   - nginx.yaml
   - node-feature-discovery.yaml
   - node-red-chart.yaml
+  - oauth2proxy.yaml
   - onepassword-connect.yaml
   - openebs.yaml
   - prometheus-community.yaml

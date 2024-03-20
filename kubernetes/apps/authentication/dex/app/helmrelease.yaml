@@ -1,0 +1,30 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: dex
+  namespace: authentication
+spec:
+  releaseName: dex
+  interval: 10m
+  chart:
+    spec:
+      chart: dex
+      version: 0.16.0
+      sourceRef:
+        kind: HelmRepository
+        name: dex
+        namespace: flux-system
+  maxHistory: 3
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  valuesFrom:
+    - kind: ConfigMap
+      name: dex-helm-config
