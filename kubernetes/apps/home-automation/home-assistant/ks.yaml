@@ -8,6 +8,11 @@ spec:
   targetNamespace: home-automation
   path: ./kubernetes/apps/home-automation/home-assistant/app
   prune: true
+  dependsOn:
+    - name: longhorn
+    - name: ingress-nginx
+    - name: cert-manager
+    - name: external-dns
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
