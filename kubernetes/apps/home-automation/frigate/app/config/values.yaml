@@ -12,7 +12,7 @@ controllers:
       frigate:
         image:
           repository: ghcr.io/blakeblackshear/frigate
-          # renovate: datasource=docker depName=blakeblackshear/frigate
+          # renovate: datasource=github-releases depName=blakeblackshear/frigate
           tag: 0.13.2
 
         resources:
