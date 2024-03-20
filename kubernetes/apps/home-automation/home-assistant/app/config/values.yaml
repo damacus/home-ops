@@ -65,7 +65,7 @@ ingress:
 persistence:
   config:
     # existingClaim: home-assistant-config
-    accessMode: ReadWriteOnce
+    accessMode: ReadWriteMany
     size: 1Gi
     globalMounts:
       - path: /config
