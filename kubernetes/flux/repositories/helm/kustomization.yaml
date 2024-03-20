@@ -9,6 +9,7 @@ resources:
   - bjws.yaml
   - cilium.yaml
   - csi-driver-nfs.yaml
+  - dex.yaml
   - emqx.yaml
   - external-dns.yaml
   - external-secrets.yaml
