@@ -64,9 +64,7 @@ ingress:
 
 persistence:
   config:
-    # existingClaim: home-assistant-config
-    accessMode: ReadWriteMany
-    size: 1Gi
+    existingClaim: home-assistant-config
     globalMounts:
       - path: /config
 
@@ -82,9 +80,9 @@ persistence:
   tmp:
     type: emptyDir
 
-  backup:
-    type: nfs
-    server: ${SECRET_SYNOLOGY_IP}
-    path: ${SECRET_NFS_DIRECTORY}/backups-hass
-    globalMounts:
-      - path: /config/backups
+# backup:
+#   type: nfs
+#   server: ${SECRET_SYNOLOGY_IP}
+#   path: ${SECRET_NFS_DIRECTORY}/backups-hass
+#   globalMounts:
+#     - path: /config/backups
