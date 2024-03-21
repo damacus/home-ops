@@ -35,7 +35,7 @@ spec:
       defaultClassReplicaCount: 3
       defaultDataLocality: best-effort
       defaultReplicaAutoBalance: best-effort
-      migratable: true
+      migratable: false # ReadWriteMany doesn't work if storage is migratable
 
     ingress:
       enabled: true
