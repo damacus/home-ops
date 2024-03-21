@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ./dex/ks.yaml
   - ./oauth2proxy/ks.yaml
+  - ./namespace.yaml
