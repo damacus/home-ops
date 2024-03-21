@@ -63,11 +63,6 @@ service:
       http:
         port: *port
 
-serviceMonitor:
-  app:
-    serviceName: app
-    enabled: true
-
 persistence:
   config:
     enabled: true
