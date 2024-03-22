@@ -11,11 +11,16 @@ controllers:
           repository: ghcr.io/home-assistant/home-assistant
           pullPolicy: IfNotPresent
           # renovate: datasource=docker depName=homeassistant/home-assistant
-          tag: 2024.3.1
+          tag: 2024.3.2
+
         env:
           TZ: ${TIMEZONE}
           HASS_HTTP_TRUSTED_PROXY_1: 192.168.1.0/24
           HASS_HTTP_TRUSTED_PROXY_2: 10.42.0.0/16
+
+        envFrom:
+          - secretRef:
+              name: home-assistant-secret
 
         securityContext:
           allowPrivilegeEscalation: false
@@ -26,6 +31,7 @@ controllers:
             cpu: 10m
           limits:
             memory: 1Gi
+
     pod:
       hostNetwork: true
       securityContext:
@@ -76,9 +82,10 @@ persistence:
 
   tmp:
     type: emptyDir
-# backup:
-#   type: nfs
-#   server: ${SECRET_SYNOLOGY_IP}
-#   path: ${SECRET_NFS_DIRECTORY}/backups-hass
-#   globalMounts:
-#     - path: /config/backups
+
+  backup:
+    type: nfs
+    server: ${SECRET_SYNOLOGY_IP}
+    path: ${SECRET_NFS_DIRECTORY}/backups-hass
+    globalMounts:
+      - path: /config/backups
