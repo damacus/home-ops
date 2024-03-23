@@ -88,7 +88,7 @@ l2announcements:
 
 loadBalancer:
   algorithm: maglev
-  mode: dsr
+  mode: snat # dsr, hybrid, snat
 
 localRedirectPolicy: true
 rollOutCiliumPods: true

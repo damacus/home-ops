@@ -3,7 +3,7 @@
 controllers:
   esphome:
     annotations:
-      reloader.stakater.com/auto: "true"
+      secret.reloader.stakater.com/reload: esphome-secrets
     containers:
       app:
         image:
