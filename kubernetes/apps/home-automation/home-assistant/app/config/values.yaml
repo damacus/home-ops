@@ -8,7 +8,7 @@ controllers:
     containers:
       app:
         image:
-          repository: ghcr.io/home-assistant/home-assistant
+          repository: ghcr.io/onedr0p/home-assistant
           pullPolicy: IfNotPresent
           # renovate: datasource=docker depName=homeassistant/home-assistant
           tag: 2024.3.3
