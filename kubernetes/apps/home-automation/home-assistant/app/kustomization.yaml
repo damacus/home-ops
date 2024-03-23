@@ -5,6 +5,7 @@ namespace: home-automation
 resources:
   - HelmRelease.yaml
   - config-pvc.yaml
+  - externalsecret.yaml
 
 configMapGenerator:
   - name: home-assistant-config
