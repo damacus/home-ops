@@ -17,9 +17,6 @@ spec:
   install:
     remediation:
       retries: 3
-  dependsOn:
-    - name: home-assistant-secret
-    - name: home-assistant-helm-values
   upgrade:
     cleanupOnFail: true
     remediation:
