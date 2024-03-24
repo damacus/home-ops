@@ -19,7 +19,7 @@ spec:
       retries: 3
   dependsOn:
     - name: home-assistant-secret
-    - name: home-assistant-config
+    - name: home-assistant-helm-values
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -28,4 +28,4 @@ spec:
     keepHistory: false
   valuesFrom:
     - kind: ConfigMap
-      name: home-assistant-config
+      name: home-assistant-helm-values
