@@ -1,0 +1,15 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: paperless-ngx
+resources:
+  - namespace.yaml
+  - helm.yaml
+configMapGenerator:
+  - name: paperless-ngx-helm-values
+    files: [values.yaml=config/values.yaml]
+
+configurations: [kustomizeconfig.yaml]
+
+generatorOptions:
+  disableNameSuffixHash: true
