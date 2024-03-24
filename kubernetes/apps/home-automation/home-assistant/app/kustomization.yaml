@@ -8,7 +8,7 @@ resources:
   - externalsecret.yaml
 
 configMapGenerator:
-  - name: home-assistant-config
+  - name: home-assistant-helm-values
     files: [values.yaml=config/values.yaml]
 
 configurations: [kustomizeconfig.yaml]
