@@ -25,4 +25,4 @@ spec:
     keepHistory: false
   valuesFrom:
     - kind: ConfigMap
-      name: home-assistant-config
+      name: home-assistant-helm-values

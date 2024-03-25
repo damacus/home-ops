@@ -5,13 +5,13 @@ image:
 authenticatedEmailsFile:
   enabled: true
   restricted_access: |-
-    ${EMAIL_ADDRESS_1}
-    ${EMAIL_ADDRESS_2}
+    "{EMAIL_ADDRESS_1}"
+    "{EMAIL_ADDRESS_2}"
 
 config:
-  clientID: ${DEX_OAUTH2_PROXY_CLIENT_ID}
-  clientSecret: ${DEX_OAUTH2_PROXY_CLIENT_SECRET}
-  cookieSecret: ${OAUTH2_PROXY_COOKIE_SECRET}
+  clientID: "{DEX_OAUTH2_PROXY_CLIENT_ID}"
+  clientSecret: "{DEX_OAUTH2_PROXY_CLIENT_SECRET}"
+  cookieSecret: "{OAUTH2_PROXY_COOKIE_SECRET}"
   configFile: |-
     provider = "oidc"
     oidc_issuer_url = "https://dex.${SECRET_DOMAIN}"
@@ -29,7 +29,7 @@ ingress:
   path: /oauth2
   pathType: Prefix
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: auth.${SECRET_DOMAIN}
+    external-dns.alpha.kubernetes.io/hostname: external.${SECRET_DOMAIN}
   hosts:
     - &host auth.${SECRET_DOMAIN}
   tls:

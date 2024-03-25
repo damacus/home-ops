@@ -6,7 +6,7 @@ resources:
   - https://github.com/rancher/system-upgrade-controller/releases/download/v0.13.4/crd.yaml
   - helmrelease.yaml
   - rbac.yaml
-  -
+
 configMapGenerator:
   - name: system-upgrade-controller-configmap
     files: [values.yaml=config/values.yaml]

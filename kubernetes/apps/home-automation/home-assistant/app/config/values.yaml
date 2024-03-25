@@ -8,10 +8,11 @@ controllers:
     containers:
       app:
         image:
-          repository: ghcr.io/home-assistant/home-assistant
+          repository: ghcr.io/onedr0p/home-assistant
           pullPolicy: IfNotPresent
           # renovate: datasource=docker depName=homeassistant/home-assistant
-          tag: 2024.3.1
+          tag: 2024.3.3
+
         env:
           TZ: ${TIMEZONE}
           HASS_HTTP_TRUSTED_PROXY_1: 192.168.1.0/24
@@ -21,17 +22,30 @@ controllers:
           - secretRef:
               name: home-assistant-secret
 
+        probes:
+          liveness:
+            enabled: false
+          readiness:
+            enabled: false
+          startup:
+            enabled: false
+
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities: { drop: ["ALL"] }
+
         resources:
           requests:
-            cpu: 10m
-          limits:
+            cpu: 250m
             memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+
     pod:
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         runAsUser: 568
         runAsGroup: 568
@@ -41,6 +55,8 @@ controllers:
 
 service:
   app:
+    type: LoadBalancer
+    loadBalancerIP: ${HASS_ADDR}
     controller: home-assistant
     ports:
       http:
@@ -48,11 +64,12 @@ service:
 
 ingress:
   app:
+    enabled: true
     className: external
     annotations:
       external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
     hosts:
-      - host: &host hass.${SECRET_DOMAIN}
+      - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
         paths:
           - path: /
             service:
@@ -61,12 +78,23 @@ ingress:
     tls:
       - hosts:
           - *host
+  internal:
+    enabled: true
+    className: internal
+    hosts:
+      - host: &internal-host "{{ .Release.Name }}.internal.${SECRET_DOMAIN}"
+        paths:
+          - path: /
+            service:
+              identifier: app
+              port: http
+    tls:
+      - hosts:
+          - *internal-host
 
 persistence:
   config:
-    # existingClaim: home-assistant-config
-    accessMode: ReadWriteMany
-    size: 1Gi
+    existingClaim: home-assistant-config
     globalMounts:
       - path: /config
 
@@ -79,6 +107,7 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /config/tts
+
   tmp:
     type: emptyDir
 
