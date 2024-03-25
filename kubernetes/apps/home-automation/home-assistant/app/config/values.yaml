@@ -5,7 +5,6 @@ controllers:
     annotations:
       reloader.stakater.com/auto: "true"
     type: statefulset
-    strategy: Recreate
     containers:
       app:
         image:
