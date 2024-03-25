@@ -26,6 +26,7 @@ controllers:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities: { drop: ["ALL"] }
+
         resources:
           requests:
             cpu: 10m
@@ -61,8 +62,7 @@ ingress:
               identifier: app
               port: http
     tls:
-      - hosts:
-          - *host
+      - hosts: [*host]
 
 persistence:
   config:
