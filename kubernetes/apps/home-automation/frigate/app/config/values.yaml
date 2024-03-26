@@ -45,7 +45,7 @@ ingress:
     enabled: true
     className: "internal"
     hosts:
-      - host: &host "{{ .Release.Name }}.internal.${SECRET_DOMAIN}"
+      - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
         paths:
           - path: /
             service:

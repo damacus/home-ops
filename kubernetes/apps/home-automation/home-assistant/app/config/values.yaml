@@ -55,9 +55,9 @@ controllers:
 
 service:
   app:
+    controller: home-assistant
     type: LoadBalancer
     loadBalancerIP: ${HASS_ADDR}
-    controller: home-assistant
     ports:
       http:
         port: 8123
@@ -78,11 +78,12 @@ ingress:
     tls:
       - hosts:
           - *host
+
   internal:
     enabled: true
     className: internal
     hosts:
-      - host: &internal-host "{{ .Release.Name }}.internal.${SECRET_DOMAIN}"
+      - host: &internal-host "{{ .Release.Name }}.${SECRET_DOMAIN}"
         paths:
           - path: /
             service:

@@ -37,10 +37,8 @@ service:
 ingress:
   app:
     className: internal
-    annotations:
-      external-dns.alpha.kubernetes.io/target: internal.${SECRET_DOMAIN}
     hosts:
-      - host: &host esphome.internal.${SECRET_DOMAIN}
+      - host: &host esphome.${SECRET_DOMAIN}
         paths:
           - path: /
             service:
