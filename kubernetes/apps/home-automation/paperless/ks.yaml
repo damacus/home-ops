@@ -2,17 +2,16 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: frigate
+  name: paperless
   namespace: flux-system
 spec:
   targetNamespace: home-automation
-  path: ./kubernetes/apps/home-automation/frigate/app
+  path: ./kubernetes/apps/home-automation/paperless/app
   prune: true
   dependsOn:
     - name: longhorn
-    - name: ingress-nginx-internal
+    - name: ingress-nginx-external
     - name: cert-manager
-    - name: external-dns
   sourceRef:
     kind: GitRepository
     name: home-kubernetes

@@ -22,15 +22,9 @@ spec:
         annotations:
           reloader.stakater.com/auto: "true"
         pod:
-          labels:
-            db.home.arpa/dragonfly: "dragonfly"
-            ingress.home.arpa/nginx-internal: allow
-            egress.home.arpa/nginx-external: allow
-            egress.home.arpa/world: allow
-            egress.home.arpa/kubedns: allow # FIXME: Remove when clusterNetworkPolicy is in place
           securityContext:
             supplementalGroups:
-              - 65542 # gladius:external-services
+              - 65542
 
         containers:
           app:
@@ -71,9 +65,9 @@ spec:
               # PAPERLESS_OCR_LANGUAGES: nld
               # PAPERLESS_OCR_LANGUAGE: nld
               # Configure redis integration
-              PAPERLESS_REDIS: redis://dragonfly.database.svc.cluster.local:6379/0
+              # PAPERLESS_REDIS: redis://dragonfly.database.svc.cluster.local:6379/0
               # Configure user permissions
-              USERMAP_GID: "65542" # gladius:external-services
+              USERMAP_GID: "65542"
               # Configure admin user
               PAPERLESS_ADMIN_USER:
                 valueFrom:
@@ -111,9 +105,9 @@ spec:
 
     ingress:
       app:
-        className: "internal-nginx"
+        className: "internal"
         hosts:
-          - host: &hostName paperless.internal.${SECRET_DOMAIN}
+          - host: &hostName paperless.${SECRET_DOMAIN}
             paths:
               - path: /
                 service:
