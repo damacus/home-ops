@@ -20,6 +20,8 @@ controllers:
           limits:
             memory: 1Gi
     pod:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         runAsUser: 568
         runAsGroup: 568
@@ -30,6 +32,8 @@ controllers:
 service:
   app:
     controller: esphome
+    type: LoadBalancer
+    loadBalancerIP: 192.168.1.227
     ports:
       http:
         port: 6052
@@ -37,10 +41,8 @@ service:
 ingress:
   app:
     className: internal
-    annotations:
-      external-dns.alpha.kubernetes.io/target: internal.${SECRET_DOMAIN}
     hosts:
-      - host: &host esphome.internal.${SECRET_DOMAIN}
+      - host: &host esphome.${SECRET_DOMAIN}
         paths:
           - path: /
             service:
