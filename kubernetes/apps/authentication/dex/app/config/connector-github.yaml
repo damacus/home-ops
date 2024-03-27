@@ -17,3 +17,11 @@ spec:
         clientID: "{{ .DEX_GITHUB_CLIENT_ID}}"
         clientSecret: "{{ .DEX_GITHUB_CLIENT_SECRET}}"
         redirectURI: "https://dex.${SECRET_DOMAIN}/callback"
+
+  dataFrom:
+    - extract:
+        key: dex-github
+      rewrite:
+        - regexp:
+            source: "(.*)"
+            target: "DEX_GITHUB_$1"
