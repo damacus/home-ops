@@ -4,14 +4,9 @@ image:
   tag: v7.6.0
 authenticatedEmailsFile:
   enabled: true
-  restricted_access: |-
-    "{EMAIL_ADDRESS_1}"
-    "{EMAIL_ADDRESS_2}"
+  template: "oauth2-proxy-email-list"
 
 config:
-  clientID: "{DEX_OAUTH2_PROXY_CLIENT_ID}"
-  clientSecret: "{DEX_OAUTH2_PROXY_CLIENT_SECRET}"
-  cookieSecret: "{OAUTH2_PROXY_COOKIE_SECRET}"
   configFile: |-
     provider = "oidc"
     oidc_issuer_url = "https://dex.${SECRET_DOMAIN}"
@@ -22,6 +17,14 @@ config:
     pass_access_token = true
     pass_authorization_header = true
     whitelist_domains = ".${SECRET_DOMAIN}"
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 300Mi
+  requests:
+    cpu: 100m
+    memory: 300Mi
 
 ingress:
   enabled: true
