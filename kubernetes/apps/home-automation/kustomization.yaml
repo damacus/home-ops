@@ -7,3 +7,4 @@ resources:
   - ./esphome/ks.yaml
   - ./home-assistant/ks.yaml
   - ./paperless/ks.yaml
+  - ./namespace.yaml
