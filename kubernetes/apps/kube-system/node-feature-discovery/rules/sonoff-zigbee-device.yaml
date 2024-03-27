@@ -7,9 +7,9 @@ metadata:
 spec:
   rules:
     - # Silicon Labs Sonoff Zigbee 3.0 USB Dongle Plus 0001
-      name: aeotec.zwave
+      name: sonoff.zigbee
       labels:
-        aeotec.feature.node.kubernetes.io/zwave: "true"
+        sonoff.feature.node.kubernetes.io/zigbee: "true"
       matchFeatures:
         - feature: usb.device
           matchExpressions:
