@@ -56,8 +56,8 @@ controllers:
 service:
   app:
     controller: home-assistant
-    type: LoadBalancer
-    loadBalancerIP: "${HASS_ADDR}"
+    # type: LoadBalancer
+    # loadBalancerIP: "${HASS_ADDR}"
     ports:
       http:
         port: 8123
