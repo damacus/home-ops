@@ -38,17 +38,6 @@ controllers:
           limits:
             memory: 4Gi
     pod:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values: ["frigate"]
-              topologyKey: kubernetes.io/hostname
-      nodeSelector:
-        intel.feature.node.kubernetes.io/gpu: "true"
       securityContext:
         runAsUser: 568
         runAsGroup: 568

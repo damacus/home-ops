@@ -20,8 +20,8 @@ controllers:
           limits:
             memory: 1Gi
     pod:
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: false
+      # dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         runAsUser: 568
         runAsGroup: 568
