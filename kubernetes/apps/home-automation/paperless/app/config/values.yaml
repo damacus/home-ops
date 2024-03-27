@@ -61,9 +61,6 @@ spec:
               PAPERLESS_CONSUMER_POLLING: "60"
               PAPERLESS_CONSUMER_RECURSIVE: "true"
               PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "true"
-              # Configure OCR
-              # PAPERLESS_OCR_LANGUAGES: nld
-              # PAPERLESS_OCR_LANGUAGE: nld
               # Configure redis integration
               # PAPERLESS_REDIS: redis://dragonfly.database.svc.cluster.local:6379/0
               # Configure user permissions
