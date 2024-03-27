@@ -15,8 +15,12 @@ spec:
       engineVersion: v2
       data:
         restricted_user_access: |
-          "{{ .EMAIL_ADDRESS_1 }}"
-          "{{ .EMAIL_ADDRESS_2 }}"
-  dataFrom:
-    - extract:
-        key: dex-emails
+          "{{ .email1 }}"
+          "{{ .email2 }}"
+  data:
+    - secretKey: email1
+      remoteRef:
+        key: dex-emails/EMAIL_ADDRESS_1
+    - secretKey: email2
+      remoteRef:
+        key: dex-emails/EMAIL_ADDRESS_2
