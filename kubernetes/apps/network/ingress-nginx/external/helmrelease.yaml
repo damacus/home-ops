@@ -57,8 +57,8 @@ spec:
           "status": $status, "vhost": "$host", "request_proto": "$server_protocol", "path": "$uri", "request_query": "$args",
           "request_length": $request_length, "duration": $request_time, "method": "$request_method", "http_referrer": "$http_referer",
           "http_user_agent": "$http_user_agent"}
-        # proxy-body-size: 1M
-        # proxy-buffer-size: 16k
+        proxy-body-size: 1M
+        proxy-buffer-size: 16k
         ssl-protocols: TLSv1.3 TLSv1.2
       metrics:
         enabled: true

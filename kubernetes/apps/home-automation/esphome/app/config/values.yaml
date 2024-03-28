@@ -33,7 +33,7 @@ service:
   app:
     controller: esphome
     # type: LoadBalancer
-    # loadBalancerIP: 192.168.1.227
+    # loadBalancerIP: "${ESPHOME_ADDR}"
     ports:
       http:
         port: 6052
