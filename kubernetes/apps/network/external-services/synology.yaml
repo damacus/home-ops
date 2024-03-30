@@ -22,16 +22,15 @@ metadata:
   name: &app synology
   namespace: network
   annotations:
-  # external-dns.alpha.kubernetes.io/target: external.${CLUSTER_DOMAIN}
-  # hajimari.io/icon: "home-assistant"
-  # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    external-dns.alpha.kubernetes.io/target: ${SYNOLOGY_NAS_IP}
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
   labels:
     app.kubernetes.io/name: *app
     app.kubernetes.io/instance: *app
 spec:
   ingressClassName: internal
   rules:
-    - host: &host synology.${CLUSTER_DOMAIN}
+    - host: &host synology.home.arpa
       http:
         paths:
           - path: /
