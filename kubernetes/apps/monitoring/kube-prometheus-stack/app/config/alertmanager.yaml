@@ -6,8 +6,9 @@ alertmanager:
       ingressClassName: internal
     annotations:
       reloader.stakater.com/auto: "true"
-    hosts: ["alertmanager.${SECRET_DOMAIN}"]
+      external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+    hosts: ["alertmanager.home.arpa"]
     paths: ["/"]
     tls:
-      - hosts: ["alertmanager.${SECRET_DOMAIN}"]
+      - hosts: ["alertmanager.home.arpa"]
         secretName: alert-manager-${SECRET_DOMAIN}-cert

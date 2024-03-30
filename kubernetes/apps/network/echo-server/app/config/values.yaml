@@ -74,8 +74,10 @@ ingress:
   internal:
     enabled: true
     className: internal
+    annotations:
+      external-dns.alpha.kubernetes.io/target: "${INTERNAL_NGINX_ADDR}"
     hosts:
-      - host: &internal-host "{{ .Release.Name }}-internal.${SECRET_DOMAIN}"
+      - host: &internal-host "{{ .Release.Name }}.home.arpa"
         paths:
           - path: /
             service:

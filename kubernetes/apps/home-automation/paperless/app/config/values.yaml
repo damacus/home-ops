@@ -39,7 +39,7 @@ spec:
                   secretKeyRef:
                     name: paperless-secret
                     key: PAPERLESS_SECRET_KEY
-              PAPERLESS_URL: https://paperless.${SECRET_DOMAIN}
+              PAPERLESS_URL: https://paperless.home.arpa
               PAPERLESS_PORT: "8000"
               PAPERLESS_TIME_ZONE: ${TIMEZONE}
               PAPERLESS_WEBSERVER_WORKERS: "2"
