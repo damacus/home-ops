@@ -7,8 +7,8 @@ grafana:
     annotations:
       reloader.stakater.com/auto: "true"
       external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
-    hosts: ["grafana.home.arpa"]
+    hosts: ["grafana.${SECRET_INTERNAL_DOMAIN}"]
     paths: ["/"]
     tls:
-      - hosts: ["grafana.home.arpa"]
+      - hosts: ["grafana.${SECRET_INTERNAL_DOMAIN}"]
         secretName: grafana-${SECRET_DOMAIN}-cert

@@ -3,13 +3,43 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ironstone-casa
+  name: ${SECRET_DOMAIN/./-}
 spec:
   secretName: ${SECRET_DOMAIN/./-}-production-tls
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
-  commonName: ironstone.casa
+  commonName: ${SECRET_DOMAIN}
   dnsNames:
-    - ironstone.casa
-    - "*.ironstone.casa"
+    - ${SECRET_DOMAIN}
+    - "*.${SECRET_DOMAIN}"
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ${SECRET_INTERNAL_DOMAIN/./-}
+spec:
+  secretName: ${SECRET_INTERNAL_DOMAIN/./-}-production-tls
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+  commonName: ${SECRET_INTERNAL_DOMAIN}
+  dnsNames:
+    - ${SECRET_INTERNAL_DOMAIN}
+    - "*.${SECRET_INTERNAL_DOMAIN}"
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ${SECRET_WORK_DOMAIN/./-}
+spec:
+  secretName: ${SECRET_WORK_DOMAIN/./-}-production-tls
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+  commonName: ${SECRET_WORK_DOMAIN}
+  dnsNames:
+    - ${SECRET_WORK_DOMAIN}
+    - "*.${SECRET_WORK_DOMAIN}"
