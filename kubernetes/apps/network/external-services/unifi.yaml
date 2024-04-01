@@ -2,27 +2,27 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: &app synology
+  name: &app unifi
   namespace: network
   labels:
     app.kubernetes.io/name: *app
     app.kubernetes.io/instance: *app
 spec:
   type: ExternalName
-  externalName: synology.local
+  externalName: unifi.local
   ports:
     - name: http
-      port: &port 8081
+      port: &port 443
       protocol: TCP
       targetPort: *port
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: &app synology
+  name: &app unifi
   namespace: network
   annotations:
-    external-dns.alpha.kubernetes.io/target: ${SYNOLOGY_NAS_IP}
+    external-dns.alpha.kubernetes.io/target: 192.168.1.254
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
   labels:
     app.kubernetes.io/name: *app
@@ -30,7 +30,7 @@ metadata:
 spec:
   ingressClassName: internal
   rules:
-    - host: &host synology.${SECRET_INTERNAL_DOMAIN}
+    - host: &host unifi.${SECRET_INTERNAL_DOMAIN}
       http:
         paths:
           - path: /

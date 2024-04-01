@@ -42,5 +42,5 @@ spec:
       annotations:
         external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
       ingressClassName: internal
-      host: longhorn.home.arpa
+      host: longhorn.${SECRET_INTERNAL_DOMAIN}
       tls: true

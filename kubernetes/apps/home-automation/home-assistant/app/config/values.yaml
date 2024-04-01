@@ -86,7 +86,7 @@ ingress:
     annotations:
       external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
     hosts:
-      - host: &internal-host "hass.home.arpa"
+      - host: &internal-host "hass.${SECRET_INTERNAL_DOMAIN}"
         paths:
           - path: /
             service:
