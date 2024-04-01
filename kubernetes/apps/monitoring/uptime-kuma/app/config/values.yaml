@@ -25,11 +25,11 @@ controllers:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
-# dnsPolicy: None
-# dnsConfig:
-#   nameservers:
-#     - 1.1.1.1
-#     - 1.0.0.1
+dnsPolicy: None
+dnsConfig:
+  nameservers:
+    - ${SECRET_SYNOLOGY_IP}
+    - 8.8.8.8
 
 service:
   uptime-kuma:
