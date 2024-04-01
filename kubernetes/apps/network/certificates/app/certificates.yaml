@@ -13,5 +13,3 @@ spec:
   dnsNames:
     - ironstone.casa
     - "*.ironstone.casa"
-    - "*.home.arpa"
-    - home.arpa

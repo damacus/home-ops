@@ -56,8 +56,9 @@ controllers:
 service:
   app:
     controller: home-assistant
-    # type: LoadBalancer
-    # loadBalancerIP: "${HASS_ADDR}"
+    type: LoadBalancer
+    annotations:
+      io.cilium/lb-ipam-ips: ${HASS_ADDR}
     ports:
       http:
         port: 8123
@@ -83,7 +84,7 @@ ingress:
     enabled: true
     className: internal
     annotations:
-      external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+      external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
     hosts:
       - host: &internal-host "hass.home.arpa"
         paths:
