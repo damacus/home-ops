@@ -36,9 +36,9 @@ controllers:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities: { drop: ["ALL"] }
-          runAsUser: 1030
-          runAsGroup: 1030
-          fsGroup: 1030
+          runAsUser: 568
+          runAsGroup: 568
+          fsGroup: 568
 
         resources:
           requests:
@@ -52,10 +52,10 @@ controllers:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       securityContext:
-        runAsUser: 1030
-        runAsGroup: 1030
+        runAsUser: 568
+        runAsGroup: 568
         runAsNonRoot: true
-        fsGroup: 1030
+        fsGroup: 568
         fsGroupChangePolicy: OnRootMismatch
 
 service:
