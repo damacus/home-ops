@@ -8,7 +8,7 @@ controllers:
     containers:
       app:
         image:
-          repository: ghcr.io/onedr0p/home-assistant
+          repository: ghcr.io/home-assistant/home-assistant
           pullPolicy: IfNotPresent
           # renovate: datasource=docker depName=homeassistant/home-assistant
           tag: 2024.3.3
@@ -32,14 +32,6 @@ controllers:
           startup:
             enabled: false
 
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities: { drop: ["ALL"] }
-          runAsUser: 568
-          runAsGroup: 568
-          fsGroup: 568
-
         resources:
           requests:
             cpu: 250m
@@ -51,12 +43,6 @@ controllers:
     pod:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
-      securityContext:
-        runAsUser: 568
-        runAsGroup: 568
-        runAsNonRoot: true
-        fsGroup: 568
-        fsGroupChangePolicy: OnRootMismatch
 
 service:
   app:
@@ -104,8 +90,10 @@ ingress:
 persistence:
   config:
     existingClaim: home-assistant-config
-    globalMounts:
-      - path: /config
+    advancedMounts:
+      home-assistant:
+        app:
+          - path: /config
 
   logs:
     type: emptyDir
@@ -124,5 +112,7 @@ persistence:
     type: nfs
     server: ${SECRET_SYNOLOGY_IP}
     path: ${SECRET_NFS_DIRECTORY}/backups-hass
-    globalMounts:
-      - path: /config/backups
+    advancedMounts:
+      home-assistant:
+        app:
+          - path: /config/backups
