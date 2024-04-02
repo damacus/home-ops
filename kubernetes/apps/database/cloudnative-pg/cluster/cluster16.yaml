@@ -30,8 +30,12 @@ spec:
     enablePodMonitor: true
     # Ref: https://github.com/cloudnative-pg/cloudnative-pg/issues/2501
     podMonitorMetricRelabelings:
-      - { sourceLabels: ["cluster"], targetLabel: cnpg_cluster, action: replace }
-      - { regex: cluster, action: labeldrop }
+    - {
+      sourceLabels: ["cluster"],
+      targetLabel: cnpg_cluster,
+      action: replace,
+    }
+    - { regex: cluster, action: labeldrop }
 # TODO: Requires minio setup
 # backup:
 #   retentionPolicy: 30d

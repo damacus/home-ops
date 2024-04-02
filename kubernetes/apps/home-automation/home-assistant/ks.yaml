@@ -14,6 +14,7 @@ spec:
     - name: cert-manager
     - name: external-dns-bind
     - name: external-dns-cloudflare
+    - name: cloudnative-pg
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
