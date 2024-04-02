@@ -36,6 +36,9 @@ controllers:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities: { drop: ["ALL"] }
+          runAsUser: 568
+          runAsGroup: 568
+          fsGroup: 568
 
         resources:
           requests:
