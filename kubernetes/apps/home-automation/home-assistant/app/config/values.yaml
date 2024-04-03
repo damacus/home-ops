@@ -19,6 +19,11 @@ controllers:
           HASS_HTTP_TRUSTED_PROXY_2: "${CLUSTER_CIDR}"
           HASS_INTERNAL_URL: "https://hass.${SECRET_INTERNAL_DOMAIN}"
           HASS_EXTERNAL_URL: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+          HASS_POSTGRES_URL:
+            valueFrom:
+              secretKeyRef:
+                name: home-assistant-app
+                key: uri
 
         envFrom:
           - secretRef:
