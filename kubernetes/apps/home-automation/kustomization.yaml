@@ -8,4 +8,3 @@ resources:
   - ./home-assistant-db/ks.yaml
   - ./paperless/ks.yaml
   - ./namespace.yaml
-  - ./config-pvc.yaml
