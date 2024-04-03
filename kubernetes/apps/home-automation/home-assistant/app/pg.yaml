@@ -6,24 +6,61 @@ metadata:
   name: home-assistant
   namespace: home-automation
 spec:
-  instances: 3 # set to the number of nodes in the cluster
   imageName: ghcr.io/cloudnative-pg/postgresql:16.2-10
+
+  instances: 3 # set to the number of nodes in the cluster
+
   primaryUpdateStrategy: unsupervised
+
   storage:
     size: 20Gi
     storageClass: openebs-hostpath
+
   superuserSecret:
     name: cloudnative-pg-secret
+
   enableSuperuserAccess: true
+
   postgresql:
     parameters:
       max_connections: "200"
-      shared_buffers: 256MB
+      checkpoint_completion_target: "0.9"
+      default_statistics_target: "100"
+      effective_cache_size: 3GB
+      effective_io_concurrency: "200"
+      maintenance_work_mem: 256MB
+      max_wal_size: 4GB
+      min_wal_size: 1GB
+      random_page_cost: "1.1"
+      shared_buffers: 1GB
+      wal_buffers: 16MB
+      work_mem: 3932kB
+
   nodeMaintenanceWindow:
     inProgress: false
     reusePVC: true
+
   resources:
     requests:
       cpu: 500m
     limits:
       memory: 2Gi
+
+  bootstrap:
+    initdb:
+      import:
+        type: microservice
+        databases: [home-assistant]
+        source:
+          externalCluster: home-assistant-recorder
+
+  externalClusters:
+    - name: home-assistant-recorder
+      connectionParameters:
+        host: ${SECRET_SYNOLOGY_IP}
+        user: haas
+        dbname: haas
+        port: "5434"
+      password:
+        name: home-assistant-recorder-superuser
+        key: password
