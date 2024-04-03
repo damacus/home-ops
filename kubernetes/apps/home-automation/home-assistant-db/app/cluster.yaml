@@ -59,7 +59,7 @@ spec:
       connectionParameters:
         host: ${SECRET_SYNOLOGY_IP}
         user: haas
-        dbname: haas
+        dbname: postgres
         port: "5434"
       password:
         name: home-assistant-recorder-superuser
