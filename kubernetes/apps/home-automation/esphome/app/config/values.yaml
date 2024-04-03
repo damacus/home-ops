@@ -20,8 +20,8 @@ controllers:
           limits:
             memory: 1Gi
     pod:
-      hostNetwork: false
-      # dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         runAsUser: 568
         runAsGroup: 568
@@ -32,8 +32,9 @@ controllers:
 service:
   app:
     controller: esphome
-    # type: LoadBalancer
-    # loadBalancerIP: "${ESPHOME_ADDR}"
+    annotations:
+      io.cilium/lb-ipam-ips: ${ESPHOME_ADDR}
+    type: LoadBalancer
     ports:
       http:
         port: 6052
