@@ -5,5 +5,6 @@ resources:
   - ./codeserver/ks.yaml
   - ./esphome/ks.yaml
   - ./home-assistant/ks.yaml
+  - ./home-assistant-db/ks.yaml
   - ./paperless/ks.yaml
   - ./namespace.yaml

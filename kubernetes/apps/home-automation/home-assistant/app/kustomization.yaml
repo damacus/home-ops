@@ -6,9 +6,6 @@ resources:
   - HelmRelease.yaml
   - config-pvc.yaml
   - externalsecret.yaml
-  - pg.yaml
-  - pg-externalsecret.yaml
-  # - pg-scheduledbackup.yaml
 
 configMapGenerator:
   - name: home-assistant-helm-values
