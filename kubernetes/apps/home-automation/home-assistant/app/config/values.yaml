@@ -8,18 +8,19 @@ controllers:
     containers:
       app:
         image:
-          repository: ghcr.io/home-assistant/home-assistant
+          repository: ghcr.io/onedr0p/home-assistant
           pullPolicy: IfNotPresent
           # renovate: datasource=docker depName=homeassistant/home-assistant
           tag: 2024.3.3
 
         env:
-          TZ: ${TIMEZONE}
-          HASS_HTTP_TRUSTED_PROXY_1: 192.168.0.0/16
-          HASS_HTTP_TRUSTED_PROXY_2: "${CLUSTER_CIDR}"
-          HASS_INTERNAL_URL: "https://hass.${SECRET_INTERNAL_DOMAIN}"
-          HASS_EXTERNAL_URL: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
-          HASS_POSTGRES_URL:
+          - name: HASS_HTTP_TRUSTED_PROXY_1
+            value: "${CLUSTER_CIDR}"
+          - name: HASS_EXTERNAL_URL
+            value: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+          - name: HASS_INTERNAL_URL
+            value: "https://hass.${SECRET_INTERNAL_DOMAIN}"
+          - name: HASS_POSTGRES_URL
             valueFrom:
               secretKeyRef:
                 name: home-assistant-app
@@ -48,6 +49,12 @@ controllers:
     pod:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
+      securityContext:
+        runAsUser: 568
+        runAsGroup: 568
+        runAsNonRoot: true
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
 
 service:
   app:
