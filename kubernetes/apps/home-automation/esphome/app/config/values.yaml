@@ -11,9 +11,17 @@ controllers:
           tag: 2024.3.1
 
         securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities: { drop: ["ALL"] }
+          runAsNonRoot: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            add:
+              - NET_ADMIN
+              - NET_RAW
+
+        env:
+          ESPHOME__INSTANCE_NAME: esphome
+          TZ: ${TZ}
+
         resources:
           requests:
             cpu: 10m
