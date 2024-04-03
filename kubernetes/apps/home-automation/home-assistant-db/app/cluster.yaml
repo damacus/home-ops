@@ -50,7 +50,7 @@ spec:
     initdb:
       import:
         type: microservice
-        databases: [home-assistant]
+        databases: [haas]
         source:
           externalCluster: home-assistant-recorder
 
