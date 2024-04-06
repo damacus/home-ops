@@ -11,7 +11,7 @@ controllers:
           repository: ghcr.io/onedr0p/home-assistant
           pullPolicy: IfNotPresent
           # renovate: datasource=docker depName=homeassistant/home-assistant
-          tag: 2024.4.0
+          tag: 2024.4.1
 
         env:
           - name: HASS_HTTP_TRUSTED_PROXY_1
