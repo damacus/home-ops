@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./HelmRelease.yaml
+
+configMapGenerator:
+  - name: generic-device-plugin-helm-values
+    files: [values.yaml=config/values.yaml]
+
+configurations: [kustomizeconfig.yaml]
+
+generatorOptions:
+  disableNameSuffixHash: true
