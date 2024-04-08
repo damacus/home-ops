@@ -10,6 +10,7 @@ resources:
   - cilium.yaml
   - cloudnative-pg.yaml
   - csi-driver-nfs.yaml
+  - descheduler.yaml
   - dex.yaml
   - emqx.yaml
   - external-dns.yaml
