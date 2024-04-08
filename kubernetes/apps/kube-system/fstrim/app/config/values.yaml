@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.1.0/charts/other/app-template/values.schema.json
+---
+controllers:
+  fstrim:
+    type: cronjob
+    cronjob:
+      schedule: "@weekly"
+      parallelism: 3 # Set to my total number of nodes
+      successfulJobsHistory: 1
+      failedJobsHistory: 1
+    containers:
+      app:
+        image:
+          repository: ghcr.io/onedr0p/kubanetics
+          tag: 2024.3.6@sha256:6556e8c4b0b732bd4eec99d8b1c44caafb0f2f653d827667f2684c24ec4af244
+        env:
+          SCRIPT_NAME: fstrim.sh
+        resources:
+          requests:
+            cpu: 25m
+          limits:
+            memory: 128Mi
+        securityContext:
+          privileged: true
+    pod:
+      hostNetwork: true
+      hostPID: true
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: fstrim
+
+persistence:
+  procfs:
+    type: hostPath
+    hostPath: /proc
+    hostPathType: Directory
+    globalMounts:
+      - path: /host/proc
+        readOnly: true
+  netfs:
+    type: hostPath
+    hostPath: /sys
+    hostPathType: Directory
+    globalMounts:
+      - path: /host/net
+        readOnly: true
