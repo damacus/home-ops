@@ -27,7 +27,7 @@ spec:
     driver: driver.longhorn.io # driver must match this
     fsType: ext4
     volumeAttributes:
-      numberOfReplicas: 3 # must match Longhorn volume value
-      # staleReplicaTimeout: '30' # in minutes
-    volumeHandle: pvc-3344c800-bfb4-4ebc-bfc6-6e8db2d379a4 # must match volume name from Longhorn
-  storageClassName: longhorn # must be same name that we will use later
+      numberOfReplicas: '3'
+      staleReplicaTimeout: '20'
+    volumeHandle: pvc-3344c800-bfb4-4ebc-bfc6-6e8db2d379a4
+  storageClassName: longhorn
