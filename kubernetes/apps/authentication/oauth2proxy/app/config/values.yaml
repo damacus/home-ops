@@ -5,6 +5,7 @@ image:
 authenticatedEmailsFile:
   enabled: true
   template: "oauth2-proxy-email-list"
+  persistence: secret
 
 config:
   configFile: |-
