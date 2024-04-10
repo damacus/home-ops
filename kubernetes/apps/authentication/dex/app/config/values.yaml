@@ -2,6 +2,7 @@
 image:
   repository: ghcr.io/dexidp/dex
   tag: v2.39.1
+
 ingress:
   enabled: true
   className: external
