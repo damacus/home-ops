@@ -44,7 +44,11 @@ controllers:
         runAsNonRoot: true
         fsGroup: 568
         fsGroupChangePolicy: OnRootMismatch
-        supplementalGroups: [44, 10000]
+        supplementalGroups:
+          - 44
+          - 10000
+          - 100 # users group on synology
+
 service:
   app:
     controller: plex
