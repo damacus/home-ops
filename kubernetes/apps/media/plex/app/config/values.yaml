@@ -89,10 +89,10 @@ persistence:
     globalMounts:
       - path: /config/Library/Application Support/Plex Media Server/Cache
 
-  # config:
-  #   existingClaim: plex-config
-  #   globalMounts:
-  #     - path: /config
+  config:
+    existingClaim: plex-config
+    globalMounts:
+      - path: /config
 
   media:
     type: nfs
