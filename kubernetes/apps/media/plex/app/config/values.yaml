@@ -64,10 +64,10 @@ ingress:
     enabled: true
     className: external
     annotations:
-      external-dns.alpha.kubernetes.io/target: plex.${SECRET_INTERNAL_DOMAIN}
+      external-dns.alpha.kubernetes.io/target: &host plex.${SECRET_INTERNAL_DOMAIN}
       nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     hosts:
-      - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
+      - host: *host
         paths:
           - path: /
             service:
@@ -101,7 +101,7 @@ persistence:
   config:
     existingClaim: plex-config
     globalMounts:
-      - path: /config/Library/Application Support/Plex Media Server/
+      - path: /test
 
   media:
     type: nfs
