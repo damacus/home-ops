@@ -29,7 +29,7 @@ controllers:
           startup:
             enabled: false
         securityContext:
-          allowPrivilegeEscalation: true
+          allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities: { drop: ["ALL"] }
         resources:
@@ -41,7 +41,7 @@ controllers:
       securityContext:
         runAsUser: 568
         runAsGroup: 568
-        runAsNonRoot: false
+        runAsNonRoot: true
         fsGroup: 568
         fsGroupChangePolicy: OnRootMismatch
         supplementalGroups:
@@ -93,10 +93,15 @@ persistence:
     globalMounts:
       - path: /config/Library/Application Support/Plex Media Server/Cache
 
+  config-test:
+    type: emptyDir
+    globalMounts:
+      - path: /config
+
   config:
     existingClaim: plex-config
     globalMounts:
-      - path: /config
+      - path: /test
 
   media:
     type: nfs
