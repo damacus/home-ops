@@ -35,8 +35,10 @@ controllers:
         resources:
           requests:
             cpu: 100m
+            memory: 1Gi
           limits:
-            memory: 4Gi
+            cpu: 200m
+            memory: 2Gi
     pod:
       securityContext:
         runAsUser: 568
@@ -45,9 +47,8 @@ controllers:
         fsGroup: 568
         fsGroupChangePolicy: OnRootMismatch
         supplementalGroups:
-          - 44
-          - 10000
-          - 100 # users group on synology
+          - 44 # video
+          - 100 # users
 
 service:
   app:
