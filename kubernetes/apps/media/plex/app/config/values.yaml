@@ -74,11 +74,6 @@ ingress:
           - *host
 
 persistence:
-  config:
-    existingClaim: plex-config
-    globalMounts:
-      - path: /config
-
   plex-cache:
     existingClaim: plex-cache
     globalMounts:
@@ -93,10 +88,14 @@ persistence:
     type: emptyDir
     globalMounts:
       - path: /transcode
+# config:
+#   existingClaim: plex-config
+#   globalMounts:
+#     - path: /config
 
-  media:
-    type: nfs
-    server: ${SECRET_SYNOLOGY_IP}
-    path: /volume2/Plex/plex-data
-    globalMounts:
-      - path: /media
+# media:
+#   type: nfs
+#   server: ${SECRET_SYNOLOGY_IP}
+#   path: /volume2/Plex/plex-data
+#   globalMounts:
+#     - path: /media
