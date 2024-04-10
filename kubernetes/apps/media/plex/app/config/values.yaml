@@ -93,9 +93,10 @@ persistence:
     existingClaim: plex-config
     globalMounts:
       - path: /config
-# media:
-#   type: nfs
-#   server: ${SECRET_SYNOLOGY_IP}
-#   path: /volume2/Plex/plex-data
-#   globalMounts:
-#     - path: /media
+
+  media:
+    type: nfs
+    server: ${SECRET_SYNOLOGY_IP}
+    path: /volume2/Plex/plex-data
+    globalMounts:
+      - path: /media
