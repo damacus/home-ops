@@ -63,7 +63,7 @@ service:
 ingress:
   main:
     enabled: true
-    className: external
+    className: internal
     annotations:
       external-dns.alpha.kubernetes.io/target: &host plex.${SECRET_INTERNAL_DOMAIN}
       nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
