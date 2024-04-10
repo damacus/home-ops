@@ -64,7 +64,7 @@ service:
 ingress:
   main:
     enabled: true
-    className: external
+    className: internal
     annotations:
       external-dns.alpha.kubernetes.io/target: ${PLEX_ADDR}
       nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
