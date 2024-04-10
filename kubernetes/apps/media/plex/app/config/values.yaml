@@ -95,7 +95,7 @@ persistence:
     globalMounts:
       - path: /config/Library/Application Support/Plex Media Server/Cache
 
-  config-test:
+  config:
     existingClaim: plex-config
     globalMounts:
       - path: /config/Library/Application Support/Plex Media Server
