@@ -38,6 +38,8 @@ spec:
         value: ironstone-k3s
       - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG
         value: hmac-sha512
+      - name: EXTERNAL_DNS_RFC2136_MIN_TTL
+        value: "60"
       - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
         valueFrom:
           secretKeyRef:
