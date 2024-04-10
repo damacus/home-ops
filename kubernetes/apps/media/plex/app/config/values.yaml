@@ -98,7 +98,7 @@ persistence:
   config-test:
     type: emptyDir
     globalMounts:
-      - path: /config
+      - path: /config/Library/Application Support/Plex Media Server
 
   config:
     existingClaim: plex-config
