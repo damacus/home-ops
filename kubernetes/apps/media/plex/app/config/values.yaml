@@ -29,7 +29,7 @@ controllers:
           startup:
             enabled: false
         securityContext:
-          allowPrivilegeEscalation: false
+          allowPrivilegeEscalation: true
           readOnlyRootFilesystem: true
           capabilities: { drop: ["ALL"] }
         resources:
@@ -41,7 +41,7 @@ controllers:
       securityContext:
         runAsUser: 568
         runAsGroup: 568
-        runAsNonRoot: true
+        runAsNonRoot: false
         fsGroup: 568
         fsGroupChangePolicy: OnRootMismatch
         supplementalGroups:
