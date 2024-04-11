@@ -2,8 +2,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.1.0/charts/other/app-template/values.schema.json
 controllers:
   plex:
+    type: statefulset
+    replicas: 1
+
     annotations:
       reloader.stakater.com/auto: "true"
+
     containers:
       app:
         image:
@@ -39,6 +43,7 @@ controllers:
           limits:
             cpu: 200m
             memory: 2Gi
+
     pod:
       securityContext:
         runAsUser: 568
@@ -60,9 +65,25 @@ service:
     ports:
       http:
         port: 32400
+      gdm-udp1:
+        port: 32410
+        protocol: UDP
+      gdm-udp2:
+        port: 32412
+        protocol: UDP
+      gdm-udp3:
+        port: 32413
+        protocol: UDP
+      gdm-udp4:
+        port: 32414
+        protocol: UDP
+      dlna:
+        port: 32469
+        protocol: TCP
 
 ingress:
   app:
+    enabled: false
     className: external
     annotations:
       external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
@@ -78,6 +99,22 @@ ingress:
       - hosts:
           - *host
 
+  internal:
+    enabled: true
+    className: internal
+    annotations:
+      external-dns.alpha.kubernetes.io/target: ${PLEX_ADDR}
+    hosts:
+      - host: &internal-host "plex.${SECRET_INTERNAL_DOMAIN}"
+        paths:
+          - path: /
+            service:
+              identifier: app
+              port: http
+    tls:
+      - hosts:
+          - *internal-host
+
 persistence:
   transcode:
     type: emptyDir
@@ -92,12 +129,20 @@ persistence:
   plex-cache:
     existingClaim: plex-cache
     globalMounts:
-      - path: /config/Library/Application Support/Plex Media Server/Cache
+      - path: "/config/Library/Application Support/Plex Media Server/Cache"
 
   config:
+    enabled: false
     existingClaim: plex-config
     globalMounts:
       - path: /config/Library/Application Support/Plex Media Server
+
+  plex-config:
+    type: nfs
+    server: ${SECRET_SYNOLOGY_IP}
+    path: /volume2/Plex/plex-config
+    globalMounts:
+      - path: /config
 
   media:
     type: nfs
