@@ -162,16 +162,16 @@ spec:
         globalMounts:
           - path: /config/Library/Application Support/Plex Media Server
 
-      plex-config-nfs:
-        enabled: false
-        type: nfs
-        server: ${SECRET_SYNOLOGY_IP}
-        path: /volume2/Plex/plex-config
-        globalMounts:
-          - path: /config
+      # plex-config-nfs:
+      #   enabled: false
+      #   type: nfs
+      #   server: ${SECRET_SYNOLOGY_IP}
+      #   path: /volume2/Plex/plex-config
+      #   globalMounts:
+      #     - path: /config
 
       media:
-        enabled: false
+        enabled: true
         type: nfs
         server: ${SECRET_SYNOLOGY_IP}
         path: /volume2/Plex/plex-data
