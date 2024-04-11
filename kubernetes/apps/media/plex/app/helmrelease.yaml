@@ -173,7 +173,7 @@ spec:
       media:
         enabled: true
         type: nfs
-        server: ${SECRET_SYNOLOGY_IP}
+        server: ${SECRET_SYNOLOGY_IP:-test}
         path: /volume2/Plex/plex-data
         globalMounts:
           - path: /media
