@@ -101,6 +101,7 @@ ingress:
     className: internal
     annotations:
       external-dns.alpha.kubernetes.io/target: ${PLEX_ADDR}
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     hosts:
       - host: &internal-host "plex.${SECRET_INTERNAL_DOMAIN}"
         paths:
