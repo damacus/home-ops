@@ -22,7 +22,7 @@ metadata:
   name: &app synology
   namespace: network
   annotations:
-    external-dns.alpha.kubernetes.io/target: internal.${SECRET_INTERNAL_DOMAIN}
+    external-dns.alpha.kubernetes.io/target: ${SECRET_SYNOLOGY_IP}
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
   ingressClassName: internal
