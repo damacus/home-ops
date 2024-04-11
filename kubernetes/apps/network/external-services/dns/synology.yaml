@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: *app
 spec:
   type: ExternalName
-  externalName: synology.${SECRET_INTERNAL_DOMAIN}
+  externalName: ${SECRET_SYNOLOGY_IP}
   ports:
     - name: http
       port: &port 8081
