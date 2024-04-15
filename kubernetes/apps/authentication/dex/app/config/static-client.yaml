@@ -13,17 +13,8 @@ spec:
     template:
       engineVersion: v2
       data:
-        values.yaml: |
-          - name: oauth2-proxy
-            id: oauth2-proxy
-            secret: "{{ .OAUTH2_PROXY_CLIENT_SECRET }}"
-            redirectURIs:
-              - "https://auth.{{ .external_domain }}/oauth2/callback"
-          - name: grafana
-            id: grafana
-            secret: "{{ .grafana_client_secret }}"
-            redirectURIs:
-              - "https://auth.{{ .external_domain }}/oauth2/callback"
+        oauth2_proxy_client_secret: "{{ .OAUTH2_PROXY_CLIENT_SECRET }}"
+        grafana_client_secret: "{{ .grafana_client_secret }}"
 
   dataFrom:
     - extract:
@@ -34,5 +25,3 @@ spec:
             target: "OAUTH2_PROXY_$1"
     - extract:
         key: dex-grafana
-    - extract:
-        key: domain
