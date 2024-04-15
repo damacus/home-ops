@@ -28,6 +28,12 @@ resources:
 config:
   issuer: https://dex.${SECRET_DOMAIN}
 
+  staticClients:
+    valueFrom:
+      secretKeyRef:
+        name: dex-static-client-secret
+        key: values.yaml
+
   connectors:
     - type: github
       id: github
