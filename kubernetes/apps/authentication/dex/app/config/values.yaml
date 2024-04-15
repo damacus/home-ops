@@ -29,10 +29,23 @@ config:
   issuer: https://dex.${SECRET_DOMAIN}
 
   staticClients:
-    valueFrom:
-      secretKeyRef:
-        name: dex-static-client-secret
-        key: values.yaml
+    - name: oauth2-proxy
+      id: oauth2-proxy
+      secret:
+        valueFrom:
+        secretKeyRef:
+          name: dex-static-client-secret
+          key: oauth2_proxy_client_secret
+      redirectURIs: ["https://auth.${SECRET_DOMAIN}/oauth2/callback"]
+
+    - name: grafana
+      id: grafana
+      secret:
+        valueFrom:
+        secretKeyRef:
+          name: dex-static-client-secret
+          key: grafana_client_secret
+      redirectURIs: ["https://auth.${SECRET_DOMAIN}/oauth2/callback"]
 
   connectors:
     - type: github
