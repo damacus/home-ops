@@ -5,3 +5,4 @@ resources:
   - ./namespace.yaml
   - ./webhooks/ks.yaml
   - ./capacitor/ks.yaml
+  - ./capacitor/ingress.yaml
