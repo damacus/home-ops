@@ -36,7 +36,9 @@ config:
         secretKeyRef:
           name: dex-static-client-secret
           key: oauth2_proxy_client_secret
-      redirectURIs: ["https://auth.${SECRET_DOMAIN}/oauth2/callback"]
+      redirectURIs:
+        - "https://auth.${SECRET_DOMAIN}/oauth2/callback"
+        - "https://hass.${SECRET_DOMAIN}/oauth2/callback"
 
     - name: grafana
       id: grafana
@@ -45,7 +47,8 @@ config:
         secretKeyRef:
           name: dex-static-client-secret
           key: grafana_client_secret
-      redirectURIs: ["https://auth.${SECRET_DOMAIN}/oauth2/callback"]
+      redirectURIs:
+        - "https://grafana.${SECRET_DOMAIN}/oauth2/callback"
 
   connectors:
     - type: github
