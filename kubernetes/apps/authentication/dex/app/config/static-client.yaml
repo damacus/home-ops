@@ -1,18 +1,4 @@
 ---
-config:
-  staticClients:
-    - name: oauth2-proxy
-      id: oauth2-proxy
-      secret: ${DEX_OAUTH2_PROXY_CLIENT_SECRET}
-      redirectURIs:
-        - https://auth.${SECRET_DOMAIN}/oauth2/callback
-
-    - name: grafana
-      id: grafana
-      secret: ${DEX_OAUTH2_PROXY_CLIENT_SECRET}
-      redirectURIs:
-        - https://auth.${SECRET_DOMAIN}/oauth2/callback
----
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/external-secrets.io/externalsecret_v1beta1.json
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret

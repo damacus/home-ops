@@ -6,6 +6,7 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./config/connector-github.yaml
+  - ./config/static-client.yaml
 
 configMapGenerator:
   - name: dex-helm-config
