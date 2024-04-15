@@ -12,20 +12,20 @@ spec:
     name: dex-static-client-secret
     template:
       engineVersion: v2
-      mergePolicy: Replace
       data:
-        config: |
-          staticClients:
-          - name: oauth2-proxy
-            id: oauth2-proxy
-            secret: "{{ .OAUTH2_PROXY_CLIENT_SECRET }}"
-            redirectURIs:
-              - "https://auth.{{ .external_domain }}/oauth2/callback"
-          - name: grafana
-            id: grafana
-            secret: "{{ .grafana_client_secret }}"
-            redirectURIs:
-              - "https://auth.{{ .external_domain }}/oauth2/callback"
+        values.yaml: |
+          config:
+            staticClients:
+            - name: oauth2-proxy
+              id: oauth2-proxy
+              secret: "{{ .OAUTH2_PROXY_CLIENT_SECRET }}"
+              redirectURIs:
+                - "https://auth.{{ .external_domain }}/oauth2/callback"
+            - name: grafana
+              id: grafana
+              secret: "{{ .grafana_client_secret }}"
+              redirectURIs:
+                - "https://auth.{{ .external_domain }}/oauth2/callback"
 
   dataFrom:
     - extract:
