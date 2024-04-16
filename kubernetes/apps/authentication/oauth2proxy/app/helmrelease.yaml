@@ -16,6 +16,8 @@ spec:
         name: oauth2-proxy
         namespace: flux-system
   maxHistory: 3
+  dependsOn:
+    - name: dex
   install:
     remediation:
       retries: 3
