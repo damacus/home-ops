@@ -4,7 +4,7 @@ kind: Ingress
 metadata:
   name: flux
   annotations:
-    external-dns.alpha.kubernetes.io/target: "flux.${SECRET_INTERNAL_DOMAIN}"
+    external-dns.alpha.kubernetes.io/target: "${NGINX_INTERNAL_ADDR}"
 spec:
   ingressClassName: internal
   rules:
