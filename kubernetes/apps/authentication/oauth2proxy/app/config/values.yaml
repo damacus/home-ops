@@ -2,13 +2,14 @@
 image:
   repository: quay.io/oauth2-proxy/oauth2-proxy
   tag: v7.6.0
-authenticatedEmailsFile:
-  enabled: true
-  persistence: secret
-  restricted_access:
-    valueFrom:
-      secretKeyRef:
-        name: oauth2-proxy-email-list-secret
+
+# authenticatedEmailsFile:
+#   enabled: true
+#   persistence: secret
+#   restricted_access:
+#     valueFrom:
+#       secretKeyRef:
+#         name: oauth2-proxy-email-list-secret
 
 config:
   configFile: |-
