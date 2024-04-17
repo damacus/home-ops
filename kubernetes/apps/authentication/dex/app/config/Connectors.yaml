@@ -42,3 +42,5 @@ spec:
         - regexp:
             source: "(.*)" # regex to match the entire string
             target: "GOOGLE_$1" # prepend "GOOGLE-" to the matched string
+    - extract:
+        key: domain
