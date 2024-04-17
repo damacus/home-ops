@@ -29,6 +29,7 @@ spec:
                 secret: "{{ .grafana_client_secret }}"
                 redirectURIs:
                   - "https://grafana.{{ .external_domain }}/oauth2/callback"
+                  - "https://grafana.{{ .external_domain }}/login/generic_oauth"
   dataFrom:
     - extract:
         key: dex-grafana
