@@ -5,7 +5,7 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ./config/authenticatedEmailsFile.yaml
+  # - ./config/authenticatedEmailsFile.yaml
 
 configMapGenerator:
   - name: oauth2proxy-helm-config

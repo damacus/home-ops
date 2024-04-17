@@ -14,7 +14,7 @@ spec:
     template:
       engineVersion: v2
       data:
-        values.yaml: |-
+        values.yaml: |
           "{{ .EMAIL_ADDRESS_1 }}"
           "{{ .EMAIL_ADDRESS_2 }}"
   dataFrom:
