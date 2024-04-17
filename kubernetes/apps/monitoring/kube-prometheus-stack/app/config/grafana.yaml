@@ -1,5 +1,20 @@
 ---
 grafana:
+  grafana.ini:
+    server:
+      root_url: &host https://grafana.${SECRET_INTERNAL_DOMAIN}
+    auth:
+      basic:
+        enabled: false
+      generic_oauth:
+        enabled: true
+        allow_sign_up: true
+        name: Dex
+        client_id: grafana
+        scopes: openid profile email groups
+        auth_url: "https://dex.${SECRET_DOMAIN}/auth"
+        token_url: "https://dex.${SECRET_DOMAIN}/token"
+        api_url: "https://dex.${SECRET_DOMAIN}/userinfo"
   ingress:
     enabled: true
     spec:
@@ -7,8 +22,10 @@ grafana:
     annotations:
       reloader.stakater.com/auto: "true"
       external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
-    hosts: ["grafana.${SECRET_INTERNAL_DOMAIN}"]
+    hosts:
+      - *host
     paths: ["/"]
     tls:
-      - hosts: ["grafana.${SECRET_INTERNAL_DOMAIN}"]
-        secretName: grafana-${SECRET_DOMAIN}-cert
+      - hosts:
+          - *host
+        secretName: "network/${SECRET_DOMAIN/./-}-production-tls"

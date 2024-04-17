@@ -39,6 +39,8 @@ spec:
       name: prometheus-config
     - kind: ConfigMap
       name: grafana-config
+    - kind: Secret
+      name: grafana-config-secret
     - kind: ConfigMap
       name: alertmanager-config
 
