@@ -6,3 +6,12 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./StaticClients.yaml
+
+configMapGenerator:
+  - name: dex-helm-config
+    files: [values.yaml=./config/values.yaml]
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configurations: [kustomizeconfig.yaml]
