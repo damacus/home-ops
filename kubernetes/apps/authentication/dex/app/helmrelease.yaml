@@ -28,3 +28,9 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: dex-helm-config
+    - kind: Secret
+      name: dex-static-clients-secret
+      valuesKey: values.yaml
+    - kind: Secret
+      name: dex-connectors-secret
+      valuesKey: values.yaml

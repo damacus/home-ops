@@ -5,6 +5,8 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
+  - ./config/Connectors.yaml
+  - ./config/StaticClients.yaml
 
 configMapGenerator:
   - name: dex-helm-config
