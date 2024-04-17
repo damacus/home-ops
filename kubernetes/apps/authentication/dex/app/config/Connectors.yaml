@@ -43,4 +43,10 @@ spec:
             source: "(.*)" # regex to match the entire string
             target: "GOOGLE_$1" # prepend "GOOGLE-" to the matched string
     - extract:
+        key: dex-github
+      rewrite:
+        - regexp:
+            source: "(.*)" # regex to match the entire string
+            target: "GITHUB_$1" # prepend "GOOGLE-" to the matched string
+    - extract:
         key: domain
