@@ -1,0 +1,115 @@
+---
+image:
+  repository: ghcr.io/dexidp/dex
+  tag: v2.39.1
+
+ingress:
+  enabled: true
+  className: external
+  annotations:
+    external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+  hosts:
+    - host: &host dex.${SECRET_DOMAIN}
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - *host
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 200Mi
+  limits:
+    cpu: 200m
+    memory: 200Mi
+
+config:
+  issuer: https://dex.${SECRET_DOMAIN}
+
+  # staticClients:
+  #   - name: oauth2-proxy
+  #     id: oauth2-proxy
+  #     secret:
+  #       valueFrom:
+  #         secretKeyRef:
+  #           name: dex-static-client-secret
+  #           key: oauth2_proxy_client_secret
+  #     redirectURIs:
+  #       - "https://auth.${SECRET_DOMAIN}/oauth2/callback"
+  #       - "https://hass.${SECRET_DOMAIN}/oauth2/callback"
+
+  #   - name: grafana
+  #     id: grafana
+  #     secret:
+  #       valueFrom:
+  #         secretKeyRef:
+  #           name: dex-static-client-secret
+  #           key: grafana_client_secret
+  #     redirectURIs:
+  #       - "https://grafana.${SECRET_DOMAIN}/oauth2/callback"
+
+  # connectors:
+  #   - type: github
+  #     id: github
+  #     name: GitHub
+  #     config:
+  #       clientID:
+  #         valueFrom:
+  #           secretKeyRef:
+  #             name: dex-secret
+  #             key: DEX_GITHUB_CLIENT_ID
+  #       clientSecret:
+  #         valueFrom:
+  #           secretKeyRef:
+  #             name: dex-secret
+  #             key: DEX_GITHUB_CLIENT_SECRET
+  #       redirectURI: "https://dex.${SECRET_DOMAIN}/callback"
+
+  #     orgs:
+  #       - name:
+  #         valueFrom:
+  #           secretKeyRef:
+  #             name: dex-secret
+  #             key: DEX_GITHUB_ORG
+
+  #   - type: oidc
+  #     id: google
+  #     name: Google
+  #     config:
+  #       issuer: https://accounts.google.com
+  #       clientID:
+  #         valueFrom:
+  #           secretKeyRef:
+  #             name: dex-secret
+  #             key: DEX_GOOGLE_CLIENT_ID
+  #       clientSecret:
+  #         valueFrom:
+  #           secretKeyRef:
+  #             name: dex-secret
+  #             key: DEX_GOOGLE_CLIENT_SECRET
+  #       redirectURI: https://dex.${SECRET_DOMAIN}/callback
+
+  storage:
+    type: kubernetes
+    config:
+      inCluster: true
+
+  frontend:
+    theme: tectonic
+    issuer: Ironstone
+    issuerUrl: https://${SECRET_DOMAIN}
+    logoUrl: https://imgur.com/Idzzln9.png
+
+  expiry:
+    signingKeys: 6h
+    idTokens: 24h
+
+  logger:
+    level: debug
+    format: json
+
+  oauth2:
+    responseTypes: ["code", "token", "id_token"]
+    skipApprovalScreen: true
