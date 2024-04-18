@@ -136,26 +136,6 @@ spec:
                 service:
                   identifier: app
                   port: http
-              - path: /
-                service:
-                  identifier: app
-                  port: dlna
-              - path: /
-                service:
-                  identifier: app
-                  port: gdm-udp1
-              - path: /
-                service:
-                  identifier: app
-                  port: gdm-udp2
-              - path: /
-                service:
-                  identifier: app
-                  port: gdm-udp3
-              - path: /
-                service:
-                  identifier: app
-                  port: gdm-udp4
         tls:
           - hosts: [*internal-host]
 
