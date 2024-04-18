@@ -73,13 +73,12 @@ spec:
 
         pod:
           securityContext:
-            runAsUser: 1030
-            runAsGroup: 568
+            runAsUser: 1027
+            runAsGroup: 65537
             # runAsNonRoot: true
-            fsGroup: 568
+            fsGroup: 1027
             fsGroupChangePolicy: OnRootMismatch
             supplementalGroups:
-              - 44 # video
               - 100 # users
 
     service:
