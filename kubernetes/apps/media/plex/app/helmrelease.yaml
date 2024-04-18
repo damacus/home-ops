@@ -73,9 +73,9 @@ spec:
 
         pod:
           securityContext:
+            runAsNonRoot: true
             runAsUser: 568
             runAsGroup: 568
-            # runAsNonRoot: true
             fsGroup: 568
             fsGroupChangePolicy: OnRootMismatch
             supplementalGroups:
@@ -92,21 +92,6 @@ spec:
         ports:
           http:
             port: 32400
-          gdm-udp1:
-            port: 32410
-            protocol: UDP
-          gdm-udp2:
-            port: 32412
-            protocol: UDP
-          gdm-udp3:
-            port: 32413
-            protocol: UDP
-          gdm-udp4:
-            port: 32414
-            protocol: UDP
-          dlna:
-            port: 32469
-            protocol: TCP
 
     ingress:
       app:
