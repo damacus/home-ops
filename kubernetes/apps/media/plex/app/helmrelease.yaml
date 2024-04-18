@@ -127,7 +127,7 @@ spec:
       internal:
         className: internal
         annotations:
-          external-dns.alpha.kubernetes.io/target: ${PLEX_ADDR}
+          external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
           nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
         hosts:
           - host: &internal-host "plex.${SECRET_INTERNAL_DOMAIN}"
@@ -136,6 +136,26 @@ spec:
                 service:
                   identifier: app
                   port: http
+              - path: /
+                service:
+                  identifier: app
+                  port: dlna
+              - path: /
+                service:
+                  identifier: app
+                  port: gdm-udp1
+              - path: /
+                service:
+                  identifier: app
+                  port: gdm-udp2
+              - path: /
+                service:
+                  identifier: app
+                  port: gdm-udp3
+              - path: /
+                service:
+                  identifier: app
+                  port: gdm-udp4
         tls:
           - hosts: [*internal-host]
 
