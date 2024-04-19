@@ -106,7 +106,7 @@ spec:
               - path: /
                 service:
                   identifier: app
-                  port: http
+                  port: 32400
         tls:
           - hosts:
               - *host
@@ -122,7 +122,7 @@ spec:
               - path: /
                 service:
                   identifier: app
-                  port: http
+                  port: 32400
         tls:
           - hosts:
               - *internal-host
