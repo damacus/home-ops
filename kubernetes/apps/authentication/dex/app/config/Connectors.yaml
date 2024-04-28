@@ -1,0 +1,52 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/external-secrets.io/externalsecret_v1beta1.json
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: dex-connectors-secret
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: onepassword-connect
+  target:
+    name: dex-connectors-secret
+    template:
+      engineVersion: v2
+      data:
+        values.yaml: |
+          config:
+            connectors:
+              - type: github
+                id: github
+                name: GitHub
+                config:
+                  clientID: "{{ .GITHUB_CLIENT_ID }}"
+                  clientSecret: "{{ .GITHUB_CLIENT_SECRET }}"
+                  redirectURI: "https://dex.{{ .external_domain }}/callback"
+
+                orgs:
+                  - name: "{{ .GITHUB_ORG }}"
+
+              - type: oidc
+                id: google
+                name: Google
+                config:
+                  issuer: https://accounts.google.com
+                  clientID: "{{ .GOOGLE_CLIENT_ID }}"
+                  clientSecret: "{{ .GOOGLE_CLIENT_SECRET }}"
+                  redirectURI: https://dex.{{ .external_domain }}/callback
+  dataFrom:
+    - extract:
+        key: dex-google
+      rewrite:
+        - regexp:
+            source: "(.*)" # regex to match the entire string
+            target: "GOOGLE_$1" # prepend "GOOGLE-" to the matched string
+    - extract:
+        key: dex-github
+      rewrite:
+        - regexp:
+            source: "(.*)" # regex to match the entire string
+            target: "GITHUB_$1" # prepend "GOOGLE-" to the matched string
+    - extract:
+        key: domain

@@ -5,10 +5,3 @@ kind: Kustomization
 resources:
   - ./pvc.yaml
   - ./helmrelease.yaml
-
-configMapGenerator:
-  - name: plex-helm-values
-    files: [values.yaml=config/values.yaml]
-
-generatorOptions:
-  disableNameSuffixHash: true
