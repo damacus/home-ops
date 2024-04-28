@@ -11,4 +11,4 @@ alertmanager:
     paths: ["/"]
     tls:
       - hosts: ["alertmanager.${SECRET_INTERNAL_DOMAIN}"]
-        secretName: alert-manager-${SECRET_DOMAIN}-cert
+        secretName: "network/${SECRET_INTERNAL_DOMAIN/./-}-production-tls"

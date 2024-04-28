@@ -46,4 +46,4 @@ spec:
       ingressClassName: internal
       host: longhorn.${SECRET_INTERNAL_DOMAIN}
       tls: true
-      tlsSecretName: "network/${SECRET_DOMAIN/./-}-production-tls"
+      tlsSecretName: "network/${SECRET_INTERNAL_DOMAIN/./-}-production-tls"

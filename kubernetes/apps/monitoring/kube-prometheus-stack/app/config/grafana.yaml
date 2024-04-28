@@ -26,6 +26,5 @@ grafana:
       - *host
     paths: ["/"]
     tls:
-      - hosts:
-          - *host
-        secretName: "network/${SECRET_DOMAIN/./-}-production-tls"
+      - hosts: ["grafana.${SECRET_INTERNAL_DOMAIN}"]
+        secretName: "network/${SECRET_INTERNAL_DOMAIN/./-}-production-tls"
