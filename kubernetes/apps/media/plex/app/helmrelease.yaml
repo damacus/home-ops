@@ -100,13 +100,15 @@ spec:
         annotations:
           external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
           nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+          nginx.ingress.kubernetes.io/configuration-snippet: |
+            proxy_ssl_protocols TLSv1.3;
         hosts:
           - host: &host plex.${SECRET_DOMAIN}
             paths:
               - path: /
                 service:
                   identifier: app
-                  port: 32400
+                  port: http
         tls:
           - hosts:
               - *host
@@ -116,13 +118,16 @@ spec:
         annotations:
           external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
           nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+          nginx.ingress.kubernetes.io/configuration-snippet: |
+            proxy_ssl_protocols TLSv1.3;
+          # https://github.com/kubernetes/ingress-nginx/issues/8257
         hosts:
           - host: &internal-host "plex.${SECRET_INTERNAL_DOMAIN}"
             paths:
               - path: /
                 service:
                   identifier: app
-                  port: 32400
+                  port: http
         tls:
           - hosts:
               - *internal-host
