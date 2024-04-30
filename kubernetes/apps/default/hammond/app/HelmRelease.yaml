@@ -31,7 +31,7 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/alfhou/hammond
+              repository: alfhou/hammond
               tag: v0.0.24
             resources:
               requests:
