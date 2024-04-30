@@ -43,6 +43,8 @@ spec:
       enabled: true
       annotations:
         external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+        hajimari.io/appName: Longhorn
+        hajimari.io/icon: simple-icons:longhorn
       ingressClassName: internal
       host: longhorn.${SECRET_INTERNAL_DOMAIN}
       tls: true
