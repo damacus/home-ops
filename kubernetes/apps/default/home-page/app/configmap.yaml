@@ -21,9 +21,6 @@ data:
         - YouTube:
             - icon: youtube.png
               href: 'https://youtube.com/feed/subscriptions'
-        - Spotify:
-            - icon: spotify.png
-              href: 'http://open.spotify.com'
         - Youtube Music:
             - icon: https://raw.githubusercontent.com/joryirving/home-ops/main/.docs/icons/youtube-music.png
               href: 'https://music.youtube.com'
@@ -43,10 +40,6 @@ data:
             href: https://grafana.${SECRET_DOMAIN}
             icon: grafana.png
             description: Grafana Monitoring
-            widget:
-              type: grafana
-              url: https://grafana.${SECRET_DOMAIN}
-              key: {{HOMEPAGE_VAR_GRAFANA_TOKEN}}
     - Home:
         - Home-Assistant:
             href: https://home-assistant.${SECRET_DOMAIN}
@@ -77,7 +70,7 @@ data:
         style: row
         columns: 5
         icon: mdi-server
-      Observability:
+      Monitoring:
         style: row
         columns: 5
         icon: mdi-chart-line
@@ -85,10 +78,6 @@ data:
         style: row
         columns: 5
         icon: mdi-home-analytics
-      Downloads:
-        style: row
-        columns: 3
-        icon: mdi-download-circle
   widgets.yaml: |
     - logo:
         icon: https://raw.githubusercontent.com/joryirving/home-ops/main/.docs/icons/lds-transparent.png
