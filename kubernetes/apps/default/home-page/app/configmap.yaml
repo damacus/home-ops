@@ -31,13 +31,15 @@ data:
         - home-ops:
             - icon: github.png
               href: 'https://github.com/damacus/home-ops'
-  docker.yaml: ""
+  docker.yaml: |
+    ---
   kubernetes.yaml: |
+    ---
     mode: cluster
   services.yaml: |
     - Infrastructure:
         - Grafana:
-            href: https://grafana.${SECRET_DOMAIN}
+            href: https://grafana.${SECRET_INTERNAL_DOMAIN}
             icon: grafana.png
             description: Grafana Monitoring
     - Home:
@@ -51,9 +53,6 @@ data:
     favicon: https://github.com/walkxcode/dashboard-icons/blob/main/png/heimdall.png
     useEqualHeights: true
     theme: dark
-    background:
-      image: https://raw.githubusercontent.com/joryirving/home-ops/main/.docs/assets/101518784_p0.jpg
-      opacity: 20
     color: slate
     headerStyle: clean
     quicklaunch:
@@ -79,15 +78,12 @@ data:
         columns: 5
         icon: mdi-home-analytics
   widgets.yaml: |
-    - logo:
-        icon: https://raw.githubusercontent.com/joryirving/home-ops/main/.docs/icons/lds-transparent.png
+    # - logo:
+    #     icon: https://raw.githubusercontent.com/joryirving/home-ops/main/.docs/icons/lds-transparent.png
     - search:
         provider: [duckduckgo, google]
         focus: false
         target: _blank
-    - greeting:
-        text_size: xl
-        text: "Howdy Hey!"
     - kubernetes:
         cluster:
           cpu: true
