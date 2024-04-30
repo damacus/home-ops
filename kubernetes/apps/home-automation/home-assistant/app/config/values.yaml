@@ -81,6 +81,7 @@ ingress:
     className: external
     annotations:
       external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+      hajimari.io/enable: "false"
     hosts:
       - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
         paths:
@@ -97,6 +98,7 @@ ingress:
     className: internal
     annotations:
       external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
+      hajimari.io/icon: simple-icons:homeassistant
     hosts:
       - host: &internal-host "hass.${SECRET_INTERNAL_DOMAIN}"
         paths:
