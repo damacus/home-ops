@@ -48,6 +48,8 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,192.168.0.0/16"
       external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+      hajimari.io/icon: simple-icons:visualstudiocode
+      hajimari.io/enable: "true"
     hosts:
       - host: &host "code.${SECRET_INTERNAL_DOMAIN}"
         paths:

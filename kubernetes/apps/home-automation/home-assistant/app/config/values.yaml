@@ -4,7 +4,7 @@ controllers:
   home-assistant:
     annotations:
       reloader.stakater.com/auto: "true"
-      hajimari.io/icon: simple-icons:homeassistant
+      hajimari.io/icon: mdi:home-assistant
       hajimari.io/enable: "true"
     type: statefulset
     containers:
