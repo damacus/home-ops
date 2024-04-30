@@ -22,6 +22,7 @@ spec:
         annotations:
           reloader.stakater.com/auto: "true"
           hajimari.io/icon: simple-icons:paperlessngx
+          hajimari.io/enable: "true"
         pod:
           securityContext:
             supplementalGroups:

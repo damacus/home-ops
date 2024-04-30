@@ -35,7 +35,7 @@ spec:
       showBookmarkGroups: false
       showGlobalBookmarks: false
       showAppUrls: true
-      defaultEnable: true
+      defaultEnable: false
       namespaceSelector:
         any: true
       globalBookmarks:
@@ -53,7 +53,6 @@ spec:
         enabled: true
         ingressClassName: internal
         annotations:
-          hajimari.io/enable: "false"
           external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
         hosts:
           - host: &host "{{ .Release.Name }}.${SECRET_INTERNAL_DOMAIN}"

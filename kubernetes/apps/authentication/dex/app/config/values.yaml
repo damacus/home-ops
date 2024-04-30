@@ -8,7 +8,6 @@ ingress:
   className: external
   annotations:
     external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
-    hajimari.io/enable: "false"
   hosts:
     - host: &host dex.${SECRET_DOMAIN}
       paths:
