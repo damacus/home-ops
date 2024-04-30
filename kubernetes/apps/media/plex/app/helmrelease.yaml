@@ -31,8 +31,6 @@ spec:
       plex:
         annotations:
           reloader.stakater.com/auto: "true"
-          hajimari.io/icon: simple-icons:plex
-          hajimari.io/enable: "true"
 
         containers:
           app:

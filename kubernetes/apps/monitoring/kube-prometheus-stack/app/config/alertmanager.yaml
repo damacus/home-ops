@@ -7,7 +7,6 @@ alertmanager:
     annotations:
       reloader.stakater.com/auto: "true"
       external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
-      hajimari.io/enable: "true"
     hosts: ["alertmanager.${SECRET_INTERNAL_DOMAIN}"]
     paths: ["/"]
     tls:

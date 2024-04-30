@@ -48,8 +48,6 @@ hubble:
       className: internal
       annotations:
         external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
-        hajimari.io/icon: simple-icons:cilium
-        hajimari.io/enable: "true"
       hosts:
         - &host hubble.${SECRET_INTERNAL_DOMAIN}
       tls:

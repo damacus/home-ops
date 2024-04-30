@@ -4,8 +4,6 @@ controllers:
   home-assistant:
     annotations:
       reloader.stakater.com/auto: "true"
-      hajimari.io/icon: mdi:home-assistant
-      hajimari.io/enable: "true"
     type: statefulset
     containers:
       app:
@@ -99,9 +97,6 @@ ingress:
     className: internal
     annotations:
       external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
-      hajimari.io/icon: simple-icons:homeassistant
-      hajimari.io/enable: "true"
-      hajimari.io/appName: Home Assistant
     hosts:
       - host: &internal-host "hass.${SECRET_INTERNAL_DOMAIN}"
         paths:
