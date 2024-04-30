@@ -16,7 +16,6 @@ resources:
   - external-dns.yaml
   - external-secrets.yaml
   - gabe.yaml
-  - hajimari.yaml
   - ingress-nginx.yaml
   - jectstack-io.yaml
   - kube-vip.yaml
