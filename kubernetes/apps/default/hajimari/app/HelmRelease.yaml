@@ -26,8 +26,8 @@ spec:
       TZ: ${TIMEZONE}
     hajimari:
       title: Apps
-      lightTheme: paper
-      darkTheme: chalk
+      lightTheme: gazette
+      darkTheme: tron
       alwaysTargetBlank: true
       showGreeting: true
       showAppGroups: false
@@ -38,12 +38,23 @@ spec:
       defaultEnable: true
       namespaceSelector:
         any: true
+      globalBookmarks:
+        - group: Infrastructure
+          bookmarks:
+            - name: NAS
+              url: "https://${SYNOLOGY_NAS_IP}"
+            - name: Unifi Network
+              url: "https://192.168.1.254/network/default/dashboard"
+            - name: Unifi Protect
+              url: "https://192.168.1.254/protect"
+
     ingress:
       main:
         enabled: true
         ingressClassName: internal
         annotations:
           hajimari.io/enable: "false"
+          external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
         hosts:
           - host: &host "{{ .Release.Name }}.${SECRET_INTERNAL_DOMAIN}"
             paths: &paths
@@ -55,6 +66,7 @@ spec:
           - hosts:
               - *host
               - *customHost0
+
     podAnnotations:
       configmap.reloader.stakater.com/reload: hajimari-settings
     persistence:
