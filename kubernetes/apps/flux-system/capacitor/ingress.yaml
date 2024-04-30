@@ -6,6 +6,7 @@ metadata:
   namespace: flux-system
   annotations:
     external-dns.alpha.kubernetes.io/target: "${NGINX_INTERNAL_ADDR}"
+    hajimari.io/icon: simple-icons:flux
 spec:
   ingressClassName: internal
   rules:
