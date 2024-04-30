@@ -32,7 +32,7 @@ spec:
       showGreeting: true
       showAppGroups: true
       showAppStatus: true
-      showBookmarkGroups: false
+      showBookmarkGroups: true
       showGlobalBookmarks: true
       showAppUrls: false
       defaultEnable: false
@@ -42,7 +42,7 @@ spec:
         - group: Infrastructure
           bookmarks:
             - name: NAS
-              url: "https://${SYNOLOGY_NAS_IP}"
+              url: "https://${SECRET_SYNOLOGY_IP}"
             - name: Unifi Network
               url: "https://192.168.1.254/network/default/dashboard"
             - name: Unifi Protect

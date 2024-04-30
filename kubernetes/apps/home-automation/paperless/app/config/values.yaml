@@ -105,8 +105,12 @@ spec:
     ingress:
       app:
         className: "internal"
+        annotations:
+          hajimari.io/icon: simple-icons:paperlessngx
+          hajimari.io/enable: "true"
+
         hosts:
-          - host: &hostName paperless.${SECRET_DOMAIN}
+          - host: &hostName paperless.${SECRET_INTERNAL_DOMAIN}
             paths:
               - path: /
                 service:
@@ -125,7 +129,7 @@ spec:
               - path: /data/local
       nas:
         type: nfs
-        server: ${SYNOLOGY_NAS_IP}
+        server: ${SECRET_SYNOLOGY_IP}
         path: ${SECRET_NFS_DIRECTORY}/paperless
         globalMounts:
           - path: /data/nas
