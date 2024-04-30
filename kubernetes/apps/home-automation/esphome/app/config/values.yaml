@@ -4,6 +4,8 @@ controllers:
   esphome:
     annotations:
       secret.reloader.stakater.com/reload: esphome-secrets
+      hajimari.io/icon: simple-icons:esphome
+      hajimari.io/enable: "true"
     containers:
       app:
         image:
@@ -52,8 +54,6 @@ ingress:
     className: internal
     annotations:
       external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
-      hajimari.io/icon: simple-icons:esphome
-      hajimari.io/enable: "true"
     hosts:
       - host: &host esphome.${SECRET_INTERNAL_DOMAIN}
         paths:
