@@ -30,10 +30,10 @@ spec:
       darkTheme: tron
       alwaysTargetBlank: true
       showGreeting: true
-      showAppGroups: false
-      showAppStatus: false
+      showAppGroups: true
+      showAppStatus: true
       showBookmarkGroups: false
-      showGlobalBookmarks: false
+      showGlobalBookmarks: true
       showAppUrls: true
       defaultEnable: false
       namespaceSelector:
