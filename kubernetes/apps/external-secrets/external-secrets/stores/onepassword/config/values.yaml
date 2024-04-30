@@ -106,7 +106,6 @@ ingress:
     className: internal
     annotations:
       external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
-      hajimari.io/enable: "false"
     hosts:
       - host: &host "{{ .Release.Name }}.${SECRET_INTERNAL_DOMAIN}"
         paths:
