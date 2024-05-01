@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: homepage
 data:
   bookmarks.yaml: |
-    - Communicate:
+    - Communication:
         - Discord:
             - icon: discord.png
               href: 'https://discord.com/app'
@@ -47,6 +47,13 @@ data:
             href: https://home-assistant.${SECRET_DOMAIN}
             icon: home-assistant.png
             description: Home Automation Software
+    - Monitoring:
+        - "Uptime Kuma":
+            href: https://uptim-kuma.${SECRET_DOMAIN}
+            widget:
+              type: uptimekuma
+              url: http://uptime-kuma.${SECRET_DOMAIN}
+              slug: services
 
   settings.yaml: |
     title: Dashboard
@@ -78,8 +85,6 @@ data:
         columns: 5
         icon: mdi-home-analytics
   widgets.yaml: |
-    # - logo:
-    #     icon: https://raw.githubusercontent.com/joryirving/home-ops/main/.docs/icons/lds-transparent.png
     - search:
         provider: [duckduckgo, google]
         focus: false
@@ -103,3 +108,5 @@ data:
           hourCycle: h23
     - unifi_console:
         url: https://192.168.1.254
+        username: {{HOMEPAGE_VAR_UNIFI_USERNAME}}
+        password: {{HOMEPAGE_VAR_UNIFI_PASSWORD}}
