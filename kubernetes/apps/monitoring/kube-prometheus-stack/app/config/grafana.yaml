@@ -1,8 +1,16 @@
 ---
 grafana:
+  ingress:
+    pathType: Prefix
+    ingressClassName: internal
+    annotations:
+      reloader.stakater.com/auto: "true"
+      external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+    hosts: [&host "grafana.${SECRET_INTERNAL_DOMAIN}"]
+
   grafana.ini:
     server:
-      root_url: &host https://grafana.${SECRET_INTERNAL_DOMAIN}
+      root_url: *host
     auth:
       basic:
         enabled: false
@@ -15,16 +23,3 @@ grafana:
         auth_url: "https://dex.${SECRET_DOMAIN}/auth"
         token_url: "https://dex.${SECRET_DOMAIN}/token"
         api_url: "https://dex.${SECRET_DOMAIN}/userinfo"
-  ingress:
-    enabled: true
-    spec:
-      ingressClassName: internal
-    annotations:
-      reloader.stakater.com/auto: "true"
-      external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
-    hosts:
-      - *host
-    paths: ["/"]
-    tls:
-      - hosts: ["grafana.${SECRET_INTERNAL_DOMAIN}"]
-        secretName: "network/${SECRET_INTERNAL_DOMAIN/./-}-production-tls"
