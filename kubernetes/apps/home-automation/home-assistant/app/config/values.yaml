@@ -8,9 +8,9 @@ controllers:
     containers:
       app:
         image:
-          repository: ghcr.io/home-assistant/home-assistant
+          repository: ghcr.io/onedr0p/home-assistant
           pullPolicy: IfNotPresent
-          tag: 2024.5.0
+          tag: 2024.5.1
 
         env:
           - name: HASS_HTTP_TRUSTED_PROXY_1
