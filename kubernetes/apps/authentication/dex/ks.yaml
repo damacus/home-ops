@@ -15,7 +15,6 @@ spec:
   dependsOn:
     - name: external-secrets-stores
     - name: ingress-nginx-external
-    - name: oauth2proxy
   sourceRef:
     kind: GitRepository
     name: home-kubernetes

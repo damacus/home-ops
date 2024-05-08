@@ -1,7 +1,8 @@
 ---
 image:
   repository: ghcr.io/dexidp/dex
-  tag: v2.39.0
+  tag: v2.39.1
+
 ingress:
   enabled: true
   className: external
@@ -26,46 +27,6 @@ resources:
 
 config:
   issuer: https://dex.${SECRET_DOMAIN}
-
-  connectors:
-    - type: github
-      id: github
-      name: GitHub
-      config:
-        valueFrom:
-          secretKeyRef:
-            name: dex-connector-github-secret
-
-      orgs:
-        - name:
-          valueFrom:
-            secretKeyRef:
-              name: dex-secret
-              key: DEX_GITHUB_ORG
-
-    - type: oidc
-      id: google
-      name: Google
-      config:
-        issuer: https://accounts.google.com
-        clientID:
-          valueFrom:
-            secretKeyRef:
-              name: dex-secret
-              key: DEX_GOOGLE_CLIENT_ID
-        clientSecret:
-          valueFrom:
-            secretKeyRef:
-              name: dex-secret
-              key: DEX_GOOGLE_CLIENT_SECRET
-        redirectURI: https://dex.${SECRET_DOMAIN}/callback
-
-  # staticClients:
-  #   - name: oauth2-proxy
-  #     id: ${DEX_OAUTH2_PROXY_CLIENT_ID}
-  #     secret: ${DEX_OAUTH2_PROXY_CLIENT_SECRET}
-  #     redirectURIs:
-  #       - https://auth.${SECRET_DOMAIN}/oauth2/callback
 
   storage:
     type: kubernetes

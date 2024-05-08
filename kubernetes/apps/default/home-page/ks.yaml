@@ -3,14 +3,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app k8s-gateway
+  name: &app home-page
   namespace: flux-system
 spec:
-  targetNamespace: network
+  targetNamespace: default
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: ./kubernetes/apps/network/k8s-gateway/app
+  path: ./kubernetes/apps/default/home-page/app
   prune: true
   sourceRef:
     kind: GitRepository

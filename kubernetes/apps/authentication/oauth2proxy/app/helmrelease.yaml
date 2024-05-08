@@ -10,12 +10,14 @@ spec:
   chart:
     spec:
       chart: oauth2-proxy
-      version: 7.3.0
+      version: 7.5.3
       sourceRef:
         kind: HelmRepository
         name: oauth2-proxy
         namespace: flux-system
   maxHistory: 3
+  dependsOn:
+    - name: dex
   install:
     remediation:
       retries: 3

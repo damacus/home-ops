@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: *app
 spec:
   type: ExternalName
-  externalName: 192.168.1.254
+  externalName: unifi.${SECRET_INTERNAL_DOMAIN}
   ports:
     - name: http
       port: &port 443
@@ -24,9 +24,6 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/target: 192.168.1.254
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-  labels:
-    app.kubernetes.io/name: *app
-    app.kubernetes.io/instance: *app
 spec:
   ingressClassName: internal
   rules:

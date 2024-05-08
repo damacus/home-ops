@@ -6,7 +6,7 @@ controllers:
       app:
         image:
           repository: louislam/uptime-kuma
-          tag: 1.23.11-alpine
+          tag: 1.23.13-alpine
           pullPolicy: IfNotPresent
         command: [node, server/server.js]
         probes:

@@ -12,7 +12,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/onedr0p/kubanetics
-          tag: 2024.3.6@sha256:6556e8c4b0b732bd4eec99d8b1c44caafb0f2f653d827667f2684c24ec4af244
+          tag: 2024.5.0@sha256:2787387cfec563b12b18c2708ac638deaaaa0daa5119b731d8a036e23a9ef43a
         env:
           SCRIPT_NAME: fstrim.sh
         resources:

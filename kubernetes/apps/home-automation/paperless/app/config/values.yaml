@@ -30,7 +30,7 @@ spec:
           app:
             image:
               repository: ghcr.io/paperless-ngx/paperless-ngx
-              tag: 2.7.2
+              tag: 2.8.1
             env:
               # Configure application
               PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
@@ -104,7 +104,7 @@ spec:
       app:
         className: "internal"
         hosts:
-          - host: &hostName paperless.${SECRET_DOMAIN}
+          - host: &hostName paperless.${SECRET_INTERNAL_DOMAIN}
             paths:
               - path: /
                 service:
@@ -123,7 +123,7 @@ spec:
               - path: /data/local
       nas:
         type: nfs
-        server: ${SYNOLOGY_NAS_IP}
+        server: ${SECRET_SYNOLOGY_IP}
         path: ${SECRET_NFS_DIRECTORY}/paperless
         globalMounts:
           - path: /data/nas

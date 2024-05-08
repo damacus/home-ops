@@ -1,0 +1,39 @@
+---
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/external-secrets.io/externalsecret_v1beta1.json
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: dex-static-clients-secret
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: onepassword-connect
+  target:
+    name: dex-static-clients-secret
+    template:
+      engineVersion: v2
+      data:
+        values.yaml: |
+          config:
+            staticClients:
+              - name: oauth2-proxy
+                id: oauth2-proxy
+                secret: "{{ .oauth2_proxy_client_secret }}"
+                redirectURIs:
+                  - "https://auth.{{ .external_domain }}/oauth2/callback"
+                  - "https://hass.{{ .external_domain }}/oauth2/callback"
+
+              - name: grafana
+                id: grafana
+                secret: "{{ .grafana_client_secret }}"
+                redirectURIs:
+                  - "https://grafana.{{ .external_domain }}/oauth2/callback"
+                  - "https://grafana.{{ .external_domain }}/login/generic_oauth"
+  dataFrom:
+    - extract:
+        key: dex-grafana
+    - extract:
+        key: dex-oauth2-proxy
+    - extract:
+        key: domain
