@@ -34,14 +34,14 @@ spec:
           app:
             image:
               repository: ghcr.io/koenkk/zigbee2mqtt
-              tag: 1.36.0@sha256:4de1ee53d67a9b4556045c34a2722bfd2348dabbefcb792e862643104d3e9fd0
+              tag: 1.37.0
             env:
               TZ: ${TIMEZONE}
               ZIGBEE2MQTT_DATA: /data
               ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_DISCOVERY_TOPIC: homeassistant
               ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_LEGACY_ENTITY_ATTRIBUTES: "false"
               ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_LEGACY_TRIGGERS: "false"
-              ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_STATUS_TOPIC: hass/status
+              ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_STATUS_TOPIC: home-assistant/status
               ZIGBEE2MQTT_CONFIG_ADVANCED_LAST_SEEN: ISO_8601
               ZIGBEE2MQTT_CONFIG_ADVANCED_LEGACY_API: "false"
               ZIGBEE2MQTT_CONFIG_ADVANCED_LEGACY_AVAILABILITY_PAYLOAD: "false"
@@ -52,14 +52,14 @@ spec:
               ZIGBEE2MQTT_CONFIG_DEVICE_OPTIONS_LEGACY: "false"
               ZIGBEE2MQTT_CONFIG_DEVICE_OPTIONS_RETAIN: "true"
               ZIGBEE2MQTT_CONFIG_EXPERIMENTAL_NEW_API: "true"
-              ZIGBEE2MQTT_CONFIG_FRONTEND_PORT: 8080
-              ZIGBEE2MQTT_CONFIG_FRONTEND_URL: https://zigbee2mqtt.bjw-s.dev
+              # ZIGBEE2MQTT_CONFIG_FRONTEND_PORT: 8080
+              ZIGBEE2MQTT_CONFIG_FRONTEND_URL: https://zigbee2mqtt.${SECRET_INTERNAL_DOMAIN}
               ZIGBEE2MQTT_CONFIG_HOMEASSISTANT: "true"
               ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC: zigbee2mqtt
               ZIGBEE2MQTT_CONFIG_MQTT_INCLUDE_DEVICE_INFORMATION: "true"
               ZIGBEE2MQTT_CONFIG_MQTT_KEEPALIVE: 60
               ZIGBEE2MQTT_CONFIG_MQTT_REJECT_UNAUTHORIZED: "true"
-              ZIGBEE2MQTT_CONFIG_MQTT_SERVER: "mqtt://mosquitto.home-automation.svc.cluster.local"
+              ZIGBEE2MQTT_CONFIG_MQTT_SERVER: "mqtt://emqx.${SECRET_INTERNAL_DOMAIN}"
               ZIGBEE2MQTT_CONFIG_MQTT_VERSION: 5
               ZIGBEE2MQTT_CONFIG_MQTT_USER:
                 valueFrom:
@@ -72,9 +72,9 @@ spec:
                     name: zigbee2mqtt-secret
                     key: mqtt_password
               ZIGBEE2MQTT_CONFIG_PERMIT_JOIN: "false"
-              ZIGBEE2MQTT_CONFIG_SERIAL_PORT: tcp://10.1.3.46:6638
-              ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE: 115200
-              ZIGBEE2MQTT_CONFIG_SERIAL_DISABLE_LED: false
+              ZIGBEE2MQTT_CONFIG_ADVANCED_CHANNEL: 25
+              # ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID: GENERATE
+              ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID: "[221, 221, 221, 221, 0xDD, 0xDD, 0xDD, 0xDD]"
 
             probes:
               liveness:
@@ -94,7 +94,7 @@ spec:
               requests:
                 cpu: 10m
               limits:
-                memory: 512Mi
+                memory: 128Mi
         pod:
           securityContext:
             runAsUser: 568
@@ -112,7 +112,7 @@ spec:
       app:
         className: internal
         hosts:
-          - host: &host zigbee.devbu.io
+          - host: &host zigbee.${SECRET_INTERNAL_DOMAIN}
             paths:
               - path: /
                 service:
@@ -120,6 +120,3 @@ spec:
                   port: http
         tls:
           - hosts: [*host]
-    persistence:
-      config:
-        existingClaim: zigbee2mqtt
