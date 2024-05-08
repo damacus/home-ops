@@ -117,3 +117,10 @@ spec:
                   port: http
         tls:
           - hosts: [*host]
+
+    persistence:
+      config:
+        accessMode: ReadWriteOnce
+        size: 500Mi
+        globalMounts:
+          - path: /config
