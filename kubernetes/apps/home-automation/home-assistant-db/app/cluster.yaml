@@ -57,7 +57,7 @@ spec:
   externalClusters:
     - name: home-assistant-recorder
       connectionParameters:
-        host: ${SECRET_SYNOLOGY_IP}
+        host: ${SECRET_SYNOLOGY_IP:-test}
         user: haas
         dbname: postgres
         port: "5434"
