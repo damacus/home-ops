@@ -91,9 +91,10 @@ spec:
 
     persistence:
       config:
-        existingClaim: frigate
+        accessMode: ReadWriteOnce
+        size: 500Mi
         globalMounts:
-          - path: /data
+          - path: /config
 
       config-file:
         type: configMap
@@ -117,6 +118,7 @@ spec:
         hostPathType: Directory
         globalMounts:
           - path: /dev/bus/usb
+
       media:
         type: nfs
         server: ${SECRET_SYNOLOGY_IP}
