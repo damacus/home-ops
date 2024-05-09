@@ -1,0 +1,81 @@
+---
+logger:
+  default: info
+  # logs:
+  #   frigate.record: debug
+
+mqtt:
+  host: emqx-listeners.database.svc.cluster.local
+  topic_prefix: frigate
+  user: "{FRIGATE_MQTT_USERNAME}"
+  password: "{FRIGATE_MQTT_PASSWORD}"
+
+database:
+  path: /data/frigate.db
+
+detectors:
+  coral:
+    type: edgetpu
+    device: usb
+
+ffmpeg:
+  global_args: ["-hide_banner", "-loglevel", "warning"]
+  output_args:
+    record: preset-record-ubiquiti
+
+snapshots:
+  enabled: true
+  timestamp: false
+  bounding_box: true
+  retain:
+    default: 1
+
+record:
+  enabled: true
+  retain:
+    days: 1
+    mode: all
+  events:
+    retain:
+      default: 1
+      mode: active_objects
+
+objects:
+  track: ["person"]
+  filters:
+    person:
+      min_area: 5000
+      max_area: 100000
+      threshold: 0.7
+
+go2rtc:
+  streams:
+    frigate_garage_hq: rtspx://192.168.1.254:7441/iGys2VI7qXr4XTtK
+    frigate_garage_lq: rtspx://192.168.1.254:7441/bVf6AaNxgdkQ3E07
+    frigate_h_room_hq: rtspx://192.168.1.254:7441/QnXjU6vnUnkI31vE
+    frigate_h_room_lq: rtspx://192.168.1.254:7441/FEqerasodx3FR8zS
+
+cameras:
+  frigate_garage:
+    ffmpeg:
+      inputs:
+        - path: rtsp://localhost:8554/frigate_garage_lq
+          roles: ["detect"]
+        - path: rtsp://localhost:8554/frigate_garage_hq
+          roles: ["record"]
+    detect:
+      width: 640
+      height: 360
+      fps: 10
+
+  frigate_h_room:
+    ffmpeg:
+      inputs:
+        - path: rtsp://localhost:8554/frigate_h_room_lq
+          roles: ["detect"]
+        - path: rtsp://localhost:8554/frigate_h_room_hq
+          roles: ["record"]
+    detect:
+      width: 640
+      height: 360
+      fps: 10
