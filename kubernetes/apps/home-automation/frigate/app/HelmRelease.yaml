@@ -90,8 +90,7 @@ spec:
 
     persistence:
       config:
-        accessMode: ReadWriteOnce
-        size: 500Mi
+        existingClaim: frigate-config
         globalMounts:
           - path: /data
 
