@@ -36,7 +36,7 @@ spec:
       defaultDataLocality: best-effort
       defaultReplicaAutoBalance: best-effort
       migratable: false # ReadWriteMany doesn't work if storage is migratable
-      backup-target: s3://${SECRET_SYNOLOGY_IP}:9000@us-east-1/longhorn
+      backup-target: s3://${SECRET_SYNOLOGY_IP:-test}:9000@us-east-1/longhorn
       backupTargetCredentialSecret: minio-secret
 
     ingress:
