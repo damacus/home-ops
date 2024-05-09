@@ -118,8 +118,6 @@ spec:
           - path: /dev/bus/usb
 
       media:
-        type: nfs
-        server: ${SECRET_SYNOLOGY_IP:-test}
-        path: ${SECRET_NFS_DIRECTORY:-/volume2}/Frigate
+        existingClaim: frigate-media
         globalMounts:
           - path: /media
