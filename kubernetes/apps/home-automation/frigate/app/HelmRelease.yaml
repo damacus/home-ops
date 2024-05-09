@@ -55,8 +55,8 @@ spec:
             resources:
               requests:
                 cpu: 100m
-              limits:
-                memory: 5Gi
+                # limits:
+                #   memory: 5Gi
     defaultPodOptions:
       affinity:
         podAntiAffinity:
