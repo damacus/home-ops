@@ -131,8 +131,8 @@ persistence:
 
   backup:
     type: nfs
-    server: ${SECRET_SYNOLOGY_IP}
-    path: ${SECRET_NFS_DIRECTORY}/backups-hass
+    server: ${SECRET_SYNOLOGY_IP:-test}
+    path: ${SECRET_NFS_DIRECTORY:-/volume2}/backups-hass
     advancedMounts:
       home-assistant:
         app:
