@@ -7,15 +7,15 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: home-automation
+  path: ./kubernetes/apps/home-automation/frigate/app
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
+  prune: true
   dependsOn:
     - name: emqx-cluster
     - name: external-secrets-stores
     - name: node-feature-discovery-rules
-  path: ./kubernetes/apps/home-automation/frigate/app
-  prune: true
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
