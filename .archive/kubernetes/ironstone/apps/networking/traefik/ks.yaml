@@ -1,0 +1,58 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: traefik-external
+  namespace: flux-system
+spec:
+  targetNamespace: network
+  dependsOn:
+    - name: certificates
+  path: ./kubernetes/apps/network/traefik/external
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: traefik-internal
+  namespace: flux-system
+spec:
+  targetNamespace: network
+  dependsOn:
+    - name: certificates
+  path: ./kubernetes/apps/network/traefik/internal
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: traefik-addons
+  namespace: flux-system
+spec:
+  targetNamespace: network
+  dependsOn:
+    - name: traefik-external
+    - name: traefik-internal
+  path: ./kubernetes/apps/network/traefik/addons
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
