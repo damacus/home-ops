@@ -5,3 +5,4 @@ namespace: home-automation
 resources:
   - cluster.yaml
   - externalsecret.yaml
+  - scheduledbackup.yaml
