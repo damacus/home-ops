@@ -13,19 +13,18 @@ grafana:
     tls:
       - hosts: ["grafana.${SECRET_INTERNAL_DOMAIN}"]
         secretName: grafana-${SECRET_DOMAIN}-cert
-
-  grafana.ini:
-    server:
-      root_url: *host
-    auth:
-      basic:
-        enabled: false
-      generic_oauth:
-        enabled: true
-        allow_sign_up: true
-        name: Dex
-        client_id: grafana
-        scopes: openid profile email groups
-        auth_url: "https://dex.${SECRET_DOMAIN}/auth"
-        token_url: "https://dex.${SECRET_DOMAIN}/token"
-        api_url: "https://dex.${SECRET_DOMAIN}/userinfo"
+# grafana.ini:
+#   server:
+#     root_url: *host
+#   auth:
+#     basic:
+#       enabled: false
+#     generic_oauth:
+#       enabled: true
+#       allow_sign_up: true
+#       name: Dex
+#       client_id: grafana
+#       scopes: openid profile email groups
+#       auth_url: "https://dex.${SECRET_DOMAIN}/auth"
+#       token_url: "https://dex.${SECRET_DOMAIN}/token"
+#       api_url: "https://dex.${SECRET_DOMAIN}/userinfo"
