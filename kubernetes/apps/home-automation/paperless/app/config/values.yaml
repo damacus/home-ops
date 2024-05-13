@@ -88,10 +88,11 @@ spec:
                   periodSeconds: 5
             resources:
               requests:
-                cpu: 11m
-                memory: 2048Mi
+                cpu: 100m
+                memory: 256Mi
               limits:
-                memory: 2048Mi
+                cpu: 500m
+                memory: 1024Mi
 
     service:
       app:

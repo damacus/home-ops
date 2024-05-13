@@ -25,7 +25,9 @@ controllers:
         resources:
           requests:
             cpu: 10m
+            memory: 100Mi
           limits:
+            cpu: 100m
             memory: 1Gi
     pod:
       hostNetwork: true
