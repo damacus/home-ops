@@ -48,28 +48,9 @@ spec:
       memory: 2Gi
       cpu: 1000m # this is a fairly low limit but it's only used by Home Assistant
 
-  bootstrap:
-    initdb:
-      import:
-        type: microservice
-        databases: [haas]
-        source:
-          externalCluster: home-assistant-recorder
-
-  externalClusters:
-    - name: home-assistant-recorder
-      connectionParameters:
-        host: ${SECRET_SYNOLOGY_IP:-test}
-        user: haas
-        dbname: postgres
-        port: "5434"
-      password:
-        name: home-assistant-recorder-superuser
-        key: password
-
   backup:
     retentionPolicy: 7d
-    barmanObjectStore:
+    barmanObjectStore: &barmanObjectStore
       data:
         compression: bzip2
       wal:
@@ -87,3 +68,16 @@ spec:
         secretAccessKey:
           name: cloudnative-pg-secret
           key: aws-secret-access-key
+
+  # Note: previousCluster needs to be set to the name of the previous
+  # cluster when recovering from an existing cnpg cluster
+  bootstrap:
+    recovery:
+      source: &previousCluster postgres16-v1
+
+  # Note: externalClusters is needed when recovering from an existing cnpg cluster
+  externalClusters:
+    - name: *previousCluster
+      barmanObjectStore:
+        <<: *barmanObjectStore
+        serverName: *previousCluster
