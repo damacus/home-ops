@@ -8,7 +8,7 @@ metadata:
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.2-16
 
-  instances: 3 # set to the number of nodes in the cluster
+  instances: 1 # set to the number of nodes in the cluster
 
   primaryUpdateStrategy: unsupervised
 
@@ -50,7 +50,7 @@ spec:
 
   backup:
     retentionPolicy: 7d
-    barmanObjectStore: &barmanObjectStore
+    barmanObjectStore:
       data:
         compression: bzip2
       wal:
@@ -75,7 +75,6 @@ spec:
     recovery:
       backup:
         name: home-assistant-db-20240513105637
-
 # Note: externalClusters is needed when recovering from an existing cnpg cluster
 # externalClusters:
 #   - name: *previousCluster
