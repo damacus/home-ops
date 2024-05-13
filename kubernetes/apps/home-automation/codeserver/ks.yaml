@@ -13,7 +13,6 @@ spec:
     - name: ingress-nginx-internal
     - name: cert-manager
     - name: external-dns-bind
-    # - name: volsync
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
