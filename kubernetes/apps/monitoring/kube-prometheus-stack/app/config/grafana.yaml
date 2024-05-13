@@ -1,12 +1,18 @@
 ---
 grafana:
   ingress:
-    pathType: Prefix
-    ingressClassName: internal
+    enabled: true
+    spec:
+      ingressClassName: internal
     annotations:
       reloader.stakater.com/auto: "true"
       external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
-    hosts: [&host "grafana.${SECRET_INTERNAL_DOMAIN}"]
+    hosts:
+      - &host "grafana.${SECRET_INTERNAL_DOMAIN}"
+    paths: ["/"]
+    tls:
+      - hosts: ["grafana.${SECRET_INTERNAL_DOMAIN}"]
+        secretName: grafana-${SECRET_DOMAIN}-cert
 
   grafana.ini:
     server:
