@@ -43,8 +43,10 @@ spec:
   resources:
     requests:
       cpu: 500m
+      memory: 256Mi
     limits:
       memory: 2Gi
+      cpu: 1000m # this is a fairly low limit but it's only used by Home Assistant
 
   bootstrap:
     initdb:
