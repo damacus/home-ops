@@ -32,7 +32,7 @@ spec:
       max_wal_size: 4GB
       min_wal_size: 1GB
       random_page_cost: "1.1"
-      shared_buffers: 256MB
+      shared_buffers: 1GB
       wal_buffers: 16MB
       work_mem: 3932kB
 
@@ -43,7 +43,7 @@ spec:
   resources:
     requests:
       cpu: 500m
-      memory: 256Mi
+      memory: 1Gi
     limits:
       memory: 2Gi
       cpu: 1000m # this is a fairly low limit but it's only used by Home Assistant
