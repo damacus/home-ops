@@ -32,7 +32,7 @@ spec:
       max_wal_size: 4GB
       min_wal_size: 1GB
       random_page_cost: "1.1"
-      shared_buffers: 1GB
+      shared_buffers: 256MB
       wal_buffers: 16MB
       work_mem: 3932kB
 
@@ -67,23 +67,23 @@ spec:
         name: home-assistant-recorder-superuser
         key: password
 
-  backup:
-    retentionPolicy: 7d
-    barmanObjectStore:
-      data:
-        compression: bzip2
-      wal:
-        compression: bzip2
-        maxParallel: 8
-      destinationPath: s3://cloudnative-pg/
-      endpointURL: https://192.168.1.60:9000
-      # Note: serverName version needs to be incremented
-      # when recovering from an existing cnpg cluster
-      serverName: home-assistant
-      s3Credentials:
-        accessKeyId:
-          name: cloudnative-pg-secret
-          key: aws-access-key-id
-        secretAccessKey:
-          name: cloudnative-pg-secret
-          key: aws-secret-access-key
+backup:
+  retentionPolicy: 7d
+  barmanObjectStore:
+    data:
+      compression: bzip2
+    wal:
+      compression: bzip2
+      maxParallel: 8
+    destinationPath: s3://cloudnative-pg/
+    endpointURL: https://192.168.1.60:9000
+    # Note: serverName version needs to be incremented
+    # when recovering from an existing cnpg cluster
+    serverName: home-assistant
+    s3Credentials:
+      accessKeyId:
+        name: cloudnative-pg-secret
+        key: aws-access-key-id
+      secretAccessKey:
+        name: cloudnative-pg-secret
+        key: aws-secret-access-key
