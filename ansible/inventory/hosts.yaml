@@ -12,11 +12,11 @@ kubernetes:
           ansible_host: 192.168.1.104
         purple-pi:
           ansible_host: 192.168.1.105
-    # worker:
-    #   hosts:
-    #     green-pi:
-    #       ansible_host:
-    #     red-pi:
-    #       ansible_host:
-    #     black-pi:
-    #       ansible_host:
+    worker:
+      hosts:
+        black-pi:
+          ansible_host: 192.168.1.100
+        red-pi:
+          ansible_host: 192.168.1.101
+        green-pi:
+          ansible_host: 192.168.1.102

@@ -45,7 +45,7 @@ spec:
       enabled: true
     loadBalancer:
       algorithm: maglev
-      mode: dsr
+      mode: snat
     localRedirectPolicy: true
     operator:
       replicas: 1
@@ -56,16 +56,16 @@ spec:
       capabilities:
         ciliumAgent:
           - CHOWN
+          - DAC_OVERRIDE
+          - FOWNER
+          - IPC_LOCK
           - KILL
           - NET_ADMIN
           - NET_RAW
-          - IPC_LOCK
-          - SYS_ADMIN
-          - SYS_RESOURCE
-          - DAC_OVERRIDE
-          - FOWNER
           - SETGID
           - SETUID
+          - SYS_ADMIN
+          - SYS_RESOURCE
         cleanCiliumState:
           - NET_ADMIN
           - SYS_ADMIN
