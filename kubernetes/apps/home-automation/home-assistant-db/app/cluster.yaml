@@ -43,45 +43,41 @@ spec:
   resources:
     requests:
       cpu: 500m
+      memory: 1Gi
     limits:
       memory: 2Gi
+      cpu: 1000m # this is a fairly low limit but it's only used by Home Assistant
 
+  backup:
+    retentionPolicy: 7d
+    barmanObjectStore:
+      data:
+        compression: bzip2
+      wal:
+        compression: bzip2
+        maxParallel: 8
+      destinationPath: s3://cloudnative-pg/
+      endpointURL: http://192.168.1.60:9000
+      # Note: serverName version needs to be incremented
+      # when recovering from an existing cnpg cluster
+      serverName: home-assistant
+      s3Credentials:
+        accessKeyId:
+          name: cloudnative-pg-secret
+          key: aws-access-key-id
+        secretAccessKey:
+          name: cloudnative-pg-secret
+          key: aws-secret-access-key
+
+  # Note: previousCluster needs to be set to the name of the previous
+  # cluster when recovering from an existing cnpg cluster
   bootstrap:
-    initdb:
-      import:
-        type: microservice
-        databases: [haas]
-        source:
-          externalCluster: home-assistant-recorder
-
-  externalClusters:
-    - name: home-assistant-recorder
-      connectionParameters:
-        host: ${SECRET_SYNOLOGY_IP:-test}
-        user: haas
-        dbname: postgres
-        port: "5434"
-      password:
-        name: home-assistant-recorder-superuser
-        key: password
-
-backup:
-  retentionPolicy: 7d
-  barmanObjectStore:
-    data:
-      compression: bzip2
-    wal:
-      compression: bzip2
-      maxParallel: 8
-    destinationPath: s3://cloudnative-pg/
-    endpointURL: https://192.168.1.60:9000
-    # Note: serverName version needs to be incremented
-    # when recovering from an existing cnpg cluster
-    serverName: home-assistant
-    s3Credentials:
-      accessKeyId:
-        name: cloudnative-pg-secret
-        key: aws-access-key-id
-      secretAccessKey:
-        name: cloudnative-pg-secret
-        key: aws-secret-access-key
+    recovery:
+      backup:
+        name: home-assistant-db-20240513105637
+# Note: externalClusters is needed when recovering from an existing cnpg cluster
+# externalClusters:
+#   - name: *previousCluster
+#     barmanObjectStore:
+#       <<: *barmanObjectStore
+#       serverName: *previousCluster
