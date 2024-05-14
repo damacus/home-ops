@@ -41,24 +41,10 @@ spec:
               value: "false"
             - name: vip_leaderelection
               value: "true"
-            # - name: vip_leaseduration
-            #   value: "15"
-            # - name: vip_renewdeadline
-            #   value: "10"
-            # - name: vip_retryperiod
-            #   value: "2"
             - name: prometheus_server
               value: :2112
             - name: vip_interface
               value: eth0
-            # - name: dns_mode
-            #   value: first
-            # - name: svc_enable
-            #   value: "true"
-            # - name: svc_leasename
-            #   value: plndr-svcs-lock
-            # - name: svc_election
-            #   value: "true"
             - name: vip_leaseduration
               value: "5"
             - name: vip_renewdeadline
