@@ -5,4 +5,5 @@ namespace: home-automation
 resources:
   - cluster.yaml
   - externalsecret.yaml
+  - PrometheusRules.yaml
   - scheduledbackup.yaml
