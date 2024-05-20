@@ -17,24 +17,9 @@ spec:
     storageClass: openebs-hostpath
 
   superuserSecret:
-    name: paperless-db-secret
+    name: cloudnative-pg-secret
 
   enableSuperuserAccess: true
-
-  # postgresql:
-  #   parameters:
-  #     max_connections: "200"
-  #     checkpoint_completion_target: "0.9"
-  #     default_statistics_target: "100"
-  #     effective_cache_size: 3GB
-  #     effective_io_concurrency: "200"
-  #     maintenance_work_mem: 256MB
-  #     max_wal_size: 4GB
-  #     min_wal_size: 1GB
-  #     random_page_cost: "1.1"
-  #     shared_buffers: 1GB
-  #     wal_buffers: 16MB
-  #     work_mem: 3932kB
 
   nodeMaintenanceWindow:
     inProgress: false
@@ -56,7 +41,7 @@ spec:
       wal:
         compression: bzip2
         maxParallel: 8
-      destinationPath: s3://cloudnative-pg/paperless
+      destinationPath: s3://cloudnative-pg
       endpointURL: http://192.168.1.60:9000
       # Note: serverName version needs to be incremented
       # when recovering from an existing cnpg cluster
@@ -73,6 +58,8 @@ spec:
     initdb:
       database: paperless
       owner: paperless
+      secret:
+        name: paperless-db-secret
 # Note: previousCluster needs to be set to the name of the previous
 # cluster when recovering from an existing cnpg cluster
 # bootstrap:
