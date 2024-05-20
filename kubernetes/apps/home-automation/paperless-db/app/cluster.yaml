@@ -69,6 +69,10 @@ spec:
           name: cloudnative-pg-secret
           key: aws-secret-access-key
 
+  bootstrap:
+    initdb:
+      database: paperless
+      owner: paperless
 # Note: previousCluster needs to be set to the name of the previous
 # cluster when recovering from an existing cnpg cluster
 # bootstrap:
