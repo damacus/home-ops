@@ -9,10 +9,7 @@ spec:
   replicas: 3
   env:
     - name: MAX_MEMORY
-      valueFrom:
-        resourceFieldRef:
-          resource: limits.memory
-          divisor: 1Mi
+      value: "512"
   args:
     - --maxmemory=$(MAX_MEMORY)Mi
     - --proactor_threads=2
