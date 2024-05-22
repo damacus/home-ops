@@ -6,7 +6,7 @@ metadata:
   name: helm
 resources:
   - actions-runner-controller.yaml
-  # - bitnami.yaml
+  - bitnami.yaml
   - bjws.yaml
   - cilium.yaml
   - cloudnative-pg.yaml
