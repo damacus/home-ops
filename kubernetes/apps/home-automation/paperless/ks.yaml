@@ -12,7 +12,7 @@ spec:
     - name: longhorn
     - name: ingress-nginx-external
     - name: cert-manager
-    - name: dragonfly-cluster
+    - name: redis
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
