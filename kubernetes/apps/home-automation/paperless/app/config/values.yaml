@@ -63,7 +63,7 @@ spec:
               PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "true"
               # Configure redis integration
               PAPERLESS_REDIS_PREFIX: pngx
-              PAPERLESS_REDIS: redis://dragonfly.database.svc.cluster.local:6379
+              PAPERLESS_REDIS: redis://redis-master-0.database.svc.cluster.local:6379
               # Configure user permissions
               USERMAP_GID: "65542"
               # Configure admin user
