@@ -8,12 +8,12 @@ spec:
   targetNamespace: home-automation
   path: ./kubernetes/apps/home-automation/paperless/app
   prune: true
-  dependsOn:
-    - name: longhorn
-    - name: ingress-nginx-internal
-    - name: cert-manager
-    - name: redis
-    - name: paperless-db
+  # dependsOn:
+  #   - name: longhorn
+  #   - name: ingress-nginx-internal
+  #   - name: cert-manager
+  #   - name: redis
+  #   - name: paperless-db
 
   sourceRef:
     kind: GitRepository
