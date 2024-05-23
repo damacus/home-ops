@@ -5,6 +5,7 @@ namespace: paperless
 resources:
   - HelmRelease.yaml
   - externalsecret.yaml
+  - pvc.yaml
 
 configMapGenerator:
   - name: paperless-helm-values
