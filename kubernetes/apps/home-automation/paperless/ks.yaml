@@ -10,9 +10,11 @@ spec:
   prune: true
   dependsOn:
     - name: longhorn
-    - name: ingress-nginx-external
+    - name: ingress-nginx-internal
     - name: cert-manager
     - name: redis
+    - name: paperless-db
+
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
