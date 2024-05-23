@@ -118,7 +118,8 @@ spec:
 
     persistence:
       data:
-        existingClaim: paperless-data
+        accessMode: ReadWriteOnce
+        size: 500Mi
         advancedMounts:
           paperless:
             app:
