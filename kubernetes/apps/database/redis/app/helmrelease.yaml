@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: redis
-      version: 19.5.0
+      version: 19.4.0
       sourceRef:
         kind: HelmRepository
         name: bitnami
@@ -20,22 +20,27 @@ spec:
       retries: 3
   values:
     architecture: standalone
+
     auth:
       enabled: false
+
     master:
       persistence:
         enabled: false
+
     replica:
       replicaCount: 1
       persistence:
         enabled: false
+
     useExternalDNS:
       enabled: true
       suffix: ${SECRET_INTERNAL_DOMAIN}
       additionalAnnotations:
         ttl: 10
+
     networkPolicy:
-      enabled: true
+      enabled: false # TODO: enable this
       ingressNSMatchLabels:
         redis: external
       ingressNSPodMatchLabels:
