@@ -38,6 +38,7 @@ spec:
       suffix: ${SECRET_INTERNAL_DOMAIN}
       additionalAnnotations:
         ttl: 10
+        external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
 
     networkPolicy:
       enabled: false # TODO: enable this
