@@ -27,6 +27,42 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
-  valuesFrom:
-    - kind: ConfigMap
-      name: oauth2proxy-helm-config
+  values:
+    image:
+      repository: quay.io/oauth2-proxy/oauth2-proxy
+      tag: v7.6.0
+
+    existingSecret: oauth2-proxy-dex
+
+    config:
+      configFile: |-
+        provider = "oidc"
+        oidc_issuer_url = "https://dex.${SECRET_DOMAIN}"
+        auth_logging = true
+        cookie_domains = ".${SECRET_DOMAIN}"
+        cookie_secure = true
+        email_domains = ["*"]
+        pass_access_token = true
+        pass_authorization_header = true
+        whitelist_domains = ".${SECRET_DOMAIN}"
+
+    resources:
+      limits:
+        cpu: 100m
+        memory: 300Mi
+      requests:
+        cpu: 100m
+        memory: 300Mi
+
+    ingress:
+      enabled: true
+      className: external
+      path: /oauth2
+      pathType: Prefix
+      annotations:
+        external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+      hosts:
+        - &host auth.${SECRET_DOMAIN}
+      tls:
+        - hosts:
+            - *host
