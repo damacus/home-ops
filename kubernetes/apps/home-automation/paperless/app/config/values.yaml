@@ -36,9 +36,9 @@ controllers:
                 name: paperless-secret
                 key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
           # Configure folders
-          # PAPERLESS_CONSUMPTION_DIR: /data/nas/incoming
+          PAPERLESS_CONSUMPTION_DIR: /data/nas/incoming
           PAPERLESS_DATA_DIR: /data/local/data
-          # PAPERLESS_EXPORT_DIR: /data/nas/export
+          PAPERLESS_EXPORT_DIR: /data/nas/export
           PAPERLESS_MEDIA_ROOT: /data/local/media
           # Configure folder importer
           PAPERLESS_CONSUMER_POLLING: "60"
@@ -107,6 +107,8 @@ persistence:
         app:
           - path: /data/local
   nas:
-    existingClaim: paperless-data
+    type: nfs
+    server: ${SECRET_SYNOLOGY_IP:=test}
+    path: ${SECRET_NFS_DIRECTORY:=/volume2}/paperless
     globalMounts:
       - path: /data/nas
