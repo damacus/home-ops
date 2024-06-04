@@ -65,6 +65,7 @@ spec:
               PAPERLESS_REDIS: redis://redis-master.database.svc.cluster.local:6379
               # Configure user permissions
               USERMAP_GID: "1030"
+              USERMAP_UID: "1030"
 
               # Configure OCR
               PAPERLESS_OCR_USER_ARGS: '{"invalidate_digital_signatures": true}'
