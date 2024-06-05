@@ -19,21 +19,17 @@ spec:
             staticClients:
               - name: oauth2-proxy
                 id: oauth2-proxy
-                secret: "{{ .oauth2_proxy_client_secret }}"
+                secret: "oauth2-proxy-dex"
                 redirectURIs:
                   - "https://auth.{{ .external_domain }}/oauth2/callback"
                   - "https://hass.{{ .external_domain }}/oauth2/callback"
 
               - name: grafana
                 id: grafana
-                secret: "{{ .grafana_client_secret }}"
+                secret: grafana-client-dex"
                 redirectURIs:
                   - "https://grafana.{{ .external_domain }}/oauth2/callback"
                   - "https://grafana.{{ .external_domain }}/login/generic_oauth"
   dataFrom:
-    - extract:
-        key: dex-grafana
-    - extract:
-        key: dex-oauth2-proxy
     - extract:
         key: domain
