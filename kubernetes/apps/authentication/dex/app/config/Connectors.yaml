@@ -23,7 +23,6 @@ spec:
                   clientID: "{{ .GITHUB_CLIENT_ID }}"
                   clientSecret: "{{ .GITHUB_CLIENT_SECRET }}"
                   redirectURI: "https://dex.{{ .external_domain }}/callback"
-
                 orgs:
                   - name: "{{ .GITHUB_ORG }}"
 
