@@ -19,7 +19,7 @@ spec:
             staticClients:
               - name: oauth2-proxy
                 id: oauth2-proxy
-                secret: "oauth2-proxy-dex"
+                secret: "oauth2-proxy-client-secret"
                 redirectURIs:
                   - "https://auth.{{ .external_domain }}/oauth2/callback"
                   - "https://hass.{{ .external_domain }}/oauth2/callback"
