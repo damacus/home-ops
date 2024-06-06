@@ -3,13 +3,13 @@
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: dex-connectors-secret
+  name: dex-connectors
 spec:
   secretStoreRef:
     kind: ClusterSecretStore
     name: onepassword-connect
   target:
-    name: dex-connectors-secret
+    name: dex-connectors
     template:
       engineVersion: v2
       data:
@@ -39,13 +39,13 @@ spec:
         key: dex-google
       rewrite:
         - regexp:
-            source: "(.*)" # regex to match the entire string
-            target: "GOOGLE_$1" # prepend "GOOGLE-" to the matched string
+            source: "(.*)" # match the entire string
+            target: "GOOGLE_$1" # prepend "GOOGLE_"
     - extract:
         key: dex-github
       rewrite:
         - regexp:
-            source: "(.*)" # regex to match the entire string
-            target: "GITHUB_$1" # prepend "GOOGLE-" to the matched string
+            source: "(.*)" # match the entire string
+            target: "GITHUB_$1" # prepend "GITHUB_"
     - extract:
         key: domain
