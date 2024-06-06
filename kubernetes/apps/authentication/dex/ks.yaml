@@ -11,7 +11,7 @@ spec:
     labels:
       app.kubernetes.io/name: dex
   path: ./kubernetes/apps/authentication/dex/app
-  prune: false
+  prune: true
   dependsOn:
     - name: external-secrets-stores
     - name: ingress-nginx-external
