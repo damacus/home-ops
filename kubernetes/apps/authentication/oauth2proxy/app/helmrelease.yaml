@@ -32,9 +32,8 @@ spec:
       repository: quay.io/oauth2-proxy/oauth2-proxy
       tag: v7.6.0
 
-    existingSecret: oauth2-proxy-client
-
     config:
+      existingSecret: oauth2-proxy-client
       configFile: |-
         provider = "oidc"
         oidc_issuer_url = "https://dex.${SECRET_DOMAIN}"
