@@ -46,11 +46,22 @@ spec:
               # Configure Remote User auth
               PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: "false"
               PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS: "false"
-              PAPERLESS_SOCIALACCOUNT_PROVIDERS:
-                valueFrom:
-                  secretKeyRef:
-                    name: paperless-secret
-                    key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+              PAPERLESS_SOCIALACCOUNT_PROVIDERS: |
+                {
+                  "openid_connect": {
+                    "APPS": [
+                      {
+                        "provider_id": "dex",
+                        "name": "Dex",
+                        "client_id": "paperless",
+                        "secret": "paperless-client",
+                        "settings": {
+                          "server_url": "https://dex.${SECRET_DOMAIN}/.well-known/openid-configuration"
+                        }
+                      }
+                    ]
+                  }
+                }
               # Configure folders
               # PAPERLESS_CONSUMPTION_DIR: /data/nas/incoming
               PAPERLESS_DATA_DIR: /data/local/data
