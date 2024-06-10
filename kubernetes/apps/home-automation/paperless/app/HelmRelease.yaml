@@ -45,7 +45,7 @@ spec:
               PAPERLESS_TASK_WORKERS: "2"
               # Configure Remote User auth
               PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: "false"
-              PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS: "false"
+              PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS: "true"
               PAPERLESS_SOCIALACCOUNT_PROVIDERS: |
                 {
                   "openid_connect": {
