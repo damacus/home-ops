@@ -74,13 +74,15 @@ spec:
               # Configure redis integration
               PAPERLESS_REDIS_PREFIX: pngx
               PAPERLESS_REDIS: redis://redis-master.database.svc.cluster.local:6379
+              # Configure Tika
+              PAPERLESS_TIKA_ENABLED: 1
+              PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://localhost:3000
+              PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
               # Configure user permissions
               USERMAP_GID: "1030"
               USERMAP_UID: "1030"
-
               # Configure OCR
               PAPERLESS_OCR_USER_ARGS: '{"invalidate_digital_signatures": true}'
-
               # Configure admin user
               PAPERLESS_ADMIN_USER:
                 valueFrom:
@@ -105,10 +107,36 @@ spec:
             resources:
               requests:
                 cpu: 100m
+                memory: 1Gi
+              limits:
+                cpu: 2000m
+                memory: 4Gi
+
+          gotenburg:
+            image:
+              repository: thecodingmachine/gotenberg
+              tag: 8.6.0
+            env:
+              - { name: DISABLE_GOOGLE_CHROME, value: "1" }
+            resources:
+              requests:
+                cpu: 100m
                 memory: 256Mi
               limits:
                 cpu: 500m
-                memory: 2Gi
+                memory: 1Gi
+
+          tika:
+            image:
+              repository: apache/tika
+              tag: 2.9.1
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: 500m
+                memory: 1Gi
 
     service:
       app:
