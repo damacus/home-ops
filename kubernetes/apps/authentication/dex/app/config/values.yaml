@@ -71,3 +71,4 @@ config:
       secret: paperless-client
       redirectURIs:
         - "https://paperless.${SECRET_INTERNAL_DOMAIN}/oauth2/callback"
+        - "https://paperless.${SECRET_INTERNAL_DOMAIN}/accounts/oidc/dex/login/callback"
