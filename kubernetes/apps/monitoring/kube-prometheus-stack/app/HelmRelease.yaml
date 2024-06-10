@@ -28,7 +28,7 @@ spec:
     spec:
       chart: kube-prometheus-stack
       # renovate: datasource=github-releases repos=prometheus-community/helm-charts
-      version: "59.*"
+      version: "60.*"
       sourceRef:
         kind: HelmRepository
         name: prometheus-community
