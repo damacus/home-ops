@@ -129,7 +129,7 @@ spec:
           tika:
             image:
               repository: apache/tika
-              tag: 2.9.1
+              tag: 2.9.2.1
             resources:
               requests:
                 cpu: 100m
