@@ -65,8 +65,8 @@ spec:
               # Configure folders
               PAPERLESS_CONSUMPTION_DIR: /data/nas-mount/incoming
               PAPERLESS_DATA_DIR: /data/local/data
-              PAPERLESS_EXPORT_DIR: /data/nas/export
-              PAPERLESS_MEDIA_ROOT: /data/local/media
+              PAPERLESS_EXPORT_DIR: /data/nas-mount/export
+              PAPERLESS_MEDIA_ROOT: /data/nas-mount/media
               # Configure folder importer
               PAPERLESS_CONSUMER_POLLING: "60"
               PAPERLESS_CONSUMER_RECURSIVE: "true"
