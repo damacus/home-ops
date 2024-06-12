@@ -2,7 +2,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: wyoming-whisper
+  name: wyoming-openwakeword
   namespace: home
 spec:
   interval: 30m
@@ -25,19 +25,15 @@ spec:
     keepHistory: false
   values:
     controllers:
-      whisper:
+      openwakeword:
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
           app:
             image:
-              repository: rhasspy/wyoming-whisper
-              tag: 2.1.0
-            args:
-              - --model
-              - Systran/faster-whisper-large-v3
-              - --language
-              - en
+              repository: rhasspy/wyoming-openwakeword
+              tag: 1.10.0
+
             env:
               TZ: ${TIMEZONE}
 
@@ -53,26 +49,18 @@ spec:
                 memory: 1Gi
               limits:
                 cpu: 2000m
-                memory: 1Gi
-
-        pod:
-          securityContext:
-            runAsUser: 568
-            runAsGroup: 568
-            runAsNonRoot: true
-            fsGroup: 568
-            fsGroupChangePolicy: OnRootMismatch
+                memory: 2Gi
 
     service:
       app:
-        controller: whisper
+        controller: openwakeword
         type: LoadBalancer
-        loadBalancerIP: ${WYOMING_WHISPER_ADDR}
+        loadBalancerIP: ${WYOMING_OPENWAKEWORD_ADDR}
         ports:
           whisper:
             enabled: true
             primary: true
-            port: 10300
+            port: 10400
             protocol: TCP
 
     persistence:
@@ -80,8 +68,8 @@ spec:
         enabled: true
         globalMounts:
           - path: /data
+        size: 1Gi
         accessMode: "ReadWriteMany"
-        size: 15Gi
 
     affinity:
       podAffinity:
