@@ -1,0 +1,84 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: wyoming-whisper
+  namespace: home
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.2.1
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      whisper:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: rhasspy/wyoming-whisper
+              tag: 2.1.0
+            args:
+              - --model
+              - base
+              - --language
+              - en
+            env:
+              TZ: ${TIMEZONE}
+
+            probes:
+              liveness:
+                enabled: false
+              readiness:
+                enabled: false
+
+            resources:
+              requests:
+                cpu: 250m
+                memory: 1Gi
+              limits:
+                cpu: 2000m
+                memory: 1Gi
+
+        pod:
+          securityContext:
+            runAsUser: 568
+            runAsGroup: 568
+            runAsNonRoot: true
+            fsGroup: 568
+            fsGroupChangePolicy: OnRootMismatch
+
+    service:
+      app:
+        controller: whisper
+        type: LoadBalancer
+        loadBalancerIP: ${WYOMING_WHISPER_ADDR}
+        ports:
+          whisper:
+            enabled: true
+            primary: true
+            port: 10300
+            protocol: TCP
+
+    persistence:
+      data:
+        enabled: true
+        globalMounts:
+          - path: /data
+        accessMode: "ReadWriteMany"
+        size: 15Gi

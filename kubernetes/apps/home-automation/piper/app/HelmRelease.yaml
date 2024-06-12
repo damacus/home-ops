@@ -1,0 +1,76 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: wyoming-piper
+  namespace: home
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.2.1
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      piper:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: rhasspy/wyoming-piper
+              tag: 1.5.0
+
+            args:
+              - --voice
+              - en_GB-northern_english_male-medium
+
+            env:
+              TZ: ${TIMEZONE}
+
+            probes:
+              liveness:
+                enabled: false
+              readiness:
+                enabled: false
+
+            resources:
+              requests:
+                cpu: 250m
+                memory: 1Gi
+              limits:
+                cpu: 2000m
+                memory: 2Gi
+
+    service:
+      app:
+        controller: piper
+        type: LoadBalancer
+        loadBalancerIP: ${WYOMING_PIPER_ADDR}
+        ports:
+          whisper:
+            enabled: true
+            primary: true
+            port: 10200
+            protocol: TCP
+
+    persistence:
+      data:
+        enabled: true
+        globalMounts:
+          - path: /data
+        size: 15Gi
+        accessMode: "ReadWriteMany"
