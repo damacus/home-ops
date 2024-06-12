@@ -13,29 +13,11 @@ spec:
         - matchLabels:
             k8s:app.kubernetes.io/component: controller
             k8s:app.kubernetes.io/instance: ingress-nginx-internal
-            k8s:app.kubernetes.io/managed-by: Helm
-            k8s:app.kubernetes.io/name: ingress-nginx
-            k8s:app.kubernetes.io/part-of: ingress-nginx
-            k8s:app.kubernetes.io/version: 1.10.1
-            k8s:helm.sh/chart: ingress-nginx-4.10.1
             k8s:io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: network
             k8s:io.kubernetes.pod.namespace: network
       toPorts:
         - ports:
-            - port: "5000"
-    - fromEndpoints:
-        - matchLabels:
-            k8s:cnpg.io/cluster: home-assistant
-            k8s:cnpg.io/instanceName: home-assistant-5
-            k8s:cnpg.io/instanceRole: replica
-            k8s:cnpg.io/podRole: instance
-            k8s:io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: home-automation
-            k8s:io.cilium.k8s.namespace.labels.name: home-automation
-            k8s:io.kubernetes.pod.namespace: home-automation
-            k8s:role: replica
-      toPorts:
-        - ports:
-            - port: "5432"
+            - port: "5000" # Frigate
     - fromEndpoints:
         - matchLabels:
             k8s:app.kubernetes.io/instance: cloudnative-pg
@@ -48,13 +30,9 @@ spec:
     - fromEndpoints:
         - matchLabels:
             k8s:cnpg.io/cluster: home-assistant
-            k8s:cnpg.io/instanceName: home-assistant-6
-            k8s:cnpg.io/instanceRole: replica
-            k8s:cnpg.io/podRole: instance
             k8s:io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: home-automation
             k8s:io.cilium.k8s.namespace.labels.name: home-automation
             k8s:io.kubernetes.pod.namespace: home-automation
-            k8s:role: replica
       toPorts:
         - ports:
             - port: "5432"
@@ -75,10 +53,6 @@ spec:
             k8s:apps.emqx.io/db-role: core
             k8s:apps.emqx.io/instance: emqx
             k8s:apps.emqx.io/managed-by: emqx-operator
-            k8s:apps.emqx.io/pod-template-hash: 7455667b8d
-            k8s:io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: database
-            k8s:io.cilium.k8s.namespace.labels.kustomize.toolkit.fluxcd.io/name: cluster-apps
-            k8s:io.cilium.k8s.namespace.labels.kustomize.toolkit.fluxcd.io/namespace: flux-system
             k8s:io.kubernetes.pod.namespace: database
       toPorts:
         - ports:
@@ -86,16 +60,9 @@ spec:
     - toEndpoints:
         - matchLabels:
             k8s:cnpg.io/cluster: home-assistant
-            k8s:cnpg.io/instanceName: home-assistant-1
-            k8s:cnpg.io/instanceRole: primary
-            k8s:cnpg.io/podRole: instance
             k8s:io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: home-automation
-            k8s:io.cilium.k8s.namespace.labels.kustomize.toolkit.fluxcd.io/name: cluster-apps
-            k8s:io.cilium.k8s.namespace.labels.kustomize.toolkit.fluxcd.io/namespace: flux-system
-            k8s:io.cilium.k8s.namespace.labels.kustomize.toolkit.fluxcd.io/prune: disabled
             k8s:io.cilium.k8s.namespace.labels.name: home-automation
             k8s:io.kubernetes.pod.namespace: home-automation
-            k8s:role: primary
       toPorts:
         - ports:
             - port: "5432"
