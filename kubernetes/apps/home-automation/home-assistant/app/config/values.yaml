@@ -128,12 +128,3 @@ persistence:
 
   tmp:
     type: emptyDir
-
-  backup:
-    type: nfs
-    server: ${SECRET_SYNOLOGY_IP:-test}
-    path: ${SECRET_NFS_DIRECTORY:-/volume2}/backups-hass
-    advancedMounts:
-      home-assistant:
-        app:
-          - path: /config/backups
