@@ -35,9 +35,11 @@ spec:
               tag: 2.1.0
             args:
               - --model
-              - Systran/faster-whisper-large-v3
+              - Systran/faster-distil-whisper-small.en
               - --language
               - en
+              - --data-dir
+              - /models
             env:
               TZ: ${TIMEZONE}
 
@@ -82,6 +84,14 @@ spec:
           - path: /data
         accessMode: "ReadWriteMany"
         size: 15Gi
+
+      models:
+        enabled: true
+        type: nfs
+        server: ${SECRET_SYNOLOGY_IP:=test}
+        path: ${SECRET_NFS_DIRECTORY:=/volume2}/whisper
+        globalMounts:
+          - path: /models
 
     affinity:
       podAffinity:
