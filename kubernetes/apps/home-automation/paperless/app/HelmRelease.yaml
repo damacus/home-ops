@@ -173,8 +173,3 @@ spec:
         path: ${SECRET_NFS_DIRECTORY:=/volume2}/paperless
         globalMounts:
           - path: /data/nas-mount
-
-      nfs-csi:
-        existingClaim: paperless-data
-        globalMounts:
-          - path: /data/nas

@@ -20,3 +20,4 @@ spec:
     requests:
       storage: 100Gi
   storageClassName: nfs-csi
+  retain: false
