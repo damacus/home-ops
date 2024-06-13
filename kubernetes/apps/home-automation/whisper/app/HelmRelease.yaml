@@ -87,10 +87,7 @@ spec:
         size: 15Gi
 
       models:
-        enabled: true
-        type: nfs
-        server: ${SECRET_SYNOLOGY_IP:=test}
-        path: ${SECRET_NFS_DIRECTORY:=/volume2}/whisper
+        existingClaim: whisper-models
         globalMounts:
           - path: /models
 
