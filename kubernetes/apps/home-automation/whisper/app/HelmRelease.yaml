@@ -59,11 +59,12 @@ spec:
 
         pod:
           securityContext:
-            runAsUser: 568
-            runAsGroup: 568
+            runAsUser: 1030
+            runAsGroup: 1030
             runAsNonRoot: true
-            fsGroup: 568
+            fsGroup: 1030
             fsGroupChangePolicy: OnRootMismatch
+            supplementalGroups: [100]
 
     service:
       app:
