@@ -38,8 +38,6 @@ spec:
               - Systran/faster-distil-whisper-small.en
               - --language
               - en
-              - --data-dir
-              - /models
             env:
               TZ: ${TIMEZONE}
 
@@ -79,17 +77,10 @@ spec:
             protocol: TCP
 
     persistence:
-      data:
-        enabled: true
-        globalMounts:
-          - path: /data
-        accessMode: "ReadWriteMany"
-        size: 15Gi
-
       models:
         existingClaim: whisper-models
         globalMounts:
-          - path: /models
+          - path: /data
 
     affinity:
       podAffinity:
