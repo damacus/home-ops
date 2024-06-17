@@ -1,8 +1,6 @@
 ---
 logger:
   default: info
-  # logs:
-  #   frigate.record: debug
 
 mqtt:
   host: emqx-listeners.database.svc.cluster.local
@@ -41,7 +39,7 @@ record:
       mode: active_objects
 
 objects:
-  track: ["person", "car", "bird", "cat"]
+  track: ["person", "car", "bird", "cat", "license_plate"]
   filters:
     person:
       min_area: 5000
@@ -50,30 +48,38 @@ objects:
 
 go2rtc:
   streams:
-    frigate_garage_hq: rtspx://192.168.1.254:7441/iGys2VI7qXr4XTtK
-    frigate_garage_lq: rtspx://192.168.1.254:7441/bVf6AaNxgdkQ3E07
-    frigate_h_room_hq: rtspx://192.168.1.254:7441/QnXjU6vnUnkI31vE
-    frigate_h_room_lq: rtspx://192.168.1.254:7441/FEqerasodx3FR8zS
+    garage_hq: rtspx://192.168.1.254:7441/iGys2VI7qXr4XTtK
+    garage_lq: rtspx://192.168.1.254:7441/bVf6AaNxgdkQ3E07
+    h_room_hq: rtspx://192.168.1.254:7441/QnXjU6vnUnkI31vE
+    h_room_lq: rtspx://192.168.1.254:7441/FEqerasodx3FR8zS
 
 cameras:
-  frigate_garage:
+  garage:
     ffmpeg:
       inputs:
-        - path: rtsp://localhost:8554/frigate_garage_lq
+        - path: rtsp://localhost:8554/garage_lq
           roles: ["detect"]
-        - path: rtsp://localhost:8554/frigate_garage_hq
+        - path: rtsp://localhost:8554/garage_hq
           roles: ["record"]
     detect:
       width: 640
       height: 360
       fps: 10
+    record:
+      events:
+        required_zones: ["drive"]
+    snapshots:
+      required_zones: ["drive"]
+    zones:
+      drive:
+        coordinates: 0,360,640,360,640,221,591,141,504,140,377,139,259,140,0,248
 
-  frigate_h_room:
+  h_room:
     ffmpeg:
       inputs:
-        - path: rtsp://localhost:8554/frigate_h_room_lq
+        - path: rtsp://localhost:8554/h_room_lq
           roles: ["detect"]
-        - path: rtsp://localhost:8554/frigate_h_room_hq
+        - path: rtsp://localhost:8554/h_room_hq
           roles: ["record"]
     detect:
       width: 640
