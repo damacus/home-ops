@@ -72,3 +72,11 @@ config:
       redirectURIs:
         - "https://paperless.${SECRET_INTERNAL_DOMAIN}/oauth2/callback"
         - "https://paperless.${SECRET_INTERNAL_DOMAIN}/accounts/oidc/dex/login/callback/"
+
+    - name: minio
+      id: minio
+      secret: minio-client
+      redirectURIs:
+        - "https://minio.${SECRET_DOMAIN}/minio/login"
+        - "https://192.168.1.60:9001/login"
+        - "https://192.168.1.60:9001/oauth/callback" # It's probably this one
