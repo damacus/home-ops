@@ -75,7 +75,7 @@ spec:
   bootstrap:
     recovery:
       backup:
-        name: home-assistant-20240617211510
+        name: home-assistant-db-20240618000000
 # Note: externalClusters is needed when recovering from an existing cnpg cluster
 # externalClusters:
 #   - name: *previousCluster
