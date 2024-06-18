@@ -23,18 +23,19 @@ spec:
 
   postgresql:
     parameters:
-      max_connections: "200"
-      checkpoint_completion_target: "0.9"
-      default_statistics_target: "100"
-      effective_cache_size: 3GB
-      effective_io_concurrency: "200"
+      max_connections: "400"
+      shared_buffers: 256MB
+      # checkpoint_completion_target: "0.9" # Default
+      # default_statistics_target: "100" # Default
+      # effective_cache_size: 3GB
+      effective_io_concurrency: "200" # Default 1
       maintenance_work_mem: 256MB
-      max_wal_size: 4GB
-      min_wal_size: 1GB
-      random_page_cost: "1.1"
-      shared_buffers: 1GB
-      wal_buffers: 16MB
-      work_mem: 3932kB
+      # max_wal_size: 4GB
+      # min_wal_size: 1GB
+      # random_page_cost: "1.1"
+      # shared_buffers: 1GB
+      # wal_buffers: 16MB
+      # work_mem: 3932kB
 
   nodeMaintenanceWindow:
     inProgress: false
@@ -42,14 +43,14 @@ spec:
 
   resources:
     requests:
-      cpu: 500m
-      memory: 1Gi
+      cpu: 50m
+      memory: 256Mi
     limits:
       memory: 2Gi
-      cpu: 1000m # this is a fairly low limit but it's only used by Home Assistant
+      # cpu: 1000m
 
   backup:
-    retentionPolicy: 7d
+    retentionPolicy: 30d
     barmanObjectStore:
       data:
         compression: bzip2
