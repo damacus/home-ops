@@ -58,6 +58,7 @@ jobs:
             `````diff
             ${{ steps.diff.outputs.diff }}
             `
+
   flux-diff-success:
     if: ${{ always() }}
     needs: ["flux-local"]
