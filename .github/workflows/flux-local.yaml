@@ -20,13 +20,10 @@ jobs:
       pull-requests: write
     strategy:
       matrix:
-        paths: ["kubernetes"]
         resources: ["helmrelease", "kustomization"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          path: pull
 
       - name: Checkout Default Branch
         uses: actions/checkout@v4
@@ -39,18 +36,18 @@ jobs:
 
       - uses: allenporter/flux-local/action/test@4.3.1
         with:
-          path: kubernetes
+          path: ./kubernetes
           enable-helm: true
           enable-kyverno: false
-          debug: true
+          debug: false
 
       - uses: allenporter/flux-local/action/diff@4.3.1
         id: diff
         with:
           live-branch: main
-          path: kubernetes
+          path: ./kubernetes
           resource: helmrelease
-          debug: true
+          debug: false
 
       - name: PR Comments
         uses: mshick/add-pr-comment@v2
