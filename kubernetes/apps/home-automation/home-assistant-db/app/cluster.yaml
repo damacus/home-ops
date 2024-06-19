@@ -47,7 +47,7 @@ spec:
       memory: 400Mi
     limits:
       memory: 2Gi
-      # cpu: 1000m
+      cpu: 500m
 
   backup:
     retentionPolicy: 30d
