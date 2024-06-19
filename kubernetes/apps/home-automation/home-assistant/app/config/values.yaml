@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.2.1/charts/other/app-template/values.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.1.0/charts/other/app-template/values.schema.json
 controllers:
   home-assistant:
     annotations:
@@ -54,21 +54,6 @@ controllers:
         runAsNonRoot: true
         fsGroup: 568
         fsGroupChangePolicy: OnRootMismatch
-
-# Prefer new nodes
-defaultPodOptions:
-  affinity:
-    nodeAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          preference:
-            matchExpressions:
-              - key: "kubernetes.io/hostname"
-                operator: In
-                values:
-                  - blue-pi
-                  - yellow-pi
-                  - purple-pi
 
 service:
   app:
