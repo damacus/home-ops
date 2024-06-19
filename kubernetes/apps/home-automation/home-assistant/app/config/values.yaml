@@ -92,21 +92,21 @@ ingress:
       - hosts:
           - *host
 
-  internal:
-    enabled: true
-    className: internal
-    annotations:
-      external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
-    hosts:
-      - host: &internal-host "hass.${SECRET_INTERNAL_DOMAIN}"
-        paths:
-          - path: /
-            service:
-              identifier: app
-              port: http
-    tls:
-      - hosts:
-          - *internal-host
+# internal:
+#   enabled: true
+#   className: internal
+#   annotations:
+#     external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
+#   hosts:
+#     - host: &internal-host "hass.${SECRET_INTERNAL_DOMAIN}"
+#       paths:
+#         - path: /
+#           service:
+#             identifier: app
+#             port: http
+#   tls:
+#     - hosts:
+#         - *internal-host
 
 persistence:
   config:
