@@ -59,8 +59,6 @@ spec:
         maxParallel: 8
       destinationPath: s3://cloudnative-pg/
       endpointURL: http://192.168.1.60:9000
-      # Note: serverName version needs to be incremented
-      # when recovering from an existing cnpg cluster
       serverName: home-assistant
       s3Credentials:
         accessKeyId:
@@ -69,16 +67,7 @@ spec:
         secretAccessKey:
           name: cloudnative-pg-secret
           key: aws-secret-access-key
-
-  # Note: previousCluster needs to be set to the name of the previous
-  # cluster when recovering from an existing cnpg cluster
   bootstrap:
     recovery:
       backup:
         name: home-assistant-db-20240618000000
-# Note: externalClusters is needed when recovering from an existing cnpg cluster
-# externalClusters:
-#   - name: *previousCluster
-#     barmanObjectStore:
-#       <<: *barmanObjectStore
-#       serverName: *previousCluster

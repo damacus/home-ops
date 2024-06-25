@@ -47,7 +47,6 @@ jobs:
             --all-namespaces
             --sources "home-kubernetes"
             --output-file diff.patch
-
       - name: Generate Diff
         id: diff
         run: |
@@ -55,7 +54,6 @@ jobs:
           echo "diff<<EOF" >> $GITHUB_OUTPUT
           cat diff.patch >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
       - if: ${{ steps.diff.outputs.diff != '' }}
         name: Add comment
         uses: mshick/add-pr-comment@v2
