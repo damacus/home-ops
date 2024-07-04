@@ -8,7 +8,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/esphome/esphome
-          tag: 2024.6.2
+          tag: 2024.6.6
 
         securityContext:
           runAsNonRoot: false
