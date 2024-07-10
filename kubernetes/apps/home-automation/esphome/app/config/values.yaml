@@ -27,8 +27,8 @@ controllers:
             cpu: 10m
             memory: 100Mi
           limits:
-            cpu: 100m
-            memory: 1Gi
+            cpu: 4000m
+            memory: 300Mi
     pod:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
