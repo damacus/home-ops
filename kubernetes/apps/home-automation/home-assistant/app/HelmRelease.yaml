@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.1.0
+      version: 3.2.1
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -101,7 +101,6 @@ spec:
 
     ingress:
       app:
-        enabled: true
         className: external
         annotations:
           external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
@@ -115,22 +114,6 @@ spec:
         tls:
           - hosts:
               - *host
-
-      internal:
-        enabled: true
-        className: internal
-        annotations:
-          external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
-        hosts:
-          - host: &internal-host "hass.${SECRET_INTERNAL_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-        tls:
-          - hosts:
-              - *internal-host
 
     persistence:
       config:
