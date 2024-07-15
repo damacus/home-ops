@@ -115,28 +115,28 @@ spec:
           - hosts:
               - *host
 
-    internal:
-      className: internal
-      annotations:
-        external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
-      hosts:
-        - host: &internal-host "hass.${SECRET_INTERNAL_DOMAIN}"
-          paths:
-            - path: /
-              service:
-                identifier: app
-                port: http
-            - path: /
-              service:
-                identifier: app
-                port: mdns-tcp
-            - path: /
-              service:
-                identifier: app
-                port: mdns-udp
-      tls:
-        - hosts:
-            - *internal-host
+      internal:
+        className: internal
+        annotations:
+          external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
+        hosts:
+          - host: &internal-host "hass.${SECRET_INTERNAL_DOMAIN}"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+              - path: /
+                service:
+                  identifier: app
+                  port: mdns-tcp
+              - path: /
+                service:
+                  identifier: app
+                  port: mdns-udp
+        tls:
+          - hosts:
+              - *internal-host
 
     persistence:
       config:
