@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: ingress-nginx
-      version: 4.10.1
+      version: 4.11.0
       sourceRef:
         kind: HelmRepository
         name: ingress-nginx
@@ -42,6 +42,7 @@ spec:
               operator: In
               values: ["external"]
       config:
+        block-user-agents: "AdsBot-Google,Amazonbot,anthropic-ai,Applebot-Extended,Bytespider,CCBot,ChatGPT-User,ClaudeBot,Claude-Web,cohere-ai,Diffbot,FacebookBot,FriendlyCrawler,Google-Extended,GoogleOther,GPTBot,img2dataset,omgili,omgilibot,peer39_crawler,peer39_crawler/1.0,PerplexityBot,YouBot,"
         client-body-buffer-size: 100M
         client-body-timeout: 120
         client-header-timeout: 120
@@ -80,13 +81,15 @@ spec:
       resources:
         requests:
           cpu: 100m
+          memory: 250Mi
         limits:
+          cpu: 200m
           memory: 500Mi
     defaultBackend:
       enabled: true
       image:
         repository: ghcr.io/tarampampam/error-pages
-        tag: 2.27.0
+        tag: 3.2.0
       extraEnvs:
         - { name: TEMPLATE_NAME, value: lost-in-space }
         - { name: SHOW_DETAILS, value: "false" }
