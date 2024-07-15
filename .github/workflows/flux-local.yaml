@@ -33,38 +33,38 @@ jobs:
       - name: Setup Flux CLI
         uses: fluxcd/flux2/action@v2.2.2
 
-      # - uses: allenporter/flux-local/action/test@4.3.1
-      #   with:
-      #     path: ./kubernetes
-      #     enable-helm: true
-      #     enable-kyverno: false
-      #     debug: false
+      - uses: allenporter/flux-local/action/test@4.3.1
+        with:
+          path: ./kubernetes
+          enable-helm: true
+          enable-kyverno: false
+          debug: false
 
-      # - uses: allenporter/flux-local/action/diff@4.3.1
-      #   id: diff
-      #   with:
-      #     live-branch: main
-      #     path: ./kubernetes
-      #     resource: helmrelease
-      #     debug: false
+      - uses: allenporter/flux-local/action/diff@4.3.1
+        id: diff
+        with:
+          live-branch: main
+          path: ./kubernetes
+          resource: helmrelease
+          debug: false
 
-  #     - name: PR Comments
-  #       uses: mshick/add-pr-comment@v2
-  #       if: ${{ steps.diff.outputs.diff != '' }}
-  #       with:
-  #         repo-token: ${{ secrets.GITHUB_TOKEN }}
-  #         message-failure: Unable to post diff
-  #         message: |
-  #           `````diff
-  #           ${{ steps.diff.outputs.diff }}
-  #           `
+      - name: PR Comments
+        uses: mshick/add-pr-comment@v2
+        if: ${{ steps.diff.outputs.diff != '' }}
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message-failure: Unable to post diff
+          message: |
+            `````diff
+            ${{ steps.diff.outputs.diff }}
+            `
 
-  # flux-diff-success:
-  #   if: ${{ always() }}
-  #   needs: ["flux-local"]
-  #   name: Flux Local Successful
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
-  #       name: Check matrix status
-  #       run: exit 1
+  flux-diff-success:
+    if: ${{ always() }}
+    needs: ["flux-local"]
+    name: Flux Local Successful
+    runs-on: ubuntu-latest
+    steps:
+      - if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        name: Check matrix status
+        run: exit 1
