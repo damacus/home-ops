@@ -33,14 +33,14 @@ jobs:
       - name: Setup Flux CLI
         uses: fluxcd/flux2/action@v2.3.0
 
-      - uses: allenporter/flux-local/action/test@4.3.1
+      - uses: allenporter/flux-local/action/test@5.4.0
         with:
           path: ./kubernetes
           enable-helm: true
           enable-kyverno: false
           debug: false
 
-      - uses: allenporter/flux-local/action/diff@4.3.1
+      - uses: allenporter/flux-local/action/diff@5.4.0
         id: diff
         with:
           live-branch: main
