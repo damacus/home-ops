@@ -16,7 +16,7 @@ kind: EndpointSlice
 metadata:
   name: minio
   namespace: network
-addresses: IPv4
+addressType: IPv4
 ports:
   - name: http
     port: 9001
