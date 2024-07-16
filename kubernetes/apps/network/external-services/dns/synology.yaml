@@ -2,32 +2,42 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: &app synology
+  name: synology
   namespace: network
-  labels:
-    app.kubernetes.io/name: *app
-    app.kubernetes.io/instance: *app
 spec:
-  type: ExternalName
-  externalName: synology.${SECRET_INTERNAL_DOMAIN}
   ports:
     - name: http
-      port: &port 8081
       protocol: TCP
+      port: &port 8081
       targetPort: *port
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: synology
+  namespace: network
+addresses: IPv4
+ports:
+  - name: http
+    port: 8081
+    protocol: TCP
+    appProtocol: HTTP
+endpoints:
+  - addresses:
+      - ${SECRET_SYNOLOGY_IP:-test}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: &app synology
   namespace: network
-  annotations:
-    external-dns.alpha.kubernetes.io/target: ${SECRET_SYNOLOGY_IP:-test}
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  labels:
+    app.kubernetes.io/name: *app
+    app.kubernetes.io/instance: *app
 spec:
   ingressClassName: internal
   rules:
-    - host: &host synology.${SECRET_INTERNAL_DOMAIN}
+    - host: synology.${SECRET_INTERNAL_DOMAIN}
       http:
         paths:
           - path: /
@@ -37,6 +47,3 @@ spec:
                 name: *app
                 port:
                   number: 8081
-  tls:
-    - hosts:
-        - *host
