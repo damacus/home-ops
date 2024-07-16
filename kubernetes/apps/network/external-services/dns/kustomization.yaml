@@ -6,4 +6,5 @@ namespace: network
 resources:
   - ./synology.yaml
   - ./internal-DNSEndpoint.yaml
+  - ./minio.yaml
   - ./unifi.yaml
