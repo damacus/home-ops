@@ -41,22 +41,41 @@ jobs:
           debug: false
 
       - uses: allenporter/flux-local/action/diff@5.4.0
-        id: diff
+        id: diff-helmrelease
         with:
           live-branch: main
           path: ./kubernetes
           resource: helmrelease
           debug: false
 
-      - name: PR Comments
+      - uses: allenporter/flux-local/action/diff@5.4.0
+        id: diff-kustomization
+        with:
+          live-branch: main
+          path: ./kubernetes
+          resource: kustomization
+          debug: false
+
+      - name: PR Comments (Helm Release)
         uses: mshick/add-pr-comment@v2
-        if: ${{ steps.diff.outputs.diff != '' }}
+        if: ${{ steps.diff-helmrelease.outputs.diff != '' }}
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message-failure: Unable to post diff
+          message-failure: Unable to post diff for helmrelease
           message: |
             `````diff
-            ${{ steps.diff.outputs.diff }}
+            ${{ steps.diff-helmrelease.outputs.diff }}
+            `
+
+      - name: PR Comments (Kustomization)
+        uses: mshick/add-pr-comment@v2
+        if: ${{ steps.diff-kustomization.outputs.diff != '' }}
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message-failure: Unable to post diff for kustomization
+          message: |
+            `````diff
+            ${{ steps.diff-kustomization.outputs.diff }}
             `
 
   flux-diff-success:
