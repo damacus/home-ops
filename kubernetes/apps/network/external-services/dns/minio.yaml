@@ -2,42 +2,32 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: minio
-  namespace: network
-spec:
-  ports:
-    - name: http
-      protocol: TCP
-      port: &port 9001
-      targetPort: *port
----
-apiVersion: discovery.k8s.io/v1
-kind: EndpointSlice
-metadata:
-  name: minio
-  namespace: network
-addressType: IPv4
-ports:
-  - name: http
-    port: 9001
-    protocol: TCP
-    appProtocol: HTTP
-endpoints:
-  - addresses:
-      - ${SECRET_SYNOLOGY_IP:-test}
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
   name: &app minio
   namespace: network
   labels:
     app.kubernetes.io/name: *app
     app.kubernetes.io/instance: *app
 spec:
+  type: ExternalName
+  externalName: minio.${SECRET_INTERNAL_DOMAIN}
+  ports:
+    - name: http
+      port: &port 9001
+      protocol: TCP
+      targetPort: *port
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: &app minio
+  namespace: network
+  annotations:
+    external-dns.alpha.kubernetes.io/target: 192.168.1.60
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
   ingressClassName: internal
   rules:
-    - host: minio.${SECRET_INTERNAL_DOMAIN}
+    - host: &host minio.${SECRET_INTERNAL_DOMAIN}
       http:
         paths:
           - path: /
@@ -47,3 +37,6 @@ spec:
                 name: *app
                 port:
                   number: 9001
+  tls:
+    - hosts:
+        - *host
