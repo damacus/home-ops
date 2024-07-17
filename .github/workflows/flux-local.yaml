@@ -12,14 +12,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  flux-local:
-    name: Flux Local
+  flux-test:
+    name: Flux Local Test
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-    strategy:
-      matrix:
-        resources: ["helmrelease", "kustomization"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,20 +37,41 @@ jobs:
           enable-kyverno: false
           debug: false
 
+  flux-diff:
+    name: Flux Local
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    strategy:
+      matrix:
+        resource: ["helmrelease", "kustomization"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout Default Branch
+        uses: actions/checkout@v4
+        with:
+          ref: "${{ github.event.repository.default_branch }}"
+          path: default
+
+      - name: Setup Flux CLI
+        uses: fluxcd/flux2/action@v2.3.0
+
       - uses: allenporter/flux-local/action/diff@5.4.0
         id: diff
         with:
           live-branch: main
           path: ./kubernetes
-          resource: helmrelease
+          resource: ${{ matrix.resource }}
           debug: false
 
-      - name: PR Comments
+      - name: PR Comments (${{matrix.resource}})
         uses: mshick/add-pr-comment@v2
         if: ${{ steps.diff.outputs.diff != '' }}
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message-failure: Unable to post diff
+          message-failure: Unable to post diff for helmrelease
           message: |
             `````diff
             ${{ steps.diff.outputs.diff }}
@@ -61,7 +79,7 @@ jobs:
 
   flux-diff-success:
     if: ${{ always() }}
-    needs: ["flux-local"]
+    needs: ["flux-diff", "flux-test"]
     name: Flux Local Successful
     runs-on: ubuntu-latest
     steps:
