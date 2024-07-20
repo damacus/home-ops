@@ -1,0 +1,121 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app matter-server
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.2.1
+      interval: 15m
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  maxHistory: 3
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: uninstall
+  uninstall:
+    keepHistory: false
+  values:
+    global:
+      nameOverride: *app
+      fullnameOverride: *app
+
+    controllers:
+      matter-server:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod:
+          securityContext:
+            runAsUser: 0 # ${APP_UID}   # Must be run as root user
+            runAsGroup: 100
+            runAsNonRoot: false # Must be run as root user
+            fsGroup: 100
+            fsGroupChangePolicy: "OnRootMismatch"
+            supplementalGroups:
+              - 34
+
+        containers:
+          app:
+            image:
+              repository: ghcr.io/home-assistant-libs/python-matter-server
+              tag: 6.3.0
+              pullPolicy: IfNotPresent
+            env:
+              TZ: "${TIMEZONE}"
+              MATTER_SERVER__INSTANCE_NAME: Matter-Server
+              MATTER_SERVER__PORT: &port 5580
+              MATTER_SERVER__APPLICATION_URL: &host-cluster "matter.${SECRET_INTERNAL_DOMAIN}"
+              MATTER_SERVER__LOG_LEVEL: info
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 5
+            resources:
+              requests:
+                memory: "100M"
+              limits:
+                memory: "500M"
+
+    service:
+      app:
+        controller: *app
+        type: LoadBalancer
+        annotations:
+          io.cilium/lb-ipam-ips: "${MATTER_ADDR}"
+        ports:
+          http:
+            enabled: false
+            primary: false
+            port: 65535
+          api:
+            enabled: true
+            primary: true
+            protocol: TCP
+            port: *port
+        externalTrafficPolicy: Cluster
+
+    persistence:
+      config:
+        size: 500Mi
+        globalMounts:
+          - path: /config
+
+    ingress:
+      app:
+        enabled: false
+        className: "internal"
+        hosts:
+          - host: *host-cluster
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+          - host: &host "matter.${SECRET_INTERNAL_DOMAIN}"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host-cluster
+              - *host
