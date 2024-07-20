@@ -10,7 +10,6 @@ spec:
   prune: true
   dependsOn:
     - name: longhorn
-    - name: home-assistant
 
   sourceRef:
     kind: GitRepository
