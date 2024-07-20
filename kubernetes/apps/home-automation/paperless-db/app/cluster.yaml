@@ -60,15 +60,7 @@ spec:
       owner: paperless
       secret:
         name: paperless-db-secret
-# Note: previousCluster needs to be set to the name of the previous
-# cluster when recovering from an existing cnpg cluster
-# bootstrap:
-#   recovery:
-#     backup:
-#       name: paperless-db-20240513105637
-# Note: externalClusters is needed when recovering from an existing cnpg cluster
-# externalClusters:
-#   - name: *previousCluster
-#     barmanObjectStore:
-#       <<: *barmanObjectStore
-#       serverName: *previousCluster
+bootstrap:
+  recovery:
+    backup:
+      name: paperless-20240720000000
