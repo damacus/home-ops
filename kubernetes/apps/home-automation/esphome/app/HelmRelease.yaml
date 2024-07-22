@@ -92,7 +92,7 @@ spec:
     persistence:
       config:
         accessMode: ReadWriteOnce
-        size: 500Mi
+        size: 1Gi
         globalMounts:
           - path: /config
 
