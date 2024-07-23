@@ -90,8 +90,17 @@ spec:
             primary: true
             protocol: TCP
             port: *port
+          mdns-tcp:
+            enabled: true
+            port: 5353
+            protocol: TCP
+            targetPort: 5353
+          mdns-udp:
+            enabled: true
+            port: 5353
+            protocol: UDP
+            targetPort: 5353
         externalTrafficPolicy: Cluster
-
     persistence:
       config:
         size: 500Mi
