@@ -74,10 +74,15 @@ spec:
               limits:
                 memory: "500M"
 
+    defaultPodOptions:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+
     service:
       app:
         controller: *app
         type: LoadBalancer
+        externalTrafficPolicy: Cluster
         annotations:
           io.cilium/lb-ipam-ips: "${MATTER_ADDR}"
         ports:
@@ -100,7 +105,6 @@ spec:
             port: 5353
             protocol: UDP
             targetPort: 5353
-        externalTrafficPolicy: Cluster
     persistence:
       config:
         size: 500Mi
