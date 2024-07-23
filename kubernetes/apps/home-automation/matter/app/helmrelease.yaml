@@ -74,6 +74,9 @@ spec:
               limits:
                 memory: "500M"
 
+    # Matter discovers devices using MDNS and neighbors discovery,
+    # thus we need the controller to be on the host network.
+    # https://github.com/home-assistant-libs/python-matter-server?tab=readme-ov-file#requirements-to-communicate-with-thread-devices-through-thread-border-routers
     defaultPodOptions:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
