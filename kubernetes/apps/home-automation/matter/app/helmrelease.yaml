@@ -38,9 +38,9 @@ spec:
           reloader.stakater.com/auto: "true"
         pod:
           securityContext:
-            runAsUser: 0 # ${APP_UID}   # Must be run as root user
+            runAsUser: 0 # Must be run as root user
             runAsGroup: 100
-            runAsNonRoot: false # Must be run as root user
+            runAsNonRoot: false
             fsGroup: 100
             fsGroupChangePolicy: "OnRootMismatch"
             supplementalGroups:
@@ -56,8 +56,9 @@ spec:
               TZ: "${TIMEZONE}"
               MATTER_SERVER__INSTANCE_NAME: Matter-Server
               MATTER_SERVER__PORT: &port 5580
-              MATTER_SERVER__APPLICATION_URL: &host-cluster "matter.${SECRET_INTERNAL_DOMAIN}"
+              MATTER_SERVER__APPLICATION_URL: "matter.${SECRET_INTERNAL_DOMAIN}"
               MATTER_SERVER__LOG_LEVEL: info
+              MATTER_SERVER__VENDOR_ID: 4939
             probes:
               liveness:
                 enabled: true
@@ -89,10 +90,6 @@ spec:
         annotations:
           io.cilium/lb-ipam-ips: "${MATTER_ADDR}"
         ports:
-          http:
-            enabled: false
-            primary: false
-            port: 65535
           api:
             enabled: true
             primary: true
@@ -108,31 +105,10 @@ spec:
             port: 5353
             protocol: UDP
             targetPort: 5353
+
     persistence:
       config:
         size: 500Mi
         accessMode: ReadWriteOnce
         globalMounts:
           - path: /config
-
-    ingress:
-      app:
-        enabled: false
-        className: "internal"
-        hosts:
-          - host: *host-cluster
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-          - host: &host "matter.${SECRET_INTERNAL_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-        tls:
-          - hosts:
-              - *host-cluster
-              - *host
