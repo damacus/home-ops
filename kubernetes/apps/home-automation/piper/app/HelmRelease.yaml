@@ -80,6 +80,6 @@ spec:
         requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
               matchExpressions:
-                - key: node-role.kubernetes.io/master=true
+                - key: node-role.kubernetes.io/master
                   operator: Exists
                   values: ["true"]

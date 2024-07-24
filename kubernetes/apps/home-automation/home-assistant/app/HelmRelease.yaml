@@ -158,3 +158,13 @@ spec:
 
       tmp:
         type: emptyDir
+
+    affinity:
+      podAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: node-role.kubernetes.io/master
+                  operator: Exists
+                  values: ["true"]
+            topologyKey: "kubernetes.io/hostname"
