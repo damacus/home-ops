@@ -108,11 +108,6 @@ spec:
             targetPort: 5353
 
     persistence:
-      config:
-        size: 500Mi
-        accessMode: ReadWriteOnce
-        globalMounts:
-          - path: /config
       data:
         size: 500Mi
         accessMode: ReadWriteOnce
