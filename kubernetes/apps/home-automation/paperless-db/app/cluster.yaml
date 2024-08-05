@@ -7,7 +7,7 @@ metadata:
   namespace: home-automation
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.3-1
-  instances: 3
+  instances: 2
   primaryUpdateStrategy: unsupervised
 
   storage:
