@@ -8,17 +8,15 @@ metadata:
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.3-10
   instances: 3
-
   primaryUpdateStrategy: unsupervised
 
   storage:
     size: 5Gi
     storageClass: openebs-hostpath
 
+  enableSuperuserAccess: true
   superuserSecret:
     name: cloudnative-pg-secret
-
-  enableSuperuserAccess: true
 
   nodeMaintenanceWindow:
     inProgress: false
@@ -33,7 +31,7 @@ spec:
       cpu: "1000m"
 
   backup:
-    retentionPolicy: 7d
+    retentionPolicy: 30d
     barmanObjectStore:
       data:
         compression: bzip2
@@ -42,8 +40,6 @@ spec:
         maxParallel: 8
       destinationPath: s3://cloudnative-pg
       endpointURL: http://192.168.1.60:9000
-      # Note: serverName version needs to be incremented
-      # when recovering from an existing cnpg cluster
       serverName: paperless
       s3Credentials:
         accessKeyId:
@@ -53,13 +49,7 @@ spec:
           name: cloudnative-pg-secret
           key: aws-secret-access-key
 
-  bootstrap:
-    initdb:
-      database: paperless
-      owner: paperless
-      secret:
-        name: paperless-db-secret
 bootstrap:
   recovery:
     backup:
-      name: paperless-20240720000000
+      name: paperless-20240805000000
