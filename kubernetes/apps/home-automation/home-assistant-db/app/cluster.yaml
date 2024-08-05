@@ -7,35 +7,23 @@ metadata:
   namespace: home-automation
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.3-1
-
   instances: 3
-
   primaryUpdateStrategy: unsupervised
 
   storage:
     size: 20Gi
     storageClass: openebs-hostpath
 
+  enableSuperuserAccess: true
   superuserSecret:
     name: cloudnative-pg-secret
-
-  enableSuperuserAccess: true
 
   postgresql:
     parameters:
       max_connections: "400"
       shared_buffers: 256MB
-      # checkpoint_completion_target: "0.9" # Default
-      # default_statistics_target: "100" # Default
-      # effective_cache_size: 3GB
-      effective_io_concurrency: "200" # Default 1
+      effective_io_concurrency: "200"
       maintenance_work_mem: 256MB
-      # max_wal_size: 4GB
-      # min_wal_size: 1GB
-      # random_page_cost: "1.1"
-      # shared_buffers: 1GB
-      # wal_buffers: 16MB
-      # work_mem: 3932kB
 
   nodeMaintenanceWindow:
     inProgress: false
@@ -59,8 +47,6 @@ spec:
         maxParallel: 8
       destinationPath: s3://cloudnative-pg/
       endpointURL: http://192.168.1.60:9000
-      # Note: serverName version needs to be incremented
-      # when recovering from an existing cnpg cluster
       serverName: home-assistant
       s3Credentials:
         accessKeyId:
