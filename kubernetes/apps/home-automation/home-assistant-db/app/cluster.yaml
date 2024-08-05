@@ -13,6 +13,9 @@ spec:
   storage:
     size: 20Gi
     storageClass: openebs-hostpath
+  walStorage:
+    storageClass: openebs-hostpath
+    size: 10Gi
 
   enableSuperuserAccess: true
   superuserSecret:
