@@ -21,10 +21,6 @@ spec:
   superuserSecret:
     name: cloudnative-pg-secret
 
-  nodeMaintenanceWindow:
-    inProgress: false
-    reusePVC: true
-
   resources:
     requests:
       memory: "128Mi"
