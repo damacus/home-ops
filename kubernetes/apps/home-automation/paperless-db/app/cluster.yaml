@@ -39,7 +39,7 @@ spec:
         maxParallel: 8
       destinationPath: s3://cloudnative-pg
       endpointURL: http://192.168.1.60:9000
-      serverName: paperless-v2
+      serverName: paperless
       s3Credentials:
         accessKeyId:
           name: cloudnative-pg-secret
