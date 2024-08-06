@@ -51,4 +51,4 @@ spec:
   bootstrap:
     recovery:
       backup:
-        name: paperless-20240805000000
+        name: paperless-20240806000000
