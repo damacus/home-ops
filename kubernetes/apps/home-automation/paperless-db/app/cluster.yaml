@@ -31,7 +31,7 @@ spec:
 
   backup:
     retentionPolicy: 30d
-    barmanObjectStore:
+    barmanObjectStore: &barmanObjectStore
       data:
         compression: bzip2
       wal:
@@ -39,7 +39,7 @@ spec:
         maxParallel: 8
       destinationPath: s3://cloudnative-pg
       endpointURL: http://192.168.1.60:9000
-      serverName: paperless
+      serverName: paperless-v2
       s3Credentials:
         accessKeyId:
           name: cloudnative-pg-secret
@@ -50,5 +50,13 @@ spec:
 
 bootstrap:
   recovery:
+    source: &previousCluster paperless-v1
     backup:
       name: paperless-20240805000000
+
+  # Note: externalClusters is needed when recovering from an existing cnpg cluster
+  externalClusters:
+    - name: *previousCluster
+      barmanObjectStore:
+        <<: *barmanObjectStore
+        serverName: *previousCluster
