@@ -7,12 +7,15 @@ metadata:
   namespace: home-automation
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.3-10
-  instances: 3
+  instances: 2
   primaryUpdateStrategy: unsupervised
 
   storage:
     size: 20Gi
     storageClass: openebs-hostpath
+  # walStorage:
+  #   storageClass: openebs-hostpath
+  #   size: 10Gi
 
   enableSuperuserAccess: true
   superuserSecret:
