@@ -31,7 +31,7 @@ spec:
 
   backup:
     retentionPolicy: 30d
-    barmanObjectStore: &barmanObjectStore
+    barmanObjectStore:
       data:
         compression: bzip2
       wal:
@@ -48,15 +48,7 @@ spec:
           name: cloudnative-pg-secret
           key: aws-secret-access-key
 
-bootstrap:
-  recovery:
-    source: &previousCluster paperless-v1
-    backup:
-      name: paperless-20240805000000
-
-  # Note: externalClusters is needed when recovering from an existing cnpg cluster
-  externalClusters:
-    - name: *previousCluster
-      barmanObjectStore:
-        <<: *barmanObjectStore
-        serverName: *previousCluster
+  bootstrap:
+    recovery:
+      backup:
+        name: paperless-20240805000000
