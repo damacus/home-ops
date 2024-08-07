@@ -50,5 +50,7 @@ spec:
 
   bootstrap:
     recovery:
+      recoveryTarget:
+        targetImmediate: true
       backup:
         name: paperless-20240806000000
