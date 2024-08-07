@@ -72,9 +72,11 @@ spec:
                   periodSeconds: 5
             resources:
               requests:
-                memory: "100M"
+                memory: "200M"
+                cpu: "100m"
               limits:
-                memory: "500M"
+                memory: "200M"
+                cpu: "100m"
 
     # Matter discovers devices using MDNS and neighbors discovery,
     # thus we need the controller to be on the host network.
