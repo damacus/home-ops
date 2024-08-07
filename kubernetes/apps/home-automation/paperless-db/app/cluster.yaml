@@ -51,6 +51,7 @@ spec:
   bootstrap:
     recovery:
       recoveryTarget:
+        backupID: paperless-20240806000000
         targetImmediate: true
-      backup:
-        name: paperless-20240806000000
+# backup:
+#   name: paperless-20240806000000
