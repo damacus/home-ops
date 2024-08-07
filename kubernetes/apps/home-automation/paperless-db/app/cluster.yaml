@@ -13,9 +13,6 @@ spec:
   storage:
     size: 5Gi
     storageClass: openebs-hostpath
-  # walStorage:
-  #   size: 5Gi
-  #   storageClass: openebs-hostpath
 
   enableSuperuserAccess: true
   superuserSecret:
@@ -39,7 +36,7 @@ spec:
         maxParallel: 8
       destinationPath: s3://cloudnative-pg
       endpointURL: http://192.168.1.60:9000
-      serverName: paperless-v2
+      serverName: paperless
       s3Credentials:
         accessKeyId:
           name: cloudnative-pg-secret
@@ -49,9 +46,10 @@ spec:
           key: aws-secret-access-key
 
   bootstrap:
-    recovery:
-      recoveryTarget:
-        backupID: paperless-20240806000000
-        targetImmediate: true
+    initdb:
+      database: paperless
+      owner: paperless
+      secret:
+        name: paperless-db-secret
 # backup:
 #   name: paperless-20240806000000
