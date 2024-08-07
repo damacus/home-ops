@@ -19,11 +19,11 @@ ingress:
 
 resources:
   requests:
-    cpu: 50m
-    memory: 200Mi
+    cpu: 100m
+    memory: 100Mi
   limits:
-    cpu: 200m
-    memory: 200Mi
+    cpu: 100m
+    memory: 100Mi
 
 config:
   issuer: https://dex.${SECRET_DOMAIN}
@@ -52,13 +52,6 @@ config:
     skipApprovalScreen: true
 
   staticClients:
-    # - name: oauth2-proxy
-    #   id: oauth2-proxy
-    #   secret: oauth2-proxy-client
-    #   redirectURIs:
-    #     - "https://auth.${SECRET_DOMAIN}/oauth2/callback"
-    #     - "https://hass.${SECRET_DOMAIN}/oauth2/callback"
-
     - name: grafana
       id: grafana
       secret: grafana-client-dex
