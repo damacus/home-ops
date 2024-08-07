@@ -20,9 +20,15 @@ spec:
       retries: 3
   values:
     architecture: standalone
+    resources:
+      limits:
+        cpu: 100m
+        memory: 64Mi
+      requests:
+        cpu: 100m
+        memory: 64Mi
 
-    auth:
-      enabled: false
+    auth.enabled: false
 
     master:
       persistence:
@@ -32,14 +38,6 @@ spec:
       replicaCount: 1
       persistence:
         enabled: false
-
-# useExternalDNS:
-#   enabled: true
-#   suffix: ${SECRET_INTERNAL_DOMAIN}
-#   additionalAnnotations:
-#     ttl: 10
-#     external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
-
 # networkPolicy:
 #   enabled: false # TODO: enable this
 #   ingressNSMatchLabels:
