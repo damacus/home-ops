@@ -12,5 +12,4 @@ resources:
   - ./piper/ks.yaml
   - ./namespace.yaml
   - ./config-pvc.yaml
-  # - ./zigbee2mqtt/ks.yaml
   - ./whisper/ks.yaml
