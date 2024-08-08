@@ -28,7 +28,8 @@ spec:
         cpu: 100m
         memory: 64Mi
 
-    auth.enabled: false
+    auth:
+      enabled: false
 
     master:
       persistence:
