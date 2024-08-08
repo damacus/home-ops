@@ -1,0 +1,72 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mosquitto
+spec:
+  chart:
+    spec:
+      chart: app-template
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      version: 3.3.2
+  values:
+    controllers:
+      mosquitto:
+        type: statefulset
+        replicas: 1
+        containers:
+          app:
+            args:
+              - sh
+              - -c
+              - exec mosquitto -c "/config/mosquitto.conf"
+            image:
+              repository: ghcr.io/vaskozl/mosquitto
+              tag: 2.0.18@sha256:b66bf94b966e29ba05cbb62e5f115bb636e26805b80170bed65618a8a91839c7
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+            resources:
+              limits:
+                memory: 200Mi
+              requests:
+                cpu: 2m
+                memory: 8Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: true
+
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        runAsGroup: 568
+        runAsNonRoot: true
+        runAsUser: 568
+        seccompProfile:
+          type: RuntimeDefault
+
+    persistence:
+      config:
+        name: mosquitto-config
+        type: configMap
+
+    service:
+      app:
+        annotations:
+          coredns.io/hostname: mqtt
+        controller: mosquitto
+        loadBalancerIP: ${MQTT_ADDR}
+        externalTrafficPolicy: Local
+        ports:
+          mqtt:
+            port: 1883
+        type: LoadBalancer
