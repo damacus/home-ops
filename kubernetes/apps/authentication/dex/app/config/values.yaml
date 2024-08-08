@@ -1,7 +1,7 @@
 ---
 image:
   repository: ghcr.io/dexidp/dex
-  tag: v2.41.0
+  tag: v2.41.1
 
 ingress:
   enabled: true
