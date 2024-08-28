@@ -5,6 +5,8 @@ kind: Cluster
 metadata:
   name: paperless
   namespace: home-automation
+  annotations:
+    cnpg.io/skipWalArchiving: "enabled"
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.3-10
   instances: 2
@@ -44,7 +46,6 @@ spec:
         secretAccessKey:
           name: cloudnative-pg-secret
           key: aws-secret-access-key
-
 # bootstrap:
 #   initdb:
 #     database: paperless
