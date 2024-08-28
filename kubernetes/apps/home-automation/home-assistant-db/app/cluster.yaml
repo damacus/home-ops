@@ -60,8 +60,7 @@ spec:
         secretAccessKey:
           name: cloudnative-pg-secret
           key: aws-secret-access-key
-
-  bootstrap:
-    recovery:
-      backup:
-        name: home-assistant-db-20240720000000
+#   bootstrap:
+#     recovery:
+#      backup:
+#        name: home-assistant-db-20240828000000

@@ -46,11 +46,7 @@ spec:
         secretAccessKey:
           name: cloudnative-pg-secret
           key: aws-secret-access-key
-# bootstrap:
-#   initdb:
-#     database: paperless
-#     owner: paperless
-#     secret:
-#       name: paperless-db-secret
-# backup:
-#   name: paperless-20240806000000
+#   bootstrap:
+#     recovery:
+#      backup:
+#       name: paperless-20240828000000
