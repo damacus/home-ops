@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  CERTS_DIR: "{{.KUBERNETES_DIR}}/certificates"
+
+tasks:
+  download-certificates:
+    desc: Download the certificates from the cluster
+    dir: "{{.CERTS_DIR}}"
+    cmd: |
+      kubectl get secrets -n network ironstone-casa-tls -o yaml | yq e '.data."tls.crt"' | base64 -d > ironstone-casa-tls.crt
+      kubectl get secrets -n network ironstone-casa-tls -o yaml | yq e '.data."tls.key"' | base64 -d > ironstone-casa-tls.key
+  upload-certificates:
+    desc: Upload the certificates to Synology
+    dir: "{{.CERTS_DIR}}"
+    cmd: |
+      scp ironstone-casa-tls.crt synology:/usr/syno/etc/certificate/system/default/cert.pem
+      scp ironstone-casa-tls.crt synology:/usr/syno/etc/certificate/system/default/fullchain.pem
+      scp ironstone-casa-tls.key synology:/usr/syno/etc/certificate/system/default/privkey.pem
