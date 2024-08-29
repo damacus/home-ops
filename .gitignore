@@ -38,3 +38,5 @@ secret-template.yaml
 .envrc
 kubeconfig
 age.key
+
+certificates/*
