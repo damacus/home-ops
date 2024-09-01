@@ -47,3 +47,7 @@ spec:
       host: longhorn.${SECRET_INTERNAL_DOMAIN}
       tls: true
       tlsSecretName: "network/${SECRET_INTERNAL_DOMAIN/./-}-production-tls"
+
+    networkPolicies:
+      enabled: false
+      type: "k3s"
