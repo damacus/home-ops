@@ -3,15 +3,21 @@
 version: "3"
 
 vars:
-  CERTS_DIR: "{{.KUBERNETES_DIR}}/certificates"
+  CERTS_DIR: "certificates"
 
 tasks:
   download-certificates:
     desc: Download the certificates from the cluster
     dir: "{{.CERTS_DIR}}"
     cmd: |
-      kubectl get secrets -n network ironstone-casa-tls -o yaml | yq e '.data."tls.crt"' | base64 -d > ironstone-casa-tls.crt
-      kubectl get secrets -n network ironstone-casa-tls -o yaml | yq e '.data."tls.key"' | base64 -d > ironstone-casa-tls.key
+      kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq e '.data."tls.crt"' | base64 -d > ironstone-casa-tls.crt
+      kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq e '.data."tls.key"' | base64 -d > ironstone-casa-tls.key
+  check-certificates:
+    desc: Check the certificates
+    dir: "{{.CERTS_DIR}}"
+    cmd: |
+      openssl x509 -in ironstone-casa-tls.crt -text -noout | grep -A 2 Validity
+      openssl rsa -in ironstone-casa-tls.key -check
   upload-certificates:
     desc: Upload the certificates to Synology
     dir: "{{.CERTS_DIR}}"
