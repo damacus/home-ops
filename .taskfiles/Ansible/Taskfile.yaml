@@ -16,7 +16,6 @@ env:
   ANSIBLE_INVENTORY_UNPARSED_WARNING: "False"
 
 tasks:
-
   deps:
     desc: Set up Ansible dependencies
     deps: [":workstation:venv"]
@@ -24,8 +23,14 @@ tasks:
       - '{{.VIRTUAL_ENV}}/bin/python3 -m pip install --upgrade --requirement "{{.ANSIBLE_PIP_REQUIREMENTS_FILE}}"'
       - '{{.VIRTUAL_ENV}}/bin/ansible-galaxy install --role-file "{{.ANSIBLE_REQUIREMENTS_FILE}}" {{if eq .force "true"}}--force{{end}}'
     preconditions:
-      - { msg: "Missing Ansible requirements file", sh: "test -f {{.ANSIBLE_REQUIREMENTS_FILE}}" }
-      - { msg: "Missing Pip requirements file", sh: "test -f {{.ANSIBLE_PIP_REQUIREMENTS_FILE}}" }
+      - {
+          msg: "Missing Ansible requirements file",
+          sh: "test -f {{.ANSIBLE_REQUIREMENTS_FILE}}",
+        }
+      - {
+          msg: "Missing Pip requirements file",
+          sh: "test -f {{.ANSIBLE_PIP_REQUIREMENTS_FILE}}",
+        }
     sources:
       - "{{.ANSIBLE_REQUIREMENTS_FILE}}"
       - "{{.ANSIBLE_PIP_REQUIREMENTS_FILE}}"
@@ -46,42 +51,60 @@ tasks:
     requires:
       vars: ["playbook"]
     preconditions:
-      - { msg: "Missing Ansible inventory file", sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}" }
+      - {
+          msg: "Missing Ansible inventory file",
+          sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
+        }
 
-  poweroff:
-    desc: Shutdown all the k8s nodes
+  poweroff-workers:
+    desc: Shutdown worker nodes
     deps: ["deps"]
-    cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} -a '/usr/bin/systemctl poweroff' --become"
+    cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} --limit 'worker' -a '/usr/bin/systemctl poweroff' --become"
     preconditions:
-      - { msg: "Missing Ansible inventory file", sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}" }
+      - {
+          msg: "Missing Ansible inventory file",
+          sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
+        }
 
   list:
     desc: List all the hosts
     deps: ["deps"]
     cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} --list-hosts"
     preconditions:
-      - { msg: "Missing Ansible inventory file", sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}" }
+      - {
+          msg: "Missing Ansible inventory file",
+          sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
+        }
 
   ping:
     desc: Ping all the hosts
     deps: ["deps"]
     cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} --one-line -m 'ping'"
     preconditions:
-      - { msg: "Missing Ansible inventory file", sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}" }
+      - {
+          msg: "Missing Ansible inventory file",
+          sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
+        }
 
   uptime:
     desc: Uptime of all the hosts
     deps: ["deps"]
     cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} --one-line -a 'uptime'"
     preconditions:
-      - { msg: "Missing Ansible inventory file", sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}" }
+      - {
+          msg: "Missing Ansible inventory file",
+          sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
+        }
 
   lint:
     desc: Lint Ansible
     deps: ["deps"]
     cmd: "{{.VIRTUAL_ENV}}/bin/ansible-lint --config-file {{.ANSIBLE_LINT_FILE}} {{.ANSIBLE_DIR}}/**/*.yaml"
     preconditions:
-      - { msg: "Missing Ansible lint file", sh: "test -f {{.ANSIBLE_LINT_FILE}}" }
+      - {
+          msg: "Missing Ansible lint file",
+          sh: "test -f {{.ANSIBLE_LINT_FILE}}",
+        }
 
   .reset:
     internal: true
