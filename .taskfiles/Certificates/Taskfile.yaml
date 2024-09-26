@@ -16,17 +16,19 @@ tasks:
     desc: Check the certificates
     dir: "{{.CERTS_DIR}}"
     cmd: |
-      openssl x509 -in ironstone-casa-tls.crt -text -noout | grep -A 2 Validity
-      openssl rsa -in ironstone-casa-tls.key -check
+      openssl x509 -in ironstone-casa-tls.crt -noout -checkend 86400
+      openssl rsa -in ironstone-casa-tls.key -noout -check
   generate-unifi-keystore:
     desc: Generate the Unifi keystore
     dir: "{{.CERTS_DIR}}"
     cmd: |
       openssl pkcs12 -export -in ironstone-casa-tls.crt -inkey ironstone-casa-tls.key -out ironstone-keystore.p12 -name "unifi"
-  upload-certificates:
-    desc: Upload the certificates to Synology
+  upload-certificates-unifi:
+    desc: Upload the certificates to Unifi
+    deps:
+      - download-certificates
+      - check-certificates
     dir: "{{.CERTS_DIR}}"
     cmd: |
-      scp ironstone-casa-tls.crt synology:/usr/syno/etc/certificate/system/default/cert.pem
-      scp ironstone-casa-tls.crt synology:/usr/syno/etc/certificate/system/default/fullchain.pem
-      scp ironstone-casa-tls.key synology:/usr/syno/etc/certificate/system/default/privkey.pem
+      scp ironstone-casa-tls.crt root:/data/unifi-core/config/unifi-core.crt
+      scp ironstone-casa-tls.key root:/data/unifi-core/config/unifi-core.key
