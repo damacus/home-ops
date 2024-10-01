@@ -5,13 +5,11 @@ bandwidthManager:
   bbr: true
 bpf:
   masquerade: true
+
 cluster:
   name: ironstone
   id: 1
-containerRuntime:
-  integration: containerd
-  socketPath: /var/run/k3s/containerd/containerd.sock
-enableRuntimeDeviceDetection: true
+
 endpointRoutes:
   enabled: true
 
@@ -88,7 +86,7 @@ l2announcements:
 
 loadBalancer:
   algorithm: maglev
-  mode: snat # dsr, hybrid, snat
+  mode: snat
 
 localRedirectPolicy: true
 rollOutCiliumPods: true
