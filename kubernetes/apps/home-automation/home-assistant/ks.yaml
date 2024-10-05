@@ -12,7 +12,7 @@ spec:
     - name: longhorn
     - name: ingress-nginx-external
     - name: cert-manager
-    - name: external-dns-bind
+    - name: external-dns-unifi
     - name: external-dns-cloudflare
     - name: cloudnative-pg
     - name: home-assistant-db
