@@ -12,7 +12,6 @@ spec:
     - name: longhorn
     - name: cert-manager
     - name: redis
-    - name: paperless-db
 
   sourceRef:
     kind: GitRepository
