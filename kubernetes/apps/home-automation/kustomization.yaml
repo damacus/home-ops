@@ -2,13 +2,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./codeserver/ks.yaml
+  # - ./codeserver/ks.yaml
   - ./esphome/ks.yaml
   - ./home-assistant/ks.yaml
   - ./home-assistant-db/ks.yaml
   - ./matter/ks.yaml
   - ./paperless/ks.yaml
-  - ./paperless-db/ks.yaml
+  # - ./paperless-db/ks.yaml
   - ./piper/ks.yaml
   - ./namespace.yaml
   - ./config-pvc.yaml
