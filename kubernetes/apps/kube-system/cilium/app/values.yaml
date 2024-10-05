@@ -14,7 +14,7 @@ endpointRoutes:
   enabled: true
 
 hubble:
-  enabled: true
+  enabled: false
   metrics:
     enabled:
       - dns:query;ignoreAAAA
@@ -25,12 +25,12 @@ hubble:
       - icmp
       - http
   relay:
-    enabled: true
+    enabled: false
     rollOutPods: true
   serviceMonitor:
     enabled: false
   ui:
-    enabled: true
+    enabled: false
     ingress:
       enabled: false
     rollOutPods: true
