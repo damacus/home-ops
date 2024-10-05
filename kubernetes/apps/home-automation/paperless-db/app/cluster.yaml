@@ -3,44 +3,30 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: home-assistant
+  name: paperless
   namespace: home-automation
   annotations:
     cnpg.io/skipWalArchiving: "enabled"
 spec:
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.4-31
+  imageName: ghcr.io/cloudnative-pg/postgresql:16-4-29
   instances: 2
   primaryUpdateStrategy: unsupervised
 
   storage:
-    size: 20Gi
+    size: 5Gi
     storageClass: openebs-hostpath
-  # walStorage:
-  #   storageClass: openebs-hostpath
-  #   size: 10Gi
 
   enableSuperuserAccess: true
   superuserSecret:
     name: cloudnative-pg-secret
 
-  postgresql:
-    parameters:
-      max_connections: "400"
-      shared_buffers: 256MB
-      effective_io_concurrency: "200"
-      maintenance_work_mem: 256MB
-
-  nodeMaintenanceWindow:
-    inProgress: false
-    reusePVC: true
-
   resources:
     requests:
-      cpu: 50m
-      memory: 400Mi
+      memory: "128Mi"
+      cpu: "250m"
     limits:
-      memory: 2Gi
-      cpu: 500m
+      memory: "512Mi"
+      cpu: "1000m"
 
   backup:
     retentionPolicy: 30d
@@ -50,9 +36,9 @@ spec:
       wal:
         compression: bzip2
         maxParallel: 8
-      destinationPath: s3://cloudnative-pg/
+      destinationPath: s3://cloudnative-pg
       endpointURL: http://192.168.1.60:9000
-      serverName: home-assistant
+      serverName: paperless
       s3Credentials:
         accessKeyId:
           name: cloudnative-pg-secret
@@ -63,4 +49,4 @@ spec:
 #   bootstrap:
 #     recovery:
 #      backup:
-#        name: home-assistant-db-20240828000000
+#       name: paperless-20240828000000
