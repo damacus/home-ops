@@ -9,7 +9,7 @@ metadata:
     cnpg.io/skipWalArchiving: "enabled"
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.4-31
-  instances: 1
+  instances: 2
   primaryUpdateStrategy: unsupervised
 
   storage:
