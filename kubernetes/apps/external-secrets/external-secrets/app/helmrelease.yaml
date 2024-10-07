@@ -36,3 +36,7 @@ spec:
       serviceMonitor:
         enabled: true
         interval: 1m
+    resources:
+      requests:
+        cpu: 100m
+        memory: 100Mi
