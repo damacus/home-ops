@@ -8,3 +8,4 @@ resources:
   - ./node-feature-discovery/ks.yaml
   - ./reloader/ks.yaml
   - ./descheduler/ks.yaml
+  - ./metrics-server/ks.yaml
