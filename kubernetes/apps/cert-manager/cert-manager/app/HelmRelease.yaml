@@ -26,6 +26,10 @@ spec:
     keepHistory: false
   values:
     installCRDs: true
+    resources:
+      requests:
+        cpu: 100m
+        memory: 150Mi
     extraArgs:
       - --dns01-recursive-nameservers=1.1.1.1:53,9.9.9.9:53
       - --dns01-recursive-nameservers-only
