@@ -5,6 +5,5 @@ kind: Kustomization
 resources:
   - ./cilium/ks.yaml
   - ./kube-vip/ks.yaml
-  - ./node-feature-discovery/ks.yaml
   - ./reloader/ks.yaml
   - ./descheduler/ks.yaml
