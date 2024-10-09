@@ -9,7 +9,7 @@ resources:
   - ./matter/ks.yaml
   - ./paperless/ks.yaml
   # - ./paperless-db/ks.yaml
-  # - ./piper/ks.yaml
+  - ./piper/ks.yaml
   - ./namespace.yaml
   - ./config-pvc.yaml
-  # - ./whisper/ks.yaml
+  - ./whisper/ks.yaml
