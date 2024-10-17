@@ -12,10 +12,6 @@ spec:
   externalName: minio.${SECRET_INTERNAL_DOMAIN}
   ports:
     - name: http
-      port: &port 900
-      protocol: TCP
-      targetPort: *port
-    - name: https
       port: &port 9001
       protocol: TCP
       targetPort: *port
@@ -27,7 +23,7 @@ metadata:
   namespace: network
   annotations:
     external-dns.alpha.kubernetes.io/target: 192.168.1.60
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
   ingressClassName: internal
   rules:

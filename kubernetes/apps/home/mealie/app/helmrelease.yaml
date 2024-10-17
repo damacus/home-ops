@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.4.1
+      version: 3.5.1
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -36,7 +36,7 @@ spec:
           app:
             image:
               repository: ghcr.io/mealie-recipes/mealie
-              tag: next
+              tag: v1.12.0
 
             env:
               TZ: "${TIMEZONE}"
@@ -60,8 +60,6 @@ spec:
             envFrom:
               - secretRef:
                   name: mealie-secret
-            # - secretRef:
-            #     name: mealie-client
             probes:
               liveness:
                 enabled: false
@@ -85,23 +83,25 @@ spec:
 
     service:
       app:
+        controller: mealie
         ports:
           http:
             port: 9000
 
     ingress:
       app:
-        enabled: true
-        ingressClassName: internal
-        annotations:
-          external-dns.alpha.kubernetes.io/target: &host "{{ .Release.Name }}.ironstone.casa"
+        className: "internal"
         hosts:
-          - host: *host
+          - host: &hostName "{{ .Release.Name }}.ironstone.casa"
             paths:
               - path: /
-                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *hostName
 
     persistence:
       data:
-        enabled: true
         existingClaim: mealie-data
