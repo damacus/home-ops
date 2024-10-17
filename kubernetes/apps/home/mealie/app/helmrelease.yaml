@@ -51,7 +51,7 @@ spec:
               POSTGRES_USER: "{{ .Release.Name }}"
               POSTGRES_DB: "{{ .Release.Name }}"
               POSTGRES_PORT: "5432"
-              POSTGRES_SERVER: "{{ .Release.Name }}-postgres-rw"
+              POSTGRES_SERVER: "{{ .Release.Name }}-rw"
               # OIDC Configuration
               # OIDC_ENABLED: "false"
               # OIDC_CLIENT_ID: "mealie"
