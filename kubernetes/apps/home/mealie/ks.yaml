@@ -12,6 +12,7 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: cloudnative-pg
+    - name: mealie-db
   path: ./kubernetes/apps/home/mealie/app
   prune: true
   sourceRef:
