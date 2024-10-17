@@ -11,16 +11,22 @@ spec:
   storage:
     size: 5Gi
     storageClass: openebs-hostpath
-  superuserSecret:
-    name: mealie-secret
+
   bootstrap:
-    recovery:
+    initdb:
       database: mealie
       owner: mealie
+      secret:
+        name: mealie-db
+
+  superuserSecret:
+    name: mealie-db-superuser
+
   postgresql:
     parameters:
       max_connections: "100"
       shared_buffers: 128MB
+
   resources:
     requests:
       cpu: 100m
