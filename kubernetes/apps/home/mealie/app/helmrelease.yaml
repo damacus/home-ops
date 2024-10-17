@@ -1,0 +1,96 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2beta1.json
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: &app mealie
+  namespace: home
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: app-template
+      version: 1.5.1
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  maxHistory: 3
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controller:
+      type: statefulset
+      annotations:
+        reloader.stakater.com/auto: "true"
+
+    image:
+      repository: ghcr.io/mealie-recipes/mealie
+      tag: v1.3.2
+
+    env:
+      TZ: "${TIMEZONE}"
+      PUID: "1000"
+      PGID: "1000"
+      ALLOW_SIGNUP: "true"
+      POSTGRES_USER: "{{ .Release.Name }}"
+      POSTGRES_DB: "{{ .Release.Name }}"
+      POSTGRES_PORT: "5432"
+      POSTGRES_SERVER: "{{ .Release.Name }}-postgres-rw"
+      BASE_URL: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+
+    envFrom:
+      - secretRef:
+          name: mealie-secret
+
+    service:
+      main:
+        ports:
+          http:
+            port: 9000
+
+    ingress:
+      main:
+        enabled: true
+        ingressClassName: internal
+        annotations:
+          external-dns.alpha.kubernetes.io/target: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        hosts:
+          - host: *host
+            paths:
+              - path: /
+                pathType: Prefix
+
+    persistence:
+      config:
+        enabled: true
+        existingClaim: mealie-config
+      data:
+        enabled: true
+        existingClaim: mealie-data
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 250Mi
+      limits:
+        memory: 500Mi
+
+    postgresql:
+      enabled: true
+      existingSecret: mealie-secret
+      auth:
+        database: mealie
+        username: mealie
+      primary:
+        persistence:
+          enabled: true
+          existingClaim: mealie-db
