@@ -1,16 +1,16 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2beta1.json
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: &app mealie
+  name: mealie
   namespace: home
 spec:
   interval: 15m
   chart:
     spec:
       chart: app-template
-      version: 1.5.1
+      version: 3.5.1
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -27,70 +27,81 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    controller:
-      type: statefulset
-      annotations:
-        reloader.stakater.com/auto: "true"
+    controllers:
+      mealie:
+        type: statefulset
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/mealie-recipes/mealie
+              tag: v1.12.0
 
-    image:
-      repository: ghcr.io/mealie-recipes/mealie
-      tag: v1.3.2
+            env:
+              TZ: "${TIMEZONE}"
+              PUID: &uid 568
+              PGID: *uid
+              ALLOW_SIGNUP: "true"
+              MAX_WORKERS: 1
+              WEB_CONCURRENCY: 1
+              BASE_URL: "https://{{ .Release.Name }}.ironstone.casa"
+              # Postgres Configuration
+              POSTGRES_USER: "{{ .Release.Name }}"
+              POSTGRES_DB: "{{ .Release.Name }}"
+              POSTGRES_PORT: "5432"
+              POSTGRES_SERVER: "{{ .Release.Name }}-postgres-rw"
+              # OIDC Configuration
+              # OIDC_ENABLED: "false"
+              # OIDC_CLIENT_ID: "mealie"
+              # OIDC_METADATA_URL: "https://auth.ironstone.casa/realms/ironstone/.well-known/openid-configuration"
+              # OIDC_AUTO_REDIRECT: "false"
 
-    env:
-      TZ: "${TIMEZONE}"
-      PUID: "1000"
-      PGID: "1000"
-      ALLOW_SIGNUP: "true"
-      POSTGRES_USER: "{{ .Release.Name }}"
-      POSTGRES_DB: "{{ .Release.Name }}"
-      POSTGRES_PORT: "5432"
-      POSTGRES_SERVER: "{{ .Release.Name }}-postgres-rw"
-      BASE_URL: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+            envFrom:
+              - secretRef:
+                  name: mealie-secret
+            probes:
+              liveness:
+                enabled: false
+              readiness:
+                enabled: false
+              startup:
+                enabled: false
+            resources:
+              requests:
+                cpu: 10m
+                memory: 250Mi
+              limits:
+                memory: 1Gi
 
-    envFrom:
-      - secretRef:
-          name: mealie-secret
+        pod:
+          securityContext:
+            runAsUser: *uid
+            runAsGroup: *uid
+            fsGroup: *uid
+            fsGroupChangePolicy: "OnRootMismatch"
 
     service:
-      main:
+      app:
+        controller: mealie
         ports:
           http:
             port: 9000
 
     ingress:
-      main:
-        enabled: true
-        ingressClassName: internal
-        annotations:
-          external-dns.alpha.kubernetes.io/target: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
+      app:
+        className: "internal"
         hosts:
-          - host: *host
+          - host: &hostName "{{ .Release.Name }}.ironstone.casa"
             paths:
               - path: /
-                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *hostName
 
     persistence:
-      config:
-        enabled: true
-        existingClaim: mealie-config
       data:
-        enabled: true
         existingClaim: mealie-data
-
-    resources:
-      requests:
-        cpu: 10m
-        memory: 250Mi
-      limits:
-        memory: 500Mi
-
-    postgresql:
-      enabled: true
-      existingSecret: mealie-secret
-      auth:
-        database: mealie
-        username: mealie
-      primary:
-        persistence:
-          enabled: true
-          existingClaim: mealie-db
