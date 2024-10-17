@@ -6,3 +6,4 @@ namespace: home
 resources:
   - helmrelease.yaml
   - externalsecret.yaml
+  - config-pvc.yaml

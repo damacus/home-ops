@@ -71,3 +71,9 @@ config:
       secret: minio-client
       redirectURIs:
         - "http://192.168.1.60:9001/oauth_callback"
+
+    - name: mealie
+      id: mealie
+      secret: mealie-client
+      redirectURIs:
+        - "https://mealie.ironstone.casa/oauth2/callback"
