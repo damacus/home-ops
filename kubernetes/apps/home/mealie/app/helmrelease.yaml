@@ -40,8 +40,8 @@ spec:
 
             env:
               TZ: "${TIMEZONE}"
-              PUID: &uid 568
-              PGID: *uid
+              PUID: 1000
+              PGID: 1000
               ALLOW_SIGNUP: "true"
               MAX_WORKERS: 1
               WEB_CONCURRENCY: 1
@@ -73,13 +73,6 @@ spec:
                 memory: 250Mi
               limits:
                 memory: 1Gi
-
-        pod:
-          securityContext:
-            runAsUser: *uid
-            runAsGroup: *uid
-            fsGroup: *uid
-            fsGroupChangePolicy: "OnRootMismatch"
 
     service:
       app:
