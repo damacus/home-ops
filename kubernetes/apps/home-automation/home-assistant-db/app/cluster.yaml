@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: home-assistant
+  name: &name home-assistant
   namespace: home-automation
   annotations:
     cnpg.io/skipWalArchiving: "enabled"
@@ -15,9 +15,6 @@ spec:
   storage:
     size: 20Gi
     storageClass: openebs-hostpath
-  # walStorage:
-  #   storageClass: openebs-hostpath
-  #   size: 10Gi
 
   enableSuperuserAccess: true
   superuserSecret:
@@ -52,7 +49,7 @@ spec:
         maxParallel: 8
       destinationPath: s3://cloudnative-pg/
       endpointURL: http://192.168.1.60:9000
-      serverName: home-assistant
+      serverName: *name
       s3Credentials:
         accessKeyId:
           name: cloudnative-pg-secret
