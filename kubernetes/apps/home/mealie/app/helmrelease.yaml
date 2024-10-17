@@ -47,6 +47,7 @@ spec:
               WEB_CONCURRENCY: 1
               BASE_URL: "https://{{ .Release.Name }}.ironstone.casa"
               # Postgres Configuration
+              DB_ENGINE: postgres
               POSTGRES_USER: "{{ .Release.Name }}"
               POSTGRES_DB: "{{ .Release.Name }}"
               POSTGRES_PORT: "5432"
