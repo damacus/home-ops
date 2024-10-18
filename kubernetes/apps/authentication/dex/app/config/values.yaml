@@ -9,13 +9,10 @@ ingress:
   annotations:
     external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
   hosts:
-    - host: &host dex.${SECRET_DOMAIN}
+    - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
       paths:
         - path: /
           pathType: Prefix
-  tls:
-    - hosts:
-        - *host
 
 resources:
   requests:
@@ -26,7 +23,7 @@ resources:
     memory: 100Mi
 
 config:
-  issuer: https://dex.${SECRET_DOMAIN}
+  issuer: https://{{ .Release.Name }}.${SECRET_DOMAIN}
 
   storage:
     type: kubernetes
@@ -63,8 +60,8 @@ config:
       id: paperless
       secret: paperless-client
       redirectURIs:
-        - "https://paperless.${SECRET_INTERNAL_DOMAIN}/oauth2/callback"
-        - "https://paperless.${SECRET_INTERNAL_DOMAIN}/accounts/oidc/dex/login/callback/"
+        - "https://paperless.ironstone.casa/oauth2/callback"
+        - "https://paperless.ironstone.casa/accounts/oidc/dex/login/callback/"
 
     - name: minio
       id: minio

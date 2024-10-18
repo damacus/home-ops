@@ -86,15 +86,12 @@ spec:
       app:
         className: "internal"
         hosts:
-          - host: &hostName "{{ .Release.Name }}.ironstone.casa"
+          - host: "{{ .Release.Name }}.ironstone.casa"
             paths:
               - path: /
                 service:
                   identifier: app
                   port: http
-        tls:
-          - hosts:
-              - *hostName
 
     persistence:
       data:

@@ -57,7 +57,7 @@ spec:
               TZ: "${TIMEZONE}"
               MATTER_SERVER__INSTANCE_NAME: Matter-Server
               MATTER_SERVER__PORT: &port 5580
-              MATTER_SERVER__APPLICATION_URL: "matter.${SECRET_INTERNAL_DOMAIN}"
+              MATTER_SERVER__APPLICATION_URL: "matter.ironstone.casa"
               MATTER_SERVER__LOG_LEVEL: info
               MATTER_SERVER__VENDOR_ID: 4939
             probes:

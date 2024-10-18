@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: *app
 spec:
   type: ExternalName
-  externalName: minio.${SECRET_INTERNAL_DOMAIN}
+  externalName: minio.ironstone.casa
   ports:
     - name: http
       port: &port 9001
@@ -23,11 +23,10 @@ metadata:
   namespace: network
   annotations:
     external-dns.alpha.kubernetes.io/target: 192.168.1.60
-    # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
   ingressClassName: internal
   rules:
-    - host: &host minio.${SECRET_INTERNAL_DOMAIN}
+    - host: minio.ironstone.casa
       http:
         paths:
           - path: /
@@ -44,6 +43,3 @@ spec:
                 name: *app
                 port:
                   number: 9000
-  tls:
-    - hosts:
-        - *host

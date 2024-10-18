@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: *app
 spec:
   type: ExternalName
-  externalName: unifi.${SECRET_INTERNAL_DOMAIN}
+  externalName: unifi.ironstone.casa
   ports:
     - name: http
       port: &port 443
@@ -27,7 +27,7 @@ metadata:
 spec:
   ingressClassName: internal
   rules:
-    - host: &host unifi.${SECRET_INTERNAL_DOMAIN}
+    - host: unifi.ironstone.casa
       http:
         paths:
           - path: /
@@ -37,6 +37,3 @@ spec:
                 name: *app
                 port:
                   number: 443
-  tls:
-    - hosts:
-        - *host

@@ -42,7 +42,7 @@ spec:
               - name: HASS_EXTERNAL_URL
                 value: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
               - name: HASS_INTERNAL_URL
-                value: "https://hass.${SECRET_INTERNAL_DOMAIN}"
+                value: "https://hass.ironstone.casa"
               - name: HASS_POSTGRES_URL
                 valueFrom:
                   secretKeyRef:
@@ -105,22 +105,19 @@ spec:
         annotations:
           external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
         hosts:
-          - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
+          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
             paths:
               - path: /
                 service:
                   identifier: app
                   port: http
-        tls:
-          - hosts:
-              - *host
 
       internal:
         className: internal
         annotations:
           external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
         hosts:
-          - host: &internal-host "hass.${SECRET_INTERNAL_DOMAIN}"
+          - host: "hass.ironstone.casa"
             paths:
               - path: /
                 service:
@@ -134,9 +131,6 @@ spec:
                 service:
                   identifier: app
                   port: mdns-udp
-        tls:
-          - hosts:
-              - *internal-host
 
     persistence:
       config:
