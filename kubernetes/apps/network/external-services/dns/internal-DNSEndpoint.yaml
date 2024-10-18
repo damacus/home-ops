@@ -7,6 +7,6 @@ metadata:
   namespace: network
 spec:
   endpoints:
-    - dnsName: "internal.${SECRET_INTERNAL_DOMAIN}"
+    - dnsName: "internal.ironstone.casa"
       recordType: A
       targets: ["${NGINX_INTERNAL_ADDR}"]

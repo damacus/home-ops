@@ -54,15 +54,12 @@ ingress:
     annotations:
       external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
     hosts:
-      - host: &host "uptime-kuma.${SECRET_DOMAIN}"
+      - host: "uptime-kuma.${SECRET_DOMAIN}"
         paths:
           - path: /
             service:
               identifier: uptime-kuma
               port: http
-    tls:
-      - hosts:
-          - *host
 
 serviceMonitor:
   main:

@@ -62,27 +62,22 @@ ingress:
     annotations:
       external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
     hosts:
-      - host: &host "{{ .Release.Name }}-external.${SECRET_DOMAIN}"
+      - host: "{{ .Release.Name }}-external.${SECRET_DOMAIN}"
         paths:
           - path: /
             service:
               identifier: app
               port: http
-    tls:
-      - hosts:
-          - *host
+
   internal:
     enabled: true
     className: internal
     annotations:
       external-dns.alpha.kubernetes.io/target: "${NGINX_INTERNAL_ADDR}"
     hosts:
-      - host: &internal-host "{{ .Release.Name }}.${SECRET_INTERNAL_DOMAIN}"
+      - host: &internal-host "{{ .Release.Name }}.ironstone.casa"
         paths:
           - path: /
             service:
               identifier: app
               port: http
-    tls:
-      - hosts:
-          - *internal-host

@@ -79,15 +79,12 @@ spec:
         annotations:
           external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
         hosts:
-          - host: &host esphome.${SECRET_INTERNAL_DOMAIN}
+          - host: esphome.ironstone.casa
             paths:
               - path: /
                 service:
                   identifier: app
                   port: http
-        tls:
-          - hosts:
-              - *host
 
     persistence:
       config:

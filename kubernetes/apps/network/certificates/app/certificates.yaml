@@ -24,7 +24,7 @@ spec:
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
-  commonName: ${SECRET_INTERNAL_DOMAIN}
+  commonName: ironstone.casa
   dnsNames:
-    - ${SECRET_INTERNAL_DOMAIN}
-    - "*.${SECRET_INTERNAL_DOMAIN}"
+    - ironstone.casa
+    - "*.ironstone.casa"

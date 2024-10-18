@@ -18,7 +18,7 @@ spec:
         selector:
           dnsZones:
             - "${SECRET_DOMAIN}"
-            - "${SECRET_INTERNAL_DOMAIN}"
+            - "ironstone.casa"
             - "${SECRET_WORK_DOMAIN}"
 ---
 apiVersion: cert-manager.io/v1
@@ -40,5 +40,5 @@ spec:
         selector:
           dnsZones:
             - "${SECRET_DOMAIN}"
-            - "${SECRET_INTERNAL_DOMAIN}"
+            - "ironstone.casa"
             - "${SECRET_WORK_DOMAIN}"

@@ -107,15 +107,12 @@ ingress:
     annotations:
       external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
     hosts:
-      - host: &host "{{ .Release.Name }}.${SECRET_INTERNAL_DOMAIN}"
+      - host: "{{ .Release.Name }}.ironstone.casa"
         paths:
           - path: /
             service:
               identifier: app
               port: http
-    tls:
-      - hosts:
-          - *host
 
 persistence:
   config:

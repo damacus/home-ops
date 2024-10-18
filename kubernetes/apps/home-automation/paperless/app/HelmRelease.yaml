@@ -38,7 +38,7 @@ spec:
                   secretKeyRef:
                     name: paperless-secret
                     key: PAPERLESS_SECRET_KEY
-              PAPERLESS_URL: https://paperless.${SECRET_INTERNAL_DOMAIN}
+              PAPERLESS_URL: https://paperless.ironstone.casa
               PAPERLESS_PORT: "8000"
               PAPERLESS_TIME_ZONE: ${TIMEZONE}
               PAPERLESS_WEBSERVER_WORKERS: "2"
@@ -149,15 +149,12 @@ spec:
       app:
         className: "internal"
         hosts:
-          - host: &hostName paperless.${SECRET_INTERNAL_DOMAIN}
+          - host: paperless.ironstone.casa
             paths:
               - path: /
                 service:
                   identifier: app
                   port: http
-        tls:
-          - hosts:
-              - *hostName
 
     persistence:
       data:

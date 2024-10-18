@@ -62,7 +62,7 @@ spec:
     sources: ["ingress", "service"]
     txtOwnerId: default
     txtPrefix: k8s.
-    domainFilters: ["${SECRET_INTERNAL_DOMAIN}"]
+    domainFilters: ["ironstone.casa"]
     serviceMonitor:
       enabled: true
     podAnnotations:
