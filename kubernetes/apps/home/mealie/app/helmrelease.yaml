@@ -96,3 +96,5 @@ spec:
     persistence:
       data:
         existingClaim: mealie-data
+        globalMounts:
+          - path: /app/data
