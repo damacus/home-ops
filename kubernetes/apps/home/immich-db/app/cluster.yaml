@@ -1,0 +1,57 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: &name immich
+  namespace: home
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4-32
+  instances: 1
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 10Gi
+    storageClass: openebs-hostpath
+
+  bootstrap:
+    initdb:
+      database: *name
+      owner: *name
+      secret:
+        name: immich-db
+
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: immich-db-superuser
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: 256MB
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  backup:
+    retentionPolicy: 30d
+    barmanObjectStore:
+      data:
+        compression: bzip2
+      wal:
+        compression: bzip2
+        maxParallel: 8
+      destinationPath: s3://cloudnative-pg/
+      endpointURL: http://192.168.1.60:9000
+      serverName: *name
+      s3Credentials:
+        accessKeyId:
+          name: cloudnative-pg-secret
+          key: aws-access-key-id
+        secretAccessKey:
+          name: cloudnative-pg-secret
+          key: aws-secret-access-key
