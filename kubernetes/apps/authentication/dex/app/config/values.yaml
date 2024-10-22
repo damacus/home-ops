@@ -71,6 +71,6 @@ config:
 
     - name: mealie
       id: mealie
-      public: true
+      secret: mealie-client
       redirectURIs:
         - "https://mealie.ironstone.casa/oauth2/callback"

@@ -53,10 +53,11 @@ spec:
               POSTGRES_PORT: "5432"
               POSTGRES_SERVER: "{{ .Release.Name }}-rw"
               # OIDC Configuration
-              # OIDC_ENABLED: "false"
-              # OIDC_CLIENT_ID: "mealie"
-              # OIDC_METADATA_URL: "https://auth.ironstone.casa/realms/ironstone/.well-known/openid-configuration"
-              # OIDC_AUTO_REDIRECT: "false"
+              OIDC_AUTH_ENABLED: "true"
+              OIDC_SIGNUP_ENABLED: "true"
+              OIDC_CLIENT_ID: "mealie"
+              OIDC_METADATA_URL: "https://dex.${SECRET_DOMAIN}/.well-known/openid-configuration"
+              OIDC_AUTO_REDIRECT: "false"
 
             envFrom:
               - secretRef:
