@@ -1,4 +1,7 @@
 ---
+annotations:
+  reloader.stakater.com/auto: "true"
+
 image:
   repository: ghcr.io/dexidp/dex
   tag: v2.41.1
@@ -73,6 +76,5 @@ config:
       id: mealie
       secret: mealie-client
       redirectURIs:
-        - "https://mealie.ironstone.casa/oauth2/callback"
         - "https://mealie.ironstone.casa/login"
         - "https://mealie.ironstone.casa/login?direct=1"

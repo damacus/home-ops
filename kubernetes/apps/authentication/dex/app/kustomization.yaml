@@ -6,9 +6,9 @@ resources:
   - ./helmrelease.yaml
   - ./config/Connectors.yaml
 
-configMapGenerator:
-  - name: dex-helm-config
-    files: [values.yaml=./config/values.yaml]
+# configMapGenerator:
+#   - name: dex-helm-config
+#     files: [values.yaml=./config/values.yaml]
 
 generatorOptions:
   disableNameSuffixHash: true
