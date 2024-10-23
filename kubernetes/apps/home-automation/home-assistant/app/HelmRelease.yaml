@@ -123,14 +123,14 @@ spec:
                 service:
                   identifier: app
                   port: http
-              - path: /
-                service:
-                  identifier: app
-                  port: mdns-tcp
-              - path: /
-                service:
-                  identifier: app
-                  port: mdns-udp
+                  # - path: /
+                  #   service:
+                  #     identifier: app
+                  #     port: mdns-tcp
+                  # - path: /
+                  #   service:
+                  #     identifier: app
+                  #     port: mdns-udp
 
     persistence:
       config:
