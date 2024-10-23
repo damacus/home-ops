@@ -55,9 +55,11 @@ spec:
               # OIDC Configuration
               OIDC_AUTH_ENABLED: "true"
               OIDC_SIGNUP_ENABLED: "true"
+              OIDC_CONFIGURATION_URL: "https://dex.${SECRET_DOMAIN}/.well-known/openid-configuration"
               OIDC_CLIENT_ID: "mealie"
-              OIDC_METADATA_URL: "https://dex.${SECRET_DOMAIN}/.well-known/openid-configuration"
               OIDC_AUTO_REDIRECT: "false"
+              OIDC_PROVIDER_NAME: "Dex"
+              OIDC_REMEMBER_ME: "false"
 
             envFrom:
               - secretRef:
