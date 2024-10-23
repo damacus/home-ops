@@ -114,8 +114,8 @@ spec:
 
       internal:
         className: internal
-        annotations:
-          external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
+        # annotations:
+        #   external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
         hosts:
           - host: "hass.ironstone.casa"
             paths:
@@ -123,14 +123,14 @@ spec:
                 service:
                   identifier: app
                   port: http
-                  # - path: /
-                  #   service:
-                  #     identifier: app
-                  #     port: mdns-tcp
-                  # - path: /
-                  #   service:
-                  #     identifier: app
-                  #     port: mdns-udp
+              - path: /
+                service:
+                  identifier: app
+                  port: mdns-tcp
+              - path: /
+                service:
+                  identifier: app
+                  port: mdns-udp
 
     persistence:
       config:
