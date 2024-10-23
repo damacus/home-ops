@@ -74,3 +74,5 @@ config:
       secret: mealie-client
       redirectURIs:
         - "https://mealie.ironstone.casa/oauth2/callback"
+        - "https://mealie.ironstone.casa/login"
+        - "https://mealie.ironstone.casa/login?direct=1"
