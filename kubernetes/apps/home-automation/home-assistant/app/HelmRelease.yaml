@@ -105,7 +105,7 @@ spec:
         annotations:
           external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
         hosts:
-          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
+          - host: "home-assistant.${SECRET_DOMAIN}"
             paths:
               - path: /
                 service:
@@ -123,14 +123,14 @@ spec:
                 service:
                   identifier: app
                   port: http
-              - path: /
-                service:
-                  identifier: app
-                  port: mdns-tcp
-              - path: /
-                service:
-                  identifier: app
-                  port: mdns-udp
+    # - path: /
+    #   service:
+    #     identifier: app
+    #     port: mdns-tcp
+    # - path: /
+    #   service:
+    #     identifier: app
+    #     port: mdns-udp
 
     persistence:
       config:
