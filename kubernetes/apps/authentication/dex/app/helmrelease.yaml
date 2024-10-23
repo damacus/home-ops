@@ -39,7 +39,7 @@ spec:
       annotations:
         external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
       hosts:
-        - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        - host: "dex.${SECRET_DOMAIN}"
           paths:
             - path: /
               pathType: Prefix
@@ -53,7 +53,7 @@ spec:
         memory: 100Mi
 
     config:
-      issuer: https://{{ .Release.Name }}.${SECRET_DOMAIN}
+      issuer: https://dex.${SECRET_DOMAIN}
 
       storage:
         type: kubernetes
