@@ -1,0 +1,97 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: immich-server
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.5.1
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s-charts
+        namespace: flux-system
+      interval: 15m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  values:
+    controllers:
+      immich-server:
+        strategy: RollingUpdate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          main:
+            image:
+              repository: ghcr.io/immich-app/immich-server
+              tag: v1.118.2
+            resources:
+              requests:
+                cpu: 100m
+                memory: 250Mi
+              limits:
+                memory: 1000Mi
+            probes:
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 5
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+            envFrom:
+              - secretRef:
+                  name: immich-secret
+              - configMapRef:
+                  name: immich-config
+            env:
+              DB_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-database-pguser-immich
+                    key: uri
+
+    service:
+      main:
+        controller: immich-server
+        ports:
+          http:
+            port: 2283
+
+    ingress:
+      main:
+        enabled: true
+        className: internal
+        annotations:
+          external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+        hosts:
+          - host: photos.ironstone.casa
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: main
+                  port: http
+
+    persistence:
+      data:
+        enabled: true
+        existingClaim: immich-data
+        globalMounts:
+          - path: /usr/src/app/upload
+      nas:
+        type: nfs
+        server: ${SECRET_SYNOLOGY_IP:=test}
+        path: /volume2/homes/damacus/Photos
+        globalMounts:
+          - path: /usr/src/app/upload

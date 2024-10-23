@@ -4,5 +4,6 @@ kind: Kustomization
 resources:
   - ./mealie/ks.yaml
   - ./mealie-db/ks.yaml
+  - ./immich/ks.yaml
   - ./immich-db/ks.yaml
   - ./namespace.yaml
