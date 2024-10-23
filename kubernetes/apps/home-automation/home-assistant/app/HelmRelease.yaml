@@ -112,17 +112,17 @@ spec:
                   identifier: app
                   port: http
 
-      internal:
-        className: internal
-        annotations:
-          external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
-        hosts:
-          - host: "hass.ironstone.casa"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+    # internal:
+    #   className: internal
+    #   annotations:
+    #     external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
+    #   hosts:
+    #     - host: "hass.ironstone.casa"
+    #       paths:
+    #         - path: /
+    #           service:
+    #             identifier: app
+    #             port: http
     # - path: /
     #   service:
     #     identifier: app
