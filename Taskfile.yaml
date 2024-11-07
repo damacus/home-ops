@@ -55,7 +55,7 @@ tasks:
       - cmd: echo {{.BOOTSTRAP_CONFIG_FILE}}
         silent: true
     status:
-      - test -f "{{.BOOTSTRAP_CONFIG_FILE}}"
+      - test -f "{{.BOOTSTRAP_CONFIG_FILE}}"  
 
   configure:
     desc: Configure repository from bootstrap vars
