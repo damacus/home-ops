@@ -1,36 +1,36 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "packageRules": [
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  packageRules: [
     {
-      "description": ["Flux Group"],
-      "groupName": "Flux",
-      "matchPackagePatterns": ["flux"],
-      "matchDatasources": ["docker", "github-tags"],
-      "versioning": "semver",
-      "group": {
-        "commitMessageTopic": "{{{groupName}}} group"
+      description: ["Flux Group"],
+      groupName: "Flux",
+      matchPackagePatterns: ["flux"],
+      matchDatasources: ["docker", "github-tags"],
+      versioning: "semver",
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
       },
-      "separateMinorPatch": true
+      separateMinorPatch: true,
     },
     {
-      "description": ["Local Path Provisioner Group"],
-      "groupName": "Local Path Provisioner",
-      "matchPackagePatterns": ["local-path-provisioner"],
-      "matchDatasources": ["docker", "github-tags"],
-      "group": {
-        "commitMessageTopic": "{{{groupName}}} group"
+      description: ["Local Path Provisioner Group"],
+      groupName: "Local Path Provisioner",
+      matchPackagePatterns: ["local-path-provisioner"],
+      matchDatasources: ["docker", "github-tags"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
       },
-      "separateMinorPatch": true
+      separateMinorPatch: true,
     },
     {
-      "description": ["System Upgrade Controller Group"],
-      "groupName": "System Upgrade Controller",
-      "matchPackagePatterns": ["system-upgrade-controller"],
-      "matchDatasources": ["docker", "github-releases"],
-      "group": {
-        "commitMessageTopic": "{{{groupName}}} group"
+      description: ["System Upgrade Controller Group"],
+      groupName: "System Upgrade Controller",
+      matchPackagePatterns: ["system-upgrade-controller"],
+      matchDatasources: ["docker", "github-releases"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
       },
-      "separateMinorPatch": true
-    }
-  ]
+      separateMinorPatch: true,
+    },
+  ],
 }
