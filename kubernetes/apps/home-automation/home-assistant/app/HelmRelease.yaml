@@ -95,10 +95,22 @@ spec:
             targetPort: 5353
 
     ingress:
-      internal:
-        className: internal
+      external:
+        className: external
         annotations:
-          external-dns.alpha.kubernetes.io/target: ${HAAS_INTERNAL_ADDR}
+          external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+        hosts:
+          - host: "home-assistant.${SECRET_DOMAIN}"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+
+      internal:
+        className: "internal"
+        annotations:
+          external-dns.alpha.kubernetes.io/target: ${HASS_ADDR}
         hosts:
           - host: "hass.ironstone.casa"
             paths:
