@@ -88,12 +88,7 @@ spec:
         ports:
           http:
             port: 8123
-          mdns-tcp:
-            enabled: true
-            port: 5353
-            protocol: TCP
-            targetPort: 5353
-          mdns-udp:
+          mdns:
             enabled: true
             port: 5353
             protocol: UDP
@@ -114,11 +109,7 @@ spec:
               - path: /
                 service:
                   identifier: app
-                  port: mdns-tcp
-              - path: /
-                service:
-                  identifier: app
-                  port: mdns-udp
+                  port: mdns
 
     persistence:
       config:
