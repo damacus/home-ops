@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.1.0
+      version: 3.5.1
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -100,18 +100,6 @@ spec:
             targetPort: 5353
 
     ingress:
-      app:
-        className: external
-        annotations:
-          external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
-        hosts:
-          - host: "home-assistant.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-
       internal:
         className: internal
         annotations:
