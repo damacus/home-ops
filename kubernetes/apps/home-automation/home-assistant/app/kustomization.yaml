@@ -4,4 +4,5 @@ kind: Kustomization
 namespace: home-automation
 resources:
   - HelmRelease.yaml
+  - Ingress.yaml
   - externalsecret.yaml
