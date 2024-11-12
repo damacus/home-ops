@@ -78,14 +78,6 @@ spec:
         responseTypes: ["code", "token", "id_token"]
         skipApprovalScreen: true
 
-      connectors:
-        - type: oidc
-          id: google
-          name: Google
-          config:
-            issuer: https://accounts.google.com
-            redirectURI: https://dex.${SECRET_DOMAIN}/callback
-
       staticClients:
         - name: grafana
           id: grafana
