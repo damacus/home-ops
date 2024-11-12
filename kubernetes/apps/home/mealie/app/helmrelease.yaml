@@ -60,7 +60,6 @@ spec:
               OIDC_AUTO_REDIRECT: "false"
               OIDC_PROVIDER_NAME: "Dex"
               OIDC_REMEMBER_ME: "false"
-              LOG_LEVEL: debug
 
             envFrom:
               - secretRef:

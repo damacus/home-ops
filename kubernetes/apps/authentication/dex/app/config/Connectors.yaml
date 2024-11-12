@@ -16,12 +16,14 @@ spec:
         values.yaml: |
           config:
             connectors:
-              - type: oidc
+              - type: google
                 id: google
                 name: Google
                 config:
                   clientID: "{{ .GOOGLE_CLIENT_ID }}"
                   clientSecret: "{{ .GOOGLE_CLIENT_SECRET }}"
+                  issuer: https://accounts.google.com
+                  redirectURI: https://dex.{{ .external_domain }}/callback
   dataFrom:
     - extract:
         key: dex-google
@@ -29,3 +31,5 @@ spec:
         - regexp:
             source: "(.*)" # match the entire string
             target: "GOOGLE_$1" # prepend "GOOGLE_"
+    - extract:
+        key: domain
