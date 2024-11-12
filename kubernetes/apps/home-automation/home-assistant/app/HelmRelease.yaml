@@ -108,9 +108,9 @@ spec:
                   port: http
 
       internal:
-        # className: "internal"
+        className: "internal"
         annotations:
-          external-dns.alpha.kubernetes.io/target: ${HASS_ADDR}
+          external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
         hosts:
           - host: "hass.ironstone.casa"
             paths:
