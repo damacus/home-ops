@@ -28,7 +28,7 @@ jobs:
           path: default
 
       - name: Setup Flux CLI
-        uses: fluxcd/flux2/action@v2.4.0
+        uses: fluxcd/flux2/action@5350425cdcd5fa015337e09fa502153c0275bd4b # v2.4.0
 
       - uses: allenporter/flux-local/action/test@bfff4ac1f313c2ef82aed95a8dd5241c0ee0def6 # 6.0.2
         with:
@@ -56,7 +56,7 @@ jobs:
           path: default
 
       - name: Setup Flux CLI
-        uses: fluxcd/flux2/action@v2.4.0
+        uses: fluxcd/flux2/action@5350425cdcd5fa015337e09fa502153c0275bd4b # v2.4.0
 
       - uses: allenporter/flux-local/action/diff@bfff4ac1f313c2ef82aed95a8dd5241c0ee0def6 # 6.0.2
         id: diff
