@@ -5,7 +5,7 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./config/Connectors.yaml
-  - ./clients.yaml
+  - ./config/clients.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
