@@ -3,6 +3,9 @@
 name: "Flux Local"
 
 on:
+  push:
+    paths:
+      - "kubernetes/**"
   pull_request:
     branches: ["main"]
     # paths: ["kubernetes/**"]
