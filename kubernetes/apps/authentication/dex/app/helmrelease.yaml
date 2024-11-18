@@ -102,7 +102,6 @@ spec:
         - name: mealie
           id: mealie
           secret: mealie-client
-          public: true
           redirectURIs:
             - "https://mealie.ironstone.casa/login"
             - "https://mealie.ironstone.casa/login?direct=1"
