@@ -5,4 +5,5 @@ resources:
   - ./namespace.yaml
   - ./kube-prometheus-stack/ks.yaml
   - ./prometheus-operator-crds/ks.yaml
+  # - ./k8s-monitoring/ks.yaml
   - ./uptime-kuma/ks.yaml

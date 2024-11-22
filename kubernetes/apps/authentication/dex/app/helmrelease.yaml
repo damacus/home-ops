@@ -81,10 +81,11 @@ spec:
       staticClients:
         - name: grafana
           id: grafana
-          secret: grafana-client-dex
+          secret: grafana-client
           redirectURIs:
             - "https://grafana.ironstone.casa/oauth2/callback"
             - "https://grafana.ironstone.casa/login/generic_oauth"
+            - "https://damacusio.grafana.net/login/generic_oauth"
 
         - name: paperless
           id: paperless
