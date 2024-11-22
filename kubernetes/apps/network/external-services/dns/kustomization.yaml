@@ -8,3 +8,4 @@ resources:
   - ./internal-DNSEndpoint.yaml
   - ./minio.yaml
   - ./unifi.yaml
+  - ./drive.yaml
