@@ -6,7 +6,7 @@ metadata:
   name: &name mealie
   namespace: home
 spec:
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.5-1
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.5-5
   instances: 1
   primaryUpdateStrategy: unsupervised
   storage:
