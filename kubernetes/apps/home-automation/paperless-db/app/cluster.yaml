@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: paperless
+  name: &name paperless
   namespace: home-automation
   annotations:
     cnpg.io/skipWalArchiving: "enabled"
@@ -36,17 +36,13 @@ spec:
       wal:
         compression: bzip2
         maxParallel: 8
-      destinationPath: s3://cloudnative-pg
-      endpointURL: http://192.168.1.60:9000
-      serverName: paperless
+      destinationPath: s3://cloudnative-pg/
+      endpointURL: https://eeded8796e30bfe7b412cd59df29bb34.eu.r2.cloudflarestorage.com
+      serverName: *name
       s3Credentials:
         accessKeyId:
-          name: cloudnative-pg-secret
-          key: aws-access-key-id
+          name: r2-cloudnative-pg
+          key: AWS_ACCESS_KEY_ID
         secretAccessKey:
-          name: cloudnative-pg-secret
-          key: aws-secret-access-key
-#   bootstrap:
-#     recovery:
-#      backup:
-#       name: paperless-20240828000000
+          name: r2-cloudnative-pg
+          key: AWS_SECRET_ACCESS_KEY
