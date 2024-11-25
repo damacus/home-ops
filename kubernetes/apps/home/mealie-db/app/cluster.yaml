@@ -14,11 +14,14 @@ spec:
     storageClass: openebs-hostpath
 
   bootstrap:
-    initdb:
-      database: *name
-      owner: *name
-      secret:
-        name: mealie-db
+    # initdb:
+    #   database: *name
+    #   owner: *name
+    #   secret:
+    #     name: mealie-db
+    recovery:
+      backup:
+        name: mealie-db-20241120000000
 
   enableSuperuserAccess: true
   superuserSecret:
@@ -55,7 +58,3 @@ spec:
         secretAccessKey:
           name: cloudnative-pg-secret
           key: aws-secret-access-key
-    bootstrap:
-      recovery:
-        backup:
-          name: mealie-db-20241120000000
