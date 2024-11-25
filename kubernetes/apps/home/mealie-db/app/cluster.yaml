@@ -55,3 +55,7 @@ spec:
         secretAccessKey:
           name: cloudnative-pg-secret
           key: aws-secret-access-key
+    bootstrap:
+      recovery:
+        backup:
+          name: mealie-db-20241120000000
