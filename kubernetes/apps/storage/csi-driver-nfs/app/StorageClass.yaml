@@ -6,7 +6,7 @@ metadata:
   namespace: kube-system
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: ${SECRET_SYNOLOGY_IP:-test}
+  server: synology.ironstone.casa
   share: ${SECRET_NFS_DIRECTORY:-/volume2}
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
