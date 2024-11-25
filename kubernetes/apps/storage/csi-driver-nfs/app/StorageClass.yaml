@@ -13,3 +13,18 @@ volumeBindingMode: Immediate
 mountOptions:
   - hard
   - nfsvers=4
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-csi-unas
+  namespace: kube-system
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: unas.ironstone.casa
+  share: /var/nfs/shared/nfs
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+mountOptions:
+  - hard
+  - nfsvers=3
