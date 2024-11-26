@@ -28,7 +28,6 @@ controllers:
       dnsPolicy: None
       dnsConfig:
         nameservers:
-          - ${SECRET_SYNOLOGY_IP:-test}
           - 8.8.8.8
 
 service:
