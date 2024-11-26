@@ -32,7 +32,7 @@ spec:
           app:
             image:
               repository: rhasspy/wyoming-whisper
-              tag: 2.2.0
+              tag: 2.2.0@sha256:eb99fe6c0da5721427d1dd285edcbddfd45fe5e2b6c2484b82723a194e59af93
             args:
               - --model
               - Systran/faster-distil-whisper-small.en
