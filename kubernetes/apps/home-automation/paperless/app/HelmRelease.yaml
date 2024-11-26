@@ -166,7 +166,7 @@ spec:
 
       nas:
         type: nfs
-        server: ${SECRET_SYNOLOGY_IP:=test}
-        path: ${SECRET_NFS_DIRECTORY:=/volume2}/paperless
+        server: 192.168.1.243
+        path: /var/nfs/shared/nfs/paperless
         globalMounts:
           - path: /data/nas-mount
