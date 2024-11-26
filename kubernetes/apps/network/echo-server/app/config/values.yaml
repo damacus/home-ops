@@ -60,9 +60,9 @@ ingress:
     enabled: true
     className: external
     annotations:
-      external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
+      external-dns.alpha.kubernetes.io/target: "external.damacus.io"
     hosts:
-      - host: "{{ .Release.Name }}-external.${SECRET_DOMAIN}"
+      - host: "{{ .Release.Name }}-external.damacus.io"
         paths:
           - path: /
             service:
