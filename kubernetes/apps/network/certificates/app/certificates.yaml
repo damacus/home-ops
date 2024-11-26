@@ -3,9 +3,9 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ${SECRET_DOMAIN/./-}
+  name: damacus-io
 spec:
-  secretName: ${SECRET_DOMAIN/./-}-production-tls
+  secretName: damacus-io-production-tls
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
@@ -18,7 +18,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ironstone.casa
+  name: ironstone-casa
 spec:
   secretName: ironstone-casa-production-tls
   issuerRef:
