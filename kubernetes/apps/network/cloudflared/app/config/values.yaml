@@ -23,7 +23,7 @@ controllers:
           - --config
           - /etc/cloudflared/config/config.yaml
           - run
-          - "${SECRET_TUNNEL_ID}"
+          - "4cd48d19-1058-4f75-91a5-3f8619afe500"
         probes:
           liveness: &probes
             enabled: true
