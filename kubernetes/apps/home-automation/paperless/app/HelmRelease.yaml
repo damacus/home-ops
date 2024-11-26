@@ -29,7 +29,7 @@ spec:
           app:
             image:
               repository: ghcr.io/paperless-ngx/paperless-ngx
-              tag: 2.13.5
+              tag: 2.13.5@sha256:6fcaa5a19328f4f1775e5013d676f0567a7569e993d87df0a857ae13dee04898
             env:
               # Configure application
               PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
@@ -129,7 +129,7 @@ spec:
           tika:
             image:
               repository: apache/tika
-              tag: 3.0.0.0
+              tag: 3.0.0.0@sha256:6e262f5b11168dbeec75217e5560d26b18f99d940d5c0fc078da66cbbe3e01cf
             resources:
               requests:
                 cpu: 100m
