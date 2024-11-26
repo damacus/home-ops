@@ -56,18 +56,12 @@ spec:
         pod:
           hostNetwork: true
           dnsPolicy: ClusterFirstWithHostNet
-          # securityContext:
-          #   runAsUser: 568
-          #   runAsGroup: 568
-          #   runAsNonRoot: true
-          #   fsGroup: 568
-          #   fsGroupChangePolicy: OnRootMismatch
 
     service:
       app:
         controller: esphome
         annotations:
-          io.cilium/lb-ipam-ips: ${ESPHOME_ADDR}
+          io.cilium/lb-ipam-ips: "192.168.1.227"
         type: LoadBalancer
         ports:
           http:
@@ -97,4 +91,3 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /cache
-          # - path: /config/.esphome

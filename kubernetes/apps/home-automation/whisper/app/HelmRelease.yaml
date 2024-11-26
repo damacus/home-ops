@@ -68,7 +68,7 @@ spec:
       app:
         controller: whisper
         type: LoadBalancer
-        loadBalancerIP: ${WYOMING_WHISPER_ADDR}
+        loadBalancerIP: "192.168.1.232"
         ports:
           whisper:
             enabled: true
