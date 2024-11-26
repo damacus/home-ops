@@ -89,7 +89,7 @@ spec:
       enabled: true
       image:
         repository: ghcr.io/tarampampam/error-pages
-        tag: 3.3.0
+        tag: 3.3.0@@sha256:f888b0fd44a247b6748c2870787771a323f3cf02f7c87693694f892fbb78a38f
       extraEnvs:
         - { name: TEMPLATE_NAME, value: lost-in-space }
         - { name: SHOW_DETAILS, value: "false" }
