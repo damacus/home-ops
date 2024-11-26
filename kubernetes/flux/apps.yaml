@@ -35,6 +35,10 @@ spec:
             substituteFrom:
               - kind: ConfigMap
                 name: cluster-settings
+                optional: true
+             - name: cluster-settings
+                kind: ConfigMap
+                optional: true
       target:
         group: kustomize.toolkit.fluxcd.io
         kind: Kustomization
