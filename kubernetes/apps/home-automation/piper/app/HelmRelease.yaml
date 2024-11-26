@@ -59,7 +59,7 @@ spec:
       app:
         controller: piper
         type: LoadBalancer
-        loadBalancerIP: ${WYOMING_PIPER_ADDR}
+        loadBalancerIP: "192.168.1.231"
         ports:
           whisper:
             enabled: true
