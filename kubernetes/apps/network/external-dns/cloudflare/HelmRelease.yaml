@@ -43,7 +43,7 @@ spec:
     sources: ["crd", "ingress", "service"]
     txtPrefix: k8s.
     txtOwnerId: ironstone
-    domainFilters: ["${SECRET_DOMAIN}"]
+    domainFilters: ["damacus.io"]
     serviceMonitor:
       enabled: true
     podAnnotations:

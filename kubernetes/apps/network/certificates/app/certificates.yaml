@@ -9,10 +9,10 @@ spec:
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
-  commonName: ${SECRET_DOMAIN}
+  commonName: damacus.io
   dnsNames:
-    - ${SECRET_DOMAIN}
-    - "*.${SECRET_DOMAIN}"
+    - damacus.io
+    - "*.damacus.io"
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
 apiVersion: cert-manager.io/v1

@@ -40,7 +40,7 @@ spec:
               - name: HASS_HTTP_TRUSTED_PROXY_1
                 value: "${CLUSTER_CIDR}"
               - name: HASS_EXTERNAL_URL
-                value: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+                value: "https://{{ .Release.Name }}.damacus.io"
               - name: HASS_INTERNAL_URL
                 value: "https://hass.ironstone.casa"
               - name: HASS_POSTGRES_URL
@@ -98,9 +98,9 @@ spec:
       external:
         className: external
         annotations:
-          external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+          external-dns.alpha.kubernetes.io/target: external.damacus.io
         hosts:
-          - host: "home-assistant.${SECRET_DOMAIN}"
+          - host: "home-assistant.damacus.io"
             paths:
               - path: /
                 service:
