@@ -55,8 +55,8 @@ spec:
       serverName: *name
       s3Credentials:
         accessKeyId:
-          name: cloudnative-pg
+          name: cloudnative-pg-secret
           key: aws-access-key-id
         secretAccessKey:
-          name: cloudnative-pg
+          name: cloudnative-pg-secret
           key: aws-secret-access-key
