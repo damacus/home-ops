@@ -5,6 +5,8 @@ kind: Cluster
 metadata:
   name: &name mealie
   namespace: home
+  annotations:
+    cnpg.io/skipWalArchiving: "enabled"
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.6-5
   instances: 1
