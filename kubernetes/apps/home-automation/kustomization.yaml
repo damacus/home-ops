@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   # - ./codeserver/ks.yaml
   - ./esphome/ks.yaml
+  - ./externalsecret.yaml
   - ./home-assistant/ks.yaml
   - ./home-assistant-db/ks.yaml
   - ./matter/ks.yaml
