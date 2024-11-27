@@ -2,7 +2,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./externalsecet.yaml
+  - ./externalsecret.yaml
   - ./mealie/ks.yaml
   - ./mealie-db/ks.yaml
   - ./immich-db/ks.yaml
