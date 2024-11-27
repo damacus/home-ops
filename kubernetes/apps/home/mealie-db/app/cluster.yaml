@@ -41,7 +41,7 @@ spec:
       memory: 256Mi
 
   backup:
-    retentionPolicy: 30d
+    retentionPolicy: 20d
     barmanObjectStore:
       data:
         compression: bzip2
@@ -53,8 +53,8 @@ spec:
       serverName: *name
       s3Credentials:
         accessKeyId:
-          name: cloudnative-pg-secret
+          name: cloudnative-pg
           key: aws-access-key-id
         secretAccessKey:
-          name: cloudnative-pg-secret
+          name: cloudnative-pg
           key: aws-secret-access-key
