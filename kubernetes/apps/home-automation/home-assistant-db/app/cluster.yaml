@@ -5,8 +5,6 @@ kind: Cluster
 metadata:
   name: &name home-assistant
   namespace: home-automation
-  annotations:
-    cnpg.io/skipWalArchiving: "enabled"
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.6-7
   instances: 2
