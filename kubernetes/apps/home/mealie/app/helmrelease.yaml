@@ -57,9 +57,16 @@ spec:
               OIDC_SIGNUP_ENABLED: "true"
               OIDC_CONFIGURATION_URL: "https://dex.damacus.io/.well-known/openid-configuration"
               OIDC_CLIENT_ID: "mealie"
+              OIDC_CLIENT_SECRET:
+                valueFrom:
+                  secretKeyRef:
+                    name: mealie-client
+                    key: client-secret
               OIDC_AUTO_REDIRECT: "false"
               OIDC_PROVIDER_NAME: "Dex"
               OIDC_REMEMBER_ME: "false"
+              OIDC_REDIRECT_URI: "https://mealie.ironstone.casa/api/auth/callback"
+              OIDC_SCOPES: "openid profile email groups"
 
             envFrom:
               - secretRef:
