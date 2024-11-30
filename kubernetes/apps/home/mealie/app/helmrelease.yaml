@@ -60,8 +60,10 @@ spec:
               OIDC_AUTO_REDIRECT: "false"
               OIDC_PROVIDER_NAME: "Dex"
               OIDC_REMEMBER_ME: "false"
-              OIDC_REDIRECT_URI: "https://mealie.ironstone.casa/api/auth/callback"
               OIDC_SCOPES: "openid profile email groups"
+              OIDC_USER_CLAIM: "email"
+              OIDC_NAME_CLAIM: "name"
+              OIDC_GROUPS_CLAIM: "groups"
 
             envFrom:
               - secretRef:
