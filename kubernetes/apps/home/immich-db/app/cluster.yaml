@@ -6,7 +6,7 @@ metadata:
   name: &name immich
   namespace: home
 spec:
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.6-15
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.6-17
   instances: 1
   primaryUpdateStrategy: unsupervised
   storage:
