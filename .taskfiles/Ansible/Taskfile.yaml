@@ -105,7 +105,3 @@ tasks:
           msg: "Missing Ansible lint file",
           sh: "test -f {{.ANSIBLE_LINT_FILE}}",
         }
-
-  .reset:
-    internal: true
-    cmd: rm -rf {{.ANSIBLE_DIR}}

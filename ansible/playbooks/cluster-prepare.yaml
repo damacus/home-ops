@@ -63,10 +63,10 @@
             dest: /etc/resolv.conf
             content: |
               search .
-              nameserver 192.168.1.60
+              nameserver 192.168.1.254
 
     - name: System Configuration
-      notify: Reboot
+      # notify: Reboot
       block:
         - name: System Configuration | Disable apparmor
           when: ansible_facts.services['apparmor.service'] is defined
@@ -114,8 +114,8 @@
               fs.inotify.max_user_watches: 524288
               fs.inotify.max_user_instances: 8192
 
-  handlers:
-    - name: Reboot
-      ansible.builtin.reboot:
-        msg: Rebooting hosts
-        reboot_timeout: 3600
+  # handlers:
+  #   - name: Reboot
+  #     ansible.builtin.reboot:
+  #       msg: Rebooting hosts
+  #       reboot_timeout: 3600
