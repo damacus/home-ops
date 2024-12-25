@@ -115,7 +115,7 @@ spec:
           gotenburg:
             image:
               repository: thecodingmachine/gotenberg
-              tag: 8.15.1@sha256:326ab37833f30df259cb446ddd9ea8c457b25728ce72de7b887355309f0f95f0
+              tag: 8.15.2@sha256:71fb1f838d1bd0fea566c11df72d45a3dda97af353ba2a4fdcc1bd96ea4d888f
             env:
               - { name: DISABLE_GOOGLE_CHROME, value: "1" }
             resources:
