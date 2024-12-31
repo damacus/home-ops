@@ -51,7 +51,7 @@ spec:
           app:
             image:
               repository: ghcr.io/home-assistant-libs/python-matter-server
-              tag: 7.0.0@sha256:1e371d6936c179fec67896180a8697448c2ccec628078f709bb4b271b040701b
+              tag: 7.0.1@sha256:828c1cd3f957bb0287a099a439505457a25f5d65ed34281acf19cfbf537fe346
               pullPolicy: IfNotPresent
             env:
               TZ: "${TIMEZONE}"
