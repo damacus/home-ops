@@ -10,8 +10,8 @@ tasks:
     desc: Download the certificates from the cluster
     dir: "{{.CERTS_DIR}}"
     cmd: |
-      kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq e '.data."tls.crt"' | base64 -d > ironstone-casa-tls.crt
-      kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq e '.data."tls.key"' | base64 -d > ironstone-casa-tls.key
+      kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq -r '.data."tls.crt"' | base64 -d > ironstone-casa-tls.crt
+      kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq -r '.data."tls.key"' | base64 -d > ironstone-casa-tls.key
   check-certificates:
     desc: Check the certificates
     dir: "{{.CERTS_DIR}}"
