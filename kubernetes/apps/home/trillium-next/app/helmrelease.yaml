@@ -41,10 +41,10 @@ spec:
                   name: trillium-next
             securityContext:
               allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: false
-              runAsNonRoot: true
-              runAsUser: 1000
-              runAsGroup: 1000
+              # readOnlyRootFilesystem: false
+              # runAsNonRoot: true
+              # runAsUser: 1000
+              # runAsGroup: 1000
               capabilities:
                 drop:
                   - ALL
