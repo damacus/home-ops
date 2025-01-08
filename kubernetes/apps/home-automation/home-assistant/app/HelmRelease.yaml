@@ -34,7 +34,7 @@ spec:
             image:
               repository: ghcr.io/home-assistant/home-assistant
               pullPolicy: IfNotPresent
-              tag: 2025.1.1@sha256:ac5f717d2cc06f2a3779a8e353222a322a23fd95385229908d8a48a8a9d8c5a7
+              tag: 2025.1.1@sha256:dda88779889b09d5465b8bf0c69ba2a62f81b01ee74d943ebe31e3474ea7cbea
 
             env:
               - name: HASS_HTTP_TRUSTED_PROXY_1
