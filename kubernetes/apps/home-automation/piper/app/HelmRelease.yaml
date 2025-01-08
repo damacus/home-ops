@@ -74,12 +74,3 @@ spec:
           - path: /data
         size: 15Gi
         accessMode: "ReadWriteMany"
-
-    affinity:
-      podAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-                - key: node-role.kubernetes.io/master
-                  operator: Exists
-                  values: ["true"]
