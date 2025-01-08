@@ -40,7 +40,7 @@ spec:
               - secretRef:
                   name: trillium-next
             securityContext:
-              allowPrivilegeEscalation: false
+              # allowPrivilegeEscalation: false
               # readOnlyRootFilesystem: false
               # runAsNonRoot: true
               # runAsUser: 1000
