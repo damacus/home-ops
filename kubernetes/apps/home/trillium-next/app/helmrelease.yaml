@@ -61,29 +61,28 @@ spec:
                 spec:
                   httpGet:
                     path: /
-                    port: 8080
+                    port: &port 8080
               readiness:
                 enabled: true
                 custom: true
                 spec:
                   httpGet:
                     path: /
-                    port: 8080
+                    port: *port
               startup:
                 enabled: false
         pod:
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            fsGroup: 1000
-            fsGroupChangePolicy: "OnRootMismatch"
+            runAsNonRoot: false
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile: { type: RuntimeDefault }
 
     service:
       app:
         controller: trillium
         ports:
           http:
-            port: 8080
+            port: *port
 
     ingress:
       app:
