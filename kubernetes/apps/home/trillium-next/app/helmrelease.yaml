@@ -73,8 +73,8 @@ spec:
                 enabled: false
         pod:
           securityContext:
-            runAsNonRoot: false
-            fsGroupChangePolicy: OnRootMismatch
+            # runAsNonRoot: false
+            # fsGroupChangePolicy: OnRootMismatch
             seccompProfile: { type: RuntimeDefault }
 
     service:
