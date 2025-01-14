@@ -32,9 +32,9 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/home-assistant/home-assistant
+              repository: ghcr.io/onedr0p/home-assistant
               pullPolicy: IfNotPresent
-              tag: 2025.1.1@sha256:dda88779889b09d5465b8bf0c69ba2a62f81b01ee74d943ebe31e3474ea7cbea
+              tag: 2025.1.2@sha256:cf7873633e30022e6bc6fbedccb859ad97c6b164404a043a3a3b94771db3ef2a
 
             env:
               - name: HASS_HTTP_TRUSTED_PROXY_1
