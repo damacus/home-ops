@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.6.0
+      version: 3.6.1
       interval: 30m
       sourceRef:
         kind: HelmRepository
@@ -29,7 +29,7 @@ spec:
           app:
             image:
               repository: ghcr.io/paperless-ngx/paperless-ngx
-              tag: 2.13.5@sha256:6fcaa5a19328f4f1775e5013d676f0567a7569e993d87df0a857ae13dee04898
+              tag: 2.14.1@sha256:d2a0c7f9969a685c147b6d7282eb08331163e4a05be988b2d522d796c72a36c7
             env:
               # Configure application
               PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
