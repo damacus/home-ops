@@ -4,8 +4,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: network
 resources:
-  - ./synology.yaml
-  - ./internal-DNSEndpoint.yaml
-  - ./minio.yaml
-  - ./unifi.yaml
   - ./drive.yaml
+  - ./internal-DNSEndpoint.yaml
+  - ./unifi.yaml
