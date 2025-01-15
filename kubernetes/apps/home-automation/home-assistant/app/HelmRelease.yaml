@@ -32,10 +32,8 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/home-assistant/home-assistant
-              pullPolicy: IfNotPresent
-              tag: 2025.1.2@sha256:871f84a00db8d05856a70ee3761b138a8e91eb108d61f2fa176e7eeadb5eda03
-
+              repository: ghcr.io/onedr0p/home-assistant
+              tag: 2025.1.2@sha256:7103698ead18144a39ae5412467fe1885331367aeb22a9c2046640f0c8f84cf7
             env:
               - name: HASS_HTTP_TRUSTED_PROXY_1
                 value: "${CLUSTER_CIDR}"
@@ -48,11 +46,9 @@ spec:
                   secretKeyRef:
                     name: home-assistant-app
                     key: uri
-
             envFrom:
               - secretRef:
                   name: home-assistant-secret
-
             probes:
               liveness:
                 enabled: false
@@ -60,7 +56,6 @@ spec:
                 enabled: false
               startup:
                 enabled: false
-
             resources:
               requests:
                 cpu: 250m
@@ -68,16 +63,20 @@ spec:
               limits:
                 cpu: 2000m
                 memory: 2Gi
-
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
         pod:
           hostNetwork: true
           dnsPolicy: ClusterFirstWithHostNet
-          # securityContext:
-          #   runAsUser: 568
-          #   runAsGroup: 568
-          #   runAsNonRoot: true
-          #   fsGroup: 568
-          #   fsGroupChangePolicy: OnRootMismatch
+          securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+          seccompProfile: { type: RuntimeDefault }
 
     service:
       app:
