@@ -68,8 +68,8 @@ spec:
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
         pod:
-          # hostNetwork: true
-          # dnsPolicy: ClusterFirstWithHostNet
+          hostNetwork: true
+          dnsPolicy: ClusterFirstWithHostNet
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
@@ -81,9 +81,9 @@ spec:
     service:
       app:
         controller: home-assistant
-        # type: LoadBalancer
-        # annotations:
-        #   io.cilium/lb-ipam-ips: "192.168.1.226"
+        type: LoadBalancer
+        annotations:
+          io.cilium/lb-ipam-ips: "192.168.1.226"
         ports:
           http:
             port: 8123
