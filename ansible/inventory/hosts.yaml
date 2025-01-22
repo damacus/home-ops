@@ -16,3 +16,5 @@ kubernetes:
       hosts:
         orange-pi:
           ansible_host: 192.168.1.241
+        blackberry-pi:
+          ansible_host: 192.168.1.200

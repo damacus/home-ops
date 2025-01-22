@@ -29,7 +29,7 @@
             install_recommends: false
 
     - name: Network Configuration
-      notify: Reboot
+      # notify: Reboot
       block:
         - name: Network Configuration | Set hostname
           ansible.builtin.hostname:
