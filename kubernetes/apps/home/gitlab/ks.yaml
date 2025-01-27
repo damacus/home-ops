@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gitlab
+  namespace: flux-system
+spec:
+  targetNamespace: home
+  path: ./kubernetes/apps/home/gitlab/app
+  prune: true
+  dependsOn:
+    - name: redis
+    - name: openebs
+    - name: longhorn
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
