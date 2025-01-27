@@ -1,0 +1,58 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gitlab
+  namespace: home
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: gitlab
+      version: 7.8.0
+      sourceRef:
+        kind: HelmRepository
+        name: gitlab
+        namespace: flux-system
+      interval: 10m
+  install:
+    remediation:
+      retries: 3
+  values:
+    global:
+      hosts:
+        domain: ironstone.casa
+        gitlab:
+          name: &host gitlab.ironstone.casa
+      initialRootPassword:
+        secret: gitlab-root-password
+        key: password
+      redis:
+        host: redis-master.database.svc.cluster.local
+        port: 6379
+        auth:
+          enabled: false
+    certmanager:
+      install: false
+    certmanager-issuer:
+      email: "admin@ironstone.casa"
+    gitlab:
+      webservice:
+        ingress:
+          enabled: true
+          hosts:
+            - host: *host
+              paths:
+                - path: /
+                  pathType: Prefix
+    nginx-ingress:
+      enabled: false  # Assuming you're using your own ingress controller
+    postgresql:
+      persistence:
+        enabled: true
+        storageClass: "longhorn"
+        size: 8Gi
+    redis:
+      install: false
+    minio:
+      install: false
