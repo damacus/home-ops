@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=http://frigate_host:5000/api/config/schema.json
+# yaml-language-server: $schema=http://frigate.ironstone.casa:5000/api/config/schema.json
 ---
 logger:
   default: info
@@ -16,8 +16,7 @@ detectors:
     device: usb
 
 ffmpeg:
-  # global_args: ["-hide_banner", "-loglevel", "warning"]
-  hwaccel: preset-rpi-64-h264
+  hwaccel_args: preset-rpi-64-h264
 
 record:
   enabled: true
