@@ -89,7 +89,7 @@ spec:
         globalMounts:
           - path: /config/config.yml
             subPath: config.yml
-            readOnly: false # whilst testing
+            readOnly: true
 
       usb:
         type: hostPath
