@@ -27,12 +27,6 @@ spec:
       mosquitto:
         annotations:
           reloader.stakater.com/auto: "true"
-        initContainers:
-          init-config:
-            image:
-              repository: public.ecr.aws/docker/library/eclipse-mosquitto
-              tag: 2.0.20
-              pullPolicy: IfNotPresent
         containers:
           app:
             image:
@@ -65,9 +59,25 @@ spec:
         ports:
           http:
             port: 1883
+
+    configMaps:
+      config:
+        enabled: true
+        data:
+          mosquitto.conf: |
+            persistence true
+            persistence_location /data/mosquitto/
+            listener 1883
+            allow_anonymous true
+            per_listener_settings false
+            connection_messages true
+            autosave_interval 60
+
     persistence:
       data:
         existingClaim: mosquitto
+        globalMounts:
+          - path: /data/mosquitto/
       config-file:
         type: configMap
         name: mosquitto-configmap
@@ -76,3 +86,10 @@ spec:
             app:
               - path: /mosquitto/config/mosquitto.conf
                 subPath: mosquitto.conf
+      config:
+        enabled: true
+        type: configMap
+        name: mosquitto-config
+        globalMounts:
+          - path: /mosquitto/config/mosquitto.conf
+            subPath: mosquitto.conf
