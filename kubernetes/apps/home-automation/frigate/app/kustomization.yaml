@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./HelmRelease.yaml
+  - ./pvc.yaml
+
+configMapGenerator:
+  - name: frigate-configmap
+    files:
+      - config.yml=./config.yml
+
+generatorOptions:
+  disableNameSuffixHash: true
