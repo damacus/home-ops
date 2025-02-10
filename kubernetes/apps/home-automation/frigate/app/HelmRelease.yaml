@@ -78,18 +78,26 @@ spec:
                   port: http
 
     persistence:
+      data:
+        existingClaim: frigate-data
+        globalMounts:
+          - path: /data
       config:
         existingClaim: frigate-config
         globalMounts:
-          - path: /data
-
-      config-file:
-        type: configMap
-        name: frigate-configmap
+          - path: /config
+      media:
+        existingClaim: frigate-media
         globalMounts:
-          - path: /config/config.yml
-            subPath: config.yml
-            readOnly: true
+          - path: /media
+
+      # config-file:
+      #   type: configMap
+      #   name: frigate-configmap
+      #   globalMounts:
+      #     - path: /config/config.yml
+      #       subPath: config.yml
+      #       readOnly: true
 
       usb:
         type: hostPath
@@ -97,8 +105,3 @@ spec:
         hostPathType: Directory
         globalMounts:
           - path: /dev/bus/usb
-
-      media:
-        existingClaim: frigate-media
-        globalMounts:
-          - path: /media
