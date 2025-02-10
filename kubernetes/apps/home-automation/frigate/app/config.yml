@@ -4,7 +4,7 @@ logger:
   default: info
 
 mqtt:
-  host: mqtt.ironstone.casa
+  host: mosquitto.home-automataion.svc.cluster.local
   topic_prefix: frigate
 
 database:
