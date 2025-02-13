@@ -39,15 +39,6 @@ spec:
             envFrom:
               - secretRef:
                   name: trillium-next
-            securityContext:
-              # allowPrivilegeEscalation: false
-              # readOnlyRootFilesystem: false
-              # runAsNonRoot: true
-              # runAsUser: 1000
-              # runAsGroup: 1000
-              capabilities:
-                drop:
-                  - ALL
             resources:
               requests:
                 cpu: 10m
@@ -73,8 +64,6 @@ spec:
                 enabled: false
         pod:
           securityContext:
-            # runAsNonRoot: false
-            # fsGroupChangePolicy: OnRootMismatch
             seccompProfile: { type: RuntimeDefault }
 
     service:
