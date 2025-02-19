@@ -31,7 +31,7 @@ spec:
 
     image:
       repository: ghcr.io/dexidp/dex
-      tag: v2.41.1
+      tag: v2.42.0@sha256:1b4a6eee8550240b0faedad04d984ca939513650e1d9bd423502c67355e3822f
 
     ingress:
       enabled: true
