@@ -1,0 +1,48 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: minio
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: minio
+      version: 5.4.0
+      sourceRef:
+        kind: HelmRepository
+        name: minio
+        namespace: flux-system
+  dependsOn:
+    - name: csi-driver-nfs
+      namespace: kube-system
+  values:
+    image:
+      repository: quay.io/minio/minio
+      tag: RELEASE.2025-02-18T16-25-55Z@sha256:1df91be8d6a6146001cd6be2569a12785a8ece583b511f56ebed08f1e65d3611
+    rootUser: "${SECRET_MINIO_ACCESSKEY}"
+    rootPassword: "${SECRET_MINIO_SECRETKEY}"
+    mode: standalone
+    replicas: 1
+
+    resources:
+      requests:
+        memory: 500Mi
+        cpu: 100m
+
+    persistence:
+      existingClaim: minio-data
+
+    buckets:
+      - name: cnpg-home-assistant
+        policy: none
+        purge: false
+        versioning: false
+        objectlocking: false
+
+    consoleIngress:
+      enabled: true
+      ingressClassName: internal
+      path: /
+      hosts:
+        - minio.ironstone.casa
