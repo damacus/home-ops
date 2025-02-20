@@ -11,6 +11,7 @@ resources:
   - cilium.yaml
   - cloudnative-pg.yaml
   - csi-driver-nfs.yaml
+  - csi-driver-smb.yaml
   - descheduler.yaml
   - dex.yaml
   - external-dns.yaml
@@ -21,6 +22,7 @@ resources:
   - kubereboot.yaml
   - longhorn.yaml
   - metrics-server.yaml
+  - minio.yaml
   - nginx.yaml
   - node-feature-discovery.yaml
   - oauth2proxy.yaml
