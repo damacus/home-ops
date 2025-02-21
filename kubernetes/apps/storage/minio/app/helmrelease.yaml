@@ -13,9 +13,6 @@ spec:
         kind: HelmRepository
         name: minio
         namespace: flux-system
-  dependsOn:
-    - name: csi-driver-nfs
-      namespace: storage
   values:
     image:
       repository: quay.io/minio/minio
