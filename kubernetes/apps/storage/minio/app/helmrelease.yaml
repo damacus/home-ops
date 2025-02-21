@@ -15,7 +15,7 @@ spec:
         namespace: flux-system
   dependsOn:
     - name: csi-driver-nfs
-      namespace: kube-system
+      namespace: storage
   values:
     image:
       repository: quay.io/minio/minio
