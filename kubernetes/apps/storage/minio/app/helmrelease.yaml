@@ -21,7 +21,10 @@ spec:
     rootPassword: "${SECRET_MINIO_SECRETKEY}"
     mode: standalone
     replicas: 1
-
+    mcImage:
+      repository: quay.io/minio/mc
+      tag: RELEASE.2025-02-15T10-36-16Z
+      pullPolicy: IfNotPresent
     resources:
       requests:
         memory: 500Mi
