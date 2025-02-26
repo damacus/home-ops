@@ -13,12 +13,19 @@ spec:
         kind: HelmRepository
         name: minio
         namespace: flux-system
+  valuesFrom:
+    - targetPath: rootUser
+      kind: Secret
+      name: minio-root-user
+      valuesKey: username
+    - targetPath: rootPassword
+      kind: Secret
+      name: minio-root-user
+      valuesKey: password
   values:
     image:
       repository: quay.io/minio/minio
       tag: RELEASE.2025-02-18T16-25-55Z
-    rootUser: "${SECRET_MINIO_ACCESSKEY}"
-    rootPassword: "${SECRET_MINIO_SECRETKEY}"
     mode: standalone
     replicas: 1
     mcImage:
