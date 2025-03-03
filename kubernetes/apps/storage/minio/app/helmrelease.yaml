@@ -84,3 +84,21 @@ spec:
       path: /
       hosts:
         - minio.ironstone.casa
+  ## OpenID Identity Management
+  ## The following section documents environment variables for enabling external identity management using an OpenID Connect (OIDC)-compatible provider.
+  ## See https://min.io/docs/minio/linux/operations/external-iam/configure-openid-external-identity-management.html for a tutorial on using these variables.
+  oidc:
+    enabled: true
+    configUrl: "https://dex.damacus.io/.well-known/openid-configuration"
+    clientId: "minio"
+    # Provide existing client secret from the Kubernetes Secret resource, existing secret will have priority over `clientId` and/or `clientSecret``
+    existingClientSecretName: "minio-client"
+    # Provide existing client secret key from the Kubernetes Secret resource
+    existingClientSecretKey: "client-secret"
+    # claimName: "policy"
+    # scopes: "openid,profile,email"
+    redirectUri: "https://minio.ironstone.casa/oauth_callback"
+    # Can leave empty
+    # claimPrefix: ""
+    # comment: ""
+    displayName: "Dex-The-OpenID-Provider" # Snappy
