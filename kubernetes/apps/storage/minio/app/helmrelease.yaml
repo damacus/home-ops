@@ -68,15 +68,28 @@ spec:
         policy: longhorn-policy
 
     buckets:
-      - name: cnpg-home-assistant &bucket_config
+      - name: cnpg-home-assistant
         policy: none
         purge: false
         versioning: false
         objectlocking: false
-      - name: cnpg-mealie *bucket_config
-      - name: cnpg-immich *bucket_config
-      - name: cnpg-paperless *bucket_config
-      - name: longhorn *bucket_config
+      - name: cnpg-mealie
+        policy: none
+        purge: false
+        versioning: false
+        objectlocking: false
+      - name: cnpg-immich
+        policy: none
+        purge: false
+        versioning: false
+      - name: cnpg-paperless
+        policy: none
+        purge: false
+        versioning: false
+      - name: longhorn
+        policy: none
+        purge: false
+        versioning: false
 
     consoleIngress:
       enabled: true
