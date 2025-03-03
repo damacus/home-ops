@@ -97,7 +97,7 @@ spec:
           id: minio
           secret: minio-client
           redirectURIs:
-            - "http://minio.ironstone.casa/oauth_callback"
+            - "https://minio.ironstone.casa/oauth_callback"
 
         - name: mealie
           id: mealie
