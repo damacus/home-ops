@@ -26,12 +26,13 @@ spec:
     image:
       repository: quay.io/minio/minio
       tag: RELEASE.2025-02-18T16-25-55Z
-    mode: standalone
-    replicas: 1
     mcImage:
       repository: quay.io/minio/mc
       tag: RELEASE.2025-02-15T10-36-16Z
       pullPolicy: IfNotPresent
+
+    mode: standalone
+    replicas: 1
     resources:
       requests:
         memory: 500Mi
@@ -41,11 +42,14 @@ spec:
       existingClaim: minio-data
 
     buckets:
-      - name: cnpg-home-assistant
+      - name: cnpg-home-assistant &bucket_config
         policy: none
         purge: false
         versioning: false
         objectlocking: false
+      - name: cnpg-mealie *bucket_config
+      - name: cnpg-immich *bucket_config
+      - name: cnpg-paperless *bucket_config
 
     consoleIngress:
       enabled: true
