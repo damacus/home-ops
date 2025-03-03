@@ -108,8 +108,8 @@ spec:
       existingClientSecretName: "minio-client"
       # Provide existing client secret key from the Kubernetes Secret resource
       existingClientSecretKey: "client-secret"
-      claimName: "name"
-      scopes: "openid,profile,email,name"
+      claimName: "email"
+      scopes: "profile,email"
       redirectUri: "https://minio.ironstone.casa/oauth_callback"
       # Can leave empty
       # claimPrefix: ""
