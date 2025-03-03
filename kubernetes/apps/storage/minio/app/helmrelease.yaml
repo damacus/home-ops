@@ -41,6 +41,32 @@ spec:
     persistence:
       existingClaim: minio-data
 
+    env:
+      MINIO_PROMETHEUS_URL: "http://prometheus-operated/monitoring.svc.cluster.local:9090"
+      TZ: "${TZ}"
+
+    metrics:
+      serviceMonitor:
+        enabled: true
+        includeNode: true
+        public: true
+
+    policies:
+      - name: longhorn-policy
+        statements:
+          - resources:
+              - "arn:aws:s3:::longhorn"
+              - "arn:aws:s3:::longhorn/*"
+            actions:
+              - "s3:PutObject"
+              - "s3:GetObject"
+              - "s3:ListBucket"
+              - "s3:DeleteObject"
+
+    users:
+      - accessKey: longhorn
+        policy: longhorn-policy
+
     buckets:
       - name: cnpg-home-assistant &bucket_config
         policy: none
@@ -50,6 +76,7 @@ spec:
       - name: cnpg-mealie *bucket_config
       - name: cnpg-immich *bucket_config
       - name: cnpg-paperless *bucket_config
+      - name: longhorn *bucket_config
 
     consoleIngress:
       enabled: true
