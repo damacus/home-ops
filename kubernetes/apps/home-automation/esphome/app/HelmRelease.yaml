@@ -56,6 +56,8 @@ spec:
         pod:
           hostNetwork: true
           dnsPolicy: ClusterFirstWithHostNet
+          imagePullSecrets:
+            - name: ghcr-creds
 
     service:
       app:

@@ -10,3 +10,5 @@ spec:
   interval: 30m
   url: oci://ghcr.io/actions
   timeout: 3m
+  secretRef:
+    name: ghcr-creds

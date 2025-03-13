@@ -58,6 +58,8 @@ spec:
     defaultPodOptions:
       nodeSelector:
         google.feature.node.kubernetes.io/coral: "true"
+      imagePullSecrets:
+        - name: ghcr-creds
     service:
       app:
         controller: frigate
