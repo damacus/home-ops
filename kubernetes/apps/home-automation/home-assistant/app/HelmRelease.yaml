@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: ghcr.io/onedr0p/home-assistant
-              tag: 2025.3.2@sha256:bc6ac31069eae42f4ff41d2dd0d600aaf8f02b109664cd6aff46709d13eff779
+              tag: 2025.3.1
             env:
               - name: HASS_HTTP_TRUSTED_PROXY_1
                 value: "${CLUSTER_CIDR}"
@@ -129,16 +129,3 @@ spec:
           home-assistant:
             app:
               - path: /config
-# We're having trouble with the following mounts, so we're going to remove them for now
-# logs:
-#   type: emptyDir
-#   globalMounts:
-#     - path: /config/logs
-
-# tts:
-#   type: emptyDir
-#   globalMounts:
-#     - path: /config/tts
-
-# tmp:
-#   type: emptyDir
