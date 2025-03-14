@@ -9,3 +9,5 @@ spec:
   url: oci://ghcr.io/gimlet-io/capacitor-manifests
   ref:
     semver: ">=0.1.0"
+  secretRef:
+    name: ghcr-creds

@@ -51,6 +51,8 @@ spec:
                 memory: 500M
         pod:
           hostUsers: false
+          imagePullSecrets:
+            - name: ghcr-creds
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
