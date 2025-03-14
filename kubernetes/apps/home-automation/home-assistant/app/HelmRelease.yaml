@@ -129,3 +129,10 @@ spec:
           home-assistant:
             app:
               - path: /config
+      tmpfs:
+        type: emptyDir
+        advancedMounts:
+          home-assistant:
+            app:
+              - path: /tmp
+                subPath: hass-tmp
