@@ -129,16 +129,16 @@ spec:
           home-assistant:
             app:
               - path: /config
+# We're having trouble with the following mounts, so we're going to remove them for now
+# logs:
+#   type: emptyDir
+#   globalMounts:
+#     - path: /config/logs
 
-      logs:
-        type: emptyDir
-        globalMounts:
-          - path: /config/logs
+# tts:
+#   type: emptyDir
+#   globalMounts:
+#     - path: /config/tts
 
-      tts:
-        type: emptyDir
-        globalMounts:
-          - path: /config/tts
-
-      tmp:
-        type: emptyDir
+# tmp:
+#   type: emptyDir
