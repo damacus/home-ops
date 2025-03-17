@@ -40,7 +40,7 @@ spec:
       kubernetes.io/os: linux
   bgpInstances:
     - name: "udm-65000"
-      localASN: 65000
+      localASN: 65020
       peers:
         - name: "udm-65000"
           peerASN: 65000
