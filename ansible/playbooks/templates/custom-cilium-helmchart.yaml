@@ -21,6 +21,9 @@ spec:
     bpf:
       masquerade: true
 
+    bgpControlPlane:
+      enabled: true
+
     cluster:
       id: 1
       name: ironstone
@@ -32,6 +35,14 @@ spec:
 
     endpointRoutes:
       enabled: true
+
+    gatewayAPI:
+      enableAlpn: true
+      enableAppProtocol: true
+      enabled: true
+      gatewayClass:
+        create: "true"
+      xffNumTrustedHops: 1
 
     hubble:
       enabled: false

@@ -8,6 +8,9 @@ bandwidthManager:
 bpf:
   masquerade: true
 
+bgpControlPlane:
+  enabled: true
+
 cluster:
   id: 1
   name: ironstone
@@ -19,6 +22,14 @@ dashboards:
 
 endpointRoutes:
   enabled: true
+
+gatewayAPI:
+  enableAlpn: true
+  enableAppProtocol: true
+  enabled: true
+  gatewayClass:
+    create: "true"
+  xffNumTrustedHops: 1
 
 hubble:
   enabled: false
