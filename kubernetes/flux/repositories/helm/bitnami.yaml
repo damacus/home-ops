@@ -9,3 +9,5 @@ spec:
   type: oci
   interval: 5m
   url: oci://registry-1.docker.io/bitnamicharts
+  secretRef:
+    name: dockerhub-creds
