@@ -1,117 +1,129 @@
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: minio
 spec:
-  interval: 5m
+  interval: 30m
   chart:
     spec:
-      chart: minio
-      version: 5.4.0
+      chart: app-template
+      version: 3.7.3
       sourceRef:
         kind: HelmRepository
-        name: minio
+        name: bjw-s
         namespace: flux-system
-  valuesFrom:
-    - targetPath: rootUser
-      kind: Secret
-      name: minio-root-user
-      valuesKey: username
-    - targetPath: rootPassword
-      kind: Secret
-      name: minio-root-user
-      valuesKey: password
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
   values:
-    image:
-      repository: quay.io/minio/minio
-      tag: RELEASE.2025-02-28T09-55-16Z
-    mcImage:
-      repository: quay.io/minio/mc
-      tag: RELEASE.2025-02-21T16-00-46Z
-      pullPolicy: IfNotPresent
+    controllers:
+      main:
+        replicas: 3
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: quay.io/minio/minio
+              tag: RELEASE.2025-02-18T16-25-55Z@sha256:1df91be8d6a6146001cd6be2569a12785a8ece583b511f56ebed08f1e65d3611
+            env:
+              TZ: "${TZ}"
+              MINIO_PROMETHEUS_URL: http://kube-prometheus-stack-prometheus.monitoring:9090
+              MINIO_PROMETHEUS_JOB_ID: minio
+              MINIO_BROWSER_REDIRECT_URL: "https://minio.ironstone.casa"
+              # MINIO_SERVER_URL: "https://s3.ironstone.casa"
+              MINIO_PROMETHEUS_AUTH_TYPE: "public"
+              MINIO_API_CORS_ALLOW_ORIGIN: https://minio.ironstone.casa,https://s3.ironstone.casa
+              MINIO_AUTH_TYPE: public
+              MINIO_UPDATE: "off"
+              MINIO_API_REQUESTS_MAX: "1600"
+            envFrom:
+              - secretRef:
+                  name: minio
+            args: ["server", "/data", "--console-address", ":9001"]
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /minio/health/live
+                    port: 9000
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 6
+              readiness: *probes
+    service:
+      main:
+        controller: main
+        type: LoadBalancer
+        annotations:
+          io.cilium/lb-ipam-ips: 192.168.1.228
+        ports:
+          http:
+            port: 9001
+          api:
+            port: 9000
+    ingress:
+      main:
+        enabled: true
+        className: internal
+        annotations:
+          external-dns.alpha.kubernetes.io/target: internal.ironstone.casa
+        hosts:
+          - host: minio.ironstone.casa
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: main
+                  port: http
+      s3:
+        enabled: true
+        className: internal
+        annotations:
+          external-dns.alpha.kubernetes.io/target: internal.ironstone.casa
+          nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+          nginx.ingress.kubernetes.io/proxy-connect-timeout: "180"
+          nginx.ingress.kubernetes.io/proxy-body-size: 1024m
+          nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+          nginx.ingress.kubernetes.io/configuration-snippet: |
+            chunked_transfer_encoding off;
+        hosts:
+          - host: s3.ironstone.casa
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: main
+                  port: api
+    serviceMonitor:
+      main:
+        serviceName: minio
+        enabled: true
+        endpoints:
+          - port: api
+            scheme: http
+            path: /minio/v2/metrics/cluster
+            interval: 1m
+            scrapeTimeout: 10s
+    persistence:
+      minio-data:
+        existingClaim: minio-data
+        globalMounts:
+          - path: /data
 
-    mode: standalone
-    replicas: 1
     resources:
       requests:
-        memory: 500Mi
-        cpu: 100m
-
-    persistence:
-      existingClaim: minio-data
-
-    env:
-      MINIO_PROMETHEUS_URL: "http://prometheus-operated/monitoring.svc.cluster.local:9090"
-      TZ: "${TZ}"
-
-    metrics:
-      serviceMonitor:
-        enabled: true
-        includeNode: true
-        public: true
-
-    policies:
-      - name: longhorn-policy
-        statements:
-          - resources:
-              - "arn:aws:s3:::longhorn"
-              - "arn:aws:s3:::longhorn/*"
-            actions:
-              - "s3:PutObject"
-              - "s3:GetObject"
-              - "s3:ListBucket"
-              - "s3:DeleteObject"
-
-    users:
-      - accessKey: longhorn
-        policy: longhorn-policy
-
-    buckets:
-      - name: cnpg-home-assistant
-        policy: none
-        purge: false
-        versioning: false
-        objectlocking: false
-      - name: cnpg-mealie
-        policy: none
-        purge: false
-        versioning: false
-        objectlocking: false
-      - name: cnpg-immich
-        policy: none
-        purge: false
-        versioning: false
-      - name: cnpg-paperless
-        policy: none
-        purge: false
-        versioning: false
-      - name: longhorn
-        policy: none
-        purge: false
-        versioning: false
-
-    consoleIngress:
-      enabled: true
-      ingressClassName: internal
-      path: /
-      hosts:
-        - minio.ironstone.casa
-## OpenID Identity Management
-## The following section documents environment variables for enabling external identity management using an OpenID Connect (OIDC)-compatible provider.
-## See https://min.io/docs/minio/linux/operations/external-iam/configure-openid-external-identity-management.html for a tutorial on using these variables.
-# oidc:
-#   enabled: false
-#   configUrl: "https://dex.damacus.io/.well-known/openid-configuration"
-#   clientId: "minio"
-#   # Provide existing client secret from the Kubernetes Secret resource, existing secret will have priority over `clientId` and/or `clientSecret``
-#   existingClientSecretName: "minio-client"
-#   # Provide existing client secret key from the Kubernetes Secret resource
-#   existingClientSecretKey: "client-secret"
-#   claimName: "email"
-#   scopes: "profile,email"
-#   redirectUri: "https://minio.ironstone.casa/oauth_callback"
-#   # Can leave empty
-#   # claimPrefix: ""
-#   # comment: ""
-#   displayName: "Dex-The-OpenID-Provider" # Snappy
+        memory: 750Mi
+        cpu: 400m
+      limits:
+        memory: 2Gi
