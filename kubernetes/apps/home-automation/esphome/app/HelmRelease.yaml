@@ -31,8 +31,8 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/esphome/esphome
-              tag: 2025.3.2@sha256:724e73a6169cb474135ce003cbc3561ca39bbc79b94c35adc8c7472de4a07920
+              repository: ghcr.io/home-operations/esphome
+              tag: 2025.3.2
 
             securityContext:
               runAsNonRoot: false
