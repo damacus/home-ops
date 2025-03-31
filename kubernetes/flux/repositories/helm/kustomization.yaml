@@ -23,6 +23,7 @@ resources:
   - longhorn.yaml
   - metrics-server.yaml
   - minio.yaml
+  - minio-operator.yaml
   - nginx.yaml
   - node-feature-discovery.yaml
   - oauth2proxy.yaml
