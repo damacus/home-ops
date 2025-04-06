@@ -26,6 +26,6 @@ spec:
         namespace: flux-system
   values:
     controller:
-      replicas: 2
+      replicas: 1
     windows:
       enabled: false
