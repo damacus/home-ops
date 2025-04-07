@@ -20,7 +20,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: github-label-manager
-              image: xorima/github-label-manager:1.0.1
+              image: xorima/github-label-manager:1.1.3@sha256:5f4f836d838d91a7d5dbe0c0ba2af7fe07317bac02e10686274fd417c286a0b8
               resources:
                 requests:
                   memory: "256Mi"
