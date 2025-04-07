@@ -51,7 +51,7 @@ spec:
                   value: 'Automated PR: Standardising Files'
                 - name: GFM_PULL_REQUEST_BODY
                   value: >
-                    This PR will standardise the files we have with out agreed
+                    This PR will standardise the files we have without our agreed
                     spec in sous-chefs/repo-management.
 
                     This repo has been identified by topic(s) of terraform
