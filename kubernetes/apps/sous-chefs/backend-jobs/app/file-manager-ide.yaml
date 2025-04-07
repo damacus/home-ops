@@ -1,0 +1,80 @@
+---
+kind: CronJob
+apiVersion: batch/v1
+metadata:
+  name: file-manager-ide
+  namespace: backend-jobs
+spec:
+  schedule: 0 13 * * *
+  concurrencyPolicy: Replace
+  jobTemplate:
+    spec:
+      parallelism: 1
+      completions: 1
+      backoffLimit: 2
+      manualSelector: false
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: github-file-manager
+              image: xorima/github-file-manager:2.1.0
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+              env:
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-admin-token
+                      key: token
+                      optional: false
+                - name: GFM_SOURCE_REPO_OWNER
+                  value: sous-chefs
+                - name: GFM_SOURCE_REPO_NAME
+                  value: repo-management
+                - name: GFM_SOURCE_REPO_PATH
+                  value: standardfiles/ide
+                - name: GFM_DESTINATION_REPO_OWNER
+                  value: sous-chefs
+                - name: GFM_DESTINATION_REPO_TOPICS
+                  value: ide
+                - name: GFM_BRANCH_NAME
+                  value: automated/standardfiles
+                - name: GFM_PULL_REQUEST_TITLE
+                  value: 'Automated PR: Standardising Files'
+                - name: GFM_PULL_REQUEST_BODY
+                  value: >
+                    This PR will standardise the files we have with our agreed
+                    spec in sous-chefs/repo-management.
+
+                    This repo has been identified by topic(s) of ide
+                - name: GFM_PULL_REQUEST_LABELS
+                - name: GFM_CHANGELOG_LOCATION
+                  value: CHANGELOG.md
+                - name: GFM_CHANGELOG_MARKER
+                  value: '## Unreleased'
+                - name: GFM_MANAGE_CHANGELOG
+                  value: '0'
+                - name: GFM_GIT_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-admin-details
+                      key: github_git_name
+                      optional: false
+                - name: GFM_GIT_EMAIL
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-admin-details
+                      key: github_email
+                      optional: false
+                - name: GFM_GIT_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-admin-details
+                      key: github_username
+                      optional: false
