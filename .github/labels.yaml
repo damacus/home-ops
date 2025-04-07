@@ -5,9 +5,10 @@
 - { name: "area/github", color: "0e8a16" }
 - { name: "area/kubernetes", color: "0e8a16" }
 - { name: "area/taskfile", color: "0e8a16" }
+- { name: "area/flux", color: "0e8a16" }
+- {name: "area/sous-chefs", color: "0e8a16"}
 # Distro
 - { name: "distro/k3s", color: "ffc300" }
-- { name: "distro/talos", color: "ffc300" }
 # Renovate
 - { name: "renovate/ansible", color: "027fa0" }
 - { name: "renovate/container", color: "027fa0" }

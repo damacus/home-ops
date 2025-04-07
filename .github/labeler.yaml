@@ -15,3 +15,6 @@ area/taskfile:
   - changed-files:
       - any-glob-to-any-file: .taskfiles/**/*
       - any-glob-to-any-file: Taskfile*
+area/sous-chefs:
+  - changed-files:
+      - any-glob-to-any-file: kubernetes/apps/sous-chefs/**/*
