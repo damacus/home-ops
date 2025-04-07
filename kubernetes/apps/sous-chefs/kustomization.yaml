@@ -4,5 +4,3 @@ kind: Kustomization
 resources:
   - ./backend-jobs/namespace.yaml
   - ./backend-jobs/ks.yaml
-  - ./frontend/namespace.yaml
-  - ./frontend/ks.yaml
