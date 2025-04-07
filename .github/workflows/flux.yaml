@@ -1,21 +1,47 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: "Flux Local"
+name: "Flux & Kubeconform"
 
 on:
-  push:
-    paths:
-      - "kubernetes/**"
   pull_request:
     branches: ["main"]
+    paths: ["kubernetes/**"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  yaml-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Run yamllint
+        uses: actionshub/yamllint@main
+
+  kubeconform:
+    name: Kubeconform
+    needs: yaml-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Setup Workflow Tools
+        run: brew install fluxcd/tap/flux kubeconform kustomize
+
+      - name: Run kubeconform
+        shell: bash
+        run: bash ./scripts/kubeconform.sh ./kubernetes
+
   flux-test:
     name: Flux Local Test
+    needs: [yaml-lint, kubeconform]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -33,13 +59,15 @@ jobs:
         uses: fluxcd/flux2/action@8d5f40dca5aa5d3c0fc3414457dda15a0ac92fa4 # v2.5.1
 
       - uses: allenporter/flux-local/action/test@23b8f4e593254e34b2913728007c419b52789382 # 7.3.0
+        id: test
         with:
           path: ./kubernetes
           enable-helm: true
           debug: false
 
   flux-diff:
-    name: Flux Local
+    name: Flux Local Diff
+    needs: [yaml-lint, kubeconform]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
