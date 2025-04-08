@@ -38,7 +38,7 @@ spec:
       ingress:
         enabled: true
         annotations:
-          external-dns.alpha.kubernetes.io/target: internal.ironstone.casa
+          external-dns.alpha.kubernetes.io/target: "${NGINX_INTERNAL_ADDR}"
         ingressClassName: internal
         hosts: ["alertmanager.ironstone.casa"]
         pathType: Prefix
@@ -72,7 +72,7 @@ spec:
       ingress:
         enabled: true
         annotations:
-          external-dns.alpha.kubernetes.io/target: internal.ironstone.casa
+          external-dns.alpha.kubernetes.io/target: "${NGINX_INTERNAL_ADDR}"
         ingressClassName: internal
         hosts: ["prometheus.ironstone.casa"]
         pathType: Prefix
@@ -94,8 +94,10 @@ spec:
         resources:
           requests:
             cpu: 100m
+            memory: 1000Mi
           limits:
-            memory: 1500Mi
+            cpu: 500m
+            memory: 1000Mi
         storageSpec:
           volumeClaimTemplate:
             spec:
