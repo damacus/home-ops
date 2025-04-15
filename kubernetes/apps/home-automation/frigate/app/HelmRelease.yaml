@@ -31,7 +31,7 @@ spec:
           app:
             image:
               repository: ghcr.io/blakeblackshear/frigate
-              tag: 0.15.0-standard-arm64
+              tag: 0.15.1-standard-arm64@sha256:dde8b639eb2239f8f3f97c377102eca401e26e613ac9543651ae201f950ba67c
             env:
               TZ: ${TIMEZONE}
             probes:
