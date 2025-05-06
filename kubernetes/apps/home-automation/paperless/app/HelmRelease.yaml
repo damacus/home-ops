@@ -24,6 +24,8 @@ spec:
           securityContext:
             supplementalGroups:
               - 100
+          imagePullSecrets:
+            - name: ghcr-creds
 
         containers:
           app:

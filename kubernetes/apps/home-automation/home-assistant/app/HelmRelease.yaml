@@ -70,6 +70,8 @@ spec:
         pod:
           hostNetwork: true
           dnsPolicy: ClusterFirstWithHostNet
+          imagePullSecrets:
+            - name: ghcr-creds
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
