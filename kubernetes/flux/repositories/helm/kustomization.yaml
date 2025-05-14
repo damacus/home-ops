@@ -24,7 +24,6 @@ resources:
   - metrics-server.yaml
   - minio.yaml
   - minio-operator.yaml
-  - nginx.yaml
   - node-feature-discovery.yaml
   - onepassword-connect.yaml
   - openebs.yaml
