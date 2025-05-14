@@ -68,6 +68,8 @@ spec:
             envFrom:
               - secretRef:
                   name: mealie-secret
+              - secretRef:
+                  name: mealie-client
             probes:
               liveness:
                 enabled: false
