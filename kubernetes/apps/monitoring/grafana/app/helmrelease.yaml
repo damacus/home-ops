@@ -23,8 +23,6 @@ spec:
     remediation:
       strategy: rollback
       retries: 3
-  dependsOn:
-    - name: external-secrets-stores
   values:
     admin:
       # Reference the secret created by ExternalSecret
