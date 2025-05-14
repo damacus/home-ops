@@ -36,7 +36,7 @@ spec:
       hosts:
         - grafana.ironstone.casa
       annotations:
-        external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+        external-dns.alpha.kubernetes.io/target: "${NGINX_INTERNAL_ADDR}"
       path: /
       tls:
         - secretName: grafana-tls
