@@ -32,10 +32,11 @@ spec:
 
     ingress:
       enabled: true
+      ingressClassName: internal
       hosts:
         - grafana.ironstone.casa
       annotations:
-        kubernetes.io/ingress.class: internal
+        external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
       path: /
       tls:
         - secretName: grafana-tls
@@ -57,10 +58,7 @@ spec:
         cpu: 1000m
         memory: 256Mi
 
-    # Inject the grafana-client secret as an environment variable
-    envFrom:
-      - secretRef:
-          name: grafana-client
+    envFromSecret: grafana-secret
 
     # OIDC (Dex) authentication configuration
     grafana.ini:
@@ -69,7 +67,7 @@ spec:
         name: Dex
         allow_sign_up: true
         client_id: grafana
-        client_secret: ${CLIENT_SECRET}
+        client_secret: "${CLIENT_SECRET}"
         scopes: openid profile email groups
         auth_url: https://dex.damacus.io/auth
         token_url: https://dex.damacus.io/token
