@@ -34,16 +34,15 @@ spec:
 
     ingress:
       enabled: true
-      ingressClassName: nginx
       hosts:
-        - host: grafana.ironstone.casa
-          paths:
-            - path: /
-              pathType: Prefix
+        - grafana.ironstone.casa
+      annotations:
+        kubernetes.io/ingress.class: internal
+      path: /
       tls:
-        - hosts:
+        - secretName: grafana-tls
+          hosts:
             - grafana.ironstone.casa
-          secretName: grafana-tls
 
     persistence:
       enabled: true
@@ -59,3 +58,28 @@ spec:
       limits:
         cpu: 1000m
         memory: 256Mi
+
+    # Inject the grafana-client secret as an environment variable
+    envFrom:
+      - secretRef:
+          name: grafana-client
+
+    # OIDC (Dex) authentication configuration
+    grafana.ini:
+      auth.generic_oauth:
+        enabled: true
+        name: Dex
+        allow_sign_up: true
+        client_id: grafana
+        client_secret: ${CLIENT_SECRET}
+        scopes: openid profile email groups
+        auth_url: https://dex.damacus.io/auth
+        token_url: https://dex.damacus.io/token
+        api_url: https://dex.damacus.io/userinfo
+        login_attribute_path: email
+        name_attribute_path: email
+        role_attribute_path: contains(groups[*], 'admin') && 'Admin' || 'Viewer'
+        use_pkce: true
+        tls_skip_verify_insecure: false
+      server:
+        root_url: https://grafana.ironstone.casa/
