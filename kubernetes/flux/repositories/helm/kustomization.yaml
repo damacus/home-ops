@@ -16,6 +16,7 @@ resources:
   - dex.yaml
   - external-dns.yaml
   - external-secrets.yaml
+  - grafana.yaml
   - ingress-nginx.yaml
   - jectstack-io.yaml
   - kube-vip.yaml
@@ -24,9 +25,7 @@ resources:
   - metrics-server.yaml
   - minio.yaml
   - minio-operator.yaml
-  - nginx.yaml
   - node-feature-discovery.yaml
-  - oauth2proxy.yaml
   - onepassword-connect.yaml
   - openebs.yaml
   - prometheus-community.yaml
