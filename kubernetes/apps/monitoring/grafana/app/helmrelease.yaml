@@ -79,3 +79,43 @@ spec:
         tls_skip_verify_insecure: false
       server:
         root_url: https://grafana.ironstone.casa/
+
+    dataSources:
+      - name: Prometheus
+        type: prometheus
+        url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+      - name: Alertmanager
+        type: alertmanager
+        url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+
+    dashboards:
+      default:
+        # Node Exporter Dashboard for system metrics
+        node-exporter:
+          gnetId: 1860
+          revision: 30
+          datasource: Prometheus
+
+        # Kubernetes cluster monitoring
+        k8s-system:
+          gnetId: 15661
+          revision: 2
+          datasource: Prometheus
+
+        # Unifi Dashboard
+        # unifi-dashboard:
+        #   gnetId: 11315
+        #   revision: 9
+        #   datasource: Prometheus
+
+        # Longhorn Storage Dashboard
+        longhorn:
+          gnetId: 16888
+          revision: 1
+          datasource: Prometheus
+
+        # PostgreSQL Overview
+        postgres:
+          gnetId: 9628
+          revision: 7
+          datasource: Prometheus
