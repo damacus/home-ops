@@ -16,6 +16,7 @@ resources:
   - dex.yaml
   - external-dns.yaml
   - external-secrets.yaml
+  - grafana.yaml
   - ingress-nginx.yaml
   - jectstack-io.yaml
   - kube-vip.yaml
