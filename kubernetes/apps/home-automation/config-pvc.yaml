@@ -9,7 +9,7 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 5Gi
+      storage: 50Gi
   storageClassName: longhorn
   volumeName: pvc-3344c800-bfb4-4ebc-bfc6-6e8db2d379a4
 ---
@@ -19,7 +19,7 @@ metadata:
   name: pvc-3344c800-bfb4-4ebc-bfc6-6e8db2d379a4
 spec:
   capacity:
-    storage: 5Gi # must match size of Longhorn volume
+    storage: 50Gi # must match size of Longhorn volume
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
