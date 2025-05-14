@@ -63,12 +63,11 @@ spec:
               OIDC_USER_CLAIM: "email"
               OIDC_NAME_CLAIM: "email"
               OIDC_GROUPS_CLAIM: "groups"
+              OIDC_CLIENT_ID: "mealie"
 
             envFrom:
               - secretRef:
                   name: mealie-secret
-              - secretRef:
-                  name: mealie-client
             probes:
               liveness:
                 enabled: false
