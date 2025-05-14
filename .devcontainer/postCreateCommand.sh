@@ -30,7 +30,7 @@ EOF
 /usr/bin/fish -c "fisher install nickeb96/puffer-fish"
 
 # Setup CLI tools autocompletions for fish
-for tool in cilium flux helm k9s kubectl kustomize talhelper talosctl; do
+for tool in cilium flux helm k9s kubectl kustomize; do
     $tool completion fish > ~/.config/fish/completions/$tool.fish
 done
 gh completion --shell fish > ~/.config/fish/completions/gh.fish

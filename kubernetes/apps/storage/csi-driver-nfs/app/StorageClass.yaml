@@ -2,14 +2,15 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: nfs-csi
+  name: nfs-csi-unas
   namespace: kube-system
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: ${SECRET_SYNOLOGY_IP:-test}
-  share: ${SECRET_NFS_DIRECTORY:-/volume2}
+  server: unas.ironstone.casa
+  share: /var/nfs/shared/nfs
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 mountOptions:
   - hard
-  - nfsvers=4
+  - nolock
+  - nfsvers=3

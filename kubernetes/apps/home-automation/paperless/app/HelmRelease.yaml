@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.5.1
+      version: 3.7.3
       interval: 30m
       sourceRef:
         kind: HelmRepository
@@ -29,7 +29,7 @@ spec:
           app:
             image:
               repository: ghcr.io/paperless-ngx/paperless-ngx
-              tag: 2.13.5
+              tag: 2.15.3@sha256:39b337e73c978238f0b529baf42f1b59b65d17eed35cd61bc1ccbbf779b5d58b
             env:
               # Configure application
               PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
@@ -56,7 +56,7 @@ spec:
                         "client_id": "paperless",
                         "secret": "paperless-client",
                         "settings": {
-                          "server_url": "https://dex.${SECRET_DOMAIN}/.well-known/openid-configuration"
+                          "server_url": "https://dex.damacus.io/.well-known/openid-configuration"
                         }
                       }
                     ]
@@ -115,7 +115,7 @@ spec:
           gotenburg:
             image:
               repository: thecodingmachine/gotenberg
-              tag: 8.14.0@sha256:71e8a5c257d746c85287b4041f7a39cd7fe62e10eab56e651fdc5e33913ec06f
+              tag: 8.20.1@sha256:cda4386c7ed38f18bc6897828be01ba7361c99929a5c84ec5e293d7916e29bac
             env:
               - { name: DISABLE_GOOGLE_CHROME, value: "1" }
             resources:
@@ -129,7 +129,7 @@ spec:
           tika:
             image:
               repository: apache/tika
-              tag: 3.0.0.0
+              tag: 3.1.0.0@sha256:2c1a2e563b3a9b2e98443143cd4ca34a6a1e829e24103152a299888153479fab
             resources:
               requests:
                 cpu: 100m
@@ -166,7 +166,7 @@ spec:
 
       nas:
         type: nfs
-        server: ${SECRET_SYNOLOGY_IP:=test}
-        path: ${SECRET_NFS_DIRECTORY:=/volume2}/paperless
+        server: 192.168.1.243
+        path: /var/nfs/shared/nfs/paperless
         globalMounts:
           - path: /data/nas-mount

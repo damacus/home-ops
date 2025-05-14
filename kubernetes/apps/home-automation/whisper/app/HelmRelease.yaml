@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.5.1
+      version: 3.7.3
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -32,7 +32,7 @@ spec:
           app:
             image:
               repository: rhasspy/wyoming-whisper
-              tag: 2.2.0
+              tag: 2.4.0@sha256:2687f79715734606f856fc4478351ce91a76bdaf6899086bcb837eb9ac7cddb8
             args:
               - --model
               - Systran/faster-distil-whisper-small.en
@@ -68,7 +68,7 @@ spec:
       app:
         controller: whisper
         type: LoadBalancer
-        loadBalancerIP: ${WYOMING_WHISPER_ADDR}
+        loadBalancerIP: "192.168.1.232"
         ports:
           whisper:
             enabled: true

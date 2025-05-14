@@ -1,0 +1,129 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: minio
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  values:
+    controllers:
+      main:
+        replicas: 1
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: quay.io/minio/minio
+              tag: RELEASE.2025-02-18T16-25-55Z@sha256:1df91be8d6a6146001cd6be2569a12785a8ece583b511f56ebed08f1e65d3611
+            env:
+              TZ: "${TZ}"
+              MINIO_PROMETHEUS_URL: http://kube-prometheus-stack-prometheus.monitoring:9090
+              MINIO_PROMETHEUS_JOB_ID: minio
+              MINIO_BROWSER_REDIRECT_URL: "https://minio.ironstone.casa"
+              # MINIO_SERVER_URL: "https://s3.ironstone.casa"
+              MINIO_PROMETHEUS_AUTH_TYPE: "public"
+              MINIO_API_CORS_ALLOW_ORIGIN: https://minio.ironstone.casa,https://s3.ironstone.casa
+              MINIO_AUTH_TYPE: public
+              MINIO_UPDATE: "off"
+              MINIO_API_REQUESTS_MAX: "1600"
+            envFrom:
+              - secretRef:
+                  name: minio-root-user
+            args: ["server", "/data", "--console-address", ":9001"]
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /minio/health/live
+                    port: 9000
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 6
+              readiness: *probes
+    service:
+      main:
+        controller: main
+        type: LoadBalancer
+        annotations:
+          io.cilium/lb-ipam-ips: 192.168.1.228
+        ports:
+          http:
+            port: 9001
+          api:
+            port: 9000
+    ingress:
+      main:
+        enabled: true
+        className: internal
+        annotations:
+          external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+        hosts:
+          - host: minio.ironstone.casa
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: main
+                  port: http
+      s3:
+        enabled: true
+        className: internal
+        annotations:
+          external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+          nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,192.168.0.0/16"
+          nginx.ingress.kubernetes.io/proxy-connect-timeout: "180"
+          nginx.ingress.kubernetes.io/proxy-body-size: 1024m
+          nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+          nginx.ingress.kubernetes.io/configuration-snippet: |
+            chunked_transfer_encoding off;
+        hosts:
+          - host: s3.ironstone.casa
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: main
+                  port: api
+    serviceMonitor:
+      main:
+        serviceName: minio
+        enabled: true
+        endpoints:
+          - port: api
+            scheme: http
+            path: /minio/v2/metrics/cluster
+            interval: 1m
+            scrapeTimeout: 10s
+    persistence:
+      minio-data:
+        existingClaim: minio-data
+        globalMounts:
+          - path: /data
+
+    resources:
+      requests:
+        memory: 750Mi
+        cpu: 400m
+      limits:
+        memory: 2Gi

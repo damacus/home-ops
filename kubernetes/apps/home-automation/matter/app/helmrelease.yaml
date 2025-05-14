@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.5.1
+      version: 3.7.3
       interval: 15m
       sourceRef:
         kind: HelmRepository
@@ -51,7 +51,7 @@ spec:
           app:
             image:
               repository: ghcr.io/home-assistant-libs/python-matter-server
-              tag: 6.6.0
+              tag: 7.0.1@sha256:828c1cd3f957bb0287a099a439505457a25f5d65ed34281acf19cfbf537fe346
               pullPolicy: IfNotPresent
             env:
               TZ: "${TIMEZONE}"
@@ -91,7 +91,7 @@ spec:
         type: LoadBalancer
         externalTrafficPolicy: Cluster
         annotations:
-          io.cilium/lb-ipam-ips: "${MATTER_ADDR}"
+          io.cilium/lb-ipam-ips: "192.168.1.234"
         ports:
           api:
             enabled: true

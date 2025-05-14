@@ -24,13 +24,13 @@ tasks:
       - '{{.VIRTUAL_ENV}}/bin/ansible-galaxy install --role-file "{{.ANSIBLE_REQUIREMENTS_FILE}}" {{if eq .force "true"}}--force{{end}}'
     preconditions:
       - {
-          msg: "Missing Ansible requirements file",
-          sh: "test -f {{.ANSIBLE_REQUIREMENTS_FILE}}",
-        }
+        msg: "Missing Ansible requirements file",
+        sh: "test -f {{.ANSIBLE_REQUIREMENTS_FILE}}",
+      }
       - {
-          msg: "Missing Pip requirements file",
-          sh: "test -f {{.ANSIBLE_PIP_REQUIREMENTS_FILE}}",
-        }
+        msg: "Missing Pip requirements file",
+        sh: "test -f {{.ANSIBLE_PIP_REQUIREMENTS_FILE}}",
+      }
     sources:
       - "{{.ANSIBLE_REQUIREMENTS_FILE}}"
       - "{{.ANSIBLE_PIP_REQUIREMENTS_FILE}}"
@@ -52,9 +52,9 @@ tasks:
       vars: ["playbook"]
     preconditions:
       - {
-          msg: "Missing Ansible inventory file",
-          sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
-        }
+        msg: "Missing Ansible inventory file",
+        sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
+      }
 
   poweroff-workers:
     desc: Shutdown worker nodes
@@ -62,9 +62,9 @@ tasks:
     cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} --limit 'worker' -a '/usr/bin/systemctl poweroff' --become"
     preconditions:
       - {
-          msg: "Missing Ansible inventory file",
-          sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
-        }
+        msg: "Missing Ansible inventory file",
+        sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
+      }
 
   list:
     desc: List all the hosts
@@ -72,9 +72,9 @@ tasks:
     cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} --list-hosts"
     preconditions:
       - {
-          msg: "Missing Ansible inventory file",
-          sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
-        }
+        msg: "Missing Ansible inventory file",
+        sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
+      }
 
   ping:
     desc: Ping all the hosts
@@ -82,9 +82,9 @@ tasks:
     cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} --one-line -m 'ping'"
     preconditions:
       - {
-          msg: "Missing Ansible inventory file",
-          sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
-        }
+        msg: "Missing Ansible inventory file",
+        sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
+      }
 
   uptime:
     desc: Uptime of all the hosts
@@ -92,9 +92,9 @@ tasks:
     cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} --one-line -a 'uptime'"
     preconditions:
       - {
-          msg: "Missing Ansible inventory file",
-          sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
-        }
+        msg: "Missing Ansible inventory file",
+        sh: "test -f {{.ANSIBLE_INVENTORY_FILE}}",
+      }
 
   lint:
     desc: Lint Ansible
@@ -102,10 +102,6 @@ tasks:
     cmd: "{{.VIRTUAL_ENV}}/bin/ansible-lint --config-file {{.ANSIBLE_LINT_FILE}} {{.ANSIBLE_DIR}}/**/*.yaml"
     preconditions:
       - {
-          msg: "Missing Ansible lint file",
-          sh: "test -f {{.ANSIBLE_LINT_FILE}}",
-        }
-
-  .reset:
-    internal: true
-    cmd: rm -rf {{.ANSIBLE_DIR}}
+        msg: "Missing Ansible lint file",
+        sh: "test -f {{.ANSIBLE_LINT_FILE}}",
+      }

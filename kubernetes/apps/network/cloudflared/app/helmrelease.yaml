@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.5.1
+      version: 3.7.3
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -20,6 +20,83 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
-  valuesFrom:
-    - kind: ConfigMap
-      name: cloudflared-helm-config
+  values:
+    controllers:
+      cloudflared:
+        replicas: 2
+        strategy: RollingUpdate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: docker.io/cloudflare/cloudflared
+              tag: 2025.4.2@sha256:698f5c59bf0b9ece62f8c60061004bdfcf7718fbac5d72b87e214af7b9d1d7ac
+            env:
+              NO_AUTOUPDATE: true
+              TUNNEL_CRED_FILE: /etc/cloudflared/creds/credentials.json
+              TUNNEL_METRICS: 0.0.0.0:8080
+              TUNNEL_ORIGIN_ENABLE_HTTP2: true
+              TUNNEL_TRANSPORT_PROTOCOL: quic
+              TUNNEL_POST_QUANTUM: true
+            args:
+              - tunnel
+              - --config
+              - /etc/cloudflared/config/config.yaml
+              - run
+              - "4cd48d19-1058-4f75-91a5-3f8619afe500"
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /ready
+                    port: &port 8080
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: false
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 128Mi
+        pod:
+          securityContext:
+            runAsUser: 65534
+            runAsGroup: 65534
+            runAsNonRoot: true
+
+    service:
+      app:
+        controller: cloudflared
+        ports:
+          http:
+            port: *port
+
+    persistence:
+      config:
+        enabled: true
+        type: configMap
+        name: cloudflared-configmap
+        globalMounts:
+          - path: /etc/cloudflared/config/config.yaml
+            subPath: config.yaml
+            readOnly: true
+      creds:
+        type: secret
+        name: cloudflared-tunnel-secret
+        globalMounts:
+          - path: /etc/cloudflared/creds/credentials.json
+            subPath: credentials.json
+            readOnly: true

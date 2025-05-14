@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.5.1
+      version: 3.7.3
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -36,7 +36,7 @@ spec:
           app:
             image:
               repository: ghcr.io/mealie-recipes/mealie
-              tag: v2.2.0@sha256:ea53ca0e874cf30c3e6bbed35f5a01a029bafb602d050ddd584fdb7defdb6f8a
+              tag: v2.8.0@sha256:63aef46d90975d9cf9c0fdb9399fc2fe36acd222e1db6be99c504b9ccdbee967
 
             env:
               TZ: "${TIMEZONE}"
@@ -55,11 +55,15 @@ spec:
               # OIDC Configuration
               OIDC_AUTH_ENABLED: "true"
               OIDC_SIGNUP_ENABLED: "true"
-              OIDC_CONFIGURATION_URL: "https://dex.${SECRET_DOMAIN}/.well-known/openid-configuration"
+              OIDC_CONFIGURATION_URL: "https://dex.damacus.io/.well-known/openid-configuration"
               OIDC_CLIENT_ID: "mealie"
               OIDC_AUTO_REDIRECT: "false"
               OIDC_PROVIDER_NAME: "Dex"
               OIDC_REMEMBER_ME: "false"
+              OIDC_SCOPES: "openid profile email groups"
+              OIDC_USER_CLAIM: "email"
+              OIDC_NAME_CLAIM: "email"
+              OIDC_GROUPS_CLAIM: "groups"
 
             envFrom:
               - secretRef:

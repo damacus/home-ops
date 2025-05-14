@@ -19,7 +19,7 @@ spec:
     spec:
       chart: csi-driver-nfs
       # renovate: datasource=github-releases repos=kubernetes-csi/csi-driver-nfs
-      version: v4.9.0
+      version: 4.11.0
       sourceRef:
         kind: HelmRepository
         name: csi-driver-nfs
@@ -29,3 +29,4 @@ spec:
       replicas: 2
     externalSnapshotter.enabled: true
     controller.runOnControlPlane: true
+    enableFSGroupPolicy: true

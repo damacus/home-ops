@@ -3,24 +3,24 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ${SECRET_DOMAIN/./-}
+  name: damacus-io
 spec:
-  secretName: ${SECRET_DOMAIN/./-}-production-tls
+  secretName: damacus-io-production-tls
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
-  commonName: ${SECRET_DOMAIN}
+  commonName: damacus.io
   dnsNames:
-    - ${SECRET_DOMAIN}
-    - "*.${SECRET_DOMAIN}"
+    - damacus.io
+    - "*.damacus.io"
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ${SECRET_INTERNAL_DOMAIN/./-}
+  name: ironstone-casa
 spec:
-  secretName: ${SECRET_INTERNAL_DOMAIN/./-}-production-tls
+  secretName: ironstone-casa-production-tls
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer

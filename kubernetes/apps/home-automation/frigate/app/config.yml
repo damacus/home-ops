@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=http://frigate.ironstone.casa:5000/api/config/schema.json
+---
+logger:
+  default: info
+
+mqtt:
+  host: mosquitto.home-automataion.svc.cluster.local
+  topic_prefix: frigate
+
+database:
+  path: /data/frigate.db
+
+detectors:
+  coral:
+    type: edgetpu
+    device: usb
+
+ffmpeg:
+  hwaccel_args: preset-rpi-64-h264
+
+record:
+  enabled: true
+  retain:
+    days: 7
+    mode: motion
+  events:
+    retain:
+      default: 30
+      mode: motion
+
+snapshots:
+  enabled: true
+  retain:
+    default: 30
+
+objects:
+  track: ["bird"]
+
+go2rtc:
+  streams:
+    birdy: rtsp://192.168.1.180:8554/main
+
+cameras:
+  birdy:
+    ffmpeg:
+      inputs:
+        - path: rtsp://192.168.1.180:8554/main
+          roles:
+            - record
+            - audio
+        - path: rtsp://192.168.1.180:8554/sub
+          roles:
+            - detect
+    detect:
+      width: 640
+      height: 480
+      fps: 5

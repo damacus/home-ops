@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.5.1/charts/other/app-template/values.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.6.0/charts/other/app-template/values.schema.json
 controllers:
   echo-server:
     strategy: RollingUpdate
@@ -7,7 +7,7 @@ controllers:
       app:
         image:
           repository: ghcr.io/mendhak/http-https-echo
-          tag: 35
+          tag: 36@sha256:43bdfe52abc5baed00706337efe26825c86360c6b9b74659a72a9aa2fca8bd55
         env:
           HTTP_PORT: &port 8080
           LOG_WITHOUT_NEWLINE: true
@@ -60,9 +60,9 @@ ingress:
     enabled: true
     className: external
     annotations:
-      external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
+      external-dns.alpha.kubernetes.io/target: "external.damacus.io"
     hosts:
-      - host: "{{ .Release.Name }}-external.${SECRET_DOMAIN}"
+      - host: "{{ .Release.Name }}-external.damacus.io"
         paths:
           - path: /
             service:

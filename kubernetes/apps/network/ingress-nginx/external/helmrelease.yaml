@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: ingress-nginx
-      version: 4.11.3
+      version: 4.12.2
       sourceRef:
         kind: HelmRepository
         name: ingress-nginx
@@ -68,7 +68,7 @@ spec:
           namespaceSelector:
             any: true
       extraArgs:
-        default-ssl-certificate: "network/${SECRET_DOMAIN/./-}-production-tls"
+        default-ssl-certificate: "network/damacus-io-production-tls"
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
@@ -89,7 +89,7 @@ spec:
       enabled: true
       image:
         repository: ghcr.io/tarampampam/error-pages
-        tag: 3.3.0
+        tag: 3.3.2@sha256:e7133e4faf97675c00ad9150c98ec1a867ae91ece5131a7eb218b868ce5a628d
       extraEnvs:
         - { name: TEMPLATE_NAME, value: lost-in-space }
         - { name: SHOW_DETAILS, value: "false" }

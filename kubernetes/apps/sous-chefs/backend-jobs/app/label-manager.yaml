@@ -1,0 +1,49 @@
+---
+kind: CronJob
+apiVersion: batch/v1
+metadata:
+  name: label-manager
+  namespace: backend-jobs
+  annotations:
+    argocd.argoproj.io/sync-wave: "2" # Do after secret
+spec:
+  schedule: 0 0 * * *
+  concurrencyPolicy: Replace
+  suspend: false
+  jobTemplate:
+    spec:
+      parallelism: 1
+      completions: 1
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: github-label-manager
+              image: xorima/github-label-manager:1.1.3@sha256:5f4f836d838d91a7d5dbe0c0ba2af7fe07317bac02e10686274fd417c286a0b8
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+              env:
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-admin-token
+                      key: token
+                      optional: false
+                - name: GLM_SOURCE_REPO_OWNER
+                  value: sous-chefs
+                - name: GLM_SOURCE_REPO_NAME
+                  value: repo-management
+                - name: GLM_SOURCE_REPO_PATH
+                  value: labels/cookbook
+                - name: GLM_DESTINATION_REPO_OWNER
+                  value: sous-chefs
+                - name: GLM_DESTINATION_REPO_TOPICS
+                  value: chef-cookbook
+                - name: GLM_DELETE_MODE
+                  value: '1'

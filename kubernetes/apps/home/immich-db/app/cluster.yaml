@@ -6,8 +6,8 @@ metadata:
   name: &name immich
   namespace: home
 spec:
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.5-1
-  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.9-1
+  instances: 2
   primaryUpdateStrategy: unsupervised
   storage:
     size: 10Gi
@@ -45,13 +45,13 @@ spec:
       wal:
         compression: bzip2
         maxParallel: 8
-      destinationPath: s3://cloudnative-pg/
-      endpointURL: http://192.168.1.60:9000
+      destinationPath: s3://cnpg/
+      endpointURL: https://eeded8796e30bfe7b412cd59df29bb34.r2.cloudflarestorage.com
       serverName: *name
       s3Credentials:
         accessKeyId:
-          name: cloudnative-pg-secret
+          name: r2-cloudnative-pg
           key: aws-access-key-id
         secretAccessKey:
-          name: cloudnative-pg-secret
+          name: r2-cloudnative-pg
           key: aws-secret-access-key

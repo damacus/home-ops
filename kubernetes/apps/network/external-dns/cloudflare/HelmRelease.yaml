@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: external-dns
-      version: 1.15.0
+      version: 1.16.1
       sourceRef:
         kind: HelmRepository
         name: external-dns
@@ -43,7 +43,7 @@ spec:
     sources: ["crd", "ingress", "service"]
     txtPrefix: k8s.
     txtOwnerId: ironstone
-    domainFilters: ["${SECRET_DOMAIN}"]
+    domainFilters: ["damacus.io"]
     serviceMonitor:
       enabled: true
     podAnnotations:

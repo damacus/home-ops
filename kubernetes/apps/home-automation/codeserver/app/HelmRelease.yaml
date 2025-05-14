@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.5.1
+      version: 3.7.3
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -23,6 +23,76 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
-  valuesFrom:
-    - kind: ConfigMap
-      name: code-config
+  values:
+    controllers:
+      code:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/coder/code-server
+              tag: 4.100.0@sha256:34f81f2bd521cb43720c4a78923d3e45b421aa62e19636585058b69f26dd8d69
+            args:
+              - --auth
+              - "none"
+              - --user-data-dir
+              - "/config/.vscode"
+              - --extensions-dir
+              - "/config/.vscode"
+              - --port
+              - "8080"
+              - "/config"
+            resources:
+              requests:
+                cpu: 10m
+                memory: 100M
+              limits:
+                memory: 500M
+        pod:
+          hostUsers: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile: { type: RuntimeDefault }
+
+    service:
+      app:
+        controller: code
+        ports:
+          http:
+            port: 8080
+
+    ingress:
+      app:
+        className: internal
+        annotations:
+          nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,192.168.0.0/16"
+          external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+        hosts:
+          - host: "code.ironstone.casa"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+
+    persistence:
+      config:
+        existingClaim: home-assistant-config
+        globalMounts:
+          - path: /config
+
+    defaultPodOptions:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values: ["home-assistant"]
+              topologyKey: kubernetes.io/hostname

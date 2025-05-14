@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: dex
-      version: 0.19.1
+      version: 0.23.0
       sourceRef:
         kind: HelmRepository
         name: dex
@@ -31,15 +31,15 @@ spec:
 
     image:
       repository: ghcr.io/dexidp/dex
-      tag: v2.41.1
+      tag: v2.42.1@sha256:8186d6dd81f400bf0424a4c978c8217736822fcbdf65ba454d025fbf2c0ff300
 
     ingress:
       enabled: true
       className: external
       annotations:
-        external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+        external-dns.alpha.kubernetes.io/target: external.damacus.io
       hosts:
-        - host: "dex.${SECRET_DOMAIN}"
+        - host: "dex.damacus.io"
           paths:
             - path: /
               pathType: Prefix
@@ -53,7 +53,7 @@ spec:
         memory: 100Mi
 
     config:
-      issuer: https://dex.${SECRET_DOMAIN}
+      issuer: https://dex.damacus.io
 
       storage:
         type: kubernetes
@@ -63,7 +63,7 @@ spec:
       frontend:
         theme: tectonic
         issuer: Ironstone
-        issuerUrl: https://${SECRET_DOMAIN}
+        issuerUrl: https://damacus.io
         logoUrl: https://imgur.com/Idzzln9.png
 
       expiry:
@@ -98,7 +98,7 @@ spec:
           id: minio
           secret: minio-client
           redirectURIs:
-            - "http://192.168.1.60:9001/oauth_callback"
+            - "https://minio.ironstone.casa/oauth_callback"
 
         - name: mealie
           id: mealie
@@ -106,7 +106,7 @@ spec:
           redirectURIs:
             - "https://mealie.ironstone.casa/login"
             - "https://mealie.ironstone.casa/login?direct=1"
-            - https://mealie.ironstone.casa/api/auth/oauth/callback
+            - "https://mealie.ironstone.casa/api/auth/oauth/callback"
 
   valuesFrom:
     - kind: Secret

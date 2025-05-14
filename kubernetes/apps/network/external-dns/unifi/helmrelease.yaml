@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: external-dns
-      version: 1.15.0
+      version: 1.16.1
       sourceRef:
         kind: HelmRepository
         name: external-dns
@@ -30,7 +30,7 @@ spec:
       webhook:
         image:
           repository: ghcr.io/kashalls/external-dns-unifi-webhook
-          tag: v0.3.2@sha256:f8cf534970560bc8d1a61cc13f7c9580d91be60f5c6c7a86c3be0ca362208500
+          tag: v0.5.2@sha256:e1eef62e8d9f1966def6f2efc89ff42bcaba1060b0c2957d9cab57a11c900d5c
         env:
           - name: UNIFI_HOST
             value: https://192.168.1.254

@@ -8,7 +8,13 @@ kubernetes:
       hosts:
         yellow-pi:
           ansible_host: 192.168.1.103
-        blue-pi:
-          ansible_host: 192.168.1.104
-        purple-pi:
-          ansible_host: 192.168.1.105
+        # blue-pi:
+        #   ansible_host: 192.168.1.104
+        # purple-pi:
+        #   ansible_host: 192.168.1.105
+    workers:
+      hosts:
+        orange-pi:
+          ansible_host: 192.168.1.241
+        blackberry-pi:
+          ansible_host: 192.168.1.200

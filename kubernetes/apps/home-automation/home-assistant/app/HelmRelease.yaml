@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.5.1
+      version: 3.7.3
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -32,15 +32,13 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/home-assistant/home-assistant
-              pullPolicy: IfNotPresent
-              tag: 2024.11.2@sha256:2ddb0ceb186218e6daf423ac26be2e5a6ce1cd430c6064fe82d1d3d70b95cf38
-
+              repository: ghcr.io/home-operations/home-assistant
+              tag: 2025.5.1@sha256:020eecfb33fbc8473a54d24607e0352d4381af51d9963cfa70b7b915115da2d1
             env:
               - name: HASS_HTTP_TRUSTED_PROXY_1
                 value: "${CLUSTER_CIDR}"
               - name: HASS_EXTERNAL_URL
-                value: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+                value: "https://{{ .Release.Name }}.damacus.io"
               - name: HASS_INTERNAL_URL
                 value: "https://hass.ironstone.casa"
               - name: HASS_POSTGRES_URL
@@ -48,11 +46,9 @@ spec:
                   secretKeyRef:
                     name: home-assistant-app
                     key: uri
-
             envFrom:
               - secretRef:
                   name: home-assistant-secret
-
             probes:
               liveness:
                 enabled: false
@@ -60,7 +56,6 @@ spec:
                 enabled: false
               startup:
                 enabled: false
-
             resources:
               requests:
                 cpu: 250m
@@ -68,23 +63,27 @@ spec:
               limits:
                 cpu: 2000m
                 memory: 2Gi
-
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
         pod:
           hostNetwork: true
           dnsPolicy: ClusterFirstWithHostNet
           securityContext:
-            runAsUser: 568
-            runAsGroup: 568
             runAsNonRoot: true
-            fsGroup: 568
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
             fsGroupChangePolicy: OnRootMismatch
+            seccompProfile: { type: RuntimeDefault }
 
     service:
       app:
         controller: home-assistant
         type: LoadBalancer
         annotations:
-          io.cilium/lb-ipam-ips: ${HASS_ADDR}
+          io.cilium/lb-ipam-ips: "192.168.1.226"
         ports:
           http:
             port: 8123
@@ -98,9 +97,9 @@ spec:
       external:
         className: external
         annotations:
-          external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+          external-dns.alpha.kubernetes.io/target: external.damacus.io
         hosts:
-          - host: "home-assistant.${SECRET_DOMAIN}"
+          - host: "home-assistant.damacus.io"
             paths:
               - path: /
                 service:
@@ -130,26 +129,10 @@ spec:
           home-assistant:
             app:
               - path: /config
-
-      logs:
+      tmpfs:
         type: emptyDir
-        globalMounts:
-          - path: /config/logs
-
-      tts:
-        type: emptyDir
-        globalMounts:
-          - path: /config/tts
-
-      tmp:
-        type: emptyDir
-
-    affinity:
-      podAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-                - key: node-role.kubernetes.io/master
-                  operator: Exists
-                  values: ["true"]
-            topologyKey: "kubernetes.io/hostname"
+        advancedMounts:
+          home-assistant:
+            app:
+              - path: /tmp
+                subPath: hass-tmp

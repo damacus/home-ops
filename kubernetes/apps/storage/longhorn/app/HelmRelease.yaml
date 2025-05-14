@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: longhorn
-      version: 1.7.2
+      version: 1.8.1
       sourceRef:
         kind: HelmRepository
         name: longhorn
@@ -36,8 +36,6 @@ spec:
       defaultDataLocality: best-effort
       defaultReplicaAutoBalance: best-effort
       migratable: false # ReadWriteMany doesn't work if storage is migratable
-      backup-target: s3://${SECRET_SYNOLOGY_IP:-test}:9000@us-east-1/longhorn
-      backupTargetCredentialSecret: minio-secret
 
     ingress:
       enabled: true

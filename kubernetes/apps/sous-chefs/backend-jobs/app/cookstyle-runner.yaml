@@ -1,0 +1,67 @@
+---
+kind: CronJob
+apiVersion: batch/v1
+metadata:
+  name: cookstyle-runner
+  namespace: backend-jobs
+spec:
+  schedule: 0 1 * * *
+  concurrencyPolicy: Replace
+  suspend: false
+  jobTemplate:
+    spec:
+      parallelism: 1
+      completions: 1
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: github-cookstyle-runner
+              image: xorima/github-cookstyle-runner:2.0.0
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+              env:
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-admin-token
+                      key: token
+                      optional: false
+                - name: GCR_DESTINATION_REPO_OWNER
+                  value: sous-chefs
+                - name: GCR_DESTINATION_REPO_TOPICS
+                  value: chef-cookbook
+                - name: GCR_BRANCH_NAME
+                  value: automated/cookstyle
+                - name: GCR_PULL_REQUEST_TITLE
+                  value: 'Automated PR: Cookstyle Changes'
+                - name: GCR_CHANGELOG_LOCATION
+                  value: CHANGELOG.md
+                - name: GCR_CHANGELOG_MARKER
+                  value: '## Unreleased'
+                - name: GCR_MANAGE_CHANGELOG
+                  value: '1'
+                - name: GCR_GIT_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-admin-details
+                      key: github_git_name
+                      optional: false
+                - name: GCR_GIT_EMAIL
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-admin-details
+                      key: github_email
+                      optional: false
+                - name: GCM_GIT_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-admin-details
+                      key: github_username
+                      optional: false

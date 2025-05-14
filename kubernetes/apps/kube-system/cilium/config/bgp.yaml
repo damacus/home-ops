@@ -1,0 +1,60 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.ok8.sh/cilium.io/ciliumbgpadvertisement_v2alpha1.json
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumBGPAdvertisement
+metadata:
+  name: cilium-bgp-advertisement
+  labels:
+    advertise: bgp
+spec:
+  advertisements:
+    - advertisementType: "Service"
+      service:
+        addresses:
+          - LoadBalancerIP
+      selector:
+        matchExpressions:
+          - { key: somekey, operator: NotIn, values: ["never-used-value"] }
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.ok8.sh/cilium.io/ciliumbgppeerconfig_v2alpha1.json
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumBGPPeerConfig
+metadata:
+  name: cilium-bgp-peer-config-ipv4
+spec:
+  families:
+    - afi: ipv4
+      safi: unicast
+      advertisements:
+        matchLabels:
+          advertise: "bgp"
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.ok8.sh/cilium.io/ciliumbgpclusterconfig_v2alpha1.json
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPClusterConfig
+metadata:
+  name: cilium-bgp-cluster-config
+spec:
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/os: linux
+  bgpInstances:
+    - name: "udm-65000"
+      localASN: 65020
+      peers:
+        - name: "udm-65000"
+          peerASN: 65000
+          peerAddress: 192.168.1.254
+          peerConfigRef:
+            name: "cilium-bgp-peer-config-ipv4"
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.ok8.sh/cilium.io/ciliumloadbalancerippool_v2alpha1.json
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: lb-pool
+spec:
+  allowFirstLastIPs: "No"
+  blocks:
+    - cidr: 192.168.3.0/24
+    - cidr: ::ffff:192.168.3.0/112 # IPv4-mapped IPv6

@@ -27,7 +27,6 @@ apk add --no-cache \
 #
 
 for installer_path in \
-    "budimanjojo/talhelper!" \
     "cilium/cilium-cli!!?as=cilium" \
     "cli/cli!!?as=gh" \
     "cloudflare/cloudflared!" \
@@ -36,7 +35,6 @@ for installer_path in \
     "k0sproject/k0sctl!" \
     "derailed/k9s!" \
     "stern/stern!" \
-    "siderolabs/talos!!?as=talosctl" \
     "yannh/kubeconform!"
 do
     curl -fsSL "https://i.jpillora.com/${installer_path}" | bash
