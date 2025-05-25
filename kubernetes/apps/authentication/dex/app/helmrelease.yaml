@@ -33,6 +33,9 @@ spec:
       repository: ghcr.io/dexidp/dex
       tag: v2.43.1@sha256:0881d3c9359b436d585b2061736ce271c100331e073be9178ef405ce5bf09557
 
+    imagePullSecrets:
+      - name: ghcr-creds
+
     ingress:
       enabled: true
       className: external
