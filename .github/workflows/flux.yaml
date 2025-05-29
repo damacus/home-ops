@@ -56,7 +56,7 @@ jobs:
           path: default
 
       - name: Setup Flux CLI
-        uses: fluxcd/flux2/action@8d5f40dca5aa5d3c0fc3414457dda15a0ac92fa4 # v2.5.1
+        uses: fluxcd/flux2/action@4c66d375454b5841cc816e7728e8ae684cf70dc3 # v2.6.0
 
       - uses: allenporter/flux-local/action/test@ec28c95cbd762a0dccd6224c77491dde8ac7f8ce # 7.5.3
         id: test
@@ -85,7 +85,7 @@ jobs:
           path: default
 
       - name: Setup Flux CLI
-        uses: fluxcd/flux2/action@8d5f40dca5aa5d3c0fc3414457dda15a0ac92fa4 # v2.5.1
+        uses: fluxcd/flux2/action@4c66d375454b5841cc816e7728e8ae684cf70dc3 # v2.6.0
 
       - uses: allenporter/flux-local/action/diff@ec28c95cbd762a0dccd6224c77491dde8ac7f8ce # 7.5.3
         id: diff
