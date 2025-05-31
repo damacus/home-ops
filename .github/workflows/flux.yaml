@@ -58,7 +58,7 @@ jobs:
       - name: Setup Flux CLI
         uses: fluxcd/flux2/action@4c66d375454b5841cc816e7728e8ae684cf70dc3 # v2.6.0
 
-      - uses: allenporter/flux-local/action/test@ec28c95cbd762a0dccd6224c77491dde8ac7f8ce # 7.5.3
+      - uses: allenporter/flux-local/action/test@3a92449cc98cc0f8debb9a608a264f533967b92b # 7.5.4
         id: test
         with:
           path: ./kubernetes
@@ -87,7 +87,7 @@ jobs:
       - name: Setup Flux CLI
         uses: fluxcd/flux2/action@4c66d375454b5841cc816e7728e8ae684cf70dc3 # v2.6.0
 
-      - uses: allenporter/flux-local/action/diff@ec28c95cbd762a0dccd6224c77491dde8ac7f8ce # 7.5.3
+      - uses: allenporter/flux-local/action/diff@3a92449cc98cc0f8debb9a608a264f533967b92b # 7.5.4
         id: diff
         with:
           live-branch: main
