@@ -13,23 +13,6 @@ spec:
   storageClassName: longhorn
 ---
 apiVersion: v1
-kind: PersistentVolume
-spec:
-  capacity:
-    storage: 50Gi # must match size of Longhorn volume
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Delete
-  csi:
-    driver: driver.longhorn.io # driver must match this
-    fsType: ext4
-    volumeAttributes:
-      numberOfReplicas: "3"
-      staleReplicaTimeout: "20"
-  storageClassName: longhorn
----
-apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: home-assistant-smb
