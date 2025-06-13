@@ -11,12 +11,9 @@ spec:
     requests:
       storage: 50Gi
   storageClassName: longhorn
-  volumeName: pvc-3344c800-bfb4-4ebc-bfc6-6e8db2d379a4
 ---
 apiVersion: v1
 kind: PersistentVolume
-metadata:
-  name: pvc-3344c800-bfb4-4ebc-bfc6-6e8db2d379a4
 spec:
   capacity:
     storage: 50Gi # must match size of Longhorn volume
@@ -28,7 +25,6 @@ spec:
     driver: driver.longhorn.io # driver must match this
     fsType: ext4
     volumeAttributes:
-      numberOfReplicas: '3'
-      staleReplicaTimeout: '20'
-    volumeHandle: pvc-3344c800-bfb4-4ebc-bfc6-6e8db2d379a4
+      numberOfReplicas: "3"
+      staleReplicaTimeout: "20"
   storageClassName: longhorn
