@@ -124,11 +124,12 @@ spec:
 
     persistence:
       config:
-        existingClaim: home-assistant-config
-        advancedMounts:
-          home-assistant:
-            app:
-              - path: /config
+        type: nfs
+        server: 192.168.1.243
+        path: /var/nfs/shared/nfs/home-assistant
+        globalMounts:
+          - path: /config
+
       tmpfs:
         type: emptyDir
         advancedMounts:
