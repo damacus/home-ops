@@ -124,9 +124,7 @@ spec:
 
     persistence:
       config:
-        type: nfs
-        server: 192.168.1.243
-        path: /var/nfs/shared/nfs/home-assistant
+        existingClaim: home-assistant-smb
         globalMounts:
           - path: /config
 

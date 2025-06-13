@@ -28,3 +28,15 @@ spec:
       numberOfReplicas: "3"
       staleReplicaTimeout: "20"
   storageClassName: longhorn
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: home-assistant-smb
+  namespace: storage
+spec:
+  accessModes: ["ReadWriteMany"]
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: smb
