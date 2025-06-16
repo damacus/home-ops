@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.7.3
+      version: 4.1.1
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -65,11 +65,12 @@ spec:
 
     persistence:
       data:
+        suffix: data
         enabled: true
         globalMounts:
           - path: /data
         size: 1Gi
-        accessMode: "ReadWriteMany"
+        accessMode: ReadWriteMany
 
     affinity:
       podAffinity:
