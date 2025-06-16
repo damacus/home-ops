@@ -58,12 +58,11 @@ spec:
         cpu: 1000m
         memory: 256Mi
 
-    # Use both secrets
     envFrom:
       - secretRef:
-          name: grafana-secret  # For admin credentials
+          name: grafana-secret
       - secretRef:
-          name: grafana-client  # For OIDC client credentials
+          name: grafana-client
 
     # OIDC (Dex) authentication configuration
     grafana.ini:
@@ -72,7 +71,7 @@ spec:
         name: Dex
         allow_sign_up: true
         client_id: grafana
-        client_secret: "${client-secret}"
+        client_secret: $__env{client_secret}
         scopes: openid profile email groups
         auth_url: https://dex.damacus.io/auth
         token_url: https://dex.damacus.io/token
