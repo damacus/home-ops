@@ -68,6 +68,7 @@ spec:
             protocol: TCP
 
     persistence:
+      suffix: "-data"
       data:
         enabled: true
         globalMounts:
