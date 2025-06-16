@@ -68,10 +68,10 @@ spec:
             protocol: TCP
 
     persistence:
-      suffix: "-data"
       data:
+        suffix: data
         enabled: true
         globalMounts:
           - path: /data
         size: 15Gi
-        accessMode: "ReadWriteMany"
+        accessMode: ReadWriteMany

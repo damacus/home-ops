@@ -111,6 +111,7 @@ spec:
 
     persistence:
       data:
+        suffix: data
         size: 500Mi
         accessMode: ReadWriteOnce
         globalMounts:

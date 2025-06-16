@@ -65,11 +65,12 @@ spec:
 
     persistence:
       data:
+        suffix: data
         enabled: true
         globalMounts:
           - path: /data
         size: 1Gi
-        accessMode: "ReadWriteMany"
+        accessMode: ReadWriteMany
 
     affinity:
       podAffinity:

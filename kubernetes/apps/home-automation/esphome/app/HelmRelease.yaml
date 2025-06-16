@@ -82,6 +82,7 @@ spec:
 
     persistence:
       config:
+        suffix: config
         accessMode: ReadWriteOnce
         size: 1Gi
         globalMounts:
