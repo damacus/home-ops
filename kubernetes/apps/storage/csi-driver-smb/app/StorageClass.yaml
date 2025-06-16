@@ -20,3 +20,7 @@ mountOptions:
   - file_mode=0777
   - uid=1000
   - gid=1000
+  - noperm
+  - mfsymlinks
+  - cache=strict
+  - noserverino
