@@ -57,6 +57,8 @@ spec:
         cpu: 1000m
         memory: 256Mi
 
+    assertNoLeakedSecrets: false
+
     envFromSecrets:
       - name: "grafana-google-oauth"
       - name: "grafana-client"
