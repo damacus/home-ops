@@ -65,24 +65,24 @@ spec:
           name: grafana-client
 
     # OIDC (Dex) authentication configuration
-    grafana.ini:
-      auth.generic_oauth:
-        enabled: true
-        name: Dex
-        allow_sign_up: true
-        client_id: grafana
-        client_secret: $__env{client_secret}
-        scopes: openid profile email groups
-        auth_url: https://dex.damacus.io/auth
-        token_url: https://dex.damacus.io/token
-        api_url: https://dex.damacus.io/userinfo
-        login_attribute_path: email
-        name_attribute_path: email
-        role_attribute_path: contains(groups[*], 'admin') && 'Admin' || 'Viewer'
-        use_pkce: true
-        tls_skip_verify_insecure: false
-      server:
-        root_url: https://grafana.ironstone.casa/
+    # grafana.ini:
+    # auth.generic_oauth:
+    #   enabled: true
+    #   name: Dex
+    #   allow_sign_up: true
+    #   client_id: grafana
+    #   client_secret: $__env{client_secret}
+    #   scopes: openid profile email groups
+    #   auth_url: https://dex.damacus.io/auth
+    #   token_url: https://dex.damacus.io/token
+    #   api_url: https://dex.damacus.io/userinfo
+    #   login_attribute_path: email
+    #   name_attribute_path: email
+    #   role_attribute_path: contains(groups[*], 'admin') && 'Admin' || 'Viewer'
+    #   use_pkce: true
+    #   tls_skip_verify_insecure: false
+    # server:
+    #   root_url: https://grafana.ironstone.casa/
 
     dataSources:
       - name: Prometheus
