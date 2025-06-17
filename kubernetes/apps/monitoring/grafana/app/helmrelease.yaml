@@ -44,9 +44,9 @@ spec:
 
     persistence:
       enabled: true
-      storageClassName: longhorn
+      storageClassName: smb
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       size: 50Gi
 
     resources:
