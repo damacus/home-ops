@@ -6,6 +6,7 @@ metadata:
   name: &app matter-server
 spec:
   interval: 15m
+  maxHistory: 3
   chart:
     spec:
       chart: app-template
@@ -15,19 +16,18 @@ spec:
         kind: HelmRepository
         name: bjw-s
         namespace: flux-system
-  maxHistory: 3
+
   install:
-    createNamespace: true
     remediation:
       retries: 3
   upgrade:
-    crds: CreateReplace
     cleanupOnFail: true
     remediation:
       retries: 3
       strategy: uninstall
   uninstall:
     keepHistory: false
+
   values:
     global:
       nameOverride: *app
@@ -44,8 +44,7 @@ spec:
             runAsNonRoot: false
             fsGroup: 100
             fsGroupChangePolicy: "OnRootMismatch"
-            supplementalGroups:
-              - 34
+            supplementalGroups: [34]
 
         containers:
           app:
@@ -111,7 +110,6 @@ spec:
 
     persistence:
       data:
-        size: 500Mi
-        accessMode: ReadWriteOnce
+        existingClaim: matter-server-data
         globalMounts:
           - path: /data
