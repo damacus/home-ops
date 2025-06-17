@@ -25,7 +25,6 @@ spec:
       retries: 3
   values:
     admin:
-      # Reference the secret created by ExternalSecret
       existingSecret: grafana-secret
       userKey: admin-user
       passwordKey: admin-password
@@ -66,23 +65,36 @@ spec:
       - secretRef:
           name: grafana-google-oauth
 
-    # OIDC (Dex) authentication configuration
+    # Google OAuth configuration
     grafana.ini:
       server:
         root_url: https://grafana.ironstone.casa/
 
       auth:
         disable_login_form: false
-
       auth.google:
         enabled: true
-        client_id: $__env{client_id}
-        client_secret: $__env{client_secret}
-        scopes: https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
+        client_id: ${CLIENT_ID}
+        client_secret: ${CLIENT_SECRET}
+        scopes: openid email profile
         auth_url: https://accounts.google.com/o/oauth2/auth
         token_url: https://accounts.google.com/o/oauth2/token
+        api_url: https://openidconnect.googleapis.com/v1/userinfo
         allowed_domains: damacus.io
         allow_sign_up: true
+        use_pkce: true
+
+    env:
+      CLIENT_ID:
+        valueFrom:
+          secretKeyRef:
+            name: grafana-google-oauth
+            key: client_id
+      CLIENT_SECRET:
+        valueFrom:
+          secretKeyRef:
+            name: grafana-google-oauth
+            key: client_secret
 
     dataSources:
       - name: Prometheus
