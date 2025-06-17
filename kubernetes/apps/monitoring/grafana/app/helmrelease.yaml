@@ -74,8 +74,8 @@ spec:
         disable_login_form: false
       auth.google:
         enabled: true
-        client_id: ${CLIENT_ID}
-        client_secret: ${CLIENT_SECRET}
+        client_id: "${CLIENT_ID}"
+        client_secret: "${CLIENT_SECRET}"
         scopes: openid email profile
         auth_url: https://accounts.google.com/o/oauth2/auth
         token_url: https://accounts.google.com/o/oauth2/token
@@ -84,17 +84,15 @@ spec:
         allow_sign_up: true
         use_pkce: true
 
-    env:
+    envValueFrom:
       CLIENT_ID:
-        valueFrom:
-          secretKeyRef:
-            name: grafana-google-oauth
-            key: client_id
+        secretKeyRef:
+          name: grafana-google-oauth
+          key: client_id
       CLIENT_SECRET:
-        valueFrom:
-          secretKeyRef:
-            name: grafana-google-oauth
-            key: client_secret
+        secretKeyRef:
+          name: grafana-google-oauth
+          key: client_secret
 
     dataSources:
       - name: Prometheus
