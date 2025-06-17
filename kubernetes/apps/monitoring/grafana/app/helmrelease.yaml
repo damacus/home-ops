@@ -65,7 +65,10 @@ spec:
           name: grafana-client
 
     # OIDC (Dex) authentication configuration
-    # grafana.ini:
+    grafana.ini:
+      server:
+        root_url: https://grafana.ironstone.casa/
+
     # auth.generic_oauth:
     #   enabled: true
     #   name: Dex
@@ -81,8 +84,6 @@ spec:
     #   role_attribute_path: contains(groups[*], 'admin') && 'Admin' || 'Viewer'
     #   use_pkce: true
     #   tls_skip_verify_insecure: false
-    server:
-      root_url: https://grafana.ironstone.casa/
 
     dataSources:
       - name: Prometheus
