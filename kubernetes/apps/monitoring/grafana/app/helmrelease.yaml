@@ -82,11 +82,11 @@ spec:
         use_pkce: true
 
     envValueFrom:
-      CLIENT_ID:
+      GOOGLE_CLIENT_ID:
         secretKeyRef:
           name: grafana-google-oauth
           key: client_id
-      CLIENT_SECRET:
+      GOOGLE_CLIENT_SECRET:
         secretKeyRef:
           name: grafana-google-oauth
           key: client_secret
