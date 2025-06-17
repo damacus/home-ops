@@ -57,13 +57,9 @@ spec:
         cpu: 1000m
         memory: 256Mi
 
-    envFrom:
-      - secretRef:
-          name: grafana-secret
-      - secretRef:
-          name: grafana-client
-      - secretRef:
-          name: grafana-google-oauth
+    envFromSecrets:
+      - name: "grafana-google-oauth"
+      - name: "grafana-client"
 
     # Google OAuth configuration
     grafana.ini:
