@@ -85,6 +85,7 @@ spec:
           redirectURIs:
             - "https://grafana.ironstone.casa/oauth2/callback"
             - "https://grafana.ironstone.casa/login/generic_oauth"
+            - "http://grafana.ironstone.casa:3000/login/generic_oauth"
 
         - name: paperless
           id: paperless
