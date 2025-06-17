@@ -81,8 +81,8 @@ spec:
     #   role_attribute_path: contains(groups[*], 'admin') && 'Admin' || 'Viewer'
     #   use_pkce: true
     #   tls_skip_verify_insecure: false
-    # server:
-    #   root_url: https://grafana.ironstone.casa/
+    server:
+      root_url: https://grafana.ironstone.casa/
 
     dataSources:
       - name: Prometheus
