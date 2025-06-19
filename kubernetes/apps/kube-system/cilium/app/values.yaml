@@ -82,6 +82,13 @@ operator:
     serviceMonitor:
       enabled: true
   rollOutPods: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
 
 prometheus:
   enabled: true
