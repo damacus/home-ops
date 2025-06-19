@@ -21,7 +21,7 @@ spec:
   upgrade:
     cleanupOnFail: true
     remediation:
-      strategy: rollback
+      strategy: uninstall
       retries: 3
   values:
     admin:
@@ -44,7 +44,7 @@ spec:
 
     persistence:
       enabled: true
-      storageClassName: smb
+      storageClassName: longhorn
       accessModes:
         - ReadWriteMany
       size: 50Gi
