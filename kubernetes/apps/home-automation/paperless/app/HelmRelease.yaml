@@ -124,7 +124,7 @@ spec:
                 cpu: 2000m
                 memory: 4Gi
 
-          gotenburg:
+          gotenberg:
             image:
               repository: thecodingmachine/gotenberg
               tag: 8.21.1@sha256:91486863744f7420ca985ee6cef7c216910e40faffd378f3da7c0fad724d01ba
@@ -182,3 +182,27 @@ spec:
         path: /var/nfs/shared/nfs/paperless
         globalMounts:
           - path: /data/nas-mount
+
+    affinity:
+      # Prefer to avoid home-assistant pods (soft anti-affinity)
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values: ["home-assistant"]
+              topologyKey: kubernetes.io/hostname
+      # Prefer to be scheduled with redis (soft affinity)
+      podAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 80
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values: ["redis"]
+              topologyKey: kubernetes.io/hostname
