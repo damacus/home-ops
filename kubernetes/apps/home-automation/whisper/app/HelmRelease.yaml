@@ -83,10 +83,14 @@ spec:
           - path: /data
 
     affinity:
-      podAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-                - key: node-role.kubernetes.io/master
-                  operator: Exists
-                  values: ["true"]
+      # Prefer to avoid home-assistant pods (soft anti-affinity)
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values: ["home-assistant"]
+              topologyKey: kubernetes.io/hostname
