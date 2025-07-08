@@ -71,10 +71,10 @@ spec:
                   periodSeconds: 5
             resources:
               requests:
-                memory: "200M"
+                memory: "120M"
                 cpu: "100m"
               limits:
-                memory: "200M"
+                memory: "120M"
                 cpu: "100m"
 
     # Matter discovers devices using MDNS and neighbors discovery,
