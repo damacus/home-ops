@@ -141,7 +141,7 @@ spec:
           tika:
             image:
               repository: apache/tika
-              tag: 3.2.0.0@sha256:c01b700def0f3020265ec4072ed37e98b5f1f3aa7ee5f9a27e2eb3e88a3561d8
+              tag: 3.2.1.0@sha256:df12b41af58c9833e60bdc231ffc4b59f5b7a83bfe2d63e3dc7aab7da923abba
             resources:
               requests:
                 cpu: 100m
