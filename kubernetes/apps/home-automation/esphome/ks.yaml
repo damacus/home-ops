@@ -9,10 +9,10 @@ spec:
   path: ./kubernetes/apps/home-automation/esphome/app
   prune: true
   dependsOn:
-    - name: longhorn
     - name: ingress-nginx-internal
     - name: cert-manager
     - name: external-dns-unifi
+    - name: csi-driver-nfs
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
