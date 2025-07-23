@@ -9,7 +9,7 @@ spec:
   resources:
     requests:
       storage: 50Gi
-  storageClassName: nfs
+  storageClassName: nfs-csi-unas
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -21,4 +21,4 @@ spec:
   resources:
     requests:
       storage: 50Gi
-  storageClassName: nfs
+  storageClassName: nfs-csi-unas
