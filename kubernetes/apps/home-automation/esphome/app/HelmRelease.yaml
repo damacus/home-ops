@@ -80,13 +80,12 @@ spec:
                   port: http
 
     persistence:
-      config:
-        accessMode: ReadWriteOnce
-        size: 1Gi
-        globalMounts:
-          - path: /config
-
-      esphome-cache:
-        type: emptyDir
+      cache:
+        existingClaim: esphome-cache-nfs
         globalMounts:
           - path: /cache
+
+      config:
+        existingClaim: esphome-config-nfs
+        globalMounts:
+          - path: /config
