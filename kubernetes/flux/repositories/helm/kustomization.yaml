@@ -21,10 +21,11 @@ resources:
   - jectstack-io.yaml
   - kube-vip.yaml
   - kubereboot.yaml
+  - kured.yaml
   - longhorn.yaml
   - metrics-server.yaml
-  - minio.yaml
   - minio-operator.yaml
+  - minio.yaml
   - node-feature-discovery.yaml
   - onepassword-connect.yaml
   - openebs.yaml
