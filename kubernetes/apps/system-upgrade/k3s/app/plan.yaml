@@ -4,7 +4,8 @@ kind: Plan
 metadata:
   name: controllers
 spec:
-  version: "${KUBE_VERSION}"
+  # renovate: datasource=github-releases depName=k3s-io/k3s
+  version: v1.33.2+k3s1
   upgrade:
     image: rancher/k3s-upgrade
   serviceAccountName: system-upgrade
@@ -30,15 +31,24 @@ spec:
       operator: Exists
     - key: CriticalAddonsOnly
       operator: Exists
+  window:
+    days:
+      - monday
+      - tuesday
+      - wednesday
+      - thursday
+    startTime: 09:00
+    endTime: 12:00
+    timeZone: UTC
 ---
 apiVersion: upgrade.cattle.io/v1
 kind: Plan
 metadata:
   name: workers
 spec:
-  version: "${KUBE_VERSION}"
   serviceAccountName: system-upgrade
   concurrency: 1
+  cordon: true
   nodeSelector:
     matchExpressions:
       - key: node-role.kubernetes.io/control-plane
@@ -48,3 +58,14 @@ spec:
     args: ["prepare", "controllers"]
   upgrade:
     image: rancher/k3s-upgrade
+  window:
+    days:
+      - monday
+      - tuesday
+      - wednesday
+      - thursday
+    startTime: 09:00
+    endTime: 12:00
+    timeZone: UTC
+  # renovate: datasource=github-releases depName=k3s-io/k3s
+  version: v1.33.2+k3s1
