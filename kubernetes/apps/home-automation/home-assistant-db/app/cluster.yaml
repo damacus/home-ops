@@ -9,6 +9,7 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.9-20
   instances: 2
   primaryUpdateStrategy: unsupervised
+  enablePDB: false
 
   storage:
     size: 20Gi
@@ -24,10 +25,6 @@ spec:
       shared_buffers: 256MB
       effective_io_concurrency: "200"
       maintenance_work_mem: 256MB
-
-  nodeMaintenanceWindow:
-    inProgress: false
-    reusePVC: true
 
   resources:
     requests:
