@@ -9,7 +9,7 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.9-20
   instances: 2
   primaryUpdateStrategy: unsupervised
-  enablePDB: false
+  enablePDB: true
 
   storage:
     size: 20Gi
