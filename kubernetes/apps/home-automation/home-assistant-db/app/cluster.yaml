@@ -76,7 +76,7 @@ spec:
   immediate: true
   backupOwnerReference: self
   cluster:
-    name: *name
+    name: home-assistant
   method: plugin
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
