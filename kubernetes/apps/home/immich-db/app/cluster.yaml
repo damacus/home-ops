@@ -9,6 +9,8 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.9-20
   instances: 2
   primaryUpdateStrategy: unsupervised
+  enablePDB: true
+
   storage:
     size: 10Gi
     storageClass: openebs-hostpath
