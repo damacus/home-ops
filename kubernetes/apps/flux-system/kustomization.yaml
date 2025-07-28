@@ -4,5 +4,5 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./webhooks/ks.yaml
-  - ./flux-instance/ks.yaml
+  # - ./flux-instance/ks.yaml
   - ./flux-operator/ks.yaml
