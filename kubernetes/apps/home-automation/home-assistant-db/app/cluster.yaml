@@ -42,31 +42,13 @@ spec:
       isWALArchiver: true
       parameters:
         barmanObjectName: *name
-
-  backup:
-    retentionPolicy: 30d
-    barmanObjectStore:
-      data:
-        compression: bzip2
-      wal:
-        compression: bzip2
-        maxParallel: 8
-      destinationPath: s3://cloudnative-pg/
-      endpointURL: https://eeded8796e30bfe7b412cd59df29bb34.r2.cloudflarestorage.com
-      serverName: *name
-      s3Credentials:
-        accessKeyId:
-          name: r2-cloudnative-pg
-          key: aws-access-key-id
-        secretAccessKey:
-          name: r2-cloudnative-pg
-          key: aws-secret-access-key
 ---
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
   name: &name home-assistant-db
 spec:
+  retention: 30d
   configuration:
     destinationPath: s3://cloudnative-pg/
     endpointURL: https://eeded8796e30bfe7b412cd59df29bb34.r2.cloudflarestorage.com
