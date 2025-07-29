@@ -2,23 +2,23 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: esphome-config-nfs
+  name: esphome-config
   namespace: home-automation
 spec:
   accessModes: ["ReadWriteOnce"]
   resources:
     requests:
-      storage: 50Gi
-  storageClassName: nfs-csi-unas
+      storage: 10Gi
+  storageClassName: longhorn
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: esphome-cache-nfs
+  name: esphome-cache
   namespace: home-automation
 spec:
   accessModes: ["ReadWriteOnce"]
   resources:
     requests:
-      storage: 50Gi
-  storageClassName: nfs-csi-unas
+      storage: 10Gi
+  storageClassName: longhorn
