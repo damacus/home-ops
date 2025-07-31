@@ -37,14 +37,13 @@ spec:
   backup:
     retentionPolicy: 30d
     barmanObjectStore:
+      destinationPath: s3://cloudnative-pg/
+      endpointURL: https://eeded8796e30bfe7b412cd59df29bb34.r2.cloudflarestorage.com
       data:
         compression: bzip2
       wal:
         compression: bzip2
         maxParallel: 8
-      destinationPath: s3://cloudnative-pg/
-      endpointURL: https://eeded8796e30bfe7b412cd59df29bb34.r2.cloudflarestorage.com
-      serverName: *name
       s3Credentials:
         accessKeyId:
           name: r2-cloudnative-pg
