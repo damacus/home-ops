@@ -81,11 +81,11 @@ spec:
 
     persistence:
       cache:
-        existingClaim: esphome-cache-nfs
+        existingClaim: esphome-cache
         globalMounts:
           - path: /cache
 
       config:
-        existingClaim: esphome-config-nfs
+        existingClaim: esphome-config
         globalMounts:
           - path: /config
