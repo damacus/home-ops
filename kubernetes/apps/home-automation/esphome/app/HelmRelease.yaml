@@ -43,7 +43,7 @@ spec:
 
             env:
               ESPHOME__INSTANCE_NAME: esphome
-              TZ: ${TIMEZONE}
+              TZ: Europe/London
 
             resources:
               requests:

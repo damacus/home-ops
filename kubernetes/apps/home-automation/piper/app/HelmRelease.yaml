@@ -39,7 +39,7 @@ spec:
               - en_GB-northern_english_male-medium
 
             env:
-              TZ: ${TIMEZONE}
+              TZ: Europe/London
 
             probes:
               liveness:

@@ -26,7 +26,7 @@ spec:
       startTime: "7:00"
       endTime: "12:00"
       period: "10m"
-      timeZone: ${TIMEZONE:=Etc/UTC}
+      timeZone: "Europe/London"
     service:
       ipFamilyPolicy: preferDualStack
     metrics:
@@ -41,4 +41,4 @@ spec:
         memory: 40Mi
     extraEnvVars:
       - name: TZ
-        value: ${TIMEZONE:=Etc/UTC}
+        value: "Europe/London"

@@ -52,7 +52,7 @@ spec:
                     key: PAPERLESS_SECRET_KEY
               PAPERLESS_URL: https://paperless.ironstone.casa
               PAPERLESS_PORT: "8000"
-              PAPERLESS_TIME_ZONE: ${TIMEZONE}
+              PAPERLESS_TIME_ZONE: Europe/London
               PAPERLESS_WEBSERVER_WORKERS: "2"
               PAPERLESS_TASK_WORKERS: "2"
               # Configure Remote User auth

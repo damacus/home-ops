@@ -53,7 +53,7 @@ spec:
               tag: 8.0.0@sha256:8fd1ea29ab5eca1c5e87cb983c9797b469ad315f6667c73a28b2c4c23a75923c
               pullPolicy: IfNotPresent
             env:
-              TZ: "${TIMEZONE}"
+              TZ: "Europe/London"
               MATTER_SERVER__INSTANCE_NAME: Matter-Server
               MATTER_SERVER__PORT: &port 5580
               MATTER_SERVER__APPLICATION_URL: "matter.ironstone.casa"

@@ -70,7 +70,7 @@ spec:
       mode: kubernetes
 
     ipv4NativeRoutingCIDR: "${CLUSTER_CIDR}"
-    k8sServiceHost: "${KUBE_VIP_ADDR}"
+    k8sServiceHost: "192.168.1.220"
     k8sServicePort: 6443
 
     kubeProxyReplacement: true
