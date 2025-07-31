@@ -39,7 +39,7 @@ spec:
               tag: v3.0.2@sha256:448d56c5b41b668a8e2f0e435ade52ce6bd574d906d3e45eba1e9a1d05f844ff
 
             env:
-              TZ: "${TIMEZONE}"
+              TZ: "Europe/London"
               PUID: 1000
               PGID: 1000
               ALLOW_SIGNUP: "true"

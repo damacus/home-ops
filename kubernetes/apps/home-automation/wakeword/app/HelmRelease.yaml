@@ -35,7 +35,7 @@ spec:
               tag: 1.10.0@sha256:3165a5cd8aef84beb882e640aa1f5c01c97f8c0b1f50016164ecdf2ab65d033a
 
             env:
-              TZ: ${TIMEZONE}
+              TZ: Europe/London
 
             probes:
               liveness:
