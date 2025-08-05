@@ -64,6 +64,12 @@ spec:
       service:
         selector:
           k8s-app: kube-controller-manager
+      serviceMonitor:
+        enabled: true
+        metricRelabelings:
+          - action: drop
+            sourceLabels: [__name__, verb, resource]
+            regex: rest_client_request_duration_seconds_bucket;(get|list|watch);(pods|nodes|services|endpoints|ingresses)
     kubeEtcd:
       <<: *kubeControllerManager # etcd runs on control plane nodes
     kubeProxy:
