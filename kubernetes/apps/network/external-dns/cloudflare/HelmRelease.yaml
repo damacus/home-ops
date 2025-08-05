@@ -44,7 +44,7 @@ spec:
       - "crd"
       - "ingress"
       - "service"
-      - "httproute"
+      - "gateway-httproute"
     txtPrefix: k8s.
     txtOwnerId: ironstone
     domainFilters: ["damacus.io"]
