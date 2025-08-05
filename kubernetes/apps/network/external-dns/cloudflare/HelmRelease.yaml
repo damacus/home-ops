@@ -40,7 +40,11 @@ spec:
       - --ingress-class=external
 
     policy: sync
-    sources: ["crd", "ingress", "service"]
+    sources:
+      - "crd"
+      - "ingress"
+      - "service"
+      - "httproute"
     txtPrefix: k8s.
     txtOwnerId: ironstone
     domainFilters: ["damacus.io"]
