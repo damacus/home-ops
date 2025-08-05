@@ -24,7 +24,6 @@ resources:
   - kured.yaml
   - longhorn.yaml
   - metrics-server.yaml
-  - minio-operator.yaml
   - minio.yaml
   - node-feature-discovery.yaml
   - onepassword-connect.yaml
