@@ -54,7 +54,10 @@ spec:
     extraArgs:
       - --ignore-ingress-tls-spec
     policy: sync
-    sources: ["ingress", "service"]
+    sources:
+      - "ingress"
+      - "service"
+      - "httproute"
     txtOwnerId: default
     txtPrefix: k8s.
     domainFilters: ["ironstone.casa"]
