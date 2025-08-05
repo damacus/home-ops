@@ -59,7 +59,7 @@ spec:
     sources:
       - "ingress"
       - "service"
-      - "httproute"
+      - "gateway-httproute"
     txtOwnerId: default
     txtPrefix: k8s.
     domainFilters: ["ironstone.casa"]
