@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: kube-prometheus-stack
-      version: 75.15.0
+      version: 75.15.2
       sourceRef:
         kind: HelmRepository
         name: prometheus-community
@@ -56,6 +56,13 @@ spec:
       serviceMonitor:
         selector:
           k8s-app: kube-apiserver
+        metricRelabelings:
+          - action: drop
+            sourceLabels: [__name__, verb, resource]
+            regex: apiserver_request_duration_seconds_bucket;(get|list|watch);(pods|nodes|services|endpoints|ingresses)
+          - action: drop
+            sourceLabels: [__name__, verb, resource]
+            regex: etcd_request_duration_seconds_bucket;(get|list|watch);(pods|nodes|services|endpoints|ingresses)
     kubeScheduler:
       service:
         selector:
@@ -64,6 +71,12 @@ spec:
       service:
         selector:
           k8s-app: kube-controller-manager
+      serviceMonitor:
+        enabled: true
+        metricRelabelings:
+          - action: drop
+            sourceLabels: [__name__, verb, resource]
+            regex: rest_client_request_duration_seconds_bucket;(get|list|watch);(pods|nodes|services|endpoints|ingresses)
     kubeEtcd:
       <<: *kubeControllerManager # etcd runs on control plane nodes
     kubeProxy:
@@ -94,10 +107,10 @@ spec:
         resources:
           requests:
             cpu: 500m
-            memory: 1000Mi
+            memory: 2000Mi
           limits:
             cpu: 1000m
-            memory: 1500Mi
+            memory: 3000Mi
         storageSpec:
           volumeClaimTemplate:
             spec:
