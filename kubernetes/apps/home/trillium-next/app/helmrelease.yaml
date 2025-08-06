@@ -77,7 +77,7 @@ spec:
       app:
         className: internal
         annotations:
-          external-dns.alpha.kubernetes.io/target: ${NGINX_INTERNAL_ADDR}
+          external-dns.alpha.kubernetes.io/target: 192.168.1.224
         hosts:
           - host: notes.ironstone.casa
             paths:
