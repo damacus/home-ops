@@ -48,6 +48,10 @@ spec:
     txtPrefix: k8s.
     txtOwnerId: ironstone
     domainFilters: ["damacus.io"]
+    excludeDomains:
+      - "_acme-challenge.*"
+      - "_dmarc.*"
+      - "_keybase.*"
     serviceMonitor:
       enabled: true
     podAnnotations:
