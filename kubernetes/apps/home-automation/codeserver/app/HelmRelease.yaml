@@ -66,6 +66,14 @@ spec:
           http:
             port: 8080
 
+    route:
+      app:
+        hostnames: ["code.ironstone.casa"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: http
+
     ingress:
       app:
         enabled: false
