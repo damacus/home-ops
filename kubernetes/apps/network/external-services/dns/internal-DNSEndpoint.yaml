@@ -9,4 +9,4 @@ spec:
   endpoints:
     - dnsName: "internal.ironstone.casa"
       recordType: A
-      targets: ["${NGINX_INTERNAL_ADDR}"]
+      targets: ["192.168.1.224"]
