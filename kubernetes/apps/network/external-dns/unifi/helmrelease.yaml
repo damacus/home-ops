@@ -39,8 +39,6 @@ spec:
               secretKeyRef:
                 name: &secret external-dns-unifi-secret
                 key: api-key
-          - name: NGINX_INTERNAL_ADDR
-            value: "192.168.1.235"
         livenessProbe:
           httpGet:
             path: /healthz
