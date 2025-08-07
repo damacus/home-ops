@@ -1,0 +1,115 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: unpoller
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 4.2.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      unpoller:
+        containers:
+          app:
+            image:
+              repository: ghcr.io/unpoller/unpoller
+              tag: v2.11.2
+            env:
+              # UniFi Controller Configuration
+              UP_UNIFI_DEFAULT_URL: "https://unifi.ironstone.casa"
+              UP_UNIFI_DEFAULT_USER: "unpoller"
+              UP_UNIFI_DEFAULT_PASS:
+                valueFrom:
+                  secretKeyRef:
+                    name: unpoller-secret
+                    key: api-key
+              UP_UNIFI_DEFAULT_VERIFY_SSL: "false"
+              UP_UNIFI_DEFAULT_SAVE_SITES: "true"
+              UP_UNIFI_DEFAULT_SAVE_DPI: "false"
+              # Prometheus Configuration
+              UP_PROMETHEUS_DISABLE: "false"
+              UP_PROMETHEUS_HTTP_LISTEN: "0.0.0.0:9130"
+              UP_PROMETHEUS_NAMESPACE: "unpoller"
+              # Logging Configuration
+              UP_LOG_LEVEL: "INFO"
+              UP_LOG_QUIET: "false"
+              # Polling Configuration
+              UP_POLLER_DEBUG: "false"
+              UP_INTERVAL: "30s"
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /metrics
+                    port: 9130
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /metrics
+                    port: 9130
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 200m
+                memory: 128Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              runAsUser: 65534
+              runAsGroup: 65534
+              capabilities:
+                drop:
+                  - ALL
+        pod:
+          securityContext:
+            fsGroup: 65534
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+    service:
+      app:
+        controller: unpoller
+        ports:
+          http:
+            port: 9130
+    serviceMonitor:
+      app:
+        serviceName: unpoller
+        endpoints:
+          - port: http
+            scheme: http
+            path: /metrics
+            interval: 30s
+            scrapeTimeout: 10s
