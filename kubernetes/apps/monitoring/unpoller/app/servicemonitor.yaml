@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/servicemonitor_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: unpoller
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: unpoller
+    app.kubernetes.io/instance: unpoller
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: unpoller
+      app.kubernetes.io/instance: unpoller
+  endpoints:
+    - port: http-metrics
+      interval: 30s
+      path: /metrics
+      scrapeTimeout: 10s
