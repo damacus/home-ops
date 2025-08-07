@@ -29,15 +29,12 @@ spec:
             - name: UP_UNIFI_DEFAULT_URL
               value: "https://unifi.ironstone.casa"
             - name: UP_UNIFI_DEFAULT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: unpoller-secret
-                  key: username
+              value: "unpoller"
             - name: UP_UNIFI_DEFAULT_PASS
               valueFrom:
                 secretKeyRef:
                   name: unpoller-secret
-                  key: password
+                  key: api-key
             - name: UP_UNIFI_DEFAULT_VERIFY_SSL
               value: "false"
             - name: UP_UNIFI_DEFAULT_SAVE_SITES
