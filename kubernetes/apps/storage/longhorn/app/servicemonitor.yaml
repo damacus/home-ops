@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/servicemonitor_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: longhorn-manager
+  namespace: storage
+  labels:
+    app: longhorn-manager
+    app.kubernetes.io/name: longhorn
+    app.kubernetes.io/instance: longhorn
+spec:
+  selector:
+    matchLabels:
+      app: longhorn-manager
+  endpoints:
+    - port: manager
+      interval: 30s
+      path: /metrics
+  namespaceSelector:
+    matchNames:
+      - storage
