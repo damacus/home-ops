@@ -15,6 +15,9 @@ spec:
     size: 5Gi
     storageClass: openebs-hostpath
 
+  monitoring:
+    enablePodMonitor: true
+
   bootstrap:
     initdb:
       database: *name

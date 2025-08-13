@@ -11,6 +11,9 @@ spec:
   primaryUpdateStrategy: unsupervised
   enablePDB: true
 
+  monitoring:
+    enablePodMonitor: true
+
   storage:
     size: 20Gi
     storageClass: openebs-hostpath
