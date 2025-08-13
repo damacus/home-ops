@@ -107,13 +107,11 @@ spec:
           - name: Prometheus
             type: prometheus
             uid: prometheus
-            access: proxy
             url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
             isDefault: true
           - name: Alertmanager
             type: alertmanager
             uid: alertmanager
-            access: proxy
             url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
             jsonData:
               implementation: prometheus
@@ -148,49 +146,22 @@ spec:
         kubernetes-pods:
           # renovate: depName="Kubernetes / Views / Pods"
           gNetId: 15760
-          revision: 21
-          datasource: Prometheus
-        kubernetes-volumes:
-          # renovate: depName="K8s / Storage / Volumes / Cluster"
-          gnetId: 11454
-          revision: 14
-          datasource: Prometheus
-
-      network:
-        unifi-insights:
-          # renovate: depName="UniFi-Poller: Client Insights - Prometheus"
-          gnetId: 11315
-          revision: 9
-          datasource: Prometheus
-        unifi-network-sites:
-          # renovate: depName="UniFi-Poller: Network Sites - Prometheus"
-          gnetId: 11311
-          revision: 5
-          datasource: Prometheus
-        unifi-uap:
-          # renovate: depName="UniFi-Poller: UAP Insights - Prometheus"
-          gnetId: 11314
-          revision: 10
-          datasource: Prometheus
-        unifi-usw:
-          # renovate: depName="UniFi-Poller: USW Insights - Prometheus"
-          gnetId: 11312
-          revision: 9
+          revision: 36
           datasource: Prometheus
 
       storage:
         longhorn:
+          # renovate: depName="Longhorn"
           gnetId: 16888
-          revision: 1
+          revision: 9
           datasource: Prometheus
 
       system:
         node-exporter-full:
           # renovate: depName="Node Exporter Full"
-          gnetId: 1860
-          revision: 41
-          datasource:
-            - { name: DS_PROMETHEUS, value: Prometheus }
+          gnetId: 10242
+          revision: 1
+          datasource: Prometheus
 
     sidecar:
       dashboards:
