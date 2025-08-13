@@ -203,9 +203,7 @@ spec:
           disableDelete: true
           foldersFromFilesStructure: true
       datasources:
-        enabled: true
-        searchNamespace: ALL
-        labelValue: ""
+        enabled: false
 
     plugins:
       - grafana-clock-panel
