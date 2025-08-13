@@ -3,70 +3,38 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: grafana
+  name: &app grafana
 spec:
-  interval: 30m
-  timeout: 15m
-  chart:
-    spec:
-      chart: grafana
-      version: 9.3.2
-      sourceRef:
-        kind: HelmRepository
-        name: grafana
-        namespace: flux-system
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: grafana
   install:
     remediation:
-      retries: 3
+      retries: -1
   upgrade:
     cleanupOnFail: true
     remediation:
-      strategy: uninstall
       retries: 3
   values:
-    admin:
-      existingSecret: grafana-secret
-      userKey: admin-user
-      passwordKey: admin-password
-
-    ingress:
-      enabled: true
-      ingressClassName: internal
-      hosts:
-        - grafana.ironstone.casa
-      annotations:
-        external-dns.alpha.kubernetes.io/target: "192.168.1.224"
-      path: /
-      tls:
-        - secretName: grafana-tls
-          hosts:
-            - grafana.ironstone.casa
-
-    persistence:
-      enabled: true
-      storageClassName: longhorn
-      accessModes:
-        - ReadWriteMany
-      size: 50Gi
-
-    resources:
-      requests:
-        cpu: 1000m
-        memory: 256Mi
-      limits:
-        cpu: 1000m
-        memory: 256Mi
-
-    assertNoLeakedSecrets: false
+    replicas: 1
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+    env:
+      GF_DATE_FORMATS_USE_BROWSER_LOCALE: true
+      GF_EXPLORE_ENABLED: true
+      GF_FEATURE_TOGGLES_ENABLE: publicDashboards
+      GF_SECURITY_COOKIE_SAMESITE: *app
+      GF_SERVER_ROOT_URL: https://grafana.ironstone.casa
 
     envFromSecrets:
-      - name: "grafana-google-oauth"
+      - name: grafana-google-oauth
 
-    # Google OAuth configuration
     grafana.ini:
-      server:
-        root_url: https://grafana.ironstone.casa/
-
+      analytics:
+        check_for_updates: false
+        check_for_plugin_updates: false
+        reporting_enabled: false
       auth:
         disable_login_form: false
       auth.google:
@@ -91,42 +59,216 @@ spec:
           name: grafana-google-oauth
           key: client_secret
 
-    dataSources:
-      - name: Prometheus
-        type: prometheus
-        url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
-      - name: Alertmanager
-        type: alertmanager
-        url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+    deploymentStrategy:
+      type: RollingUpdate
+
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 256Mi
+
+    admin:
+      existingSecret: grafana-secret
+      passwordKey: admin-password
+      userKey: admin-user
+
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: default
+            orgId: 1
+            folder: ""
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/default
+          - name: kubernetes
+            orgId: 1
+            folder: Kubernetes
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/kubernetes
+          - name: network
+            orgId: 1
+            folder: Network
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/network
+          - name: storage
+            orgId: 1
+            folder: Storage
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/storage
+          - name: system
+            orgId: 1
+            folder: System
+            type: file
+            disableDeletion: false
+            editable: true
+            allowUiUpdates: true
+            options:
+              path: /var/lib/grafana/dashboards/system
+
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        deleteDatasources:
+          - { name: Alertmanager, orgId: 1 }
+          - { name: Prometheus, orgId: 1 }
+        datasources:
+          - name: Prometheus
+            type: prometheus
+            uid: prometheus
+            access: proxy
+            url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+            isDefault: true
+          - name: Alertmanager
+            type: alertmanager
+            uid: alertmanager
+            access: proxy
+            url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+            jsonData:
+              implementation: prometheus
 
     dashboards:
-      default:
-        # Node Exporter Dashboard for system metrics
-        node-exporter:
-          gnetId: 1860
-          revision: 30
+      kubernetes:
+        kubernetes-api-server:
+          # renovate: depName="Kubernetes / System / API Server"
+          gnetId: 15761
+          revision: 19
+          datasource: Prometheus
+        kubernetes-coredns:
+          # renovate: depName="Kubernetes / System / CoreDNS"
+          gnetId: 15762
+          revision: 21
+          datasource: Prometheus
+        kubernetes-global:
+          # renovate: depName="Kubernetes / Views / Global"
+          gnetId: 15757
+          revision: 43
+          datasource: Prometheus
+        kubernetes-namespaces:
+          # renovate: depName="Kubernetes / Views / Namespaces"
+          gnetId: 15758
+          revision: 42
+          datasource: Prometheus
+        kubernetes-nodes:
+          # renovate: depName="Kubernetes / Views / Nodes"
+          gnetId: 15759
+          revision: 37
+          datasource: Prometheus
+        kubernetes-pods:
+          # renovate: depName="Kubernetes / Views / Pods"
+          gNetId: 15760
+          revision: 21
+          datasource: Prometheus
+        kubernetes-volumes:
+          # renovate: depName="K8s / Storage / Volumes / Cluster"
+          gnetId: 11454
+          revision: 14
           datasource: Prometheus
 
-        # Kubernetes cluster monitoring
-        k8s-system:
-          gnetId: 15661
-          revision: 2
+      network:
+        unifi-insights:
+          # renovate: depName="UniFi-Poller: Client Insights - Prometheus"
+          gnetId: 11315
+          revision: 9
+          datasource: Prometheus
+        unifi-network-sites:
+          # renovate: depName="UniFi-Poller: Network Sites - Prometheus"
+          gnetId: 11311
+          revision: 5
+          datasource: Prometheus
+        unifi-uap:
+          # renovate: depName="UniFi-Poller: UAP Insights - Prometheus"
+          gnetId: 11314
+          revision: 10
+          datasource: Prometheus
+        unifi-usw:
+          # renovate: depName="UniFi-Poller: USW Insights - Prometheus"
+          gnetId: 11312
+          revision: 9
           datasource: Prometheus
 
-        # Unifi Dashboard
-        # unifi-dashboard:
-        #   gnetId: 11315
-        #   revision: 9
-        #   datasource: Prometheus
-
-        # Longhorn Storage Dashboard
+      storage:
         longhorn:
           gnetId: 16888
           revision: 1
           datasource: Prometheus
 
-        # PostgreSQL Overview
-        postgres:
-          gnetId: 9628
-          revision: 7
-          datasource: Prometheus
+      system:
+        node-exporter-full:
+          # renovate: depName="Node Exporter Full"
+          gnetId: 1860
+          revision: 41
+          datasource:
+            - { name: DS_PROMETHEUS, value: Prometheus }
+
+    sidecar:
+      dashboards:
+        enabled: true
+        searchNamespace: ALL
+        labelValue: ""
+        label: grafana_dashboard
+        folderAnnotation: grafana_folder
+        provider:
+          disableDelete: true
+          foldersFromFilesStructure: true
+      datasources:
+        enabled: true
+        searchNamespace: ALL
+        labelValue: ""
+
+    plugins:
+      - grafana-clock-panel
+      - grafana-piechart-panel
+      - grafana-worldmap-panel
+      - natel-discrete-panel
+      - pr0ps-trackmap-panel
+      - vonage-status-panel
+
+    serviceMonitor:
+      enabled: true
+      metricRelabelings:
+        - action: labeldrop
+          regex: (pod)
+
+    ingress:
+      enabled: true
+      ingressClassName: internal
+      hosts:
+        - grafana.ironstone.casa
+      annotations:
+        external-dns.alpha.kubernetes.io/target: "192.168.1.224"
+      path: /
+      tls:
+        - secretName: grafana-tls
+          hosts:
+            - grafana.ironstone.casa
+
+    persistence:
+      enabled: true
+      storageClassName: longhorn
+      accessModes:
+        - ReadWriteMany
+      size: 50Gi
+
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: *app
