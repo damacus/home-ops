@@ -27,9 +27,6 @@ spec:
       GF_SECURITY_COOKIE_SAMESITE: grafana
       GF_SERVER_ROOT_URL: https://grafana.ironstone.casa
 
-    envFromSecrets:
-      - name: grafana-google-oauth
-
     grafana.ini:
       analytics:
         check_for_updates: false
@@ -37,27 +34,6 @@ spec:
         reporting_enabled: false
       auth:
         disable_login_form: false
-      auth.google:
-        enabled: true
-        client_id: "${GOOGLE_CLIENT_ID}"
-        client_secret: "${GOOGLE_CLIENT_SECRET}"
-        scopes: openid email profile
-        auth_url: https://accounts.google.com/o/oauth2/auth
-        token_url: https://accounts.google.com/o/oauth2/token
-        api_url: https://openidconnect.googleapis.com/v1/userinfo
-        allowed_domains: damacus.io
-        allow_sign_up: true
-        use_pkce: true
-
-    envValueFrom:
-      GOOGLE_CLIENT_ID:
-        secretKeyRef:
-          name: grafana-google-oauth
-          key: client_id
-      GOOGLE_CLIENT_SECRET:
-        secretKeyRef:
-          name: grafana-google-oauth
-          key: client_secret
 
     deploymentStrategy:
       type: RollingUpdate
