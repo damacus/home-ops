@@ -31,3 +31,4 @@ resources:
   - prometheus-community.yaml
   - secrets-store-csi-driver.yaml
   - skater.yaml
+  - unpoller.yaml

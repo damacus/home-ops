@@ -8,11 +8,11 @@ spec:
   interval: 30m
   chart:
     spec:
-      chart: app-template
-      version: 4.2.0
+      chart: unpoller
+      version: 2.11.2
       sourceRef:
         kind: HelmRepository
-        name: bjw-s
+        name: unpoller
         namespace: flux-system
   install:
     remediation:
@@ -24,92 +24,89 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    controllers:
-      unpoller:
-        containers:
-          app:
-            image:
-              repository: ghcr.io/unpoller/unpoller
-              tag: v2.11.2
-            env:
-              # UniFi Controller Configuration
-              UP_UNIFI_DEFAULT_URL: "https://unifi.ironstone.casa"
-              UP_UNIFI_DEFAULT_USER: "unpoller"
-              UP_UNIFI_DEFAULT_PASS:
-                valueFrom:
-                  secretKeyRef:
-                    name: unpoller-secret
-                    key: api-key
-              UP_UNIFI_DEFAULT_VERIFY_SSL: "false"
-              UP_UNIFI_DEFAULT_SAVE_SITES: "true"
-              UP_UNIFI_DEFAULT_SAVE_DPI: "false"
-              # Prometheus Configuration
-              UP_PROMETHEUS_DISABLE: "false"
-              UP_PROMETHEUS_HTTP_LISTEN: "0.0.0.0:9130"
-              UP_PROMETHEUS_NAMESPACE: "unpoller"
-              # Logging Configuration
-              UP_LOG_LEVEL: "INFO"
-              UP_LOG_QUIET: "false"
-              # Polling Configuration
-              UP_POLLER_DEBUG: "false"
-              UP_INTERVAL: "30s"
-            probes:
-              liveness:
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /metrics
-                    port: 9130
-                  initialDelaySeconds: 30
-                  periodSeconds: 30
-                  timeoutSeconds: 10
-                  failureThreshold: 3
-              readiness:
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /metrics
-                    port: 9130
-                  initialDelaySeconds: 5
-                  periodSeconds: 10
-                  timeoutSeconds: 5
-                  failureThreshold: 3
-            resources:
-              requests:
-                cpu: 50m
-                memory: 64Mi
-              limits:
-                cpu: 200m
-                memory: 128Mi
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              runAsNonRoot: true
-              runAsUser: 65534
-              runAsGroup: 65534
-              capabilities:
-                drop:
-                  - ALL
-        pod:
-          securityContext:
-            fsGroup: 65534
-            runAsNonRoot: true
-            seccompProfile:
-              type: RuntimeDefault
-    service:
-      app:
-        controller: unpoller
-        ports:
-          http:
-            port: 9130
-    serviceMonitor:
-      app:
-        serviceName: unpoller
-        endpoints:
-          - port: http
-            scheme: http
-            path: /metrics
-            interval: 30s
-            scrapeTimeout: 10s
+    replicaCount: 1
+    image:
+      repository: ghcr.io/unpoller/unpoller
+      tag: v2.11.2
+      pullPolicy: IfNotPresent
+
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 65534
+      runAsGroup: 65534
+      capabilities:
+        drop:
+          - ALL
+
+    podSecurityContext:
+      fsGroup: 65534
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+
+    livenessProbe:
+      httpGet:
+        path: /metrics
+        port: tcp
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 3
+
+    readinessProbe:
+      httpGet:
+        path: /metrics
+        port: tcp
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+    # Disable built-in dashboards as we already have Grafana configured
+    dashboards:
+      create: false
+
+    # UnPoller configuration using config file format
+    upConfig: |
+      [poller]
+        debug = false
+        quiet = false
+        plugins = []
+      [prometheus]
+        disable = false
+        http_listen = "0.0.0.0:9130"
+        report_errors = false
+      [influxdb]
+        disable = true
+      [unifi]
+        dynamic = false
+      [loki]
+        disable = true
+      [[unifi.controller]]
+        url = "https://unifi.ironstone.casa"
+        user = "unpoller"
+        pass = "${UNIFI_API_KEY}"
+        sites = ["all"]
+        save_ids = true
+        save_dpi = false
+        save_sites = true
+        hash_pii = false
+        verify_ssl = false
+
+    # Environment variables for secret substitution
+    env:
+      - name: UNIFI_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: unpoller-secret
+            key: api-key

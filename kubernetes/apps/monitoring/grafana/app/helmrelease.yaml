@@ -95,6 +95,7 @@ spec:
       - name: Prometheus
         type: prometheus
         url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+        isDefault: true
       - name: Alertmanager
         type: alertmanager
         url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
