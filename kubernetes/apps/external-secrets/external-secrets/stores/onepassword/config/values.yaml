@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.6.0/charts/other/app-template/values.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-4.2.0/charts/other/app-template/values.schema.json
 controllers:
   one-password:
     strategy: RollingUpdate
@@ -106,6 +106,8 @@ controllers:
 service:
   app:
     controller: one-password
+    extraSelectorLabels:
+      app.kubernetes.io/component: one-password
     # Maintain compatibility with existing label selectors
     labels:
       app.kubernetes.io/component: one-password
