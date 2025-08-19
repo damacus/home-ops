@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: &name home-assistant
+  name: home-assistant
   namespace: home-automation
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16.9-22
