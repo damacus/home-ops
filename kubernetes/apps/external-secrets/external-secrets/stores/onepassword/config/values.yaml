@@ -6,8 +6,10 @@ controllers:
     annotations:
       reloader.stakater.com/auto: "true"
     # Maintain compatibility with existing label selectors
+    # Both labels are needed during transition to avoid selector mismatch
     labels:
       app.kubernetes.io/component: one-password
+      app.kubernetes.io/controller: one-password
     containers:
       app:
         image:
@@ -93,6 +95,7 @@ controllers:
       # Maintain compatibility with existing label selectors
       labels:
         app.kubernetes.io/component: one-password
+        app.kubernetes.io/controller: one-password
       securityContext:
         runAsUser: 999
         runAsGroup: 999
@@ -106,6 +109,7 @@ service:
     # Maintain compatibility with existing label selectors
     labels:
       app.kubernetes.io/component: one-password
+      app.kubernetes.io/controller: one-password
     ports:
       http:
         port: *apiPort
