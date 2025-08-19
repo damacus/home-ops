@@ -14,3 +14,19 @@ mountOptions:
   - hard
   - nolock
   - nfsvers=3
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-csi-ssd
+  namespace: kube-system
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: unas.ironstone.casa
+  share: /var/nfs/shared/csi_ssd
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+mountOptions:
+  - hard
+  - nolock
+  - nfsvers=3
