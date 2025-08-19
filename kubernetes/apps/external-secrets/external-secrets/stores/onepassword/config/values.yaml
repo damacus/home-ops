@@ -5,6 +5,9 @@ controllers:
     strategy: RollingUpdate
     annotations:
       reloader.stakater.com/auto: "true"
+    # Maintain compatibility with existing label selectors
+    labels:
+      app.kubernetes.io/component: one-password
     containers:
       app:
         image:
@@ -87,6 +90,9 @@ controllers:
             enabled: false
 
     pod:
+      # Maintain compatibility with existing label selectors
+      labels:
+        app.kubernetes.io/component: one-password
       securityContext:
         runAsUser: 999
         runAsGroup: 999
@@ -97,6 +103,9 @@ controllers:
 service:
   app:
     controller: one-password
+    # Maintain compatibility with existing label selectors
+    labels:
+      app.kubernetes.io/component: one-password
     ports:
       http:
         port: *apiPort
