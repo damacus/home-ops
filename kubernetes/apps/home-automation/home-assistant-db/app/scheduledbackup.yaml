@@ -5,7 +5,7 @@ kind: ScheduledBackup
 metadata:
   name: home-assistant-db
 spec:
-  schedule: "0 4 * * *"
+  schedule: "0 1,23 * * *"
   immediate: true
   backupOwnerReference: self
   cluster:
