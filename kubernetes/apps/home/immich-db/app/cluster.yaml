@@ -6,7 +6,11 @@ metadata:
   name: &name immich
   namespace: home
 spec:
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.9-22
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 16
   instances: 2
   primaryUpdateStrategy: unsupervised
   enablePDB: true
