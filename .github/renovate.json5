@@ -8,6 +8,6 @@
     "github>damacus/renovate-config:labels.json5",
     "github>damacus/renovate-config:semanticCommits.json5",
     "github>damacus/renovate-config:packageRules.json5",
-    "github>damacus/renovate-config:autoMergeKubePrometheusStack.json",
+    "github>damacus/renovate-config:autoMergeSelect.json5",
   ],
 }
