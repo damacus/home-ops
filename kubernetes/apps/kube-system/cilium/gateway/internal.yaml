@@ -29,6 +29,15 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: mdns
+      protocol: UDP
+      port: 5353
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              app.kubernetes.io/component: home-assistant
       tls:
         certificateRefs:
           - kind: Secret
