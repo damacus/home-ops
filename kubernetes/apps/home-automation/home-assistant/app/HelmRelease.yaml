@@ -121,6 +121,16 @@ spec:
                 service:
                   identifier: app
                   port: mdns
+    route:
+      app:
+        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+          - name: internal
+            namespace: kube-system
+            sectionName: mdns
 
     persistence:
       config:
