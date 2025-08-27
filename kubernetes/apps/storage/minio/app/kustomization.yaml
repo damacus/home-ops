@@ -7,3 +7,4 @@ resources:
   - ./helmrelease.yaml
   - ./PrometheusRule.yaml
   - ./pvc.yaml
+  - ./job-buckets.yaml
