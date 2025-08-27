@@ -128,9 +128,6 @@ spec:
           - name: internal
             namespace: kube-system
             sectionName: https
-          - name: internal
-            namespace: kube-system
-            sectionName: mdns
 
     persistence:
       config:
