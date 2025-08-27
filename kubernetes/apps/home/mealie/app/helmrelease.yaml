@@ -82,23 +82,32 @@ spec:
               limits:
                 memory: 1Gi
 
+    route:
+      app:
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        hostnames:
+          - "{{ .Release.Name }}.ironstone.casa"
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: mealie
+                namespace: home
+                port: 9000
+                weight: 1
+
     service:
       app:
         controller: mealie
         ports:
           http:
             port: 9000
-
-    # ingress:
-    #   app:
-    #     className: "internal"
-    #     hosts:
-    #       - host: "{{ .Release.Name }}.ironstone.casa"
-    #         paths:
-    #           - path: /
-    #             service:
-    #               identifier: app
-    #               port: http
 
     persistence:
       data:
