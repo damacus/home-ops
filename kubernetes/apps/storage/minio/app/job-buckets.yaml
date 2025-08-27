@@ -1,0 +1,43 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-buckets-create
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: minio/mc:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MINIO_ENDPOINT
+              value: "http://minio.storage.svc.cluster.local:9000"
+            - name: BUCKETS
+              value: "app-data backups cloudnative-pg longhorn"
+          envFrom:
+            - secretRef:
+                name: minio-root-user
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              echo "Configuring mc alias and waiting for MinIO at ${MINIO_ENDPOINT:?}..."
+              for i in $(seq 1 60); do
+                if mc alias set minio "${MINIO_ENDPOINT:?}" "${MINIO_ROOT_USER:?}" "${MINIO_ROOT_PASSWORD:?}" >/dev/null 2>&1; then
+                  if mc ls minio >/dev/null 2>&1; then
+                    echo "MinIO is reachable"; break
+                  fi
+                fi
+                echo "Attempt $i: MinIO not ready, retrying..."; sleep 5
+              done
+
+              for b in ${BUCKETS}; do
+                echo "Creating bucket: $b"
+                mc mb --ignore-existing "minio/${b}"
+                # Set a sensible default policy; adjust as needed
+                mc anonymous set download "minio/${b}" || true
+              done
