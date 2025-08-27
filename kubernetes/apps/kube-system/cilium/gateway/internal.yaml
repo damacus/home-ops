@@ -4,9 +4,8 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: internal
-  namespace: kube-system
   annotations:
-    external-dns.alpha.kubernetes.io/target: &hostname gateway.ironstone.casa
+    external-dns.alpha.kubernetes.io/hostname: &hostname internal-gateway.ironstone.casa
 spec:
   gatewayClassName: cilium
   addresses:

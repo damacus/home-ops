@@ -68,11 +68,11 @@ spec:
 
     route:
       app:
-        hostnames: ["code.ironstone.casa"]
+        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
         parentRefs:
           - name: internal
             namespace: kube-system
-            sectionName: http
+            sectionName: https
 
     ingress:
       app:
