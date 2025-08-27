@@ -50,7 +50,7 @@ spec:
                   secretKeyRef:
                     name: paperless-secret
                     key: PAPERLESS_SECRET_KEY
-              PAPERLESS_URL: https://paperless.ironstone.casa
+              PAPERLESS_URL: https://{{ .Release.Name }}.ironstone.casa
               PAPERLESS_PORT: "8000"
               PAPERLESS_TIME_ZONE: Europe/London
               PAPERLESS_WEBSERVER_WORKERS: "2"
@@ -157,16 +157,24 @@ spec:
           http:
             port: 8000
 
-    ingress:
+    # ingress:
+    #   app:
+    #     className: "internal"
+    #     hosts:
+    #       - host: paperless.ironstone.casa
+    #         paths:
+    #           - path: /
+    #             service:
+    #               identifier: app
+    #               port: http
+
+    route:
       app:
-        className: "internal"
-        hosts:
-          - host: paperless.ironstone.casa
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
 
     persistence:
       data:

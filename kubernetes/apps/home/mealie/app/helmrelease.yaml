@@ -89,16 +89,24 @@ spec:
           http:
             port: 9000
 
-    ingress:
+    # ingress:
+    #   app:
+    #     className: "internal"
+    #     hosts:
+    #       - host: "{{ .Release.Name }}.ironstone.casa"
+    #         paths:
+    #           - path: /
+    #             service:
+    #               identifier: app
+    #               port: http
+
+    route:
       app:
-        className: "internal"
-        hosts:
-          - host: "{{ .Release.Name }}.ironstone.casa"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
 
     persistence:
       data:

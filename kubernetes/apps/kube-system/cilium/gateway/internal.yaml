@@ -33,3 +33,14 @@ spec:
         certificateRefs:
           - kind: Secret
             name: ironstone-casa-production-tls
+    - name: s3
+      protocol: HTTP
+      port: 9000
+      hostname: "*.ironstone.casa"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: ironstone-casa-production-tls
