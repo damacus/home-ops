@@ -34,7 +34,7 @@ spec:
           - kind: Secret
             name: ironstone-casa-production-tls
     - name: s3
-      protocol: HTTP
+      protocol: HTTPS
       port: 9000
       hostname: "*.ironstone.casa"
       allowedRoutes:
