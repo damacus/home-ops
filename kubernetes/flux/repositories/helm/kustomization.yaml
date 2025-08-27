@@ -25,7 +25,6 @@ resources:
   - longhorn.yaml
   - metrics-server.yaml
   - minio.yaml
-  - minio-operator.yaml
   - node-feature-discovery.yaml
   - onepassword-connect.yaml
   - openebs.yaml
