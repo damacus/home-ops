@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.7.3
+      version: 4.2.0
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -72,39 +72,30 @@ spec:
             port: 9001
           api:
             port: 9000
-    ingress:
-      main:
-        enabled: true
-        className: internal
-        annotations:
-          external-dns.alpha.kubernetes.io/target: 192.168.1.224
-        hosts:
-          - host: minio.ironstone.casa
-            paths:
-              - path: /
-                pathType: Prefix
-                service:
-                  identifier: main
-                  port: http
+
+    # HTTPRoutes for Gateway API
+    route:
+      console:
+        hostnames: ["minio.ironstone.casa"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https  # Uses port 443 with TLS
+        rules:
+          - backendRefs:
+              - name: minio
+                port: 9001  # MinIO console port
       s3:
-        enabled: true
-        className: internal
-        annotations:
-          external-dns.alpha.kubernetes.io/target: 192.168.1.224
-          nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,192.168.0.0/16"
-          nginx.ingress.kubernetes.io/proxy-connect-timeout: "180"
-          nginx.ingress.kubernetes.io/proxy-body-size: 1024m
-          nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
-          nginx.ingress.kubernetes.io/configuration-snippet: |
-            chunked_transfer_encoding off;
-        hosts:
-          - host: s3.ironstone.casa
-            paths:
-              - path: /
-                pathType: Prefix
-                service:
-                  identifier: main
-                  port: api
+        hostnames: ["s3.ironstone.casa"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: s3  # Uses port 9000 for S3 API
+        rules:
+          - backendRefs:
+              - name: minio
+                port: 9000  # MinIO S3 API port
+
     serviceMonitor:
       main:
         serviceName: minio

@@ -69,16 +69,14 @@ spec:
             port: *api_port
           rtsp:
             port: 8554
-    ingress:
+
+    route:
       app:
-        className: internal
-        hosts:
-          - host: "{{ .Release.Name }}.ironstone.casa"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
 
     persistence:
       data:
