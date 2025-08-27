@@ -29,6 +29,10 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: ironstone-casa-production-tls
     - name: mdns
       protocol: UDP
       port: 5353
@@ -38,7 +42,3 @@ spec:
           selector:
             matchLabels:
               app.kubernetes.io/component: home-assistant
-      tls:
-        certificateRefs:
-          - kind: Secret
-            name: ironstone-casa-production-tls
