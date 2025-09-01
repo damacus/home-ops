@@ -3,6 +3,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: minio-buckets-create
+  namespace: storage
 spec:
   backoffLimit: 6
   ttlSecondsAfterFinished: 3600

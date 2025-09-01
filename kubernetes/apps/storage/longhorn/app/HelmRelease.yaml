@@ -38,10 +38,4 @@ spec:
       migratable: false # ReadWriteMany doesn't work if storage is migratable
 
     ingress:
-      enabled: true
-      annotations:
-        external-dns.alpha.kubernetes.io/target: 192.168.1.224
-      ingressClassName: internal
-      host: longhorn.ironstone.casa
-      tls: true
-      tlsSecretName: "network/ironstone-casa-production-tls"
+      enabled: false
