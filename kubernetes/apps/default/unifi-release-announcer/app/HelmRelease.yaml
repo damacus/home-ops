@@ -50,10 +50,3 @@ spec:
               limits:
                 cpu: 1000m
                 memory: 100M
-
-    persistence:
-      cache:
-        accessMode: ReadWriteOnce
-        size: 10Mi
-        globalMounts:
-          - path: /app/last_release_url.txt
