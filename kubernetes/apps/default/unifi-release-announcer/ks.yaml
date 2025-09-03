@@ -5,7 +5,7 @@ metadata:
   name: unifi-release-announcer
   namespace: flux-system
 spec:
-  targetNamespace: home-automation
+  targetNamespace: default
   path: ./kubernetes/apps/default/unifi-release-announcer/app
   prune: true
   sourceRef:
