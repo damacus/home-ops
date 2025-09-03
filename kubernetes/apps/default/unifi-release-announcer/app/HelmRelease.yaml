@@ -33,11 +33,11 @@ spec:
               repository: ghcr.io/damacus/unifi-release-announcer
               tag: 0.1.2
             env:
-              - name: DISCORD_TOKEN
+              - name: DISCORD_BOT_TOKEN
                 valueFrom:
                   secretKeyRef:
                     name: unifi-release-announcer
-                    key: DISCORD_TOKEN
+                    key: DISCORD_BOT_TOKEN
               - name: DISCORD_CHANNEL_ID
                 valueFrom:
                   secretKeyRef:
