@@ -50,14 +50,6 @@ spec:
               limits:
                 cpu: 1000m
                 memory: 100M
-        pod:
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
-            fsGroup: 1000
-            fsGroupChangePolicy: Always
-            seccompProfile: { type: RuntimeDefault }
 
     persistence:
       cache:
