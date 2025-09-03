@@ -10,7 +10,7 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 0.26.0
+    tag: 0.28.0@sha256:9ee42975ae78d465c7006fd98431f3e2971326f16f79940f747d997aa1984b94
   url: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
