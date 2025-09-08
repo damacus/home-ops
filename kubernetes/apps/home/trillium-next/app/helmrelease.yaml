@@ -73,18 +73,24 @@ spec:
           http:
             port: *port
 
-    ingress:
+    route:
       app:
-        className: internal
-        annotations:
-          external-dns.alpha.kubernetes.io/target: 192.168.1.224
-        hosts:
-          - host: notes.ironstone.casa
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: trillium
+                namespace: home
+                port: 8080
+                weight: 1
 
     persistence:
       data:
