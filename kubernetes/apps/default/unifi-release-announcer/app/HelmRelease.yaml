@@ -31,7 +31,7 @@ spec:
           app:
             image:
               repository: ghcr.io/damacus/unifi-release-announcer
-              tag: 0.1.2
+              tag: 0.1.3@sha256:1236539ff86a21f7467cfd119adba2197330f1d312081061b323fffb696feba0
             env:
               - name: DISCORD_BOT_TOKEN
                 valueFrom:
