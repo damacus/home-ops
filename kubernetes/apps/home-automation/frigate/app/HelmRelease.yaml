@@ -113,13 +113,13 @@ spec:
       rga:
         type: hostPath
         hostPath: /dev/rga
-        hostPathType: Directory
+        hostPathType: CharDevice
         globalMounts:
           - path: /dev/rga
       mpp-service:
         type: hostPath
         hostPath: /dev/mpp_service
-        hostPathType: Directory
+        hostPathType: CharDevice
         globalMounts:
           - path: /dev/mpp_service
       sys:
