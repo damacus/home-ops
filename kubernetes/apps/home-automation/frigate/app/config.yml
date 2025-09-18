@@ -11,12 +11,11 @@ database:
   path: /data/frigate.db
 
 detectors:
-  coral:
-    type: edgetpu
-    device: usb
+  rknn:
+    type: rknn
+    num_cores: 0
 
-ffmpeg:
-  hwaccel_args: preset-rpi-64-h264
+ffmpeg: {}
 
 record:
   enabled: true
