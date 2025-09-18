@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.7.3
+      version: 4.3.0
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -20,6 +20,9 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
+      strategy: uninstall
+  uninstall:
+    keepHistory: true
   values:
     controllers:
       cloudflared:
