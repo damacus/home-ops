@@ -101,13 +101,13 @@ spec:
       dri:
         type: hostPath
         hostPath: /dev/dri
-        hostPathType: Directory
+        hostPathType: CharDevice
         globalMounts:
           - path: /dev/dri
       dma-heap:
         type: hostPath
         hostPath: /dev/dma_heap
-        hostPathType: Directory
+        hostPathType: CharDevice
         globalMounts:
           - path: /dev/dma_heap
       rga:
