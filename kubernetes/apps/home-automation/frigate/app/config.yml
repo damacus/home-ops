@@ -13,7 +13,15 @@ database:
 detectors:
   rknn:
     type: rknn
-    num_cores: 0
+    num_cores: 3
+
+model:
+  path: frigate-fp16-yolov9-t
+  model_type: yolo-generic
+  width: 320
+  height: 320
+  input_tensor: nhwc
+  labelmap_path: /labelmap/coco-80.txt
 
 ffmpeg: {}
 
