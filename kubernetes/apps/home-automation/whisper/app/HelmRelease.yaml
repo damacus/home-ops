@@ -83,6 +83,15 @@ spec:
           - path: /data
 
     affinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: In
+                  values:
+                    - "rocky"
       # Prefer to avoid home-assistant pods (soft anti-affinity)
       podAntiAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
