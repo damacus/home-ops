@@ -101,9 +101,10 @@ spec:
       dri:
         type: hostPath
         hostPath: /dev/dri
-        hostPathType: Directory
+        hostPathType: CharDevice
         globalMounts:
           - path: /dev/dri
+
       rga:
         type: hostPath
         hostPath: /dev/rga
