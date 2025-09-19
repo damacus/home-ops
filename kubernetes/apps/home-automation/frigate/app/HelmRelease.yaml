@@ -104,13 +104,24 @@ spec:
         hostPathType: Directory
         globalMounts:
           - path: /dev/dri
-
+      dma-heap:
+        type: hostPath
+        hostPath: /dev/dma_heap
+        hostPathType: Directory
+        globalMounts:
+          - path: /dev/dma_heap
       rga:
         type: hostPath
         hostPath: /dev/rga
-        hostPathType: File
+        hostPathType: CharDevice
         globalMounts:
           - path: /dev/rga
+      mpp-service:
+        type: hostPath
+        hostPath: /dev/mpp_service
+        hostPathType: CharDevice
+        globalMounts:
+          - path: /dev/mpp_service
 
       sys:
         type: hostPath
