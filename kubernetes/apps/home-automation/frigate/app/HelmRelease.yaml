@@ -101,16 +101,24 @@ spec:
       dri:
         type: hostPath
         hostPath: /dev/dri
-        hostPathType: CharDevice
+        hostPathType: Directory
         globalMounts:
           - path: /dev/dri
 
       rga:
         type: hostPath
         hostPath: /dev/rga
-        hostPathType: CharDevice
+        hostPathType: Directory
         globalMounts:
           - path: /dev/rga
+
+      sys:
+        type: hostPath
+        hostPath: /sys/kernel/debug
+        hostPathType: Directory
+        globalMounts:
+          - path: /sys/kernel/debug
+            readOnly: true
 
     affinity:
       nodeAffinity:
