@@ -108,7 +108,7 @@ spec:
       rga:
         type: hostPath
         hostPath: /dev/rga
-        hostPathType: CharDevice
+        hostPathType: Directory
         globalMounts:
           - path: /dev/rga
 
