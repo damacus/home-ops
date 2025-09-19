@@ -104,31 +104,13 @@ spec:
         hostPathType: CharDevice
         globalMounts:
           - path: /dev/dri
-      dma-heap:
-        type: hostPath
-        hostPath: /dev/dma_heap
-        hostPathType: CharDevice
-        globalMounts:
-          - path: /dev/dma_heap
+
       rga:
         type: hostPath
         hostPath: /dev/rga
         hostPathType: CharDevice
         globalMounts:
           - path: /dev/rga
-      mpp-service:
-        type: hostPath
-        hostPath: /dev/mpp_service
-        hostPathType: CharDevice
-        globalMounts:
-          - path: /dev/mpp_service
-      sys:
-        type: hostPath
-        hostPath: /sys
-        hostPathType: Directory
-        globalMounts:
-          - path: /sys
-            readOnly: true
 
     affinity:
       nodeAffinity:
