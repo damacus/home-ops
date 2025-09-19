@@ -125,10 +125,10 @@ spec:
 
       sys:
         type: hostPath
-        hostPath: /sys/kernel/debug
+        hostPath: /sys
         hostPathType: Directory
         globalMounts:
-          - path: /sys/kernel/debug
+          - path: /sys
             readOnly: true
 
     affinity:
