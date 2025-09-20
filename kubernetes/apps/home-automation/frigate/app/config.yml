@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=http://frigate.ironstone.casa:5000/api/config/schema.json
+# yaml-language-server: $schema=https://demo.frigate.video/api/config/schema.json
 ---
 logger:
   default: info
@@ -23,17 +23,14 @@ model:
   input_tensor: nhwc
   labelmap_path: /labelmap/coco-80.txt
 
-ffmpeg: {}
+ffmpeg:
+  hwaccel_args: preset-rkmpp
 
 record:
   enabled: true
   retain:
     days: 7
     mode: motion
-  events:
-    retain:
-      default: 30
-      mode: motion
 
 snapshots:
   enabled: true
@@ -52,10 +49,12 @@ cameras:
     ffmpeg:
       inputs:
         - path: rtsp://192.168.1.180:8554/main
+          input_args: preset-rtsp-generic
           roles:
             - record
             - audio
         - path: rtsp://192.168.1.180:8554/sub
+          input_args: preset-rtsp-generic
           roles:
             - detect
     detect:
