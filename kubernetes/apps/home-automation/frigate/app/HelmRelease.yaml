@@ -39,7 +39,7 @@ spec:
               TZ: Europe/London
             probes:
               liveness: &probes
-                enabled: true
+                enabled: false
                 custom: true
                 spec:
                   httpGet:
@@ -50,8 +50,8 @@ spec:
                   timeoutSeconds: 1
                   failureThreshold: 3
               readiness:
-                custom: true
                 enabled: false
+                custom: true
                 spec:
                   httpGet:
                     path: /api/version
