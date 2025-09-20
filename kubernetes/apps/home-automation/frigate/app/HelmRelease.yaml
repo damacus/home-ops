@@ -49,7 +49,17 @@ spec:
                   periodSeconds: 10
                   timeoutSeconds: 1
                   failureThreshold: 3
-              readiness: *probes
+              readiness:
+                custom: true
+                enabled: false
+                spec:
+                  httpGet:
+                    path: /api/version
+                    port: *api_port
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 3
             securityContext:
               privileged: true
             resources:
