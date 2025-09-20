@@ -66,9 +66,12 @@ spec:
               requests:
                 cpu: 100m
               limits:
-                cpu: 1000m
+                cpu: "2"
                 memory: 4Gi
-    defaultPodOptions: {}
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         controller: frigate
