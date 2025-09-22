@@ -9,11 +9,13 @@
 - [ ] **Enable worker nodes** - Configure separate worker pods for better performance
 - [ ] **Enable webhook pods** - Set up dedicated webhook processing pods
 - [ ] **Resource optimization** - Monitor and adjust CPU/memory limits based on usage
-- [ ] **Redis optimization** - Consider dedicated Redis instance for n8n vs shared
+- [x] **Redis optimization** - Consider dedicated Redis instance for n8n vs shared
 
 ## Monitoring & Observability
 - [ ] **Add Prometheus metrics** - Configure n8n metrics export
+  <https://docs.n8n.io/hosting/configuration/configuration-examples/prometheus/>
 - [ ] **Create Grafana dashboard** - Build monitoring dashboard for n8n workflows
+  <https://docs.n8n.io/hosting/configuration/configuration-examples/grafana/>
 - [ ] **Set up alerting** - Configure alerts for failed workflows and system health
 - [ ] **Log aggregation** - Ensure logs are properly collected and searchable
 

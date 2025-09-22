@@ -35,11 +35,44 @@ spec:
               repository: n8nio/n8n
               tag: 1.113.0
             env:
-              DB_POSTGRESDB_DATABASE: "app"
-              DB_POSTGRESDB_HOST: "n8n-db-rw.home-automation.svc.cluster.local"
-              DB_POSTGRESDB_PORT: 5432
-              DB_POSTGRESDB_USER: "app"
               DB_TYPE: "postgresdb"
+              DB_POSTGRESDB_DATABASE:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-app
+                    key: dbname
+              DB_POSTGRESDB_HOST:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-app
+                    key: host
+              DB_POSTGRESDB_PORT: 5432
+              DB_POSTGRESDB_USER:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-app
+                    key: user
+              DB_POSTGRESDB_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-app
+                    key: password
+              DB_POSTGRESDB_SSL_CA:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-ca
+                    key: ca.crt
+              DB_POSTGRESDB_SSL_CERT:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-server
+                    key: tls.crt
+              DB_POSTGRESDB_SSL_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-server
+                    key: tls.key
+              DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED: "true"
               EXECUTIONS_DATA_MAX_AGE: 7
               EXECUTIONS_DATA_PRUNE: "true"
               EXECUTIONS_DATA_PRUNE_MAX_COUNT: 50000
@@ -54,16 +87,25 @@ spec:
               N8N_LOG_OUTPUT: "console"
               N8N_PORT: &port 5678
               N8N_PROTOCOL: "https"
+              N8N_TEMPLATES_ENABLED: "true"
               N8N_RUNNERS_ENABLED: "true"
               NODE_ENV: "production"
+              # TODO: Add external data storage with MinIO
+              # See: https://docs.n8n.io/hosting/configuration/environment-variables/external-data-storage/
+              # Environment variables to add:
+              # - N8N_EXTERNAL_STORAGE_S3_HOST
+              # - N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME
+              # - N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY
+              # - N8N_EXTERNAL_STORAGE_S3_ACCESS_SECRET
+              # - N8N_EXTERNAL_STORAGE_S3_REGION
               OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
               QUEUE_BULL_REDIS_HOST: "redis-master.database.svc.cluster.local"
               QUEUE_BULL_REDIS_PORT: 6379
-            envFrom:
-              - secretRef:
-                  name: n8n-secret
-              - secretRef:
-                  name: n8n-app
+              N8N_ENCRYPTION_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-secret
+                    key: encryption_key
             probes:
               liveness: &probes
                 enabled: true
@@ -83,6 +125,12 @@ spec:
               limits:
                 cpu: 1000m
                 memory: 2Gi
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            fsGroupChangePolicy: "OnRootMismatch"
 
     service:
       app:
@@ -99,14 +147,6 @@ spec:
           - name: internal
             namespace: kube-system
             sectionName: https
-
-    webhooks:
-      hostnames:
-        - "n8n-webhook.ironstone.casa"
-      parentRefs:
-        - name: internal
-          namespace: kube-system
-          sectionName: https
 
     persistence:
       data:
