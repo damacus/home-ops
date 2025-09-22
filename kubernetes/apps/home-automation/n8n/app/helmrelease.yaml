@@ -18,9 +18,6 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
-  dependsOn:
-    - name: n8n-db
-      namespace: flux-system
   values:
     ingress:
       enabled: false
