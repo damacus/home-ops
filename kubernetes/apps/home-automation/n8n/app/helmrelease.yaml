@@ -1,0 +1,106 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: n8n
+spec:
+  interval: 30m
+  chartRef:
+    kind: OCIRepository
+    name: n8n
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  dependsOn:
+    - name: n8n-db
+      namespace: flux-system
+  values:
+    ingress:
+      enabled: false
+
+    main:
+      config:
+        n8n:
+          # Database configuration
+          db:
+            type: postgresdb
+            postgresdb:
+              host: n8n-rw.home-automation.svc.cluster.local
+              port: 5432
+              database: app
+              user: app
+          # Redis configuration
+          queue:
+            bull:
+              redis:
+                host: redis-master.database.svc.cluster.local
+                port: 6379
+          # General configuration
+          webhook_url: https://n8n.ironstone.casa
+          editor_base_url: https://n8n.ironstone.casa
+          timezone: Europe/London
+          default_locale: en
+          # Security
+          secure_cookie: false
+          # Disable usage statistics
+          diagnostics_enabled: false
+          version_notifications_enabled: false
+          templates_enabled: true
+          public_api_disabled: false
+          # Workflow settings
+          workflows_default_name: "My Workflow"
+          new_workflow_sharing_enabled: false
+        # Execution mode
+        executions_mode: queue
+
+      secret:
+        n8n:
+          encryption_key:
+            valueFrom:
+              secretKeyRef:
+                name: n8n-secret
+                key: encryption_key
+
+      extraEnv:
+        DB_POSTGRESDB_PASSWORD:
+          valueFrom:
+            secretKeyRef:
+              name: n8n-app
+              key: password
+
+      persistence:
+        enabled: true
+        type: dynamic
+        size: 10Gi
+        storageClass: openebs-hostpath
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+
+    service:
+      type: ClusterIP
+      port: 80
+
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop: ["ALL"]
