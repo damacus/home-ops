@@ -23,7 +23,9 @@ model:
   input_tensor: nhwc
   labelmap_path: /labelmap/coco-80.txt
 
+# https://docs.frigate.video/configuration/hardware_acceleration_video#rockchip-platform
 ffmpeg:
+  path: "7.0"
   hwaccel_args: preset-rkmpp
 
 record:
