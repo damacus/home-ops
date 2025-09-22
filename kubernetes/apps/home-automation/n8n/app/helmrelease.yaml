@@ -57,22 +57,6 @@ spec:
                   secretKeyRef:
                     name: n8n-app
                     key: password
-              DB_POSTGRESDB_SSL_CA:
-                valueFrom:
-                  secretKeyRef:
-                    name: n8n-ca
-                    key: ca.crt
-              DB_POSTGRESDB_SSL_CERT:
-                valueFrom:
-                  secretKeyRef:
-                    name: n8n-server
-                    key: tls.crt
-              DB_POSTGRESDB_SSL_KEY:
-                valueFrom:
-                  secretKeyRef:
-                    name: n8n-server
-                    key: tls.key
-              DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED: "true"
               EXECUTIONS_DATA_MAX_AGE: 7
               EXECUTIONS_DATA_PRUNE: "true"
               EXECUTIONS_DATA_PRUNE_MAX_COUNT: 50000
