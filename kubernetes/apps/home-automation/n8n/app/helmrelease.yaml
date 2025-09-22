@@ -61,9 +61,9 @@ spec:
               EXECUTIONS_DATA_PRUNE: "true"
               EXECUTIONS_DATA_PRUNE_MAX_COUNT: 50000
               EXECUTIONS_MODE: "queue"
-              EXECUTIONS_PROCESS: "main"
               GENERIC_TIMEZONE: "Europe/London"
               N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+              N8N_GIT_NODE_DISABLE_BARE_REPOS: "true"
               N8N_COMMUNITY_PACKAGES_ENABLED: "false"
               N8N_DEFAULT_LOCALE: "en_GB"
               N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "false"
@@ -78,9 +78,10 @@ spec:
               N8N_PORT: &port 5678
               N8N_PROTOCOL: "https"
               N8N_TEMPLATES_ENABLED: "false"
-              N8N_RUNNERS_ENABLED: "false"
+              N8N_RUNNERS_ENABLED: "true"
               WEBHOOK_URL: "https://n8n.ironstone.casa"
               N8N_PROXY_HOPS: "1"
+              OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
               NODE_ENV: "production"
               QUEUE_BULL_REDIS_HOST: "redis-master.database.svc.cluster.local"
               QUEUE_BULL_REDIS_PORT: 6379
