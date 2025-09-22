@@ -64,8 +64,6 @@ spec:
                   name: n8n-secret
               - secretRef:
                   name: n8n-app
-              - secretRef:
-                  name: redis
             probes:
               liveness: &probes
                 enabled: true
