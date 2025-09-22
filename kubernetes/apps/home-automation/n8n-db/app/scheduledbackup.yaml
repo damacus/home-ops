@@ -3,10 +3,15 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: home-assistant-db
+  name: n8n
+  namespace: home-automation
 spec:
-  schedule: "0 1,23 * * *"
-  immediate: true
+  schedule: "0 0 0 * * *"
   backupOwnerReference: self
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+    parameters:
+      objectStore: minio-store
   cluster:
-    name: home-assistant
+    name: n8n

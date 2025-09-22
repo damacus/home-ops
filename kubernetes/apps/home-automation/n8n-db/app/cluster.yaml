@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: home-assistant
+  name: n8n
   namespace: home-automation
 spec:
   imageCatalogRef:
@@ -15,11 +15,15 @@ spec:
   primaryUpdateStrategy: unsupervised
   enablePDB: true
 
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+
   monitoring:
     enablePodMonitor: true
 
   storage:
-    size: 20Gi
+    size: 10Gi
     storageClass: openebs-hostpath
 
   enableSuperuserAccess: true
@@ -28,33 +32,15 @@ spec:
 
   postgresql:
     parameters:
-      max_connections: "400"
-      shared_buffers: 256MB
+      max_connections: "200"
+      shared_buffers: 128MB
       effective_io_concurrency: "200"
-      maintenance_work_mem: 256MB
+      maintenance_work_mem: 128MB
 
   resources:
     requests:
       cpu: 50m
-      memory: 400Mi
+      memory: 256Mi
     limits:
-      memory: 2Gi
-      cpu: 3000m
-
-  backup:
-    retentionPolicy: 30d
-    barmanObjectStore:
-      destinationPath: s3://cloudnative-pg/
-      endpointURL: https://eeded8796e30bfe7b412cd59df29bb34.r2.cloudflarestorage.com
-      data:
-        compression: bzip2
-      wal:
-        compression: bzip2
-        maxParallel: 8
-      s3Credentials:
-        accessKeyId:
-          name: r2-cloudnative-pg
-          key: aws-access-key-id
-        secretAccessKey:
-          name: r2-cloudnative-pg
-          key: aws-secret-access-key
+      memory: 1Gi
+      cpu: 1000m
