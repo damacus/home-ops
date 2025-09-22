@@ -6,9 +6,14 @@ metadata:
   name: n8n
 spec:
   interval: 30m
-  chartRef:
-    kind: OCIRepository
-    name: n8n
+  chart:
+    spec:
+      chart: app-template
+      version: 3.3.1
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
   install:
     remediation:
       retries: 3
@@ -16,88 +21,97 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
+      strategy: rollback
   uninstall:
     keepHistory: false
   values:
-    ingress:
-      enabled: false
-
-    main:
-      config:
-        n8n:
-          # Database configuration
-          db:
-            type: postgresdb
-            postgresdb:
-              host: n8n-rw.home-automation.svc.cluster.local
-              port: 5432
-              database: app
-              user: app
-          # Redis configuration
-          queue:
-            bull:
-              redis:
-                host: redis-master.database.svc.cluster.local
-                port: 6379
-          # General configuration
-          webhook_url: https://n8n.ironstone.casa
-          editor_base_url: https://n8n.ironstone.casa
-          timezone: Europe/London
-          default_locale: en
-          # Security
-          secure_cookie: false
-          # Disable usage statistics
-          diagnostics_enabled: false
-          version_notifications_enabled: false
-          templates_enabled: true
-          public_api_disabled: false
-          # Workflow settings
-          workflows_default_name: "My Workflow"
-          new_workflow_sharing_enabled: false
-        # Execution mode
-        executions_mode: queue
-
-      secret:
-        n8n:
-          encryption_key:
-            valueFrom:
-              secretKeyRef:
-                name: n8n-secret
-                key: encryption_key
-
-      extraEnv:
-        DB_POSTGRESDB_PASSWORD:
-          valueFrom:
-            secretKeyRef:
-              name: n8n-app
-              key: password
-
-      persistence:
-        enabled: true
-        type: dynamic
-        size: 10Gi
-        storageClass: openebs-hostpath
-
-      resources:
-        requests:
-          cpu: 100m
-          memory: 512Mi
-        limits:
-          cpu: 1000m
-          memory: 2Gi
+    controllers:
+      n8n:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: n8nio/n8n
+              tag: 1.48.2
+            env:
+              DB_POSTGRESDB_DATABASE: "app"
+              DB_POSTGRESDB_HOST: "n8n-db-rw.home-automation.svc.cluster.local"
+              DB_POSTGRESDB_PORT: 5432
+              DB_POSTGRESDB_USER: "app"
+              DB_TYPE: "postgresdb"
+              EXECUTIONS_DATA_MAX_AGE: 7
+              EXECUTIONS_DATA_PRUNE: "true"
+              EXECUTIONS_DATA_PRUNE_MAX_COUNT: 50000
+              EXECUTIONS_MODE: "queue"
+              EXECUTIONS_PROCESS: "main"
+              GENERIC_TIMEZONE: "Europe/London"
+              N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+              N8N_DEFAULT_LOCALE: "en_GB"
+              N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+              N8N_HOST: "n8n.ironstone.casa"
+              N8N_LOG_LEVEL: "info"
+              N8N_LOG_OUTPUT: "console"
+              N8N_PORT: &port 5678
+              N8N_PROTOCOL: "https"
+              N8N_RUNNERS_ENABLED: "true"
+              NODE_ENV: "production"
+              OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
+              QUEUE_BULL_REDIS_HOST: "redis-master.database.svc.cluster.local"
+              QUEUE_BULL_REDIS_PORT: 6379
+            envFrom:
+              - secretRef:
+                  name: n8n-secret
+              - secretRef:
+                  name: n8n-app
+              - secretRef:
+                  name: redis
+            probes:
+              liveness: &probes
+                enabled: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: *port
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                cpu: 1000m
+                memory: 2Gi
 
     service:
-      type: ClusterIP
-      port: 80
+      app:
+        controller: n8n
+        ports:
+          http:
+            port: *port
 
-    podSecurityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
-      runAsGroup: 1000
-      fsGroup: 1000
+    route:
+      app:
+        hostnames:
+          - "n8n.ironstone.casa"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
 
-    securityContext:
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: false
-      capabilities:
-        drop: ["ALL"]
+    webhooks:
+      hostnames:
+        - "n8n-webhook.ironstone.casa"
+      parentRefs:
+        - name: internal
+          namespace: kube-system
+          sectionName: https
+
+    persistence:
+      data:
+        existingClaim: n8n
+        globalMounts:
+          - path: /home/node/.n8n
