@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: n8nio/n8n
-              tag: 1.48.2
+              tag: 1.113.0
             env:
               DB_POSTGRESDB_DATABASE: "app"
               DB_POSTGRESDB_HOST: "n8n-db-rw.home-automation.svc.cluster.local"
