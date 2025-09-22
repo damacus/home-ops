@@ -10,4 +10,12 @@
     "github>damacus/renovate-config:packageRules.json5",
     "github>damacus/renovate-config:autoMergeSelect.json5",
   ],
+  packageRules: [
+    {
+      description: "Disable digest pinning for OCI repositories (as it breaks flux-local)",
+      matchDatasources: ["helm"],
+      matchPackagePatterns: ["^oci://"],
+      pinDigests: false
+    }
+  ]
 }
