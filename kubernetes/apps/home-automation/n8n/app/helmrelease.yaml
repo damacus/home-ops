@@ -64,32 +64,26 @@ spec:
               EXECUTIONS_PROCESS: "main"
               GENERIC_TIMEZONE: "Europe/London"
               N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+              N8N_COMMUNITY_PACKAGES_ENABLED: "false"
               N8N_DEFAULT_LOCALE: "en_GB"
               N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "false"
-              N8N_HOST: "n8n.ironstone.casa"
-              N8N_LOG_LEVEL: "debug"
-              N8N_LOG_OUTPUT: "console"
-              N8N_PORT: &port 5678
-              N8N_PROTOCOL: "https"
-              N8N_TEMPLATES_ENABLED: "true"
-              N8N_RUNNERS_ENABLED: "true"
-              NODE_ENV: "production"
-              # TODO: Add external data storage with MinIO
-              # See: https://docs.n8n.io/hosting/configuration/environment-variables/external-data-storage/
-              # Environment variables to add:
-              # - N8N_EXTERNAL_STORAGE_S3_HOST
-              # - N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME
-              # - N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY
-              # - N8N_EXTERNAL_STORAGE_S3_ACCESS_SECRET
-              # - N8N_EXTERNAL_STORAGE_S3_REGION
-              OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
-              QUEUE_BULL_REDIS_HOST: "redis-master.database.svc.cluster.local"
-              QUEUE_BULL_REDIS_PORT: 6379
               N8N_ENCRYPTION_KEY:
                 valueFrom:
                   secretKeyRef:
                     name: n8n-secret
                     key: encryption_key
+              N8N_HOST: "n8n.ironstone.casa"
+              N8N_LOG_LEVEL: "info"
+              N8N_LOG_OUTPUT: "console"
+              N8N_PORT: &port 5678
+              N8N_PROTOCOL: "https"
+              N8N_TEMPLATES_ENABLED: "false"
+              N8N_RUNNERS_ENABLED: "false"
+              WEBHOOK_URL: "https://n8n.ironstone.casa"
+              N8N_PROXY_HOPS: "1"
+              NODE_ENV: "production"
+              QUEUE_BULL_REDIS_HOST: "redis-master.database.svc.cluster.local"
+              QUEUE_BULL_REDIS_PORT: 6379
             probes:
               liveness: &probes
                 enabled: true
