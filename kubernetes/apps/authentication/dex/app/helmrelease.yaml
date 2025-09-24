@@ -35,14 +35,6 @@ spec:
 
     ingress:
       enabled: false
-      className: external
-      annotations:
-        external-dns.alpha.kubernetes.io/target: external.damacus.io
-      hosts:
-        - host: "dex.damacus.io"
-          paths:
-            - path: /
-              pathType: Prefix
 
     resources:
       requests:
