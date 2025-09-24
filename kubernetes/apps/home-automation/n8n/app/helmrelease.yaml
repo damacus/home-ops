@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: n8nio/n8n
-              tag: 1.112.4
+              tag: 1.113.2@sha256:4c1ba1a29b773752cb92b3ac89249a69cb95c6cb591cb7e0587cd8a78cc5fde4
             env:
               DB_TYPE: "postgresdb"
               DB_POSTGRESDB_DATABASE:
