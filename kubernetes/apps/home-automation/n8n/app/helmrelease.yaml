@@ -65,7 +65,7 @@ spec:
               N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
               N8N_GIT_NODE_DISABLE_BARE_REPOS: "true"
               N8N_COMMUNITY_PACKAGES_ENABLED: "false"
-              N8N_DEFAULT_LOCALE: "en_GB"
+              # N8N_DEFAULT_LOCALE: "en_GB" https://community.n8n.io/t/unable-to-input-credentials/192826/7
               N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "false"
               N8N_ENCRYPTION_KEY:
                 valueFrom:
