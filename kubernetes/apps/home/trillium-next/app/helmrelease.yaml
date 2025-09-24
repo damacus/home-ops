@@ -31,7 +31,7 @@ spec:
           app:
             image:
               repository: ghcr.io/triliumnext/notes
-              tag: develop
+              tag: develop@sha256:972ce44a8df57972bd83b7e6390a87e92b26addfdf0d7d8e700e967681c380bc
             env:
               TRILIUM_DATA_DIR: &datadir /home/node/trilium-data
               SSO_ENABLED: "true"

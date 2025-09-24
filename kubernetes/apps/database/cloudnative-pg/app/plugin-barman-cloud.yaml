@@ -924,7 +924,7 @@ spec:
         env:
         - name: SIDECAR_IMAGE
           value: "ghcr.io/cloudnative-pg/plugin-barman-cloud-sidecar:v0.6.0"
-        image: ghcr.io/cloudnative-pg/plugin-barman-cloud:v0.6.0
+        image: ghcr.io/cloudnative-pg/plugin-barman-cloud:v0.6.0@sha256:2adabf02728307119a22c13abb9efc52371ad6d74106db6204c6dee5abe75fb8
         name: barman-cloud
         ports:
         - containerPort: 9090
