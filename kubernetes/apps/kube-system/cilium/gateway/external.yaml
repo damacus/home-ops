@@ -27,3 +27,4 @@ spec:
         certificateRefs:
           - kind: Secret
             name: damacus-io-production-tls
+            namespace: network

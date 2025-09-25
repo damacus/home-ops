@@ -30,6 +30,7 @@ spec:
         certificateRefs:
           - kind: Secret
             name: ironstone-casa-production-tls
+            namespace: network
     - name: s3
       protocol: HTTPS
       port: 9000
