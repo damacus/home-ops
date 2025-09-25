@@ -55,6 +55,7 @@ spec:
       - --ignore-ingress-tls-spec
     policy: sync
     sources:
+      - "crd"
       - "ingress"
       - "service"
       - "gateway-httproute"
