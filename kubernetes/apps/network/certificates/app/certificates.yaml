@@ -4,6 +4,10 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: damacus-io
+  namespace: network
+  annotations:
+    reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+    reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "kube-system"
 spec:
   secretName: damacus-io-production-tls
   issuerRef:
@@ -19,6 +23,10 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: ironstone-casa
+  namespace: network
+  annotations:
+    reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+    reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "kube-system"
 spec:
   secretName: ironstone-casa-production-tls
   issuerRef:
