@@ -88,27 +88,9 @@ spec:
           http:
             port: &port 8123
           mdns:
-            enabled: true
             port: 5353
             protocol: UDP
             targetPort: 5353
-
-    ingress:
-      internal:
-        className: "internal"
-        annotations:
-          external-dns.alpha.kubernetes.io/target: 192.168.1.224
-        hosts:
-          - host: "hass.ironstone.casa"
-            paths:
-              # - path: /
-              #   service:
-              #     identifier: app
-              #     port: http
-              - path: /
-                service:
-                  identifier: app
-                  port: mdns
 
     route:
       app:
