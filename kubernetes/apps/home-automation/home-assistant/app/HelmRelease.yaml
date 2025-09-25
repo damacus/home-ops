@@ -95,9 +95,10 @@ spec:
 
     ingress:
       external:
+        enabled: false
         className: external
         annotations:
-          external-dns.alpha.kubernetes.io/target: external.damacus.io
+          exeternal-dns.alpha.kubernetes.io/target: external.damacus.io
         hosts:
           - host: "home-assistant.damacus.io"
             paths:
@@ -123,9 +124,17 @@ spec:
                   port: mdns
     route:
       app:
-        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
+        hostnames:
+          - "{{ .Release.Name }}.ironstone.casa"
         parentRefs:
           - name: internal
+            namespace: kube-system
+            sectionName: https
+      external:
+        hostnames:
+          - "{{ .Release.Name }}.damacus.io"
+        parentRefs:
+          - name: external
             namespace: kube-system
             sectionName: https
 
