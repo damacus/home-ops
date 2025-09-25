@@ -57,7 +57,7 @@ service:
 
 ingress:
   app:
-    enabled: true
+    enabled: false
     className: external
     annotations:
       external-dns.alpha.kubernetes.io/target: "external.damacus.io"
@@ -70,14 +70,30 @@ ingress:
               port: http
 
   internal:
-    enabled: true
+    enabled: false
     className: internal
     annotations:
       external-dns.alpha.kubernetes.io/target: "192.168.1.224"
     hosts:
-      - host: &internal-host "{{ .Release.Name }}.ironstone.casa"
+      - host: "{{ .Release.Name }}.ironstone.casa"
         paths:
           - path: /
             service:
               identifier: app
               port: http
+route:
+  app:
+    hostnames:
+      - "{{ .Release.Name }}.ironstone.casa"
+    parentRefs:
+      - name: internal
+        namespace: kube-system
+        sectionName: https
+
+  external:
+    hostnames:
+      - "{{ .Release.Name }}.damacus.io"
+    parentRefs:
+      - name: external
+        namespace: kube-system
+        sectionName: https
