@@ -5,7 +5,7 @@ kind: Gateway
 metadata:
   name: internal
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: &hostname internal-gateway.ironstone.casa
+    external-dns.alpha.kubernetes.io/hostname: &hostname gateway.ironstone.casa
 spec:
   gatewayClassName: cilium
   addresses:
