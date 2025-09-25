@@ -77,32 +77,6 @@ spec:
           http:
             port: *port
 
-    ingress:
-      app:
-        enabled: false
-        className: external
-        annotations:
-          external-dns.alpha.kubernetes.io/target: "external.damacus.io"
-        hosts:
-          - host: "{{ .Release.Name }}-external.damacus.io"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-
-      internal:
-        enabled: false
-        className: internal
-        annotations:
-          external-dns.alpha.kubernetes.io/target: "192.168.1.224"
-        hosts:
-          - host: "{{ .Release.Name }}.ironstone.casa"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
     route:
       app:
         hostnames:
