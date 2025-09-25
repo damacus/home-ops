@@ -79,7 +79,7 @@ spec:
               N8N_PROTOCOL: "https"
               N8N_TEMPLATES_ENABLED: "false"
               N8N_RUNNERS_ENABLED: "true"
-              WEBHOOK_URL: "https://n8n.ironstone.casa"
+              WEBHOOK_URL: &webhooks "https://n8n-webhooks.damacus.io"
               N8N_PROXY_HOPS: "1"
               OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
               NODE_ENV: "production"
@@ -126,6 +126,24 @@ spec:
           - name: internal
             namespace: kube-system
             sectionName: https
+        rules:
+          - backendRefs:
+              - name: n8n
+                namespace: authentication
+                port: 80
+
+    webhooks:
+      hostnames:
+        - *webhooks
+      parentRefs:
+        - name: external
+          namespace: kube-system
+          sectionName: https
+      rules:
+        - backendRefs:
+            - name: n8n
+              namespace: authentication
+              port: 80
 
     persistence:
       data:
