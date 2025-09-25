@@ -86,7 +86,7 @@ spec:
           io.cilium/lb-ipam-ips: "192.168.1.226"
         ports:
           http:
-            port: 8123
+            port: &port 8123
           mdns:
             enabled: true
             port: 5353
@@ -127,7 +127,7 @@ spec:
               - kind: Service
                 name: home-assistant
                 namespace: home
-                port: http
+                port: *port
                 weight: 1
 
       external:
@@ -146,7 +146,7 @@ spec:
               - kind: Service
                 name: home-assistant
                 namespace: home
-                port: http
+                port: *port
                 weight: 1
 
     persistence:

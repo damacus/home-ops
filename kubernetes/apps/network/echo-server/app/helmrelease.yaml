@@ -79,6 +79,8 @@ spec:
 
     route:
       app:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: "gateway.ironstone.casa"
         hostnames:
           - "{{ .Release.Name }}.ironstone.casa"
         parentRefs:
@@ -87,6 +89,8 @@ spec:
             sectionName: https
 
       external:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: "gateway.damacus.io"
         hostnames:
           - "{{ .Release.Name }}.damacus.io"
         parentRefs:
