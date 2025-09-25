@@ -11,11 +11,13 @@ spec:
   listeners:
     - name: http
       protocol: HTTP
+      hostname: "*.damacus.io"
       port: 80
       allowedRoutes:
         namespaces:
           from: All
     - name: https
+      hostname: "*.damacus.io"
       protocol: HTTPS
       port: 443
       allowedRoutes:
