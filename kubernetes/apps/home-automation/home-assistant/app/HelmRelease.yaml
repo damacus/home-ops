@@ -94,19 +94,6 @@ spec:
             targetPort: 5353
 
     ingress:
-      external:
-        enabled: false
-        className: external
-        annotations:
-          exeternal-dns.alpha.kubernetes.io/target: external.damacus.io
-        hosts:
-          - host: "home-assistant.damacus.io"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-
       internal:
         className: "internal"
         annotations:
@@ -122,6 +109,7 @@ spec:
                 service:
                   identifier: app
                   port: mdns
+
     route:
       app:
         hostnames:
@@ -130,6 +118,18 @@ spec:
           - name: internal
             namespace: kube-system
             sectionName: https
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: home-assistant
+                namespace: home
+                port: http
+                weight: 1
+
       external:
         hostnames:
           - "{{ .Release.Name }}.damacus.io"
@@ -137,6 +137,17 @@ spec:
           - name: external
             namespace: kube-system
             sectionName: https
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: home-assistant
+                namespace: home
+                port: http
+                weight: 1
 
     persistence:
       config:
