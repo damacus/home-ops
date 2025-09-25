@@ -114,6 +114,7 @@ spec:
       app:
         hostnames:
           - "{{ .Release.Name }}.ironstone.casa"
+          - "hass.ironstone.casa"
         parentRefs:
           - name: internal
             namespace: kube-system
