@@ -22,7 +22,7 @@ kind: HTTPRoute
 metadata:
   name: unas
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: "192.168.1.243"
+    external-dns.alpha.kubernetes.io/target: "192.168.1.243"
 spec:
   hostnames: ["unas.ironstone.casa"]
   parentRefs:
@@ -45,7 +45,7 @@ kind: HTTPRoute
 metadata:
   name: drive
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: "192.168.1.243"
+    external-dns.alpha.kubernetes.io/target: "192.168.1.243"
 spec:
   hostnames: ["drive.ironstone.casa"]
   parentRefs:
