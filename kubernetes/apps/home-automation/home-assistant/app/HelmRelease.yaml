@@ -101,10 +101,10 @@ spec:
         hosts:
           - host: "hass.ironstone.casa"
             paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+              # - path: /
+              #   service:
+              #     identifier: app
+              #     port: http
               - path: /
                 service:
                   identifier: app
@@ -126,7 +126,7 @@ spec:
             backendRefs:
               - kind: Service
                 name: home-assistant
-                namespace: home
+                namespace: home-automation
                 port: *port
                 weight: 1
 
@@ -145,7 +145,7 @@ spec:
             backendRefs:
               - kind: Service
                 name: home-assistant
-                namespace: home
+                namespace: home-automation
                 port: *port
                 weight: 1
 
