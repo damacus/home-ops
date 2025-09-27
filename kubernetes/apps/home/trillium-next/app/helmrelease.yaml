@@ -94,7 +94,6 @@ spec:
 
     persistence:
       data:
-        accessMode: ReadWriteOnce
-        size: 1Gi
+        existingClaim: trillium-data
         globalMounts:
           - path: *datadir
