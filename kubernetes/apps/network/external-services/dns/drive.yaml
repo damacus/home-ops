@@ -16,44 +16,44 @@ spec:
       protocol: TCP
       targetPort: 443
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/httproute_v1.json
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: unas
+  name: &app unas
+  namespace: network
+  annotations:
+    external-dns.alpha.kubernetes.io/target: 192.168.1.243
 spec:
-  hostnames: ["unas.ironstone.casa"]
-  parentRefs:
-    - name: internal
-      namespace: kube-system
-      sectionName: https
+  ingressClassName: internal
   rules:
-    - backendRefs:
-        - name: unas
-          namespace: network
-          port: 443
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
+    - host: unas.ironstone.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: *app
+                port:
+                  number: 443
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/httproute_v1.json
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: drive
+  name: &app drive
+  namespace: network
+  annotations:
+    external-dns.alpha.kubernetes.io/target: 192.168.1.243
 spec:
-  hostnames: ["drive.ironstone.casa"]
-  parentRefs:
-    - name: internal
-      namespace: kube-system
-      sectionName: https
+  ingressClassName: internal
   rules:
-    - backendRefs:
-        - name: unas
-          namespace: network
-          port: 443
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
+    - host: drive.ironstone.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: *app
+                port:
+                  number: 443
