@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: &app pikvm
+  namespace: network
+  labels:
+    app.kubernetes.io/name: *app
+    app.kubernetes.io/instance: *app
+spec:
+  type: ExternalName
+  externalName: pikvm.ironstone.casa
+  ports:
+    - name: http
+      port: &port 443
+      protocol: TCP
+      targetPort: *port
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/httproute_v1.json
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pikvm
+spec:
+  hostnames: ["pikvm.ironstone.casa"]
+  parentRefs:
+    - name: internal
+      namespace: kube-system
+      sectionName: https
+  rules:
+    - backendRefs:
+        - name: pikvm
+          namespace: network
+          port: 443
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
