@@ -16,23 +16,23 @@ spec:
       protocol: TCP
       targetPort: *port
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/httproute_v1.json
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: unifi
+  name: &app unifi
+  namespace: network
+  annotations:
+    external-dns.alpha.kubernetes.io/target: 192.168.1.243
 spec:
-  hostnames: ["unifi.ironstone.casa"]
-  parentRefs:
-    - name: internal
-      namespace: kube-system
-      sectionName: https
+  ingressClassName: internal
   rules:
-    - backendRefs:
-        - name: unifi
-          namespace: network
-          port: 443
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
+    - host: unifi.ironstone.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: *app
+                port:
+                  number: 443
