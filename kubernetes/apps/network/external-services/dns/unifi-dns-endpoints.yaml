@@ -15,3 +15,7 @@ spec:
       recordType: A
       targets:
         - "192.168.1.243"
+    - dnsName: pikvm.ironstone.casa
+      recordType: A
+      targets:
+        - "192.168.1.108"
