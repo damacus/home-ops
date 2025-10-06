@@ -27,5 +27,4 @@ resources:
   - openebs.yaml
   - prometheus-community.yaml
   - secrets-store-csi-driver.yaml
-  - skater.yaml
   - backube.yaml
