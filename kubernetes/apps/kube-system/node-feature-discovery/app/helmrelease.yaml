@@ -10,7 +10,7 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 0.18.0
+    tag: 0.18.2@sha256:477874562824750aad0de4718a5f4b1606448b680af2beb0a5422619bc6be6c3
   url: oci://registry.k8s.io/nfd/charts/node-feature-discovery
 ---
 # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/helm.toolkit.fluxcd.io/helmrelease_v2.json
