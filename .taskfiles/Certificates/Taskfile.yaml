@@ -9,26 +9,29 @@ tasks:
   download-certificates:
     desc: Download the certificates from the cluster
     dir: "{{.CERTS_DIR}}"
-    cmd: |
-      kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq -r '.data."tls.crt"' | base64 -d > ironstone-casa-tls.crt
-      kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq -r '.data."tls.key"' | base64 -d > ironstone-casa-tls.key
+    cmds:
+      - cmd: kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq -r '.data."tls.crt"' | base64 -d > ironstone-casa-tls.crt
+      - cmd: kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq -r '.data."tls.key"' | base64 -d > ironstone-casa-tls.key
+      - task: check-certificates
+
   check-certificates:
     desc: Check the certificates
     dir: "{{.CERTS_DIR}}"
-    cmd: |
-      openssl x509 -in ironstone-casa-tls.crt -noout -checkend 86400
-      openssl rsa -in ironstone-casa-tls.key -noout -check
+    cmds:
+      - cmd: openssl x509 -in ironstone-casa-tls.crt -noout -checkend 86400
+      - cmd: openssl rsa -in ironstone-casa-tls.key -noout -check
+
   generate-unifi-keystore:
     desc: Generate the Unifi keystore
     dir: "{{.CERTS_DIR}}"
-    cmd: |
-      openssl pkcs12 -export -in ironstone-casa-tls.crt -inkey ironstone-casa-tls.key -out ironstone-keystore.p12 -name "unifi"
+    cmd: openssl pkcs12 -export -in ironstone-casa-tls.crt -inkey ironstone-casa-tls.key -out ironstone-keystore.p12 -name "unifi"
+
   upload-certificates-unifi:
     desc: Upload the certificates to Unifi
     deps:
       - download-certificates
       - check-certificates
     dir: "{{.CERTS_DIR}}"
-    cmd: |
-      scp ironstone-casa-tls.crt root:/data/unifi-core/config/unifi-core.crt
-      scp ironstone-casa-tls.key root:/data/unifi-core/config/unifi-core.key
+    cmds:
+      - cmd: scp ironstone-casa-tls.crt root:/data/unifi-core/config/unifi-core.crt
+      - cmd: scp ironstone-casa-tls.key root:/data/unifi-core/config/unifi-core.key
