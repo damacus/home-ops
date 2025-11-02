@@ -7,4 +7,4 @@ resources:
   - ./mealie-db/ks.yaml
   - ./mealie/ks.yaml
   - ./namespace.yaml
-  - ./trillium-next/ks.yaml
+  # - ./trillium-next/ks.yaml
