@@ -6,7 +6,7 @@ metadata:
   namespace: kube-system
   labels:
     app.kubernetes.io/name: kube-vip
-    app.kubernetes.io/version: v1.0.0
+    app.kubernetes.io/version: v1.0.1
 spec:
   selector:
     matchLabels:
@@ -15,11 +15,11 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: kube-vip
-        app.kubernetes.io/version: v1.0.0
+        app.kubernetes.io/version: v1.0.1
     spec:
       containers:
         - name: kube-vip
-          image: ghcr.io/kube-vip/kube-vip:v1.0.0
+          image: ghcr.io/kube-vip/kube-vip:v1.0.1
           imagePullPolicy: IfNotPresent
           args: ["manager"]
           env:
