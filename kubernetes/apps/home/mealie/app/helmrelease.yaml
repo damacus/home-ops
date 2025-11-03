@@ -36,7 +36,7 @@ spec:
           app:
             image:
               repository: ghcr.io/mealie-recipes/mealie
-              tag: v3.3.1@sha256:a0d4a0b8543389ff3259eae40ffedeea94364f9229aa945a3e9d69e7a03e30ad
+              tag: v3.4.0@sha256:545fb8af4287ad027e4f7eb8a0464fa2e21f157e88fda3d7a514ba1e6d3a86b0
 
             env:
               TZ: "Europe/London"
