@@ -1,13 +1,13 @@
 {
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
-    "github>damacus/renovate-config",
-    "github>damacus/renovate-config:autoMergeGitHubActions",
-    "github>damacus/renovate-config:cnpg.json5",
-    "github>damacus/renovate-config:groups",
-    "github>damacus/renovate-config:labels.json5",
-    "github>damacus/renovate-config:semanticCommits.json5",
-    "github>damacus/renovate-config:packageRules.json5",
-    "github>damacus/renovate-config:autoMergeSelect.json5",
+    'github>damacus/renovate-config',
+    'github>damacus/renovate-config:autoMergeGitHubActions.json5',
+    'github>damacus/renovate-config:cnpg.json5',
+    'github>damacus/renovate-config:groups.json',
+    'github>damacus/renovate-config:labels.json5',
+    'github>damacus/renovate-config:semanticCommits.json5',
+    'github>damacus/renovate-config:packageRules.json5',
+    'github>damacus/renovate-config:autoMergeSelect.json5',
   ],
 }

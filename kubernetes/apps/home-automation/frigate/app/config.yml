@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=http://frigate.ironstone.casa:5000/api/config/schema.json
+# yaml-language-server: $schema=https://demo.frigate.video/api/config/schema.json
 ---
 logger:
   default: info
@@ -11,22 +11,28 @@ database:
   path: /data/frigate.db
 
 detectors:
-  coral:
-    type: edgetpu
-    device: usb
+  rknn:
+    type: rknn
+    num_cores: 3
 
+model:
+  path: frigate-fp16-yolov9-t
+  model_type: yolo-generic
+  width: 320
+  height: 320
+  input_tensor: nhwc
+  labelmap_path: /labelmap/coco-80.txt
+
+# https://docs.frigate.video/configuration/hardware_acceleration_video#rockchip-platform
 ffmpeg:
-  hwaccel_args: preset-rpi-64-h264
+  path: "7.0"
+  hwaccel_args: preset-rkmpp
 
 record:
   enabled: true
   retain:
     days: 7
     mode: motion
-  events:
-    retain:
-      default: 30
-      mode: motion
 
 snapshots:
   enabled: true
@@ -45,10 +51,12 @@ cameras:
     ffmpeg:
       inputs:
         - path: rtsp://192.168.1.180:8554/main
+          input_args: preset-rtsp-generic
           roles:
             - record
             - audio
         - path: rtsp://192.168.1.180:8554/sub
+          input_args: preset-rtsp-generic
           roles:
             - detect
     detect:

@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: n8n
+  namespace: flux-system
+spec:
+  targetNamespace: home-automation
+  path: ./kubernetes/apps/home-automation/n8n/app
+  prune: true
+  dependsOn:
+    - name: n8n-db
+    - name: cilium-gateway
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m

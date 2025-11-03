@@ -41,7 +41,7 @@ spec:
           app:
             image:
               repository: ghcr.io/paperless-ngx/paperless-ngx
-              tag: 2.18.4@sha256:3421ebe06ed27662d014046cf5089e612de853aae0c676a2bc72f73b38080e57
+              tag: 2.19.3@sha256:321ca858e4b6ce9dc416dbcb7c0691d545e3e9b0f44cf420f75c22098854ca25
             env:
               # Configure application
               PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
@@ -127,7 +127,7 @@ spec:
           gotenberg:
             image:
               repository: thecodingmachine/gotenberg
-              tag: 8.23.1@sha256:6ae55a47fee9f95541aadb9af5a87548ebcc0603e8f6bf6af01ca82e594a78cc
+              tag: 8.24.0@sha256:b116a40a1c24917e2bf3e153692da5acd2e78e7cd67e1b2d243b47c178f31c90
             env:
               - { name: DISABLE_GOOGLE_CHROME, value: "1" }
             resources:

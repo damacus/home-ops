@@ -5,15 +5,12 @@ kind: Gateway
 metadata:
   name: internal
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: &hostname internal-gateway.ironstone.casa
+    external-dns.alpha.kubernetes.io/hostname: &hostname gateway.ironstone.casa
 spec:
   gatewayClassName: cilium
   addresses:
     - type: IPAddress
       value: 192.168.1.235
-  infrastructure:
-    annotations:
-      external-dns.alpha.kubernetes.io/hostname: *hostname
   listeners:
     - name: http
       protocol: HTTP

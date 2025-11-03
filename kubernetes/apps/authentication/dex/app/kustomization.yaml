@@ -6,6 +6,7 @@ resources:
   - ./helmrelease.yaml
   - ./config/Connectors.yaml
   - ./config/clients.yaml
+  - ./httproute.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

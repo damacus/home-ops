@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: ghcr.io/home-operations/home-assistant
-              tag: 2025.9.3@sha256:3191141730b5062769f806ea6130c30709b19c8289e77e49c5d28061bbad6e7a
+              tag: 2025.10.4@sha256:25a113a6d3e42ac66ba6b4172300b8c9a66f91e707a03cab5ad454910ca37eeb
             env:
               - name: HASS_HTTP_TRUSTED_PROXY_1
                 value: "${CLUSTER_CIDR}"
@@ -86,9 +86,8 @@ spec:
           io.cilium/lb-ipam-ips: "192.168.1.226"
         ports:
           http:
-            port: 8123
+            port: &port 8123
           mdns:
-            enabled: true
             port: 5353
             protocol: UDP
             targetPort: 5353
@@ -106,28 +105,45 @@ spec:
                   identifier: app
                   port: http
 
-      internal:
-        className: "internal"
-        annotations:
-          external-dns.alpha.kubernetes.io/target: 192.168.1.224
-        hosts:
-          - host: "hass.ironstone.casa"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-              - path: /
-                service:
-                  identifier: app
-                  port: mdns
     route:
       app:
-        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
+        hostnames:
+          - "{{ .Release.Name }}.ironstone.casa"
+          - "hass.ironstone.casa"
         parentRefs:
           - name: internal
             namespace: kube-system
             sectionName: https
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: home-assistant
+                namespace: home-automation
+                port: *port
+                weight: 1
+
+      external:
+        hostnames:
+          - "{{ .Release.Name }}.damacus.io"
+        parentRefs:
+          - name: external
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: home-assistant
+                namespace: home-automation
+                port: *port
+                weight: 1
 
     persistence:
       config:

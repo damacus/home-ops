@@ -12,9 +12,9 @@ spec:
   externalName: unas.ironstone.casa
   ports:
     - name: http
-      port: &port 443
+      port: 443
       protocol: TCP
-      targetPort: *port
+      targetPort: 443
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -27,6 +27,27 @@ spec:
   ingressClassName: internal
   rules:
     - host: unas.ironstone.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: *app
+                port:
+                  number: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: &app drive
+  namespace: network
+  annotations:
+    external-dns.alpha.kubernetes.io/target: 192.168.1.243
+spec:
+  ingressClassName: internal
+  rules:
+    - host: drive.ironstone.casa
       http:
         paths:
           - path: /

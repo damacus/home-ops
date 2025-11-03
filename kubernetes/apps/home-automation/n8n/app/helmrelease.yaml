@@ -1,0 +1,152 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: n8n
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 4.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      n8n:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: n8nio/n8n
+              tag: 1.118.1@sha256:cf74d4ebe7dca858c390ee317b9a4f554ea57f0444b2d760f6d69e4f18d5d312
+            env:
+              DB_TYPE: "postgresdb"
+              DB_POSTGRESDB_DATABASE:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-app
+                    key: dbname
+              DB_POSTGRESDB_HOST:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-app
+                    key: host
+              DB_POSTGRESDB_PORT: 5432
+              DB_POSTGRESDB_USER:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-app
+                    key: user
+              DB_POSTGRESDB_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-app
+                    key: password
+              EXECUTIONS_DATA_MAX_AGE: 7
+              EXECUTIONS_DATA_PRUNE: "true"
+              EXECUTIONS_DATA_PRUNE_MAX_COUNT: 50000
+              EXECUTIONS_MODE: "queue"
+              GENERIC_TIMEZONE: "Europe/London"
+              N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+              N8N_GIT_NODE_DISABLE_BARE_REPOS: "true"
+              N8N_COMMUNITY_PACKAGES_ENABLED: "false"
+              # N8N_DEFAULT_LOCALE: "en_GB" https://community.n8n.io/t/unable-to-input-credentials/192826/7
+              N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "false"
+              N8N_ENCRYPTION_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-secret
+                    key: encryption_key
+              N8N_HOST: "n8n.ironstone.casa"
+              N8N_LOG_LEVEL: "info"
+              N8N_LOG_OUTPUT: "console"
+              N8N_PORT: &port 5678
+              N8N_PROTOCOL: "https"
+              N8N_TEMPLATES_ENABLED: "false"
+              N8N_RUNNERS_ENABLED: "true"
+              WEBHOOK_URL: &webhooks "https://n8n-webhooks.damacus.io"
+              N8N_PROXY_HOPS: "1"
+              OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
+              NODE_ENV: "production"
+              QUEUE_BULL_REDIS_HOST: "redis-master.database.svc.cluster.local"
+              QUEUE_BULL_REDIS_PORT: 6379
+            probes:
+              liveness: &probes
+                enabled: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: *port
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                cpu: 1000m
+                memory: 2Gi
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            fsGroupChangePolicy: "OnRootMismatch"
+
+    service:
+      app:
+        controller: n8n
+        ports:
+          http:
+            port: *port
+
+    route:
+      app:
+        hostnames:
+          - "n8n.ironstone.casa"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - name: n8n
+                namespace: authentication
+                port: 80
+
+    webhooks:
+      hostnames:
+        - *webhooks
+      parentRefs:
+        - name: external
+          namespace: kube-system
+          sectionName: https
+      rules:
+        - backendRefs:
+            - name: n8n
+              namespace: authentication
+              port: 80
+
+    persistence:
+      data:
+        existingClaim: n8n
+        globalMounts:
+          - path: /home/node/.n8n

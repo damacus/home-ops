@@ -5,27 +5,21 @@ kind: Gateway
 metadata:
   name: external
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: &hostname external-gateway.damacus.io
+    external-dns.alpha.kubernetes.io/target: gateway.damacus.io
 spec:
   gatewayClassName: cilium
-  addresses:
-    - type: IPAddress
-      value: 192.168.1.235
-  infrastructure:
-    annotations:
-      external-dns.alpha.kubernetes.io/hostname: *hostname
   listeners:
     - name: http
       protocol: HTTP
-      port: 80
       hostname: "*.damacus.io"
+      port: 80
       allowedRoutes:
         namespaces:
           from: All
     - name: https
+      hostname: "*.damacus.io"
       protocol: HTTPS
       port: 443
-      hostname: "*.damacus.io"
       allowedRoutes:
         namespaces:
           from: All

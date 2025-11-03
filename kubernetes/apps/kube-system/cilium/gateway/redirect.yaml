@@ -8,12 +8,15 @@ metadata:
     external-dns.alpha.kubernetes.io/controller: none
 spec:
   parentRefs:
+    - name: external
+      namespace: kube-system
+      sectionName: http
     - name: internal
       namespace: kube-system
       sectionName: http
   rules:
     - filters:
-        - requestRedirect:
+        - type: RequestRedirect
+          requestRedirect:
             scheme: https
             statusCode: 301
-          type: RequestRedirect

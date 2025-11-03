@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/barmancloud.cnpg.io/objectstore_v1.json
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: minio-store
+  namespace: home-automation
+spec:
+  retentionPolicy: 30d
+  configuration:
+    destinationPath: s3://cloudnative-pg/n8n/
+    endpointURL: http://s3.ironstone.casa
+    s3Credentials:
+      accessKeyId:
+        name: minio-cnpg-credentials
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: minio-cnpg-credentials
+        key: SECRET_ACCESS_KEY
+    data:
+      compression: bzip2
+    wal:
+      compression: bzip2
+      maxParallel: 8

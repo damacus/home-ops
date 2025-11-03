@@ -3,7 +3,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: wyoming-whisper
-  namespace: home
+  namespace: home-automation
 spec:
   interval: 30m
   chart:
@@ -32,12 +32,14 @@ spec:
           app:
             image:
               repository: rhasspy/wyoming-whisper
-              tag: 2.5.0@sha256:0d78ad506e450fb113616650b7328233385905e2f2ed07fa59221012144500e3
+              tag: 3.0.1@sha256:08031ae19b68f286bbc99daf65e90c526bd99a7812e2e64ea3c0f23624538b97
             args:
               - --model
               - Systran/faster-distil-whisper-small.en
               - --language
               - en
+              - --data-dir
+              - /data
             env:
               TZ: Europe/London
 

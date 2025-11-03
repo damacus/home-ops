@@ -1,0 +1,13 @@
+---
+# yaml-language
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trillium-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: longhorn

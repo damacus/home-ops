@@ -74,8 +74,8 @@ spec:
                 memory: "120M"
                 cpu: "100m"
               limits:
-                memory: "120M"
-                cpu: "100m"
+                memory: "500M"
+                cpu: "1000m"
 
     # Matter discovers devices using MDNS and neighbors discovery,
     # thus we need the controller to be on the host network.

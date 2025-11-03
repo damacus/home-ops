@@ -10,6 +10,8 @@ resources:
   - ./home-assistant/ks.yaml
   - ./matter/ks.yaml
   - ./mosquitto/ks.yaml
+  # - ./n8n-db/ks.yaml
+  # - ./n8n/ks.yaml
   - ./frigate/ks.yaml
   - ./namespace.yaml
   - ./paperless/ks.yaml

@@ -22,8 +22,7 @@ metadata:
   name: &app unifi
   namespace: network
   annotations:
-    external-dns.alpha.kubernetes.io/target: 192.168.1.254
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    external-dns.alpha.kubernetes.io/target: 192.168.1.243
 spec:
   ingressClassName: internal
   rules:
