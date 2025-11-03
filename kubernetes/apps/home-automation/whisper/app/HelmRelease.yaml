@@ -38,6 +38,8 @@ spec:
               - Systran/faster-distil-whisper-small.en
               - --language
               - en
+              - --data-dir
+              - /data
             env:
               TZ: Europe/London
 
