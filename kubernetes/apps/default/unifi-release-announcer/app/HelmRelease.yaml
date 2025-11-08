@@ -31,7 +31,7 @@ spec:
           app:
             image:
               repository: ghcr.io/damacus/unifi-release-announcer
-              tag: 0.1.5@sha256:b19c2a8855161dc3f952d7ae1ba30431120d9445b4e40cffd764abbf32fa0900
+              tag: 0.1.6@sha256:bc902c9f122e181357629ed285b36c7fd1be057df2fe4395febffa5c2b689ac6
             env:
               - name: TAGS
                 value: "unifi-drive,unifi-network,unifi-protect"
