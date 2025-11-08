@@ -76,6 +76,6 @@ spec:
 
     persistence:
       config:
-        existingClaim: home-assistant-smb
+        existingClaim: home-assistant-config
         globalMounts:
           - path: /config
