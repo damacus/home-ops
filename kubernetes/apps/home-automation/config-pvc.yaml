@@ -55,7 +55,8 @@ spec:
     - nfsvers=3
   csi:
     driver: nfs.csi.k8s.io
-    volumeHandle: unas.ironstone.casa#pvc-09d900c2-8ce5-4566-b8a6-d1d26a5516c5#/var/nfs/shared/csi_ssd
+    volumeHandle: unas.ironstone.casa#/var/nfs/shared/csi_ssd#pvc-09d900c2-8ce5-4566-b8a6-d1d26a5516c5##
     volumeAttributes:
       server: unas.ironstone.casa
       share: /var/nfs/shared/csi_ssd
+      subdir: pvc-09d900c2-8ce5-4566-b8a6-d1d26a5516c5
