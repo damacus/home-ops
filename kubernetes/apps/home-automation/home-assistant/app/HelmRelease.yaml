@@ -147,7 +147,7 @@ spec:
 
     persistence:
       config:
-        existingClaim: home-assistant-smb
+        existingClaim: home-assistant-nfs-csi-ssd
         globalMounts:
           - path: /config
 
