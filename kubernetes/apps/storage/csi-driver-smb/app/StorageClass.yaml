@@ -12,7 +12,7 @@ parameters:
   csi.storage.k8s.io/provisioner-secret-namespace: storage
   csi.storage.k8s.io/node-stage-secret-name: csi-driver-smb
   csi.storage.k8s.io/node-stage-secret-namespace: storage
-reclaimPolicy: Retain
+reclaimPolicy: Delete
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
@@ -38,7 +38,7 @@ parameters:
   csi.storage.k8s.io/provisioner-secret-namespace: storage
   csi.storage.k8s.io/node-stage-secret-name: csi-driver-smb
   csi.storage.k8s.io/node-stage-secret-namespace: storage
-reclaimPolicy: Retain
+reclaimPolicy: Delete
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
