@@ -1,34 +1,38 @@
-# ---
-# apiVersion: v1
-# kind: PersistentVolumeClaim
-# metadata:
-#   name: home-assistant-config
-#   namespace: home-automation
-# spec:
-#   accessModes:
-#     - ReadWriteMany
-#   resources:
-#     requests:
-#       storage: 50Gi
-#   storageClassName: longhorn
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: home-assistant-smb
+  name: home-assistant-nfs-csi-ssd
   namespace: home-automation
 spec:
-  accessModes: ["ReadWriteMany"]
+  accessModes:
+    - ReadWriteMany
   resources:
     requests:
       storage: 50Gi
-  storageClassName: smb
-  # mountOptions:
-  #   - dir_mode=0777
-  #   - file_mode=0777
-  #   - uid=1000
-  #   - gid=1000
-  #   - noperm
-  #   - mfsymlinks
-  #   - cache=strict
-  #   - noserverino
+  storageClassName: nfs-csi-ssd
+  volumeName: pvc-09d900c2-8ce5-4566-b8a6-d1d26a5516c5
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: home-assistant-smb-ssd
+#   namespace: home-automation
+# spec:
+#   accessModes: ["ReadWriteMany"]
+#   resources:
+#     requests:
+#       storage: 50Gi
+#   storageClassName: smb-ssd
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: home-assistant-nfs-csi-hdd
+#   namespace: home-automation
+# spec:
+#   accessModes: ["ReadWriteMany"]
+#   resources:
+#     requests:
+#       storage: 50Gi
+#   storageClassName: nfs-csi-unas
