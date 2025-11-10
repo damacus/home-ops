@@ -115,6 +115,12 @@ spec:
             url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
             jsonData:
               implementation: prometheus
+          - name: Loki
+            type: loki
+            uid: loki
+            url: http://loki-gateway.monitoring.svc.cluster.local
+            jsonData:
+              maxLines: 1000
 
     dashboards:
       kubernetes:
