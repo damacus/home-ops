@@ -31,8 +31,8 @@ spec:
     remediation:
       retries: 3
   values:
-    # Deploy in Single Binary mode for simplicity
-    deploymentMode: SingleBinary
+    # Deploy in Simple Scalable mode (default)
+    deploymentMode: SimpleScalable
 
     loki:
       # Single tenant mode
@@ -91,8 +91,8 @@ spec:
           kvstore:
             store: inmemory
 
-    # Single Binary configuration
-    singleBinary:
+    # Write target configuration (Distributor + Ingester)
+    write:
       replicas: 1
 
       resources:
@@ -113,6 +113,49 @@ spec:
       extraEnv:
         - name: TZ
           value: "Europe/London"
+
+    # Read target configuration (Query Frontend + Querier)
+    read:
+      replicas: 1
+
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+      extraEnv:
+        - name: TZ
+          value: "Europe/London"
+
+    # Backend target configuration (Compactor + Index Gateway + Query Scheduler + Ruler)
+    backend:
+      replicas: 1
+
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+      persistence:
+        enabled: true
+        storageClass: openebs-hostpath
+        size: 10Gi
+        accessModes:
+          - ReadWriteOnce
+
+      extraEnv:
+        - name: TZ
+          value: "Europe/London"
+
+    # Disable SingleBinary mode
+    singleBinary:
+      replicas: 0
 
     # Gateway configuration (nginx)
     gateway:
