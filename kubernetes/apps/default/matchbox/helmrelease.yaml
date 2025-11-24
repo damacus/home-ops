@@ -1,0 +1,92 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: matchbox
+  namespace: default
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 4.4.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  values:
+    controllers:
+      matchbox:
+        replicas: 1
+        initContainers:
+          setup-data:
+            image:
+              repository: busybox
+              tag: latest
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                mkdir -p /data/profiles /data/groups /data/cloud /data/generic
+                cp /tmp/config/profile*.json /data/profiles/ 2>/dev/null || true
+                cp /tmp/config/group*.json /data/groups/ 2>/dev/null || true
+                cp /tmp/config/user-data*.yaml /data/cloud/ 2>/dev/null || true
+                echo "Data setup complete."
+                ls -R /data
+        containers:
+          app:
+            image:
+              repository: quay.io/poseidon/matchbox
+              tag: v0.11.0
+            args:
+              - -address=0.0.0.0:8080
+              - -rpc-address=0.0.0.0:8081
+              - -log-level=debug
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+
+    service:
+      app:
+        controller: matchbox
+        ports:
+          http:
+            port: 8080
+          grpc:
+            port: 8081
+
+    route:
+      app:
+        hostnames:
+          - provision.ironstone.casa
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: matchbox
+                port: 8080
+
+    persistence:
+      data:
+        type: emptyDir
+        globalMounts:
+          - path: /var/lib/matchbox
+      config:
+        type: configMap
+        name: matchbox-data
+        globalMounts:
+          - path: /tmp/config

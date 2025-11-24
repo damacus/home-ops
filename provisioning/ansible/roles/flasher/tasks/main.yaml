@@ -1,0 +1,69 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install common packages
+  apt:
+    name:
+      - dcfldd
+      - nfs-common
+    state: present
+
+- name: Install RPi5 specific packages
+  apt:
+    name:
+      - rpi-eeprom
+    state: present
+  when: target_board == 'rpi5'
+
+- name: Install Rock 5B specific packages
+  apt:
+    name:
+      - mtd-utils
+    state: present
+  when: target_board == 'rock5b'
+
+- name: Create SPI directory for Rock 5B
+  file:
+    path: /opt/spi
+    state: directory
+    mode: '0755'
+  when: target_board == 'rock5b'
+
+- name: Download Rock 5B SPI Loader
+  get_url:
+    url: https://dl.radxa.com/rock5/sw/images/loader/rock-5b/release/rock-5b-spi-image-gd1cf491-20240523.img
+    dest: /opt/spi/rkspi_loader.img
+    mode: '0644'
+  when: target_board == 'rock5b'
+
+- name: Deploy Flash and Clone script
+  template:
+    src: flash-and-clone.sh.j2
+    dest: /usr/local/bin/flash-and-clone.sh
+    mode: '0755'
+
+- name: Create Systemd Unit for Flasher
+  copy:
+    dest: /etc/systemd/system/install-worker.service
+    content: |
+      [Unit]
+      Description=Ironstone Flasher Worker
+      Before=getty.target
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/flash-and-clone.sh
+      StandardOutput=tty
+      TTYPath=/dev/tty1
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Enable Flasher Service
+  systemd:
+    name: install-worker.service
+    enabled: yes

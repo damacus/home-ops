@@ -1,0 +1,23 @@
+---
+- name: Provision Ironstone Image
+  hosts: default
+  become: true
+  vars:
+    target_board: "{{ lookup('env', 'TARGET_BOARD') | default('rpi5') }}"
+    image_type: "{{ lookup('env', 'IMAGE_TYPE') | default('gold') }}"
+    k3s_token: "{{ lookup('env', 'K3S_TOKEN') }}"
+
+  tasks:
+    - name: Debug variables
+      debug:
+        msg: "Provisioning {{ target_board }} as {{ image_type }}"
+
+    - name: Include Gold Master Role
+      include_role:
+        name: gold-master
+      when: image_type == 'gold'
+
+    - name: Include Flasher Role
+      include_role:
+        name: flasher
+      when: image_type == 'flasher'

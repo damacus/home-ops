@@ -1,0 +1,53 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install required packages
+  apt:
+    name:
+      - cloud-init
+      - network-manager
+      - nfs-common
+      - curl
+    state: present
+
+- name: Download K3s install script
+  get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s_install.sh
+    mode: '0755'
+
+- name: Install K3s binary (without starting service)
+  shell: |
+    INSTALL_K3S_SKIP_ENABLE=true INSTALL_K3S_SKIP_START=true ./k3s_install.sh
+  args:
+    chdir: /tmp
+    creates: /usr/local/bin/k3s
+
+- name: Configure Cloud-Init Datasource
+  copy:
+    dest: /etc/cloud/cloud.cfg.d/99-ironstone.cfg
+    content: |
+      #cloud-config
+      datasource:
+        NoCloud:
+          seedfrom: "http://provision.ironstone.casa:8080/"
+
+- name: Clean up SSH host keys (Sealing)
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_fileglob:
+    - /etc/ssh/ssh_host_*
+
+- name: Remove machine-id (Sealing)
+  file:
+    path: /etc/machine-id
+    state: absent
+
+- name: Create empty machine-id
+  file:
+    path: /etc/machine-id
+    state: touch
+    mode: '0444'

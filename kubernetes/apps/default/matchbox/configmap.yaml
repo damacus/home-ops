@@ -1,0 +1,49 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: matchbox-data
+  namespace: default
+data:
+  # Profile: RPi5 Gold Master
+  # This profile serves the cloud-init user-data
+  profile-rpi5-gold.json: |
+    {
+      "id": "rpi5-gold",
+      "name": "Raspberry Pi 5 Gold Master",
+      "cloud_id": "nocloud",
+      "boot": {},
+      "cloud": "user-data-rpi5.yaml",
+      "generic_config": "generic-rpi5.yaml"
+    }
+
+  # User Data for RPi5
+  # Note: We use templating provided by Matchbox (Go templates)
+  user-data-rpi5.yaml: |
+    #cloud-config
+    hostname: "{{.hostname}}"
+    ssh_authorized_keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKs..."
+    write_files:
+      - path: /etc/rancher/k3s/config.yaml
+        content: |
+          server: https://192.168.1.200:6443
+          token: "{{.k3s_token}}"
+    runcmd:
+      - systemctl enable --now k3s
+
+  # Group: Node A (Example)
+  # Matches a specific MAC to the RPi5 profile and injects variables
+  group-node-a.json: |
+    {
+      "id": "node-a",
+      "name": "Node A (RPi5)",
+      "profile": "rpi5-gold",
+      "selector": {
+        "mac": "d8:3a:dd:xx:xx:xx"
+      },
+      "metadata": {
+        "hostname": "node-a",
+        "k3s_token": "SECRET_TOKEN_HERE"
+      }
+    }
