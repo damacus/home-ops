@@ -1,9 +1,17 @@
 #!/bin/bash
-set -e
+set -euo pipefail
+
+# =============================================================================
+# Ironstone Flash and Clone Script
+# =============================================================================
+# This script runs on first boot of the flasher image to:
+# 1. Update firmware (board-specific)
+# 2. Clone the gold master image from NFS to NVMe
+# 3. Shutdown
 
 BOARD="{{ target_board }}"
-NFS_SERVER="192.168.1.243"
-NFS_PATH="/volume1/NFS"
+NFS_SERVER="{{ nfs_server }}"
+NFS_PATH="{{ nfs_share }}"
 
 echo "Starting Flash and Clone for $BOARD"
 

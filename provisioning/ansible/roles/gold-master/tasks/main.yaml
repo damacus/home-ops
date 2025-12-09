@@ -20,7 +20,10 @@
 
 - name: Install K3s binary (without starting service)
   shell: |
-    INSTALL_K3S_SKIP_ENABLE=true INSTALL_K3S_SKIP_START=true ./k3s_install.sh
+    INSTALL_K3S_SKIP_ENABLE=true \
+    INSTALL_K3S_SKIP_START=true \
+    {{ 'INSTALL_K3S_VERSION=' + k3s_version if k3s_version | length > 0 else '' }} \
+    ./k3s_install.sh
   args:
     chdir: /tmp
     creates: /usr/local/bin/k3s
@@ -32,7 +35,7 @@
       #cloud-config
       datasource:
         NoCloud:
-          seedfrom: "http://provision.ironstone.casa:8080/"
+          seedfrom: "{{ cloud_init_url }}"
 
 - name: Clean up SSH host keys (Sealing)
   file:

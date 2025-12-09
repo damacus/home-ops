@@ -1,0 +1,5 @@
+# Armbian build directory (cloned during build)
+armbian-build/
+
+# Build output
+output/

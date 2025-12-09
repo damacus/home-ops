@@ -40,3 +40,8 @@ kubeconfig
 age.key
 
 certificates/*
+
+# Provisioning
+provisioning/config.env.local
+provisioning/secrets/
+provisioning/packer/builds/

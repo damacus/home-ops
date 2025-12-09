@@ -1,0 +1,63 @@
+# =============================================================================
+# Docker Compose for Packer ARM Builder
+# =============================================================================
+# Usage:
+#   docker compose run --rm packer-build
+#   docker compose run --rm packer-build packer validate ironstone.pkr.hcl
+# =============================================================================
+
+services:
+  packer-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PACKER_BUILDER_VERSION: ${PACKER_BUILDER_VERSION:-latest}
+        TIMEZONE: ${TIMEZONE:-Europe/London}
+    image: ironstone-packer-builder:latest
+    privileged: true
+    working_dir: /workspace/provisioning/packer
+    volumes:
+      - ..:/workspace
+      - /dev:/dev
+    devices:
+      - /dev/loop-control:/dev/loop-control
+    environment:
+      - TARGET_BOARD=${TARGET_BOARD:-rpi5}
+      - IMAGE_TYPE=${IMAGE_TYPE:-gold}
+      - ARTIFACT_NAME=${ARTIFACT_NAME:-}
+      - NFS_SERVER=${NFS_SERVER:-192.168.1.243}
+      - NFS_SHARE=${NFS_SHARE:-/volume1/NFS}
+      - CLOUD_INIT_URL=${CLOUD_INIT_URL:-http://provision.ironstone.casa:8080/}
+      - K3S_VERSION=${K3S_VERSION:-}
+      - K3S_VIP=${K3S_VIP:-192.168.1.200}
+      - DEBIAN_RPI5_IMAGE_URL=${DEBIAN_RPI5_IMAGE_URL:-}
+      - DEBIAN_RPI5_SHA_URL=${DEBIAN_RPI5_SHA_URL:-}
+      - ARMBIAN_ROCK5B_IMAGE_URL=${ARMBIAN_ROCK5B_IMAGE_URL:-}
+      - ARMBIAN_ROCK5B_SHA_URL=${ARMBIAN_ROCK5B_SHA_URL:-}
+      - ROCK5B_SPI_LOADER_URL=${ROCK5B_SPI_LOADER_URL:-}
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        # Hack: Mock binfmt_misc to satisfy packer-builder-arm check on native ARM64
+        # We mount a tmpfs over /proc/sys/fs/binfmt_misc and create a fake entry
+        if mount -t tmpfs tmpfs /proc/sys/fs/binfmt_misc; then
+          echo "Mounted tmpfs on /proc/sys/fs/binfmt_misc"
+          echo "enabled" > /proc/sys/fs/binfmt_misc/status
+          # Create a fake entry that points to our binary
+          echo "enabled" > /proc/sys/fs/binfmt_misc/qemu-aarch64
+          echo "interpreter /usr/bin/qemu-aarch64-static" >> /proc/sys/fs/binfmt_misc/qemu-aarch64
+          echo "flags: OC" >> /proc/sys/fs/binfmt_misc/qemu-aarch64
+          echo "offset 0" >> /proc/sys/fs/binfmt_misc/qemu-aarch64
+          echo "magic 7f454c460201010000000000000000000200b700" >> /proc/sys/fs/binfmt_misc/qemu-aarch64
+          echo "mask ffffffffffffff00fffffffffffffffffeffffff" >> /proc/sys/fs/binfmt_misc/qemu-aarch64
+        else
+          echo "Failed to mount tmpfs on binfmt_misc, continuing anyway..."
+        fi
+
+        packer build \
+          -only="arm.$${TARGET_BOARD:-rpi5}" \
+          -var "target_board=$${TARGET_BOARD:-rpi5}" \
+          -var "image_type=$${IMAGE_TYPE:-gold}" \
+          -var "artifact_name=$${ARTIFACT_NAME:-}" \
+          ironstone.pkr.hcl

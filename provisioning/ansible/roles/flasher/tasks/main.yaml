@@ -33,7 +33,7 @@
 
 - name: Download Rock 5B SPI Loader
   get_url:
-    url: https://dl.radxa.com/rock5/sw/images/loader/rock-5b/release/rock-5b-spi-image-gd1cf491-20240523.img
+    url: "{{ rock5b_spi_loader_url }}"
     dest: /opt/spi/rkspi_loader.img
     mode: '0644'
   when: target_board == 'rock5b'

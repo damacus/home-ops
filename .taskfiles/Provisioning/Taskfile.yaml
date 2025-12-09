@@ -1,0 +1,28 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  PROVISIONING_DIR: "{{.ROOT_DIR}}/provisioning"
+  BOARD: "{{.board | default \"rpi5\"}}"
+  TYPE: "{{.type | default \"gold\"}}"
+
+tasks:
+  default:
+    cmds:
+      - task -l
+
+  dry-run:
+    desc: Validate provisioning config without building
+    cmds:
+      - "{{.PROVISIONING_DIR}}/build.sh --dry-run {{.BOARD}} {{.TYPE}}"
+
+  build:
+    desc: Build provisioning image (gold | flasher)
+    cmds:
+      - "{{.PROVISIONING_DIR}}/build.sh {{.BOARD}} {{.TYPE}}"
+
+  test:
+    desc: Run provisioning tests (Bats)
+    cmds:
+      - "cd {{.PROVISIONING_DIR}} && bats tests/build.bats"

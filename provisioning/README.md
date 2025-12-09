@@ -9,18 +9,40 @@ The pipeline produces two artifacts per board:
 1. **Gold Master** (`*-gold.img`): The production OS with K3s installed but not started.
 2. **Flasher** (`*-flasher.img`): A utility image that boots, updates firmware, clones the Gold Master from NFS to NVMe, and shuts down.
 
-## Usage
-
-**Prerequisites:**
-
-- Docker Desktop (Mac)
-- `K3S_TOKEN` environment variable set
-
-**Build Command:**
+## Quick Start
 
 ```bash
+# 1. Configure your environment (copy and edit)
+cp config.env config.env.local
+vim config.env.local
+
+# 2. Set up K3S token (choose one method)
 export K3S_TOKEN="your-secret-token"
-./build.sh [board] [type]
+# OR
+echo "your-secret-token" > ~/.secrets/k3s_token
+# OR
+mkdir -p secrets && echo "your-secret-token" > secrets/k3s_token
+
+# 3. Validate configuration (dry run)
+./build.sh --dry-run rpi5 gold
+
+# 4. Build
+./build.sh rpi5 gold
+```
+
+## Usage
+
+```bash
+./build.sh [OPTIONS] <board> <type>
+
+Arguments:
+  board     Target board: rpi5 | rock5b
+  type      Image type: gold | flasher
+
+Options:
+  -h, --help      Show help message
+  -n, --dry-run   Validate configuration without building
+  -c, --clean     Remove old build artifacts before building
 ```
 
 **Examples:**
@@ -32,22 +54,80 @@ export K3S_TOKEN="your-secret-token"
 # Build Flasher for RPi5 (keeps local)
 ./build.sh rpi5 flasher
 
-# Build Gold Master for Rock 5B+
-./build.sh rock5b gold
+# Validate configuration without building
+./build.sh --dry-run rock5b gold
+
+# Clean old builds and build fresh
+./build.sh --clean rpi5 gold
 ```
-
-## Artifacts
-
-- **Gold Master**: Automatically uploaded to `192.168.1.243:/volume1/NFS`.
-- **Flasher**: Output to `provisioning/packer/builds/`. Flash this to an SD card using Etcher/dd.
 
 ## Configuration
 
-- **Packer**: `provisioning/packer/ironstone.pkr.hcl`
-- **Ansible**: `provisioning/ansible/`
-- **Scripts**: `provisioning/scripts/` (if any)
+All configuration is externalised to `config.env`. Create a local override:
+
+```bash
+cp config.env config.env.local
+```
+
+### Configuration Options
+
+| Variable | Description | Default |
+|----------|-------------|--------|
+| `NFS_SERVER` | NFS server IP | `192.168.1.243` |
+| `NFS_SHARE` | NFS share path | `/volume1/NFS` |
+| `CLOUD_INIT_URL` | Cloud-init datasource | `http://provision.ironstone.casa:8080/` |
+| `K3S_VIP` | K3s API server VIP | `192.168.1.200` |
+| `K3S_VERSION` | K3s version to install | `v1.31.3+k3s1` |
+| `PACKER_BUILDER_IMAGE` | Docker image for builds | `mkaczanowski/packer-builder-arm:1.0.9` |
+| `VERSIONED_ARTIFACTS` | Include git SHA/timestamp in names | `true` |
+
+### Secrets Management
+
+The `K3S_TOKEN` can be provided via (in order of precedence):
+
+1. Environment variable: `export K3S_TOKEN="..."`
+2. File: `~/.secrets/k3s_token`
+3. File: `./secrets/k3s_token`
+
+**Security Note:** Secrets are mounted read-only into the build container at `/run/secrets/` and cleaned up after the build.
+
+## Artifacts
+
+- **Gold Master**: Automatically uploaded to NFS with both versioned and `*-latest.img` names
+- **Flasher**: Output to `provisioning/packer/builds/`
+
+With `VERSIONED_ARTIFACTS=true`, artifacts are named like:
+
+```text
+rpi5-gold-abc1234-20231215-143022.img
+```
+
+## Directory Structure
+
+```text
+provisioning/
+├── README.md
+├── build.sh              # Main build script
+├── config.env            # Configuration (version controlled)
+├── config.env.local      # Local overrides (gitignored)
+├── secrets/              # Local secrets directory (gitignored)
+├── ansible/
+│   ├── playbook.yaml
+│   └── roles/
+│       ├── gold-master/  # K3s installation, cloud-init config
+│       └── flasher/      # Firmware update, NFS clone
+└── packer/
+    ├── ironstone.pkr.hcl # Packer configuration
+    ├── upload_to_nfs.sh  # Post-build NFS upload
+    └── builds/           # Build output directory
+```
+
+## Image Verification
+
+All Armbian images are verified against SHA256 checksums from the official Armbian mirrors before use.
 
 ## Network Dependencies
 
-- **NFS Server**: `192.168.1.243:/volume1/NFS` (Must be accessible during build for Gold Master upload)
-- **K3s VIP**: `192.168.1.200` (Hardcoded in bootstrap script)
+- **NFS Server**: Must be accessible during build for Gold Master upload
+- **Cloud-init Server**: Must be running at `CLOUD_INIT_URL` for node bootstrap
+- **K3s VIP**: Used by nodes to join the cluster
