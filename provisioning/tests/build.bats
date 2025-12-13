@@ -23,10 +23,50 @@ teardown() {
   [[ "${output}" == *"Dry run complete. All validations passed."* ]]
 }
 
+@test "clean succeeds without board/type and does not invoke docker" {
+  STUB_BIN="$(mktemp -d)"
+
+  cat > "${STUB_BIN}/rm" <<'EOF'
+#!/usr/bin/env bash
+echo "rm $*" >> "${RM_LOG}"
+exit 0
+EOF
+  chmod +x "${STUB_BIN}/rm"
+
+  cat > "${STUB_BIN}/docker" <<'EOF'
+#!/usr/bin/env bash
+echo "docker should not be invoked" >&2
+exit 99
+EOF
+  chmod +x "${STUB_BIN}/docker"
+
+  export RM_LOG
+  RM_LOG="${TEMP_HOME}/rm.log"
+
+  run env PATH="${STUB_BIN}:$PATH" SKIP_DOCKER_VALIDATION=true SKIP_NETWORK_VALIDATION=true HOME="${TEMP_HOME}" \
+    "${BUILD_SCRIPT}" --clean
+
+  [ "$status" -eq 0 ]
+  [[ "${output}" == *"Cleaning old build artifacts"* ]]
+  [[ -f "${RM_LOG}" ]]
+}
+
 @test "dry run gold fails without K3S_TOKEN" {
-  run env SKIP_DOCKER_VALIDATION=true SKIP_NETWORK_VALIDATION=true HOME="${TEMP_HOME}" K3S_TOKEN="" "${BUILD_SCRIPT}" --dry-run rpi5 gold
+  run env SKIP_DOCKER_VALIDATION=true SKIP_NETWORK_VALIDATION=true HOME="${TEMP_HOME}" K3S_TOKEN="" K3S_TOKEN_ALLOW_SYSTEM_PATHS=false "${BUILD_SCRIPT}" --dry-run rpi5 gold
   [ "$status" -ne 0 ]
   [[ "${output}" == *"K3S_TOKEN is required for gold images."* ]]
+}
+
+@test "dry run gold succeeds when K3S_TOKEN_FILE points to a token file" {
+  TOKEN_FILE="${TEMP_HOME}/k3s_token"
+  echo "token-from-file" > "${TOKEN_FILE}"
+  chmod 600 "${TOKEN_FILE}"
+
+  run env SKIP_DOCKER_VALIDATION=true SKIP_NETWORK_VALIDATION=true HOME="${TEMP_HOME}" K3S_TOKEN="" K3S_TOKEN_FILE="${TOKEN_FILE}" \
+    "${BUILD_SCRIPT}" --dry-run rpi5 gold
+
+  [ "$status" -eq 0 ]
+  [[ "${output}" == *"Dry run complete. All validations passed."* ]]
 }
 
 @test "build works when invoked from repo root (uses provisioning docker-compose)" {

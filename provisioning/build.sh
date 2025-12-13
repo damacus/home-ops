@@ -109,10 +109,23 @@ validate_secrets() {
         return 0
     fi
 
+    if [[ -n "${K3S_TOKEN_FILE:-}" && -f "${K3S_TOKEN_FILE}" ]]; then
+        echo "Loading K3S_TOKEN from ${K3S_TOKEN_FILE}"
+        K3S_TOKEN=$(cat "${K3S_TOKEN_FILE}")
+        export K3S_TOKEN
+        return 0
+    fi
+
+    local allow_system_paths="${K3S_TOKEN_ALLOW_SYSTEM_PATHS:-true}"
+
     local secret_paths=(
         "${HOME}/.secrets/k3s_token"
         "${SCRIPT_DIR}/secrets/k3s_token"
     )
+
+    if [[ "${allow_system_paths}" == "true" ]]; then
+        secret_paths+=("/Volumes/csi_nfs/provisioning/token")
+    fi
 
     for path in "${secret_paths[@]}"; do
         if [[ -f "$path" ]]; then
@@ -362,6 +375,12 @@ fi
 # Handle clean-cache only (no build required)
 if [[ "$CLEAN_CACHE" == "true" && -z "$TARGET_BOARD" ]]; then
     clean_cache
+    exit 0
+fi
+
+# Handle clean only (no build required)
+if [[ "$CLEAN" == "true" && -z "$TARGET_BOARD" && -z "$IMAGE_TYPE" ]]; then
+    clean_builds
     exit 0
 fi
 
