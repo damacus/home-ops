@@ -73,9 +73,67 @@ To achieve this without prescribing specific tools, the solution requires:
 - **Speed**: The "flashing" process should be limited only by network/disk I/O, not manual configuration steps.
 - **Reproducibility**: If a node fails, re-running the Installer SD card should return it to a known good state.
 - **Observability**: The process should emit some form of status (logs to a central server, LED codes) so the operator knows when flashing is complete.
+
+---
+
+## 7. Implementation Status
+
+### ✅ Completed (Golden Image)
+
+- [x] **Packer Configuration**: `packer/ironstone.pkr.hcl` - ARM image builder for RPi5 and Rock5B
+- [x] **Docker Build Environment**: `docker-compose.yaml` + `Dockerfile` - Containerised build pipeline
+- [x] **Ansible Gold-Master Role**: Complete provisioning with:
+  - [x] K3s binary installation (without starting)
+  - [x] Kernel modules for Kubernetes (overlay, br_netfilter, ip_vs)
+  - [x] Sysctl settings for networking
+  - [x] Cloud-init configuration for Matchbox datasource
+  - [x] `k3s-init.service` - First-boot k3s startup
+  - [x] Image sealing (SSH keys, machine-id, cloud-init state)
+- [x] **MAC-Based Naming**: Via Matchbox (see `kubernetes/apps/default/matchbox/helmrelease.yaml`)
+- [x] **Architecture Documentation**: `docs/ARCHITECTURE.md`
+
+### 🔄 In Progress (Flasher Image)
+
+- [x] **Ansible Flasher Role**: Basic implementation complete
+- [ ] **Testing**: End-to-end flasher workflow validation
+
+### 📋 Pending (CI/CD & Hardening)
+
+See phases below for detailed roadmap.
+
+---
+
+## Phase 1: Local Build Improvements
+
+### 1.1 Build Script Enhancements
+
+- [x] Externalised configuration (`config.env`)
+- [x] Secret management (K3S_TOKEN from env/file)
+- [x] Dry-run validation mode
+- [ ] CI mode flag for non-interactive builds
+
+---
+
+## Phase 2: GitHub Actions Integration
+
+### 2.1 Basic Workflow
+
+```yaml
+# .github/workflows/build-image.yaml
+name: Build Provisioning Image
+on:
+  workflow_dispatch:
+    inputs:
+      board:
+        type: choice
+        options: [rpi5, rock5b]
+      image_type:
+        type: choice
+        options: [gold, flasher]
+
+jobs:
+  build:
     runs-on: ubuntu-latest
-    # Only build on main branch or manual trigger
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
       - name: Build Image

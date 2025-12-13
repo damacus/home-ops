@@ -71,15 +71,16 @@ cp config.env config.env.local
 
 ### Configuration Options
 
-| Variable | Description | Default |
-|----------|-------------|--------|
-| `NFS_SERVER` | NFS server IP | `192.168.1.243` |
-| `NFS_SHARE` | NFS share path | `/volume1/NFS` |
-| `CLOUD_INIT_URL` | Cloud-init datasource | `http://provision.ironstone.casa:8080/` |
-| `K3S_VIP` | K3s API server VIP | `192.168.1.200` |
-| `K3S_VERSION` | K3s version to install | `v1.31.3+k3s1` |
-| `PACKER_BUILDER_IMAGE` | Docker image for builds | `mkaczanowski/packer-builder-arm:1.0.9` |
-| `VERSIONED_ARTIFACTS` | Include git SHA/timestamp in names | `true` |
+| Variable               | Description                        | Default                                 |
+|------------------------|------------------------------------|-----------------------------------------|
+| `NFS_SERVER`           | NFS server IP                      | `192.168.1.243`                         |
+| `NFS_SHARE`            | NFS share path                     | `/volume1/NFS`                          |
+| `CLOUD_INIT_URL`       | Cloud-init datasource              | `http://provision.ironstone.casa:8080/` |
+| `K3S_VIP`              | K3s API server VIP                 | `192.168.1.200`                         |
+| `K3S_VERSION`          | K3s version to install             | `v1.31.3+k3s1`                          |
+| `PACKER_CROSS_VERSION` | packer-plugin-cross version        | `latest`                                |
+| `MIN_DISK_SPACE_GB`    | Minimum free disk space required   | `15`                                    |
+| `VERSIONED_ARTIFACTS`  | Include git SHA/timestamp in names | `true`                                  |
 
 ### Secrets Management
 
@@ -111,16 +112,36 @@ provisioning/
 ├── config.env            # Configuration (version controlled)
 ├── config.env.local      # Local overrides (gitignored)
 ├── secrets/              # Local secrets directory (gitignored)
+├── docs/
+│   └── ARCHITECTURE.md   # Detailed architecture documentation
 ├── ansible/
 │   ├── playbook.yaml
 │   └── roles/
 │       ├── gold-master/  # K3s installation, cloud-init config
+│       │   ├── tasks/
+│       │   ├── templates/
+│       │   │   ├── k3s-init.service.j2
+│       │   │   ├── k3s-init.sh.j2
+│       │   │   └── 99-ironstone-cloud-init.cfg.j2
+│       │   └── files/
+│       │       ├── k8s-modules.conf
+│       │       └── k8s-sysctl.conf
 │       └── flasher/      # Firmware update, NFS clone
 └── packer/
     ├── ironstone.pkr.hcl # Packer configuration
     ├── upload_to_nfs.sh  # Post-build NFS upload
     └── builds/           # Build output directory
 ```
+
+## Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation including:
+
+- Build pipeline overview
+- First-boot sequence
+- MAC-based node identification via Matchbox
+- K3s cluster join flow
+- Troubleshooting guide
 
 ## Image Verification
 

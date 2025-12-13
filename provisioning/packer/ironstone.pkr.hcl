@@ -127,7 +127,7 @@ locals {
   rock5b_spi_loader_url = coalesce(var.rock5b_spi_loader_url, "https://dl.radxa.com/rock5/sw/images/loader/rock-5b/release/rock-5b-spi-image-gd1cf491-20240523.img")
 }
 
-source "arm" "rpi5" {
+source "cross" "rpi5" {
   file_urls             = [var.rpi5_image_url]
   file_checksum_type    = "none"
   file_target_extension = "xz"
@@ -159,9 +159,14 @@ source "arm" "rpi5" {
   }
 
   image_chroot_env = ["PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"]
-  # qemu_binary_source_path      = ""
-  # qemu_binary_destination_path = ""
 
+  # QEMU binary paths - required by packer-plugin-cross even for native ARM64 builds.
+  # The plugin checks for binfmt_misc registration of this binary.
+  qemu_binary_source_path      = "/usr/bin/qemu-aarch64-static"
+  qemu_binary_destination_path = "/usr/bin/qemu-aarch64-static"
+
+  # Explicitly define chroot mounts WITHOUT binfmt_misc for native builds
+  # The default includes binfmt_misc which fails on Docker for Mac
   image_chroot_mounts {
     mount_type       = "proc"
     source_path      = "proc"
@@ -205,9 +210,13 @@ source "arm" "rock5b" {
   }
 
   image_chroot_env = ["PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"]
-  qemu_binary_source_path      = "/usr/bin/qemu-aarch64-static"
-  qemu_binary_destination_path = "/usr/bin/qemu-aarch64-static"
 
+  # For native ARM64 builds (Mac M1/M2), we don't need QEMU emulation.
+  # Setting empty paths tells packer-builder-arm to skip QEMU setup.
+  qemu_binary_source_path      = ""
+  qemu_binary_destination_path = ""
+
+  # Explicitly define chroot mounts WITHOUT binfmt_misc for native builds
   image_chroot_mounts {
     mount_type       = "proc"
     source_path      = "proc"

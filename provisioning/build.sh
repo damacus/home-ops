@@ -4,6 +4,13 @@ set -euo pipefail
 # =============================================================================
 # Ironstone Zero-Touch Provisioning Build Script
 # =============================================================================
+# NOTE: Docker-based builds are currently broken on ARM64 Mac due to binfmt_misc
+# issues. Use build-native.sh with Lima VM instead:
+#
+#   limactl shell ironstone bash -c "cd $(pwd) && ./build-native.sh rpi5 gold"
+#
+# This script is retained for disk space management utilities.
+# =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -43,20 +50,26 @@ Arguments:
   type      Image type: gold | flasher
 
 Options:
-  -h, --help      Show this help message
-  -n, --dry-run   Validate configuration without building
-  -c, --clean     Remove old build artifacts before building
+  -h, --help        Show this help message
+  -n, --dry-run     Validate configuration without building
+  -c, --clean       Remove old build artifacts before building
+  --clean-cache     Remove Packer cache (downloaded base images)
+  --clean-all       Remove both build artifacts and cache
+  --disk-usage      Show current disk usage and exit
 
 Environment:
-  K3S_TOKEN       Required for gold images. Can be set via:
-                  - Environment variable
-                  - File at ~/.secrets/k3s_token
-                  - File at ./secrets/k3s_token
+  K3S_TOKEN         Required for gold images. Can be set via:
+                    - Environment variable
+                    - File at ~/.secrets/k3s_token
+                    - File at ./secrets/k3s_token
+  MIN_DISK_SPACE_GB Minimum free disk space required (default: 15)
 
 Examples:
   ./build.sh rpi5 gold
   ./build.sh --dry-run rock5b flasher
   ./build.sh --clean rpi5 gold
+  ./build.sh --clean-all              # Free up disk space
+  ./build.sh --disk-usage             # Check current usage
 
 EOF
     exit "${1:-0}"
@@ -166,6 +179,75 @@ clean_builds() {
 }
 
 # -----------------------------------------------------------------------------
+# Clean Packer Cache
+# -----------------------------------------------------------------------------
+clean_cache() {
+    local cache_dir="${SCRIPT_DIR}/packer/.packer_cache"
+    if [[ -d "$cache_dir" ]]; then
+        echo "Cleaning Packer cache..."
+        rm -rf "${cache_dir:?}"/*
+        echo "Packer cache cleaned."
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# Check Available Disk Space
+# -----------------------------------------------------------------------------
+check_disk_space() {
+    local min_space_gb="${MIN_DISK_SPACE_GB:-15}"
+    local packer_dir="${SCRIPT_DIR}/packer"
+
+    # Get available space in GB
+    local available_gb
+    if [[ "$(uname)" == "Darwin" ]]; then
+        available_gb=$(df -g "$packer_dir" | awk 'NR==2 {print $4}')
+    else
+        available_gb=$(df -BG "$packer_dir" | awk 'NR==2 {print $4}' | tr -d 'G')
+    fi
+
+    echo "Available disk space: ${available_gb}GB (minimum required: ${min_space_gb}GB)"
+
+    if [[ "$available_gb" -lt "$min_space_gb" ]]; then
+        echo "WARNING: Low disk space!"
+        echo "Packer builds typically need 10-15GB of free space."
+        echo ""
+        echo "To free space, run:"
+        echo "  ./build.sh --clean-all"
+        echo ""
+        read -p "Continue anyway? [y/N] " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# Show Disk Usage
+# -----------------------------------------------------------------------------
+show_disk_usage() {
+    echo "Disk usage for provisioning:"
+    echo ""
+
+    local builds_dir="${SCRIPT_DIR}/packer/builds"
+    local cache_dir="${SCRIPT_DIR}/packer/.packer_cache"
+
+    if [[ -d "$builds_dir" ]]; then
+        local builds_size
+        builds_size=$(du -sh "$builds_dir" 2>/dev/null | cut -f1)
+        echo "  Build artifacts:  ${builds_size:-0}"
+    fi
+
+    if [[ -d "$cache_dir" ]]; then
+        local cache_size
+        cache_size=$(du -sh "$cache_dir" 2>/dev/null | cut -f1)
+        echo "  Packer cache:     ${cache_size:-0}"
+    fi
+
+    echo ""
+}
+
+# -----------------------------------------------------------------------------
 # Main Build Function
 # -----------------------------------------------------------------------------
 build() {
@@ -182,7 +264,7 @@ build() {
     echo "Image Type:      $image_type"
     echo "Artifact Name:   $artifact_name"
     echo "K3s Version:     ${K3S_VERSION:-latest}"
-    echo "Builder Image:   ${PACKER_BUILDER_IMAGE:-mkaczanowski/packer-builder-arm}"
+    echo "Builder Image:   ghcr.io/michalfita/packer-plugin-cross:${PACKER_CROSS_VERSION:-latest}"
     echo "========================================"
 
     # Create secrets directory in container-accessible location
@@ -217,6 +299,9 @@ build() {
 # -----------------------------------------------------------------------------
 DRY_RUN=false
 CLEAN=false
+CLEAN_CACHE=false
+CLEAN_ALL=false
+DISK_USAGE_ONLY=false
 TARGET_BOARD=""
 IMAGE_TYPE=""
 
@@ -231,6 +316,18 @@ while [[ $# -gt 0 ]]; do
             ;;
         -c|--clean)
             CLEAN=true
+            shift
+            ;;
+        --clean-cache)
+            CLEAN_CACHE=true
+            shift
+            ;;
+        --clean-all)
+            CLEAN_ALL=true
+            shift
+            ;;
+        --disk-usage)
+            DISK_USAGE_ONLY=true
             shift
             ;;
         rpi5|rock5b)
@@ -248,7 +345,27 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Validate required arguments
+# Handle disk usage only
+if [[ "$DISK_USAGE_ONLY" == "true" ]]; then
+    show_disk_usage
+    exit 0
+fi
+
+# Handle clean-all (no build required)
+if [[ "$CLEAN_ALL" == "true" ]]; then
+    clean_builds
+    clean_cache
+    echo "All build artifacts and cache cleaned."
+    exit 0
+fi
+
+# Handle clean-cache only (no build required)
+if [[ "$CLEAN_CACHE" == "true" && -z "$TARGET_BOARD" ]]; then
+    clean_cache
+    exit 0
+fi
+
+# Validate required arguments for build
 if [[ -z "$TARGET_BOARD" || -z "$IMAGE_TYPE" ]]; then
     echo "Error: Both board and type are required."
     usage 1
@@ -261,12 +378,18 @@ load_config
 validate_docker
 validate_secrets "$IMAGE_TYPE"
 validate_network
+check_disk_space
 
-if [[ "$CLEAN" == "true" ]]; then
+if [[ "$CLEAN" == "true" || "$CLEAN_ALL" == "true" ]]; then
     clean_builds
 fi
 
+if [[ "$CLEAN_CACHE" == "true" || "$CLEAN_ALL" == "true" ]]; then
+    clean_cache
+fi
+
 if [[ "$DRY_RUN" == "true" ]]; then
+    show_disk_usage
     echo ""
     echo "Dry run complete. All validations passed."
     echo "Run without --dry-run to build."

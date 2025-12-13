@@ -1,0 +1,81 @@
+#!/bin/bash
+# =============================================================================
+# K3s First-Boot Initialization Script
+# =============================================================================
+# This script is executed by k3s-init.service on first boot.
+# It enables and starts k3s after cloud-init has configured the node.
+# =============================================================================
+set -euo pipefail
+
+LOG_TAG="k3s-init"
+
+log() {
+    logger -t "$LOG_TAG" "$*"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+log "Starting K3s first-boot initialization..."
+
+# Verify cloud-init completed successfully
+if [ -f /run/cloud-init/result.json ]; then
+    if grep -q '"errors": \[\]' /run/cloud-init/result.json; then
+        log "Cloud-init completed successfully"
+    else
+        log "WARNING: Cloud-init reported errors, proceeding anyway..."
+    fi
+else
+    log "WARNING: Cloud-init result not found, proceeding anyway..."
+fi
+
+# Verify k3s config exists
+if [ ! -f /etc/rancher/k3s/config.yaml ]; then
+    log "ERROR: /etc/rancher/k3s/config.yaml not found!"
+    log "Cloud-init should have created this file from Matchbox metadata."
+    exit 1
+fi
+
+# Log the hostname for debugging
+log "Hostname: $(hostname)"
+log "K3s config found, enabling k3s service..."
+
+# Determine if this is an agent or server based on config
+if grep -q "^server:" /etc/rancher/k3s/config.yaml; then
+    log "Detected agent configuration (server URL present)"
+    K3S_SERVICE="k3s-agent"
+else
+    log "Detected server configuration"
+    K3S_SERVICE="k3s"
+fi
+
+# Enable and start k3s
+log "Enabling ${K3S_SERVICE} service..."
+systemctl enable "${K3S_SERVICE}"
+
+log "Starting ${K3S_SERVICE} service..."
+systemctl start "${K3S_SERVICE}"
+
+# Wait for k3s to be ready (with timeout)
+log "Waiting for k3s to be ready..."
+TIMEOUT=120
+ELAPSED=0
+while [ $ELAPSED -lt $TIMEOUT ]; do
+    if systemctl is-active --quiet "${K3S_SERVICE}"; then
+        log "K3s service is active"
+        break
+    fi
+    sleep 5
+    ELAPSED=$((ELAPSED + 5))
+done
+
+if [ $ELAPSED -ge $TIMEOUT ]; then
+    log "WARNING: K3s did not become active within ${TIMEOUT}s"
+    log "Check: journalctl -u ${K3S_SERVICE}"
+else
+    log "K3s initialization complete!"
+fi
+
+# Disable this init service - it only needs to run once
+log "Disabling k3s-init service (one-time setup complete)"
+systemctl disable k3s-init.service
+
+exit 0

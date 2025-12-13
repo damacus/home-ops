@@ -52,3 +52,8 @@ EOF
   [ "$status" -eq 0 ]
   [[ "${output}" != *"compose missing"* ]]
 }
+
+@test "gold master role defines pi user" {
+  run grep -E "^[[:space:]]+name: pi$" "${PROVISIONING_DIR}/ansible/roles/gold-master/tasks/main.yaml"
+  [ "$status" -eq 0 ]
+}
