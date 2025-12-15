@@ -211,6 +211,28 @@
     group: root
     mode: '0644'
 
+- name: Deploy ironstone-datasource script
+  ansible.builtin.template:
+    src: ironstone-datasource.sh.j2
+    dest: /usr/local/bin/ironstone-datasource.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy ironstone-datasource systemd service
+  ansible.builtin.template:
+    src: ironstone-datasource.service.j2
+    dest: /etc/systemd/system/ironstone-datasource.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable ironstone-datasource service
+  ansible.builtin.systemd:
+    name: ironstone-datasource.service
+    enabled: yes
+    daemon_reload: yes
+
 - name: Install hostname fallback script (used if Matchbox unavailable)
   ansible.builtin.template:
     src: ironstone-hostname-fallback.sh.j2

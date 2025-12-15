@@ -24,19 +24,16 @@ spec:
             {
               "id": "rpi5-gold",
               "name": "Raspberry Pi 5 Gold Master",
-              "cloud_id": "nocloud",
-              "boot": {},
-              "cloud": "user-data-rpi5.yaml",
-              "generic_config": "generic-rpi5.yaml"
+              "cloud_id": "user-data-rpi5.yaml",
+              "boot": {}
             }
 
           user-data-rpi5.yaml: |
             #cloud-config
-            hostname: "{{.hostname}}"
-            ssh_import_id:
-              - gh:damacus
+            hostname: "{{ "{{" }}.hostname{{ "}}" }}"
             users:
               - name: pi
+                ssh_import_id: [gh:damacus]
                 groups: sudo
                 shell: /bin/bash
                 sudo: ALL=(ALL) NOPASSWD:ALL
@@ -44,12 +41,100 @@ spec:
               - path: /etc/rancher/k3s/config.yaml
                 content: |
                   server: https://192.168.1.200:6443
-                  token: "{{.k3s_token}}"
+                  token: "{{ "{{" }}.k3s_token{{ "}}" }}"
                   node-label:
                     - "ironstone.casa/platform=pi"
                     - "ironstone.casa/board=rpi5"
+              - path: /usr/local/bin/ironstone-provision.sh
+                permissions: '0755'
+                content: |
+                  #!/bin/bash
+                  # Ironstone Provisioning Script for RPi5
+                  # Follows Radxa NVMe install guide:
+                  # 1. Boot from SD card
+                  # 2. Check for /reprovision flag on NVMe
+                  # 3. If flag exists, wipe NVMe and dd image
+                  # 4. Remove SD card and reboot from NVMe
+                  set -euo pipefail
+                  LOG_TAG="ironstone-provision"
+                  log() { logger -t "$LOG_TAG" "$*"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
+
+                  # Detect boot device
+                  ROOT_DEV=$(findmnt -n -o SOURCE /)
+                  log "Root device: $ROOT_DEV"
+
+                  # Check if booting from SD card (mmcblk) vs NVMe (nvme)
+                  if [[ "$ROOT_DEV" == *"mmcblk"* ]]; then
+                    log "Booting from SD card - reprovision mode"
+
+                    # Check for NVMe device
+                    if [ -b /dev/nvme0n1 ]; then
+                      log "NVMe device found: $(lsblk /dev/nvme0n1 -n -o SIZE)"
+
+                      # Try to mount NVMe to check for reprovision flag
+                      NVME_MNT=$(mktemp -d)
+                      SHOULD_WIPE=false
+
+                      if mount /dev/nvme0n1p1 "$NVME_MNT" 2>/dev/null; then
+                        log "Mounted nvme0n1p1"
+                        if [ -f "$NVME_MNT/reprovision" ]; then
+                          log "Reprovision flag found at /reprovision"
+                          SHOULD_WIPE=true
+                        fi
+                        umount "$NVME_MNT"
+                      elif mount /dev/nvme0n1p2 "$NVME_MNT" 2>/dev/null; then
+                        log "Mounted nvme0n1p2 (root partition)"
+                        if [ -f "$NVME_MNT/reprovision" ]; then
+                          log "Reprovision flag found at /reprovision"
+                          SHOULD_WIPE=true
+                        fi
+                        umount "$NVME_MNT"
+                      else
+                        log "Could not mount NVMe partitions - drive may be empty"
+                        SHOULD_WIPE=true
+                      fi
+                      rmdir "$NVME_MNT" 2>/dev/null || true
+
+                      if [ "$SHOULD_WIPE" = true ]; then
+                        log "Wiping NVMe drive..."
+                        wipefs -a /dev/nvme0n1
+
+                        # Clone SD card to NVMe - we're running from the gold image!
+                        SD_DEV=$(echo "$ROOT_DEV" | sed 's/p[0-9]*$//')
+                        SD_SIZE=$(blockdev --getsize64 "$SD_DEV")
+                        log "Cloning $SD_DEV ($(numfmt --to=iec $SD_SIZE)) to /dev/nvme0n1..."
+
+                        dd if="$SD_DEV" of=/dev/nvme0n1 bs=4M status=progress conv=fsync
+
+                        log "Clone complete!"
+                        log "Expanding root partition on NVMe..."
+
+                        # Resize partition to fill NVMe
+                        growpart /dev/nvme0n1 2 || true
+                        e2fsck -f -y /dev/nvme0n1p2 || true
+                        resize2fs /dev/nvme0n1p2 || true
+
+                        log "NVMe provisioning complete!"
+                        log "Remove SD card and reboot to boot from NVMe."
+                      else
+                        log "No /reprovision flag found on NVMe."
+                        log "To reprovision, create /reprovision file on NVMe root and reboot from SD."
+                      fi
+                    else
+                      log "No NVMe device found at /dev/nvme0n1"
+                    fi
+
+                    log "SD card boot complete."
+                    exit 0
+                  fi
+
+                  # Booting from NVMe - normal operation
+                  log "Booting from NVMe - normal mode"
+
+                  # k3s-init.service will handle k3s startup
+                  log "Provisioning complete. k3s-init.service will start k3s."
             runcmd:
-              - systemctl enable --now k3s
+              - /usr/local/bin/ironstone-provision.sh
 
           group-node-a.json.tmpl: |
             {
@@ -69,20 +154,19 @@ spec:
             {
               "id": "rock5b-gold",
               "name": "Rock 5B Gold Master",
-              "cloud_id": "nocloud",
-              "boot": {},
-              "cloud": "user-data-rock5b.yaml",
-              "generic_config": "generic-rock5b.yaml"
+              "cloud_id": "user-data-rock5b.yaml",
+              "boot": {}
             }
 
           user-data-rock5b.yaml: |
             #cloud-config
-            hostname: "{{.hostname}}"
+            hostname: "{{ "{{" }}.hostname{{ "}}" }}"
             locale: en_GB.UTF-8
             ssh_import_id:
               - gh:damacus
             users:
               - name: pi
+                ssh_import_id: [gh:damacus]
                 groups: sudo
                 shell: /bin/bash
                 sudo: ALL=(ALL) NOPASSWD:ALL
@@ -90,12 +174,100 @@ spec:
               - path: /etc/rancher/k3s/config.yaml
                 content: |
                   server: https://192.168.1.200:6443
-                  token: "{{.k3s_token}}"
+                  token: "{{ "{{" }}.k3s_token{{ "}}" }}"
                   node-label:
                     - "ironstone.casa/platform=rocky"
                     - "ironstone.casa/board=rock5b"
+              - path: /usr/local/bin/ironstone-provision.sh
+                permissions: '0755'
+                content: |
+                  #!/bin/bash
+                  # Ironstone Provisioning Script for Rock5B
+                  # Follows Radxa NVMe install guide:
+                  # 1. Boot from SD card
+                  # 2. Check for /reprovision flag on NVMe
+                  # 3. If flag exists, wipe NVMe and dd image
+                  # 4. Remove SD card and reboot from NVMe
+                  set -euo pipefail
+                  LOG_TAG="ironstone-provision"
+                  log() { logger -t "$LOG_TAG" "$*"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
+
+                  # Detect boot device
+                  ROOT_DEV=$(findmnt -n -o SOURCE /)
+                  log "Root device: $ROOT_DEV"
+
+                  # Check if booting from SD card (mmcblk) vs NVMe (nvme)
+                  if [[ "$ROOT_DEV" == *"mmcblk"* ]]; then
+                    log "Booting from SD card - reprovision mode"
+
+                    # Check for NVMe device
+                    if [ -b /dev/nvme0n1 ]; then
+                      log "NVMe device found: $(lsblk /dev/nvme0n1 -n -o SIZE)"
+
+                      # Try to mount NVMe to check for reprovision flag
+                      NVME_MNT=$(mktemp -d)
+                      SHOULD_WIPE=false
+
+                      if mount /dev/nvme0n1p1 "$NVME_MNT" 2>/dev/null; then
+                        log "Mounted nvme0n1p1"
+                        if [ -f "$NVME_MNT/reprovision" ]; then
+                          log "Reprovision flag found at /reprovision"
+                          SHOULD_WIPE=true
+                        fi
+                        umount "$NVME_MNT"
+                      elif mount /dev/nvme0n1p2 "$NVME_MNT" 2>/dev/null; then
+                        log "Mounted nvme0n1p2 (root partition)"
+                        if [ -f "$NVME_MNT/reprovision" ]; then
+                          log "Reprovision flag found at /reprovision"
+                          SHOULD_WIPE=true
+                        fi
+                        umount "$NVME_MNT"
+                      else
+                        log "Could not mount NVMe partitions - drive may be empty"
+                        SHOULD_WIPE=true
+                      fi
+                      rmdir "$NVME_MNT" 2>/dev/null || true
+
+                      if [ "$SHOULD_WIPE" = true ]; then
+                        log "Wiping NVMe drive..."
+                        wipefs -a /dev/nvme0n1
+
+                        # Clone SD card to NVMe - we're running from the gold image!
+                        SD_DEV=$(echo "$ROOT_DEV" | sed 's/p[0-9]*$//')
+                        SD_SIZE=$(blockdev --getsize64 "$SD_DEV")
+                        log "Cloning $SD_DEV ($(numfmt --to=iec $SD_SIZE)) to /dev/nvme0n1..."
+
+                        dd if="$SD_DEV" of=/dev/nvme0n1 bs=4M status=progress conv=fsync
+
+                        log "Clone complete!"
+                        log "Expanding root partition on NVMe..."
+
+                        # Resize partition to fill NVMe
+                        growpart /dev/nvme0n1 2 || true
+                        e2fsck -f -y /dev/nvme0n1p2 || true
+                        resize2fs /dev/nvme0n1p2 || true
+
+                        log "NVMe provisioning complete!"
+                        log "Remove SD card and reboot to boot from NVMe."
+                      else
+                        log "No /reprovision flag found on NVMe."
+                        log "To reprovision, create /reprovision file on NVMe root and reboot from SD."
+                      fi
+                    else
+                      log "No NVMe device found at /dev/nvme0n1"
+                    fi
+
+                    log "SD card boot complete."
+                    exit 0
+                  fi
+
+                  # Booting from NVMe - normal operation
+                  log "Booting from NVMe - normal mode"
+
+                  # k3s-init.service will handle k3s startup
+                  log "Provisioning complete. k3s-init.service will start k3s."
             runcmd:
-              - systemctl enable --now k3s
+              - /usr/local/bin/ironstone-provision.sh
 
           group-rock5b.json.tmpl: |
             {
