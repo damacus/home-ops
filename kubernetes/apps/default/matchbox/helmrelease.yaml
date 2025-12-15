@@ -142,7 +142,7 @@ spec:
               - -address=0.0.0.0:8080
               - -rpc-address=0.0.0.0:8081
               - -log-level=debug
-              - -assets-path=
+              - -assets-path=''
             probes:
               liveness:
                 enabled: true
