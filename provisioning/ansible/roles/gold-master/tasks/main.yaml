@@ -15,30 +15,82 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
+# Locale Configuration
+# -----------------------------------------------------------------------------
+- name: Set timezone to Europe/London
+  ansible.builtin.file:
+    src: /usr/share/zoneinfo/Europe/London
+    dest: /etc/localtime
+    state: link
+    force: true
+
+- name: Set timezone in /etc/timezone
+  ansible.builtin.copy:
+    content: "Europe/London\n"
+    dest: /etc/timezone
+    mode: '0644'
+
+# -----------------------------------------------------------------------------
+# System Configuration
+# -----------------------------------------------------------------------------
+- name: Disable apparmor
+  ansible.builtin.systemd:
+    name: apparmor
+    state: stopped
+    masked: true
+  ignore_errors: true  # May not exist on all systems
+
+- name: Disable swap
+  ansible.posix.mount:
+    name: "{{ item }}"
+    fstype: swap
+    state: absent
+  loop: ["none", "swap"]
+  ignore_errors: true
+
+# -----------------------------------------------------------------------------
 # Package Installation
 # -----------------------------------------------------------------------------
 - name: Update apt cache
-  apt:
+  ansible.builtin.apt:
     update_cache: yes
     cache_valid_time: 3600
 
 - name: Install required packages
   apt:
     name:
+      - apt-transport-https
+      - ca-certificates
       - cloud-init
+      - conntrack
+      - curl
+      - dirmngr
+      - gdisk
+      - gnupg
+      - hdparm
+      - htop
+      - iptables
+      - iputils-ping
+      - ipvsadm
+      - libseccomp2
+      - lm-sensors
+      - lsb-release
+      - net-tools
       - network-manager
       - nfs-common
-      - curl
-      - ca-certificates
-      - gnupg
-      - apt-transport-https
-      - iptables
-      - ipvsadm
-      - conntrack
-      - socat
+      - nvme-cli
       - open-iscsi
+      - parted
+      - psmisc
+      - python3
+      - python3-apt
+      - python3-kubernetes
+      - python3-yaml
+      - smartmontools
+      - socat
       - systemd-timesyncd
-      - lsb-release
+      - unzip
+      - util-linux
     state: present
   ignore_errors: true  # initramfs-tools may fail in chroot, but packages are installed
 
@@ -141,8 +193,14 @@
 # -----------------------------------------------------------------------------
 # Cloud-Init Configuration
 # -----------------------------------------------------------------------------
+- name: Ensure cloud-init config directory exists
+  ansible.builtin.file:
+    path: /etc/cloud/cloud.cfg.d
+    state: directory
+    mode: '0755'
+
 - name: Configure Cloud-Init for Matchbox datasource
-  template:
+  ansible.builtin.template:
     src: 99-ironstone-cloud-init.cfg.j2
     dest: /etc/cloud/cloud.cfg.d/99-ironstone.cfg
     owner: root

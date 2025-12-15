@@ -22,7 +22,7 @@ This document describes the architecture for building and deploying golden image
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │   ┌──────────────┐    ┌──────────────────┐    ┌──────────────────────────┐  │
-│   │  Mac/Linux   │───▶│  Docker          │───▶│  packer-builder-arm      │  │
+│   │  Mac/Linux   │───▶│  Docker          │───▶│  packer-plugin-cross     │  │
 │   │  Host        │    │  (privileged)    │    │  container               │  │
 │   └──────────────┘    └──────────────────┘    └──────────────────────────┘  │
 │                                                          │                   │
@@ -176,8 +176,8 @@ The MAC address is used as the unique identifier for each node:
    }
    ```
 
-3. Flash the node with the flasher SD card
-4. Node will automatically join the cluster
+1. Flash the node with the flasher SD card
+2. Node will automatically join the cluster
 
 ## Alternative: Local MAC-Based Naming
 
@@ -192,26 +192,12 @@ hostnamectl set-hostname "$HOSTNAME"
 
 This provides unique hostnames without external dependencies, but loses the human-readable naming.
 
-## Packer Builder Options
+## Build Process
 
-### Current: mkaczanowski/packer-builder-arm
-
-- Stable, well-documented
-- Works on Linux and Mac (via Docker)
-- Used in current implementation
-
-### Alternative: michalfita/packer-plugin-cross
-
-- Fork with active development
-- Better Mac M1/ARM64 support
-- Multi-arch container images
-
-To switch to packer-plugin-cross:
+The build uses `build-native.sh` running inside a Lima VM on ARM64 Mac. This avoids Docker/Packer binfmt_misc issues by using native ARM64 chroot.
 
 ```bash
-docker pull ghcr.io/michalfita/packer-plugin-cross:latest
-docker run --rm --privileged -v /dev:/dev -v ${PWD}:/build \
-  ghcr.io/michalfita/packer-plugin-cross:latest build ironstone.pkr.hcl
+task provisioning:build-and-copy board=rpi5
 ```
 
 ## Security Considerations

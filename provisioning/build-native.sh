@@ -10,7 +10,7 @@
 #   - limactl shell ironstone
 #
 # Usage:
-#   ./build-native.sh rpi5 gold
+#   ./build-native.sh rpi5
 # =============================================================================
 set -euo pipefail
 
@@ -20,10 +20,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Configuration
 # -----------------------------------------------------------------------------
 TARGET_BOARD="${1:-rpi5}"
-IMAGE_TYPE="${2:-gold}"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 GIT_SHA=$(git -C "$SCRIPT_DIR/.." rev-parse --short HEAD 2>/dev/null || echo "unknown")
-ARTIFACT_NAME="${TARGET_BOARD}-${IMAGE_TYPE}-${GIT_SHA}-${TIMESTAMP}.img"
+ARTIFACT_NAME="${TARGET_BOARD}-gold-${GIT_SHA}-${TIMESTAMP}.img"
 
 # Load config
 source "${SCRIPT_DIR}/config.env" 2>/dev/null || true
@@ -42,7 +41,7 @@ echo "========================================"
 echo "Ironstone Native Build"
 echo "========================================"
 echo "Target Board:    $TARGET_BOARD"
-echo "Image Type:      $IMAGE_TYPE"
+echo "Image Type:      gold"
 echo "Artifact Name:   $ARTIFACT_NAME"
 echo "========================================"
 
@@ -153,7 +152,7 @@ sudo chroot "$MOUNT_DIR" /bin/bash -c "
     # Run ansible with verbose output and ignore errors from modprobe (not available in chroot)
     ansible-playbook -i /tmp/inventory playbook.yaml -v \
         -e 'target_board=${TARGET_BOARD}' \
-        -e 'image_type=${IMAGE_TYPE}' \
+        -e 'image_type=gold' \
         -e 'nfs_server=${NFS_SERVER:-192.168.1.243}' \
         -e 'nfs_share=${NFS_SHARE:-/volume1/NFS}' \
         -e 'cloud_init_url=${CLOUD_INIT_URL:-http://provision.ironstone.casa:8080/}' \

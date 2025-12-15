@@ -2,18 +2,16 @@
 # =============================================================================
 # Ironstone Provisioning Playbook
 # =============================================================================
-# All variables are passed via --extra-vars from Packer.
-# No defaults are defined here - Packer/config.env is the source of truth.
+# All variables are passed via --extra-vars from build-native.sh.
+# No defaults are defined here - config.env is the source of truth.
 #
 # Required variables:
 #   - target_board: rpi5 | rock5b
-#   - image_type: gold | flasher
 #   - nfs_server: NFS server IP
 #   - nfs_share: NFS share path
 #   - cloud_init_url: Cloud-init datasource URL
 #   - k3s_version: K3s version (can be empty for latest)
 #   - k3s_vip: K3s API server VIP
-#   - rock5b_spi_loader_url: Rock 5B SPI loader URL
 # =============================================================================
 
 - name: Provision Ironstone Image
@@ -23,14 +21,8 @@
   tasks:
     - name: Debug variables
       debug:
-        msg: "Provisioning {{ target_board }} as {{ image_type }}"
+        msg: "Provisioning {{ target_board }} gold master image"
 
     - name: Include Gold Master Role
-      include_role:
+      ansible.builtin.include_role:
         name: gold-master
-      when: image_type == 'gold'
-
-    - name: Include Flasher Role
-      include_role:
-        name: flasher
-      when: image_type == 'flasher'

@@ -2,63 +2,62 @@
 
 This directory contains the build pipeline for creating "Zero-Touch" bare-metal Kubernetes nodes (RPi5 & Rock 5B+).
 
+`build-native.sh` is the build script, designed to run inside a Lima VM on ARM64 Mac.
+
 ## Architecture
 
-The pipeline produces two artifacts per board:
-
-1. **Gold Master** (`*-gold.img`): The production OS with K3s installed but not started.
-2. **Flasher** (`*-flasher.img`): A utility image that boots, updates firmware, clones the Gold Master from NFS to NVMe, and shuts down.
+The pipeline produces a **Gold Master** image (`*-gold.img`) for each board: the production OS with K3s installed but not started.
 
 ## Quick Start
 
 ```bash
-# 1. Configure your environment (copy and edit)
-cp config.env config.env.local
-vim config.env.local
+# Build and copy image in one command (handles Lima VM automatically)
+task provisioning:build-and-copy board=rpi5
 
-# 2. Set up K3S token (choose one method)
-export K3S_TOKEN="your-secret-token"
-# OR
-echo "your-secret-token" > ~/.secrets/k3s_token
-# OR
-mkdir -p secrets && echo "your-secret-token" > secrets/k3s_token
+# Flash to SD card
+sudo dd if=./provisioning/packer/builds/rpi5-gold-*.img of=/dev/diskN bs=4M status=progress
+```
 
-# 3. Validate configuration (dry run)
-./build.sh --dry-run rpi5 gold
+## Prerequisites
 
-# 4. Build
-./build.sh rpi5 gold
+- **Lima VM**: Install with `brew install lima`
+- **Lima VM instance**: The `ironstone` VM will be started automatically if stopped
+
+To create the Lima VM (first time only):
+
+```bash
+limactl create --name=ironstone template://default
 ```
 
 ## Usage
 
+All commands are run via Task from the repository root:
+
 ```bash
-./build.sh [OPTIONS] <board> <type>
-
-Arguments:
-  board     Target board: rpi5 | rock5b
-  type      Image type: gold | flasher
-
-Options:
-  -h, --help      Show help message
-  -n, --dry-run   Validate configuration without building
-  -c, --clean     Remove old build artifacts before building
+task provisioning:build board=<board>      # Build image
+task provisioning:copy board=<board>       # Copy to local
+task provisioning:build-and-copy board=<board>  # Both
+task provisioning:test                      # Run tests
 ```
+
+**Arguments:**
+
+- `board`: Target board (`rpi5` | `rock5b`), default: `rpi5`
 
 **Examples:**
 
 ```bash
-# Build Gold Master for RPi5 (uploads to NFS)
-./build.sh rpi5 gold
+# Build Gold Master for RPi5 (default)
+task provisioning:build-and-copy
 
-# Build Flasher for RPi5 (keeps local)
-./build.sh rpi5 flasher
+# Build for Rock 5B
+task provisioning:build-and-copy board=rock5b
 
-# Validate configuration without building
-./build.sh --dry-run rock5b gold
+# Just build (don't copy)
+task provisioning:build board=rpi5
 
-# Clean old builds and build fresh
-./build.sh --clean rpi5 gold
+# Just copy (if already built)
+task provisioning:copy board=rpi5
 ```
 
 ## Configuration
@@ -78,9 +77,6 @@ cp config.env config.env.local
 | `CLOUD_INIT_URL`       | Cloud-init datasource              | `http://provision.ironstone.casa:8080/` |
 | `K3S_VIP`              | K3s API server VIP                 | `192.168.1.200`                         |
 | `K3S_VERSION`          | K3s version to install             | `v1.31.3+k3s1`                          |
-| `PACKER_CROSS_VERSION` | packer-plugin-cross version        | `latest`                                |
-| `MIN_DISK_SPACE_GB`    | Minimum free disk space required   | `15`                                    |
-| `VERSIONED_ARTIFACTS`  | Include git SHA/timestamp in names | `true`                                  |
 
 ### Secrets Management
 
@@ -90,14 +86,9 @@ The `K3S_TOKEN` can be provided via (in order of precedence):
 2. File: `~/.secrets/k3s_token`
 3. File: `./secrets/k3s_token`
 
-**Security Note:** Secrets are mounted read-only into the build container at `/run/secrets/` and cleaned up after the build.
-
 ## Artifacts
 
-- **Gold Master**: Automatically uploaded to NFS with both versioned and `*-latest.img` names
-- **Flasher**: Output to `provisioning/packer/builds/`
-
-With `VERSIONED_ARTIFACTS=true`, artifacts are named like:
+Built images are output to `provisioning/packer/builds/` with names like:
 
 ```text
 rpi5-gold-abc1234-20231215-143022.img
@@ -108,32 +99,23 @@ rpi5-gold-abc1234-20231215-143022.img
 ```text
 provisioning/
 ├── README.md
-├── build.sh              # Main build script
+├── build-native.sh       # Main build script (Lima VM)
 ├── config.env            # Configuration (version controlled)
 ├── config.env.local      # Local overrides (gitignored)
-├── secrets/              # Local secrets directory (gitignored)
 ├── docs/
 │   └── ARCHITECTURE.md   # Detailed architecture documentation
 ├── ansible/
 │   ├── playbook.yaml
 │   └── roles/
-│       ├── gold-master/  # K3s installation, cloud-init config
-│       │   ├── tasks/
-│       │   ├── templates/
-│       │   │   ├── k3s-init.service.j2
-│       │   │   ├── k3s-init.sh.j2
-│       │   │   └── 99-ironstone-cloud-init.cfg.j2
-│       │   └── files/
-│       │       ├── k8s-modules.conf
-│       │       └── k8s-sysctl.conf
-│       └── flasher/      # Firmware update, NFS clone
+│       └── gold-master/  # K3s installation, cloud-init config
+│           ├── tasks/
+│           ├── templates/
+│           └── files/
 └── packer/
-    ├── ironstone.pkr.hcl # Packer configuration
-    ├── upload_to_nfs.sh  # Post-build NFS upload
     └── builds/           # Build output directory
 ```
 
-## Architecture
+## Further Architecture
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation including:
 

@@ -5,22 +5,69 @@ version: "3"
 vars:
   PROVISIONING_DIR: "{{.ROOT_DIR}}/provisioning"
   BOARD: "{{.board | default \"rpi5\"}}"
-  TYPE: "{{.type | default \"gold\"}}"
+  LIMA_VM: "ironstone"
 
 tasks:
   default:
     cmds:
       - task -l
 
-  dry-run:
-    desc: Validate provisioning config without building
+  check-lima:
+    desc: Check if Lima is installed
+    internal: true
+    silent: true
+    preconditions:
+      - sh: command -v limactl
+        msg: "Lima is not installed. Install with: brew install lima"
+
+  check-vm:
+    desc: Check if Lima VM is running, start if not
+    internal: true
+    deps: [check-lima]
     cmds:
-      - "{{.PROVISIONING_DIR}}/build.sh --dry-run {{.BOARD}} {{.TYPE}}"
+      - |
+        STATUS=$(limactl list --format '{{`{{.Status}}`}}' {{.LIMA_VM}} 2>/dev/null || echo "NotFound")
+        if [ "$STATUS" = "NotFound" ]; then
+          echo "Error: Lima VM '{{.LIMA_VM}}' does not exist."
+          echo "Create it with: limactl create --name={{.LIMA_VM}} template://default"
+          exit 1
+        elif [ "$STATUS" != "Running" ]; then
+          echo "Starting Lima VM '{{.LIMA_VM}}'..."
+          limactl start {{.LIMA_VM}}
+        else
+          echo "Lima VM '{{.LIMA_VM}}' is running."
+        fi
 
   build:
-    desc: Build provisioning image (gold | flasher)
+    desc: Build provisioning image via Lima VM
+    deps: [check-vm]
     cmds:
-      - "{{.PROVISIONING_DIR}}/build.sh {{.BOARD}} {{.TYPE}}"
+      - |
+        echo "Building {{.BOARD}}-gold image inside Lima VM..."
+        limactl shell {{.LIMA_VM}} bash -c "cd {{.PROVISIONING_DIR}} && ./build-native.sh {{.BOARD}} gold"
+
+  copy:
+    desc: Copy built image from Lima VM to local packer/builds/
+    deps: [check-lima]
+    cmds:
+      - |
+        echo "Copying latest {{.BOARD}}-gold image from Lima VM..."
+        mkdir -p {{.PROVISIONING_DIR}}/packer/builds
+        # Get the most recent image file
+        LATEST=$(limactl shell {{.LIMA_VM}} bash -c "ls -t ~/ironstone-builds/{{.BOARD}}-gold-*.img 2>/dev/null | head -1")
+        if [ -z "$LATEST" ]; then
+          echo "Error: No {{.BOARD}}-gold image found in Lima VM"
+          exit 1
+        fi
+        echo "Copying: $LATEST"
+        limactl copy "{{.LIMA_VM}}:$LATEST" {{.PROVISIONING_DIR}}/packer/builds/
+        echo "Done. Image copied to {{.PROVISIONING_DIR}}/packer/builds/"
+
+  build-and-copy:
+    desc: Build image and copy to local machine
+    cmds:
+      - task: build
+      - task: copy
 
   test:
     desc: Run provisioning tests (Bats)
