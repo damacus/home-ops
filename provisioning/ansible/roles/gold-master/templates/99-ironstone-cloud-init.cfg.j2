@@ -9,12 +9,13 @@
 # =============================================================================
 
 # Datasource configuration
-datasource_list: [ NoCloud, None ]
+# We use None datasource - cloud-init runs but doesn't fetch external config
+# The ironstone-provision.sh script fetches config from Matchbox and applies it
+datasource_list: [ None ]
 datasource:
-  NoCloud:
-    seedfrom: "{{ cloud_init_url }}"
-    # Matchbox serves metadata at /metadata and userdata at /userdata
-    # The MAC address is sent as a query parameter for matching
+  None:
+    metadata:
+      instance-id: iid-local01
 
 # System configuration
 preserve_hostname: false

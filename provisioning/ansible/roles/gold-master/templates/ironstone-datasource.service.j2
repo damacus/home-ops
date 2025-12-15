@@ -1,0 +1,14 @@
+[Unit]
+Description=Ironstone Cloud-Init Datasource Setup
+DefaultDependencies=no
+Before=cloud-init-local.service cloud-init.service
+After=systemd-networkd-wait-online.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ironstone-datasource.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=cloud-init-local.service
