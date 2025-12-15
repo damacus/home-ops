@@ -40,7 +40,7 @@ spec:
               MINIO_BROWSER_REDIRECT_URL: "https://minio.ironstone.casa"
               # MINIO_SERVER_URL: "https://s3.ironstone.casa"
               MINIO_PROMETHEUS_AUTH_TYPE: "public"
-              MINIO_API_CORS_ALLOW_ORIGIN: https://minio.ironstone.casa,https://s3.ironstone.casa
+              MINIO_API_CORS_ALLOW_ORIGIN: https://minio.ironstone.casa,https://s3.ironstone.casa,https://ironbuckets.ironstone.casa
               MINIO_AUTH_TYPE: public
               MINIO_UPDATE: "off"
               MINIO_API_REQUESTS_MAX: "1600"
@@ -61,6 +61,35 @@ spec:
                   timeoutSeconds: 10
                   failureThreshold: 6
               readiness: *probes
+          ironbuckets:
+            image:
+              repository: ghcr.io/damacus/ironbuckets
+              tag: v1.0.0
+            env:
+              MINIO_ENDPOINT: "localhost:9000"
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 8080
+                  initialDelaySeconds: 10
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 8080
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
     service:
       main:
         controller: main
@@ -72,6 +101,8 @@ spec:
             port: 9001
           api:
             port: 9000
+          ironbuckets:
+            port: 8080
 
     # HTTPRoutes for Gateway API
     route:
@@ -95,6 +126,16 @@ spec:
           - backendRefs:
               - name: minio
                 port: 9000  # MinIO S3 API port
+      ironbuckets:
+        hostnames: ["ironbuckets.ironstone.casa"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - name: minio
+                port: 8080  # IronBuckets UI port
 
     serviceMonitor:
       main:
