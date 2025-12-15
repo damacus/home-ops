@@ -141,14 +141,23 @@ spec:
             args:
               - -address=0.0.0.0:8080
               - -log-level=debug
-              - -assets-path=''
+              - "-assets-path="
             probes:
               liveness:
                 enabled: true
+                type: HTTP
+                path: /
+                port: 8080
               readiness:
                 enabled: true
+                type: HTTP
+                path: /
+                port: 8080
               startup:
                 enabled: true
+                type: HTTP
+                path: /
+                port: 8080
                 spec:
                   failureThreshold: 30
                   periodSeconds: 10
@@ -159,8 +168,6 @@ spec:
         ports:
           http:
             port: 8080
-          grpc:
-            port: 8081
 
     route:
       app:
