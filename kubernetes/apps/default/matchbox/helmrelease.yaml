@@ -140,7 +140,6 @@ spec:
               tag: v0.11.0
             args:
               - -address=0.0.0.0:8080
-              - -rpc-address=0.0.0.0:8081
               - -log-level=debug
               - -assets-path=''
             probes:
