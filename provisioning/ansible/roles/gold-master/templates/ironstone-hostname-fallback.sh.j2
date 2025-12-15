@@ -1,0 +1,48 @@
+#!/bin/bash
+# =============================================================================
+# Ironstone Hostname Fallback Script
+# =============================================================================
+# Sets hostname from MAC address if cloud-init didn't set it.
+# This provides a fallback when Matchbox is unavailable.
+#
+# Hostname format: k3s-<last 6 chars of MAC>
+# Example: k3s-a1b2c3
+# =============================================================================
+
+set -euo pipefail
+
+CURRENT_HOSTNAME=$(hostname)
+
+# Check if hostname is already set (not empty, not localhost, not default)
+if [[ -n "$CURRENT_HOSTNAME" && "$CURRENT_HOSTNAME" != "localhost" && "$CURRENT_HOSTNAME" != "(none)" ]]; then
+    echo "Hostname already set to: $CURRENT_HOSTNAME"
+    exit 0
+fi
+
+# Find primary network interface (prefer eth0, then first non-lo interface)
+if [[ -d /sys/class/net/eth0 ]]; then
+    IFACE="eth0"
+elif [[ -d /sys/class/net/end0 ]]; then
+    IFACE="end0"
+else
+    IFACE=$(ls /sys/class/net | grep -v lo | head -1)
+fi
+
+if [[ -z "$IFACE" ]]; then
+    echo "ERROR: No network interface found"
+    exit 1
+fi
+
+# Get MAC address and generate hostname
+MAC=$(cat /sys/class/net/${IFACE}/address | tr -d ':' | tr '[:upper:]' '[:lower:]')
+HOSTNAME="k3s-${MAC: -6}"
+
+echo "Setting hostname to: $HOSTNAME (from ${IFACE} MAC)"
+hostnamectl set-hostname "$HOSTNAME"
+
+# Update /etc/hosts
+if ! grep -q "$HOSTNAME" /etc/hosts; then
+    echo "127.0.1.1 $HOSTNAME" >> /etc/hosts
+fi
+
+echo "Hostname set successfully"

@@ -128,12 +128,11 @@ spec:
                 echo "Data setup complete."
                 ls -R ${DATA_DIR}
             env:
-              - name: K3S_TOKEN
+              K3S_TOKEN:
                 valueFrom:
                   secretKeyRef:
                     name: matchbox
                     key: K3S_TOKEN
-                    optional: true
         containers:
           app:
             image:

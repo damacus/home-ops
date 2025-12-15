@@ -28,12 +28,13 @@ ARTIFACT_NAME="${TARGET_BOARD}-gold-${GIT_SHA}-${TIMESTAMP}.img"
 # Load config
 source "${SCRIPT_DIR}/config.env" 2>/dev/null || true
 
-# Image URLs - Official Raspberry Pi OS Lite ARM64 (December 2025)
+# Image URLs and checksums - Official Raspberry Pi OS Lite ARM64 (December 2025)
 RPI5_IMAGE_URL="${RPI5_IMAGE_URL:-https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2025-12-04/2025-12-04-raspios-trixie-arm64-lite.img.xz}"
 RPI5_IMAGE_SHA256="681a775e20b53a9e4c7341d748a5a8cdc822039d8c67c1fd6ca35927abbe6290"
 
-# Rock 5B - Armbian Trixie Minimal (latest)
-ROCK5B_IMAGE_URL="https://dl.armbian.com/rock-5b/Trixie_current_minimal.img.xz"
+# Rock 5B - Armbian Trixie Vendor Minimal (pinned version for reproducibility)
+ROCK5B_IMAGE_URL="https://dl.armbian.com/rock-5b/archive/Armbian_25.11.1_Rock-5b_trixie_vendor_6.1.115_minimal.img.xz"
+ROCK5B_IMAGE_SHA256="a5723585adf42ab32567b43d2e2fe5107c749ad2272e5ae4560b48e418905fe2"
 
 # -----------------------------------------------------------------------------
 # Main
@@ -49,12 +50,16 @@ echo "========================================"
 # Select Image based on Board
 if [[ "$TARGET_BOARD" == "rpi5" ]]; then
     BASE_IMAGE_URL="$RPI5_IMAGE_URL"
+    EXPECTED_SHA256="$RPI5_IMAGE_SHA256"
 elif [[ "$TARGET_BOARD" == "rock5b" ]]; then
     BASE_IMAGE_URL="$ROCK5B_IMAGE_URL"
+    EXPECTED_SHA256="$ROCK5B_IMAGE_SHA256"
 else
     echo "Error: Unknown target board $TARGET_BOARD"
     exit 1
 fi
+
+echo "Expected SHA256: $EXPECTED_SHA256"
 
 # Create build directory on Linux filesystem (Lima mounts macOS as read-only)
 BUILD_DIR="${HOME}/ironstone-builds"
@@ -68,8 +73,47 @@ CACHED_IMAGE="${CACHE_DIR}/$(basename "$BASE_IMAGE_URL")"
 if [[ ! -f "${CACHED_IMAGE%.xz}" ]]; then
     echo "Downloading base image..."
     curl -fsSL "$BASE_IMAGE_URL" -o "$CACHED_IMAGE"
+
+    # Verify checksum before extraction
+    echo "Verifying image checksum..."
+    ACTUAL_SHA256=$(sha256sum "$CACHED_IMAGE" | awk '{print $1}')
+    if [[ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]]; then
+        echo "ERROR: Checksum verification failed!"
+        echo "  Expected: $EXPECTED_SHA256"
+        echo "  Actual:   $ACTUAL_SHA256"
+        echo "Removing corrupted download..."
+        rm -f "$CACHED_IMAGE"
+        exit 1
+    fi
+    echo "Checksum verified successfully."
+
     echo "Extracting image..."
     xz -dk "$CACHED_IMAGE"
+else
+    # Verify cached image checksum
+    echo "Verifying cached image checksum..."
+    ACTUAL_SHA256=$(sha256sum "$CACHED_IMAGE" | awk '{print $1}')
+    if [[ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]]; then
+        echo "WARNING: Cached image checksum mismatch, re-downloading..."
+        rm -f "$CACHED_IMAGE" "${CACHED_IMAGE%.xz}"
+        echo "Downloading base image..."
+        curl -fsSL "$BASE_IMAGE_URL" -o "$CACHED_IMAGE"
+
+        ACTUAL_SHA256=$(sha256sum "$CACHED_IMAGE" | awk '{print $1}')
+        if [[ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]]; then
+            echo "ERROR: Checksum verification failed after re-download!"
+            echo "  Expected: $EXPECTED_SHA256"
+            echo "  Actual:   $ACTUAL_SHA256"
+            rm -f "$CACHED_IMAGE"
+            exit 1
+        fi
+        echo "Checksum verified successfully."
+
+        echo "Extracting image..."
+        xz -dk "$CACHED_IMAGE"
+    else
+        echo "Cached image checksum verified."
+    fi
 fi
 
 # Copy to build directory
@@ -137,9 +181,11 @@ sudo cp /etc/resolv.conf "$MOUNT_DIR/etc/resolv.conf"
 echo "Running provisioning..."
 sudo chroot "$MOUNT_DIR" /bin/bash -c "
     set -e
+    export DEBIAN_FRONTEND=noninteractive
     apt-get update
-    # Install packages, ignoring initramfs-tools errors (expected in chroot)
-    apt-get install -y python3 python3-pip ansible curl || true
+    # Install packages - initramfs-tools may fail in chroot but packages will still install
+    apt-get install -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' \
+        python3 python3-pip ansible curl
 "
 
 # Copy and run Ansible
