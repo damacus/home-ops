@@ -136,20 +136,6 @@ spec:
             runcmd:
               - /usr/local/bin/ironstone-provision.sh
 
-          group-node-a.json.tmpl: |
-            {
-              "id": "node-a",
-              "name": "Node A (RPi5)",
-              "profile": "rpi5-gold",
-              "selector": {
-                "serial": "REPLACE_WITH_NODE_A_SERIAL"
-              },
-              "metadata": {
-                "hostname": "node-a",
-                "k3s_token": "__K3S_TOKEN__"
-              }
-            }
-
           profile-rock5b-gold.json: |
             {
               "id": "rock5b-gold",
@@ -268,18 +254,6 @@ spec:
                   log "Provisioning complete. k3s-init.service will start k3s."
             runcmd:
               - /usr/local/bin/ironstone-provision.sh
-
-          group-rock5b.json.tmpl: |
-            {
-              "id": "rock5b-default",
-              "name": "Rock 5B Default",
-              "profile": "rock5b-gold",
-              "selector": {},
-              "metadata": {
-                "hostname": "rock5b-node",
-                "k3s_token": "__K3S_TOKEN__"
-              }
-            }
 
           setup.sh: |
             #!/bin/sh
