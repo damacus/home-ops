@@ -39,6 +39,9 @@ includes:
   user:
     taskfile: .taskfiles/User
     optional: true
+  provisioning:
+    aliases: ["prov"]
+    taskfile: .taskfiles/Provisioning/Taskfile.yaml
 
 tasks:
   default: task -l

@@ -1,0 +1,28 @@
+---
+# =============================================================================
+# Ironstone Provisioning Playbook
+# =============================================================================
+# All variables are passed via --extra-vars from build-native.sh.
+# No defaults are defined here - config.env is the source of truth.
+#
+# Required variables:
+#   - target_board: rpi5 | rock5b
+#   - nfs_server: NFS server IP
+#   - nfs_share: NFS share path
+#   - cloud_init_url: Cloud-init datasource URL
+#   - k3s_version: K3s version (can be empty for latest)
+#   - k3s_vip: K3s API server VIP
+# =============================================================================
+
+- name: Provision Ironstone Image
+  hosts: default
+  become: true
+
+  tasks:
+    - name: Debug variables
+      debug:
+        msg: "Provisioning {{ target_board }} gold master image"
+
+    - name: Include Gold Master Role
+      ansible.builtin.include_role:
+        name: gold-master

@@ -1,0 +1,76 @@
+# =============================================================================
+# Ironstone Cloud-Init Configuration
+# =============================================================================
+# This file configures cloud-init to fetch metadata from Matchbox.
+# Matchbox matches nodes by MAC address and injects:
+#   - hostname
+#   - k3s_token
+#   - node_role (optional)
+# =============================================================================
+
+# Datasource configuration
+datasource_list: [ NoCloud, None ]
+datasource:
+  NoCloud:
+    seedfrom: "{{ cloud_init_url }}"
+    # Matchbox serves metadata at /metadata and userdata at /userdata
+    # The MAC address is sent as a query parameter for matching
+
+# System configuration
+preserve_hostname: false
+manage_etc_hosts: true
+
+# Locale and timezone (en_GB as per user preference)
+locale: en_GB.UTF-8
+timezone: Europe/London
+
+# SSH configuration
+ssh_deletekeys: true
+ssh_genkeytypes: ['ed25519', 'rsa']
+
+# Disable phone home
+phone_home:
+  url: ""
+  post: []
+  tries: 0
+
+# Module configuration
+cloud_init_modules:
+  - migrator
+  - seed_random
+  - bootcmd
+  - write-files
+  - growpart
+  - resizefs
+  - disk_setup
+  - mounts
+  - set_hostname
+  - update_hostname
+  - update_etc_hosts
+  - ca-certs
+  - rsyslog
+  - users-groups
+  - ssh
+
+cloud_config_modules:
+  - emit_upstart
+  - ssh-import-id
+  - locale
+  - set-passwords
+  - grub-dpkg
+  - apt-configure
+  - ntp
+  - timezone
+  - disable-ec2-metadata
+  - runcmd
+
+cloud_final_modules:
+  - package-update-upgrade-install
+  - scripts-vendor
+  - scripts-per-once
+  - scripts-per-boot
+  - scripts-per-instance
+  - scripts-user
+  - ssh-authkey-fingerprints
+  - keys-to-console
+  - final-message

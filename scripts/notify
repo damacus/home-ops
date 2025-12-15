@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+#
+# Pushover notification script for agent task status
+#
+# Usage:
+#   bin/notify --status success --message "Task completed successfully"
+#   bin/notify --status failure --message "Build failed" --title "CI Error"
+#   bin/notify --status stuck --message "Agent stuck on test step for 15 minutes"
+#
+# Environment variables (required):
+#   PUSHOVER_USER_KEY  - Your Pushover user key
+#   PUSHOVER_API_TOKEN - Your Pushover application API token
+#
+# Optional environment variables:
+#   PUSHOVER_DEVICE    - Target specific device(s)
+#
+set -euo pipefail
+
+# Pushover API endpoint
+PUSHOVER_API_URL="https://api.pushover.net/1/messages.json"
+
+# Default values
+TITLE="Agent Notification"
+PRIORITY=0
+SOUND="pushover"
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Send notifications via Pushover.net for agent task status.
+
+Options:
+  -s, --status STATUS    Status type: success, failure, stuck (required)
+  -m, --message MESSAGE  Notification message (required)
+  -t, --title TITLE      Notification title (default: "Agent Notification")
+  -h, --help             Show this help message
+
+Status types:
+  success  - Task completed successfully (normal priority, green)
+  failure  - Task failed (high priority, red, persistent)
+  stuck    - Agent stuck on task >10 min (high priority, orange)
+
+Environment variables:
+  PUSHOVER_USER_KEY   - Your Pushover user key (required)
+  PUSHOVER_API_TOKEN  - Your Pushover application API token (required)
+  PUSHOVER_DEVICE     - Target specific device(s) (optional)
+
+Examples:
+  bin/notify --status success --message "Deployment completed"
+  bin/notify --status failure --message "Tests failed" --title "CI Pipeline"
+  bin/notify --status stuck --message "Agent stuck on refactoring step"
+EOF
+  exit 0
+}
+
+error() {
+  echo "Error: $1" >&2
+  exit 1
+}
+
+# Parse arguments
+STATUS=""
+MESSAGE=""
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -s|--status)
+      STATUS="$2"
+      shift 2
+      ;;
+    -m|--message)
+      MESSAGE="$2"
+      shift 2
+      ;;
+    -t|--title)
+      TITLE="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      ;;
+    *)
+      error "Unknown option: $1"
+      ;;
+  esac
+done
+
+# Validate required arguments
+[[ -z "$STATUS" ]] && error "Status is required. Use --status success|failure|stuck"
+[[ -z "$MESSAGE" ]] && error "Message is required. Use --message \"your message\""
+
+# Validate environment variables
+[[ -z "${PUSHOVER_USER_KEY:-}" ]] && error "PUSHOVER_USER_KEY environment variable is not set"
+[[ -z "${PUSHOVER_API_TOKEN:-}" ]] && error "PUSHOVER_API_TOKEN environment variable is not set"
+
+# Set priority and sound based on status
+case $STATUS in
+  success)
+    PRIORITY=0
+    SOUND="pushover"
+    TITLE="${TITLE} ✅"
+    ;;
+  failure)
+    PRIORITY=1
+    SOUND="siren"
+    TITLE="${TITLE} ❌"
+    ;;
+  stuck)
+    PRIORITY=1
+    SOUND="mechanical"
+    TITLE="${TITLE} ⚠️"
+    ;;
+  *)
+    error "Invalid status: $STATUS. Use success, failure, or stuck"
+    ;;
+esac
+
+# Build curl arguments
+CURL_ARGS=(
+  -s
+  --form-string "token=${PUSHOVER_API_TOKEN}"
+  --form-string "user=${PUSHOVER_USER_KEY}"
+  --form-string "title=${TITLE}"
+  --form-string "message=${MESSAGE}"
+  --form-string "priority=${PRIORITY}"
+  --form-string "sound=${SOUND}"
+)
+
+# Add device if specified
+if [[ -n "${PUSHOVER_DEVICE:-}" ]]; then
+  CURL_ARGS+=(--form-string "device=${PUSHOVER_DEVICE}")
+fi
+
+# Send notification
+RESPONSE=$(curl "${CURL_ARGS[@]}" "$PUSHOVER_API_URL")
+
+# Check response
+if echo "$RESPONSE" | grep -q '"status":1'; then
+  echo "Notification sent successfully"
+  exit 0
+else
+  echo "Failed to send notification: $RESPONSE" >&2
+  exit 1
+fi

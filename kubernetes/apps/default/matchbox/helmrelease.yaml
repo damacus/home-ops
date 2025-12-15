@@ -1,0 +1,192 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: matchbox
+  namespace: default
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 4.4.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  values:
+    configMaps:
+      data:
+        enabled: true
+        data:
+          profile-rpi5-gold.json: |
+            {
+              "id": "rpi5-gold",
+              "name": "Raspberry Pi 5 Gold Master",
+              "cloud_id": "nocloud",
+              "boot": {},
+              "cloud": "user-data-rpi5.yaml",
+              "generic_config": "generic-rpi5.yaml"
+            }
+
+          user-data-rpi5.yaml: |
+            #cloud-config
+            hostname: "{{.hostname}}"
+            ssh_import_id:
+              - gh:damacus
+            write_files:
+              - path: /etc/rancher/k3s/config.yaml
+                content: |
+                  server: https://192.168.1.200:6443
+                  token: "{{.k3s_token}}"
+                  node-label:
+                    - "ironstone.casa/platform=pi"
+                    - "ironstone.casa/board=rpi5"
+            runcmd:
+              - systemctl enable --now k3s
+
+          group-node-a.json.tmpl: |
+            {
+              "id": "node-a",
+              "name": "Node A (RPi5)",
+              "profile": "rpi5-gold",
+              "selector": {
+                "serial": "REPLACE_WITH_NODE_A_SERIAL"
+              },
+              "metadata": {
+                "hostname": "node-a",
+                "k3s_token": "__K3S_TOKEN__"
+              }
+            }
+
+          profile-rock5b-gold.json: |
+            {
+              "id": "rock5b-gold",
+              "name": "Rock 5B Gold Master",
+              "cloud_id": "nocloud",
+              "boot": {},
+              "cloud": "user-data-rock5b.yaml",
+              "generic_config": "generic-rock5b.yaml"
+            }
+
+          user-data-rock5b.yaml: |
+            #cloud-config
+            hostname: "{{.hostname}}"
+            ssh_import_id:
+              - gh:damacus
+            write_files:
+              - path: /etc/rancher/k3s/config.yaml
+                content: |
+                  server: https://192.168.1.200:6443
+                  token: "{{.k3s_token}}"
+                  node-label:
+                    - "ironstone.casa/platform=rocky"
+                    - "ironstone.casa/board=rock5b"
+            runcmd:
+              - systemctl enable --now k3s
+
+          group-rock5b.json.tmpl: |
+            {
+              "id": "rock5b-node",
+              "name": "Rock 5B Node",
+              "profile": "rock5b-gold",
+              "selector": {
+                "serial": "REPLACE_WITH_ROCK5B_SERIAL"
+              },
+              "metadata": {
+                "hostname": "rocky",
+                "k3s_token": "__K3S_TOKEN__"
+              }
+            }
+
+    controllers:
+      matchbox:
+        replicas: 1
+        initContainers:
+          setup-data:
+            image:
+              repository: busybox
+              tag: latest
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                DATA_DIR="/var/lib/matchbox"
+                mkdir -p ${DATA_DIR}/profiles ${DATA_DIR}/groups ${DATA_DIR}/cloud ${DATA_DIR}/generic
+                cp /tmp/config/profile*.json ${DATA_DIR}/profiles/ 2>/dev/null || true
+                for tmpl in /tmp/config/group*.json.tmpl; do
+                  [ -f "${tmpl}" ] || continue
+                  out="${DATA_DIR}/groups/$(basename "${tmpl}" .tmpl)"
+                  if [ -n "${K3S_TOKEN:-}" ]; then
+                    escaped_token=$(printf '%s' "${K3S_TOKEN}" | sed -e 's/[\\&|]/\\\\&/g')
+                    sed "s|__K3S_TOKEN__|${escaped_token}|g" "${tmpl}" > "${out}"
+                  else
+                    cp "${tmpl}" "${out}"
+                  fi
+                done
+                cp /tmp/config/user-data*.yaml ${DATA_DIR}/cloud/ 2>/dev/null || true
+                echo "Data setup complete."
+                ls -R ${DATA_DIR}
+            env:
+              K3S_TOKEN:
+                valueFrom:
+                  secretKeyRef:
+                    name: matchbox
+                    key: K3S_TOKEN
+        containers:
+          app:
+            image:
+              repository: quay.io/poseidon/matchbox
+              tag: v0.11.0
+            args:
+              - -address=0.0.0.0:8080
+              - -rpc-address=0.0.0.0:8081
+              - -log-level=debug
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+
+    service:
+      app:
+        controller: matchbox
+        ports:
+          http:
+            port: 8080
+          grpc:
+            port: 8081
+
+    route:
+      app:
+        hostnames:
+          - provision.ironstone.casa
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: matchbox
+                port: 8080
+
+    persistence:
+      data:
+        type: emptyDir
+        globalMounts:
+          - path: /var/lib/matchbox
+      config:
+        type: configMap
+        identifier: data
+        globalMounts:
+          - path: /tmp/config
