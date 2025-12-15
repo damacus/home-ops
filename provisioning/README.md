@@ -74,7 +74,7 @@ cp config.env config.env.local
 |------------------------|------------------------------------|-----------------------------------------|
 | `NFS_SERVER`           | NFS server IP                      | `192.168.1.243`                         |
 | `NFS_SHARE`            | NFS share path                     | `/volume1/NFS`                          |
-| `CLOUD_INIT_URL`       | Cloud-init datasource              | `http://provision.ironstone.casa:8080/` |
+| `CLOUD_INIT_URL`       | Cloud-init datasource              | `https://provision.ironstone.casa/` |
 | `K3S_VIP`              | K3s API server VIP                 | `192.168.1.200`                         |
 | `K3S_VERSION`          | K3s version to install             | `v1.31.3+k3s1`                          |
 

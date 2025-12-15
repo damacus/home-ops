@@ -156,7 +156,7 @@ sudo chroot "$MOUNT_DIR" /bin/bash -c "
         -e 'image_type=gold' \
         -e 'nfs_server=${NFS_SERVER:-192.168.1.243}' \
         -e 'nfs_share=${NFS_SHARE:-/volume1/NFS}' \
-        -e 'cloud_init_url=${CLOUD_INIT_URL:-http://provision.ironstone.casa:8080/}' \
+        -e 'cloud_init_url=${CLOUD_INIT_URL:-https://provision.ironstone.casa/}' \
         -e 'k3s_vip=${K3S_VIP:-192.168.1.200}' \
         -e 'k3s_version=${K3S_VERSION:-}' || echo 'Ansible completed with warnings (expected in chroot)'
 "

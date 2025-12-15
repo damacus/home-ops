@@ -47,21 +47,21 @@ tasks:
         limactl shell {{.LIMA_VM}} bash -c "cd {{.PROVISIONING_DIR}} && GIT_SHA={{.GIT_SHA}} ./build-native.sh {{.BOARD}} gold"
 
   copy:
-    desc: Copy built image from Lima VM to local packer/builds/
+    desc: Copy built image from Lima VM to ~/Downloads (for Raspberry Pi Imager/Etcher)
     deps: [check-lima]
     cmds:
       - |
         echo "Copying latest {{.BOARD}}-gold image from Lima VM..."
-        mkdir -p {{.PROVISIONING_DIR}}/packer/builds
         # Get the most recent image file
         LATEST=$(limactl shell {{.LIMA_VM}} bash -c "ls -t ~/ironstone-builds/{{.BOARD}}-gold-*.img 2>/dev/null | head -1")
         if [ -z "$LATEST" ]; then
           echo "Error: No {{.BOARD}}-gold image found in Lima VM"
           exit 1
         fi
-        echo "Copying: $LATEST"
-        limactl copy "{{.LIMA_VM}}:$LATEST" {{.PROVISIONING_DIR}}/packer/builds/
-        echo "Done. Image copied to {{.PROVISIONING_DIR}}/packer/builds/"
+        FILENAME=$(basename "$LATEST")
+        echo "Copying: $FILENAME to ~/Downloads/"
+        limactl copy "{{.LIMA_VM}}:$LATEST" ~/Downloads/
+        echo "Done. Image ready at ~/Downloads/$FILENAME"
 
   build-and-copy:
     desc: Build image and copy to local machine
@@ -69,7 +69,35 @@ tasks:
       - task: build
       - task: copy
 
+  clean:
+    desc: Remove built images from Lima VM to free disk space
+    deps: [check-lima]
+    cmds:
+      - |
+        echo "Cleaning build artifacts from Lima VM..."
+        limactl shell {{.LIMA_VM}} bash -c "rm -rf ~/ironstone-builds/*.img ~/ironstone-builds/*.img.xz 2>/dev/null || true"
+        echo "Checking Lima VM disk usage..."
+        limactl shell {{.LIMA_VM}} df -h /home
+        echo "Done. Build artifacts removed."
+
   test:
     desc: Run provisioning tests (Bats)
     cmds:
       - "cd {{.PROVISIONING_DIR}} && bats tests/build.bats"
+
+  audit:
+    desc: Run CINC Auditor (InSpec) tests against a running node
+    cmds:
+      - |
+        if [ -z "{{.host}}" ]; then
+          echo "Usage: task provisioning:audit host=<ip-or-hostname>"
+          exit 1
+        fi
+        AUDITOR=$(command -v cinc-auditor || command -v inspec || echo "")
+        if [ -z "$AUDITOR" ]; then
+          echo "Error: Neither cinc-auditor nor inspec found. Install with:"
+          echo "  brew install cinc-auditor"
+          exit 1
+        fi
+        echo "Running $AUDITOR tests against {{.host}}..."
+        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec -t ssh://pi@{{.host}} -i ~/.ssh/id_ed25519 --reporter cli

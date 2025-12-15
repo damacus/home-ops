@@ -40,13 +40,21 @@
     masked: true
   ignore_errors: true  # May not exist on all systems
 
-- name: Disable swap
+- name: Disable swap in fstab
   ansible.posix.mount:
     name: "{{ item }}"
     fstype: swap
     state: absent
   loop: ["none", "swap"]
   ignore_errors: true
+
+- name: Disable Armbian zram swap
+  ansible.builtin.lineinfile:
+    path: /etc/default/armbian-zram-config
+    regexp: '^ENABLED='
+    line: 'ENABLED=false'
+    create: false
+  ignore_errors: true  # File may not exist on non-Armbian systems
 
 # -----------------------------------------------------------------------------
 # Package Installation
@@ -103,6 +111,11 @@
     append: true
     create_home: true
 
+- name: Set root password same as pi user
+  user:
+    name: root
+    password: '$y$j9T$sOTilo3FwaNEi8nW0WvZi1$TT71KjGbYKPz.PZTa4Q/GA0ipCaxUwXLlIb/OCL51D4'
+
 # -----------------------------------------------------------------------------
 # Kernel Module Configuration
 # -----------------------------------------------------------------------------
@@ -113,15 +126,6 @@
     owner: root
     group: root
     mode: '0644'
-
-- name: Load kernel modules immediately
-  modprobe:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - overlay
-    - br_netfilter
-  ignore_errors: true
 
 # -----------------------------------------------------------------------------
 # Sysctl Configuration

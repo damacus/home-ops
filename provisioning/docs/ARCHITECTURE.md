@@ -73,7 +73,7 @@ This document describes the architecture for building and deploying golden image
 │                                      ▼                                       │
 │   ┌──────────────────────────────────────────────────────────────────────┐  │
 │   │  2. cloud-init fetches metadata from Matchbox                        │  │
-│   │     GET http://provision.ironstone.casa:8080/metadata?mac=XX:XX:XX   │  │
+│   │     GET https://provision.ironstone.casa/metadata?mac=XX:XX:XX   │  │
 │   └──────────────────────────────────────────────────────────────────────┘  │
 │                                      │                                       │
 │                                      ▼                                       │
