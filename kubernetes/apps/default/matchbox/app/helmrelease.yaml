@@ -35,6 +35,11 @@ spec:
             hostname: "{{.hostname}}"
             ssh_import_id:
               - gh:damacus
+            users:
+              - name: pi
+                groups: sudo
+                shell: /bin/bash
+                sudo: ALL=(ALL) NOPASSWD:ALL
             write_files:
               - path: /etc/rancher/k3s/config.yaml
                 content: |
@@ -73,8 +78,14 @@ spec:
           user-data-rock5b.yaml: |
             #cloud-config
             hostname: "{{.hostname}}"
+            locale: en_GB.UTF-8
             ssh_import_id:
               - gh:damacus
+            users:
+              - name: pi
+                groups: sudo
+                shell: /bin/bash
+                sudo: ALL=(ALL) NOPASSWD:ALL
             write_files:
               - path: /etc/rancher/k3s/config.yaml
                 content: |
