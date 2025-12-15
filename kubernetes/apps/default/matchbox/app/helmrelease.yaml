@@ -109,6 +109,28 @@ spec:
               }
             }
 
+          setup.sh: |
+            #!/bin/sh
+            set -e
+            mkdir -p /var/lib/matchbox/profiles /var/lib/matchbox/groups /var/lib/matchbox/cloud /var/lib/matchbox/generic
+            for f in /tmp/config/profile-*.json; do
+              [ -f "$f" ] || continue
+              newname=$(basename "$f" | sed 's/^profile-//')
+              cp "$f" "/var/lib/matchbox/profiles/$newname"
+            done
+            for tmpl in /tmp/config/group-*.json.tmpl; do
+              [ -f "$tmpl" ] || continue
+              outfile="/var/lib/matchbox/groups/$(basename "$tmpl" .json.tmpl | sed 's/^group-//').json"
+              if [ -n "$K3S_TOKEN" ]; then
+                sed "s|__K3S_TOKEN__|$K3S_TOKEN|g" "$tmpl" > "$outfile"
+              else
+                cp "$tmpl" "$outfile"
+              fi
+            done
+            cp /tmp/config/user-data*.yaml /var/lib/matchbox/cloud/ 2>/dev/null || true
+            echo "Data setup complete."
+            ls -R /var/lib/matchbox
+
     controllers:
       matchbox:
         replicas: 1
@@ -117,27 +139,7 @@ spec:
             image:
               repository: busybox
               tag: latest
-            command: ["/bin/sh", "-c"]
-            args:
-              - |
-                mkdir -p /var/lib/matchbox/profiles /var/lib/matchbox/groups /var/lib/matchbox/cloud /var/lib/matchbox/generic
-                for f in /tmp/config/profile-*.json; do
-                  [ -f "$f" ] || continue
-                  newname=$(basename "$f" | sed 's/^profile-//')
-                  cp "$f" "/var/lib/matchbox/profiles/$newname"
-                done
-                for tmpl in /tmp/config/group-*.json.tmpl; do
-                  [ -f "$tmpl" ] || continue
-                  outfile="/var/lib/matchbox/groups/$(basename "$tmpl" .json.tmpl | sed 's/^group-//').json"
-                  if [ -n "$K3S_TOKEN" ]; then
-                    sed "s|__K3S_TOKEN__|$K3S_TOKEN|g" "$tmpl" > "$outfile"
-                  else
-                    cp "$tmpl" "$outfile"
-                  fi
-                done
-                cp /tmp/config/user-data*.yaml /var/lib/matchbox/cloud/ 2>/dev/null || true
-                echo "Data setup complete."
-                ls -R /var/lib/matchbox
+            command: ["/bin/sh", "/tmp/config/setup.sh"]
             env:
               K3S_TOKEN:
                 valueFrom:
