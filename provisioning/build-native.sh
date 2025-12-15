@@ -20,8 +20,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Configuration
 # -----------------------------------------------------------------------------
 TARGET_BOARD="${1:-rpi5}"
-TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-GIT_SHA=$(git -C "$SCRIPT_DIR/.." rev-parse --short HEAD 2>/dev/null || echo "unknown")
+TIMESTAMP=$(date +%Y%m%d)
+# GIT_SHA can be passed as env var from host (Lima VM can't access .git)
+GIT_SHA="${GIT_SHA:-unknown}"
 ARTIFACT_NAME="${TARGET_BOARD}-gold-${GIT_SHA}-${TIMESTAMP}.img"
 
 # Load config

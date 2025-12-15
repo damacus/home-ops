@@ -1,6 +1,7 @@
 ---
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
+silent: true
 
 vars:
   PROVISIONING_DIR: "{{.ROOT_DIR}}/provisioning"
@@ -8,10 +9,6 @@ vars:
   LIMA_VM: "ironstone"
 
 tasks:
-  default:
-    cmds:
-      - task -l
-
   check-lima:
     desc: Check if Lima is installed
     internal: true
@@ -41,10 +38,13 @@ tasks:
   build:
     desc: Build provisioning image via Lima VM
     deps: [check-vm]
+    vars:
+      GIT_SHA:
+        sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
     cmds:
       - |
         echo "Building {{.BOARD}}-gold image inside Lima VM..."
-        limactl shell {{.LIMA_VM}} bash -c "cd {{.PROVISIONING_DIR}} && ./build-native.sh {{.BOARD}} gold"
+        limactl shell {{.LIMA_VM}} bash -c "cd {{.PROVISIONING_DIR}} && GIT_SHA={{.GIT_SHA}} ./build-native.sh {{.BOARD}} gold"
 
   copy:
     desc: Copy built image from Lima VM to local packer/builds/
