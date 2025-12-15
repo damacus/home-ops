@@ -43,17 +43,23 @@ spec:
 
       # Storage configuration - using filesystem (openebs-hostpath)
       storage:
-        type: filesystem
-        filesystem:
-          chunks_directory: /var/loki/chunks
-          rules_directory: /var/loki/rules
+        type: s3
+        bucketNames:
+          chunks: loki
+          ruler: loki
+          admin: loki
+        s3:
+          endpoint: http://minio.storage.svc.cluster.local:9000
+          region: us-east-1
+          s3ForcePathStyle: true
+          insecure: true
 
       # Schema configuration
       schemaConfig:
         configs:
           - from: "2024-01-01"
             store: tsdb
-            object_store: filesystem
+            object_store: s3
             schema: v13
             index:
               prefix: loki_index_
@@ -191,3 +197,8 @@ spec:
     # Test configuration
     test:
       enabled: false
+
+  valuesFrom:
+    - kind: Secret
+      name: loki-s3
+      valuesKey: values.yaml
