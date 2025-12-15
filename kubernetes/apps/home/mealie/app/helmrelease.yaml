@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 3.7.3
+      version: 4.5.0
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -36,7 +36,7 @@ spec:
           app:
             image:
               repository: ghcr.io/mealie-recipes/mealie
-              tag: v3.4.0@sha256:545fb8af4287ad027e4f7eb8a0464fa2e21f157e88fda3d7a514ba1e6d3a86b0
+              tag: v3.7.0@sha256:bb2939094eed2f2b71458f2793c232d094c02507371107fe1068b79e6118c620
 
             env:
               TZ: "Europe/London"

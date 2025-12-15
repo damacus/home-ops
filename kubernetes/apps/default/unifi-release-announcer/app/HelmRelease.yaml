@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 4.3.0
+      version: 4.5.0
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -31,7 +31,7 @@ spec:
           app:
             image:
               repository: ghcr.io/damacus/unifi-release-announcer
-              tag: 0.1.6@sha256:bc902c9f122e181357629ed285b36c7fd1be057df2fe4395febffa5c2b689ac6
+              tag: 0.1.8@sha256:7d4b3f0c4634fa1b1bb39fde81ada5c42f1aa191b884da10b428ebc9437ccbf5
             env:
               - name: TAGS
                 value: "unifi-drive,unifi-network,unifi-protect"
