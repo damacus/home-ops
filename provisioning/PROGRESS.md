@@ -60,13 +60,61 @@ Requirements tested:
 - REQ-STORAGE-001, REQ-STORAGE-002
 - REQ-BOOT-001 through REQ-BOOT-003
 
-## Next Steps
+## Next Steps for Rock 5B+ Testing
 
-1. [ ] Build Rock 5B+ gold image with `task provisioning:build board=rock5b`
-2. [ ] Run gold image tests in Lima VM
-3. [ ] Flash image to hardware and boot
-4. [ ] Run running system tests
-5. [ ] Mark passing requirements in `requirements.json`
+### Option 1: VM Testing (Fast Iteration)
+
+Test cloud-init configuration in a VM before flashing to hardware:
+
+```bash
+# 1. Start a VM with Debian ARM64 cloud image
+#    (Use Parallels, UTM, or QEMU with a Debian genericcloud image)
+
+# 2. Generate seed ISO with PRODUCTION cloud-init (same as hardware)
+task provisioning:vm-test host=<vm-ip> profile=gold template=production
+
+# 3. After cloud-init completes, run running system tests
+task provisioning:vm-test host=<vm-ip> profile=running template=production
+```
+
+### Option 2: Lima VM Testing (Recommended)
+
+Test a built gold image in Lima:
+
+```bash
+# 1. Build the Rock 5B+ gold image
+task provisioning:build board=rock5b
+
+# 2. Copy image to local machine
+task provisioning:copy board=rock5b
+
+# 3. Test in Lima VM
+task provisioning:test-cloud-init image=~/Downloads/rock5b-gold-*.img profile=both
+```
+
+### Option 3: Hardware Testing
+
+Flash to SD card and test on real Rock 5B+ hardware:
+
+```bash
+# 1. Build and copy image
+task provisioning:build-and-copy board=rock5b
+
+# 2. Flash to SD card (use Raspberry Pi Imager or dd)
+# 3. Boot the Rock 5B+
+# 4. Run tests against the booted node
+task provisioning:audit-running host=<rock5b-ip>
+```
+
+### Marking Requirements as Passing
+
+After tests pass, update `requirements.json`:
+
+```bash
+# Mark a single requirement as passing
+jq '(.requirements[] | select(.id == "REQ-CLOUD-001")).passes = true' \
+  provisioning/requirements.json | sponge provisioning/requirements.json
+```
 
 ## Session Notes
 
