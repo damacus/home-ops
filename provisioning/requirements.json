@@ -1,0 +1,648 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "K3s Node Cloud-Init Requirements",
+  "description": "Strict, testable requirements for zero-touch provisioning of K3s cluster nodes via cloud-init. Each requirement has a unique ID, clear acceptance criteria, and verification method.",
+  "version": "1.0.0",
+  "metadata": {
+    "target_platforms": ["Raspberry Pi 5", "Rock 5B+"],
+    "base_os": "Armbian/Debian",
+    "k3s_version": "v1.31.3+k3s1",
+    "author": "Dan Webb",
+    "last_updated": "2025-12-16"
+  },
+  "requirements": [
+    {
+      "id": "REQ-CLOUD-001",
+      "category": "cloud-init",
+      "title": "Cloud-init package installed",
+      "description": "The cloud-init package MUST be installed on the gold image.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "Package 'cloud-init' is installed",
+        "cloud-init version >= 23.0"
+      ],
+      "test_steps": [
+        "Boot the image in a VM or on hardware",
+        "Run: dpkg -l cloud-init",
+        "Verify package is installed and version >= 23.0"
+      ],
+      "verification": {
+        "method": "inspec",
+        "profile": "gold",
+        "control": "gold-1.0",
+        "test": "describe package('cloud-init') { it { should be_installed } }"
+      }
+    },
+    {
+      "id": "REQ-CLOUD-002",
+      "category": "cloud-init",
+      "title": "NoCloud datasource configured",
+      "description": "Cloud-init MUST be configured to use the NoCloud datasource with seed directory at /var/lib/cloud/seed/nocloud.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /etc/cloud/cloud.cfg.d/99-ironstone.cfg exists",
+        "Datasource list contains 'NoCloud'",
+        "Seed directory is /var/lib/cloud/seed/nocloud"
+      ],
+      "test_steps": [
+        "Check /etc/cloud/cloud.cfg.d/99-ironstone.cfg exists",
+        "Verify datasource_list contains NoCloud"
+      ],
+      "verification": {
+        "method": "inspec",
+        "profile": "gold",
+        "control": "gold-1.1",
+        "test": "describe file('/etc/cloud/cloud.cfg.d/99-ironstone.cfg') { it { should exist }; its('content') { should match /NoCloud/ } }"
+      }
+    },
+    {
+      "id": "REQ-CLOUD-003",
+      "category": "cloud-init",
+      "title": "User-data file present",
+      "description": "The user-data file MUST exist at /var/lib/cloud/seed/nocloud/user-data and contain valid cloud-init configuration.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /var/lib/cloud/seed/nocloud/user-data exists",
+        "File starts with '#cloud-config'",
+        "File contains no unsubstituted template variables (__K3S_VIP__, __NFS_SERVER__, __NFS_SHARE__)"
+      ],
+      "test_steps": [
+        "Check /var/lib/cloud/seed/nocloud/user-data exists",
+        "Verify file starts with #cloud-config",
+        "Verify no __VAR__ placeholders remain"
+      ],
+      "verification": {
+        "method": "inspec",
+        "profile": "gold",
+        "control": "gold-1.2",
+        "test": "describe file('/var/lib/cloud/seed/nocloud/user-data') { it { should exist }; its('content') { should match /^#cloud-config/ }; its('content') { should_not match /__K3S_VIP__|__NFS_SERVER__|__NFS_SHARE__/ } }"
+      }
+    },
+    {
+      "id": "REQ-CLOUD-004",
+      "category": "cloud-init",
+      "title": "Meta-data file present",
+      "description": "The meta-data file MUST exist at /var/lib/cloud/seed/nocloud/meta-data.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /var/lib/cloud/seed/nocloud/meta-data exists"
+      ],
+      "test_steps": [
+        "Check /var/lib/cloud/seed/nocloud/meta-data exists",
+        "Verify meta-data contains instance-id"
+      ],
+      "verification": {
+        "method": "inspec",
+        "profile": "gold",
+        "control": "gold-1.3",
+        "test": "describe file('/var/lib/cloud/seed/nocloud/meta-data') { it { should exist } }"
+      }
+    },
+    {
+      "id": "REQ-CLOUD-005",
+      "category": "cloud-init",
+      "title": "Cloud-init state clean on gold image",
+      "description": "The gold image MUST have clean cloud-init state so it runs on first boot.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "Directory /var/lib/cloud/instance does not exist OR is empty",
+        "File /var/lib/cloud/instance/boot-finished does not exist"
+      ],
+      "test_steps": [
+        "Check /var/lib/cloud/instance does not exist",
+        "Check /var/lib/cloud/instances does not exist",
+        "Check /var/lib/cloud/data does not exist"
+      ],
+      "verification": {
+        "method": "inspec",
+        "profile": "gold",
+        "control": "gold-1.4",
+        "test": "describe file('/var/lib/cloud/instance/boot-finished') { it { should_not exist } }"
+      }
+    },
+    {
+      "id": "REQ-USER-001",
+      "category": "user",
+      "title": "Pi user created",
+      "description": "Cloud-init MUST create a user named 'pi' with sudo privileges.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "User 'pi' exists",
+        "User 'pi' is member of groups: adm, sudo",
+        "User 'pi' has passwordless sudo",
+        "User 'pi' shell is /bin/bash"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe user('pi') { it { should exist }; its('groups') { should include 'sudo' }; its('groups') { should include 'adm' } }"
+      }
+    },
+    {
+      "id": "REQ-USER-002",
+      "category": "user",
+      "title": "SSH authorized keys configured",
+      "description": "The pi user MUST have SSH authorized keys configured for passwordless login.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /home/pi/.ssh/authorized_keys exists",
+        "File contains at least one SSH public key",
+        "File permissions are 0600 or 0644",
+        "Directory /home/pi/.ssh permissions are 0700"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe file('/home/pi/.ssh/authorized_keys') { it { should exist }; its('content') { should_not be_empty } }"
+      }
+    },
+    {
+      "id": "REQ-SSH-001",
+      "category": "ssh",
+      "title": "SSH password authentication disabled",
+      "description": "SSH MUST have password authentication disabled for security.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "PasswordAuthentication is set to 'no' in sshd_config or cloud-init"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe sshd_config { its('PasswordAuthentication') { should eq 'no' } }"
+      }
+    },
+    {
+      "id": "REQ-SSH-002",
+      "category": "ssh",
+      "title": "SSH root login disabled",
+      "description": "SSH MUST have root login disabled for security.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "PermitRootLogin is set to 'no' in sshd_config or cloud-init"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe sshd_config { its('PermitRootLogin') { should eq 'no' } }"
+      }
+    },
+    {
+      "id": "REQ-SSH-003",
+      "category": "ssh",
+      "title": "SSH host keys removed on gold image",
+      "description": "The gold image MUST NOT contain SSH host keys. They MUST be regenerated on first boot.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "No files matching /etc/ssh/ssh_host_*_key exist on gold image",
+        "SSH host keys are generated after first boot"
+      ],
+      "verification": {
+        "method": "inspec",
+        "gold_test": "describe command('ls /etc/ssh/ssh_host_*_key 2>/dev/null') { its('stdout') { should be_empty } }",
+        "running_test": "describe file('/etc/ssh/ssh_host_ed25519_key') { it { should exist } }"
+      }
+    },
+    {
+      "id": "REQ-SYSTEM-001",
+      "category": "system",
+      "title": "Machine ID cleared on gold image",
+      "description": "The gold image MUST have /etc/machine-id empty or cleared. It MUST be regenerated on first boot.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /etc/machine-id is empty OR contains only 'uninitialized' on gold image",
+        "File /etc/machine-id contains a valid UUID after first boot"
+      ],
+      "verification": {
+        "method": "inspec",
+        "gold_test": "describe file('/etc/machine-id') { its('size') { should be <= 14 } }",
+        "running_test": "describe file('/etc/machine-id') { its('size') { should be > 0 } }"
+      }
+    },
+    {
+      "id": "REQ-SYSTEM-002",
+      "category": "system",
+      "title": "Hostname cleared on gold image",
+      "description": "The gold image MUST have hostname cleared. Hostname is set dynamically from MAC address on first boot.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /etc/hostname is empty OR contains 'localhost' on gold image",
+        "Hostname matches pattern 'node-[a-f0-9]{6}' after first boot (derived from MAC)"
+      ],
+      "verification": {
+        "method": "inspec",
+        "running_test": "describe command('hostname') { its('stdout.strip') { should match /^node-[a-f0-9]{6}$/ } }"
+      }
+    },
+    {
+      "id": "REQ-SYSTEM-003",
+      "category": "system",
+      "title": "Timezone set to Europe/London",
+      "description": "The system timezone MUST be set to Europe/London.",
+      "priority": "medium",
+      "passes": false,
+      "acceptance_criteria": [
+        "Timezone is Europe/London"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe command('timedatectl show --property=Timezone --value') { its('stdout.strip') { should eq 'Europe/London' } }"
+      }
+    },
+    {
+      "id": "REQ-SYSTEM-004",
+      "category": "system",
+      "title": "Locale set to en_GB.UTF-8",
+      "description": "The system locale MUST be set to en_GB.UTF-8.",
+      "priority": "medium",
+      "passes": false,
+      "acceptance_criteria": [
+        "LANG environment variable is en_GB.UTF-8"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe command('locale') { its('stdout') { should match /LANG=en_GB\\.UTF-8/ } }"
+      }
+    },
+    {
+      "id": "REQ-SYSTEM-005",
+      "category": "system",
+      "title": "Swap disabled",
+      "description": "Swap MUST be disabled for Kubernetes compatibility.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "No swap partitions are active",
+        "swapon --show returns empty output"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe command('swapon --show') { its('stdout') { should be_empty } }"
+      }
+    },
+    {
+      "id": "REQ-KERNEL-001",
+      "category": "kernel",
+      "title": "Overlay kernel module loaded",
+      "description": "The overlay kernel module MUST be loaded for container storage.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "Kernel module 'overlay' is loaded"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe kernel_module('overlay') { it { should be_loaded } }"
+      }
+    },
+    {
+      "id": "REQ-KERNEL-002",
+      "category": "kernel",
+      "title": "br_netfilter kernel module loaded",
+      "description": "The br_netfilter kernel module MUST be loaded for Kubernetes networking.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "Kernel module 'br_netfilter' is loaded"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe kernel_module('br_netfilter') { it { should be_loaded } }"
+      }
+    },
+    {
+      "id": "REQ-KERNEL-003",
+      "category": "kernel",
+      "title": "IPv4 forwarding enabled",
+      "description": "IPv4 forwarding MUST be enabled for Kubernetes networking.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "net.ipv4.ip_forward = 1"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe kernel_parameter('net.ipv4.ip_forward') { its('value') { should eq 1 } }"
+      }
+    },
+    {
+      "id": "REQ-KERNEL-004",
+      "category": "kernel",
+      "title": "Bridge netfilter for iptables enabled",
+      "description": "Bridge netfilter settings MUST be enabled for iptables to see bridged traffic.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "net.bridge.bridge-nf-call-iptables = 1",
+        "net.bridge.bridge-nf-call-ip6tables = 1"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe kernel_parameter('net.bridge.bridge-nf-call-iptables') { its('value') { should eq 1 } }"
+      }
+    },
+    {
+      "id": "REQ-K3S-001",
+      "category": "k3s",
+      "title": "K3s binary installed",
+      "description": "The k3s binary MUST be installed at /usr/local/bin/k3s and be executable.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /usr/local/bin/k3s exists",
+        "File is executable",
+        "File is owned by root"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe file('/usr/local/bin/k3s') { it { should exist }; it { should be_executable }; its('owner') { should eq 'root' } }"
+      }
+    },
+    {
+      "id": "REQ-K3S-002",
+      "category": "k3s",
+      "title": "K3s symlinks created",
+      "description": "K3s symlinks for kubectl, crictl, and ctr MUST exist.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "Symlink /usr/local/bin/kubectl -> k3s exists",
+        "Symlink /usr/local/bin/crictl -> k3s exists",
+        "Symlink /usr/local/bin/ctr -> k3s exists"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe file('/usr/local/bin/kubectl') { it { should be_symlink }; it { should be_linked_to 'k3s' } }"
+      }
+    },
+    {
+      "id": "REQ-K3S-003",
+      "category": "k3s",
+      "title": "K3s configuration file present",
+      "description": "The k3s config.yaml MUST exist at /etc/rancher/k3s/config.yaml with correct server and token-file settings.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /etc/rancher/k3s/config.yaml exists",
+        "File contains 'server:' with the K3S_VIP address",
+        "File contains 'token-file: /etc/rancher/k3s/token'"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe file('/etc/rancher/k3s/config.yaml') { it { should exist }; its('content') { should match /server:/ }; its('content') { should match /token-file:/ } }"
+      }
+    },
+    {
+      "id": "REQ-K3S-004",
+      "category": "k3s",
+      "title": "K3s systemd service configured",
+      "description": "The k3s.service systemd unit MUST be installed and enabled.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /etc/systemd/system/k3s.service exists",
+        "Service k3s is enabled",
+        "Service starts k3s agent mode"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe systemd_service('k3s') { it { should be_enabled } }"
+      }
+    },
+    {
+      "id": "REQ-K3S-005",
+      "category": "k3s",
+      "title": "K3s init script present",
+      "description": "The k3s-init.sh script MUST exist at /usr/local/bin/k3s-init.sh to handle NFS token retrieval.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /usr/local/bin/k3s-init.sh exists",
+        "File is executable",
+        "File contains NFS mount logic",
+        "File contains token copy logic"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe file('/usr/local/bin/k3s-init.sh') { it { should exist }; it { should be_executable }; its('content') { should match /mount.*nfs/ }; its('content') { should match /token/ } }"
+      }
+    },
+    {
+      "id": "REQ-NFS-001",
+      "category": "nfs",
+      "title": "NFS client installed",
+      "description": "The nfs-common package MUST be installed for NFS token retrieval.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "Package 'nfs-common' is installed"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe package('nfs-common') { it { should be_installed } }"
+      }
+    },
+    {
+      "id": "REQ-NFS-002",
+      "category": "nfs",
+      "title": "NFS mount uses safe options",
+      "description": "The NFS mount in k3s-init.sh MUST use safe mount options.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "Mount uses 'ro' (read-only) option",
+        "Mount uses 'noexec' option",
+        "Mount uses 'nosuid' option",
+        "Mount specifies NFS version (vers=4 or nfsvers=4)"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe file('/usr/local/bin/k3s-init.sh') { its('content') { should match /mount.*-o.*ro/ } }"
+      }
+    },
+    {
+      "id": "REQ-NFS-003",
+      "category": "nfs",
+      "title": "Token file has secure permissions",
+      "description": "The k3s token file MUST have secure permissions after retrieval.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /etc/rancher/k3s/token exists after first boot",
+        "File permissions are 0600",
+        "File is owned by root:root"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe file('/etc/rancher/k3s/token') { it { should exist }; its('mode') { should cmp '0600' }; its('owner') { should eq 'root' } }"
+      }
+    },
+    {
+      "id": "REQ-STORAGE-001",
+      "category": "storage",
+      "title": "iSCSI initiator installed",
+      "description": "The open-iscsi package MUST be installed for Longhorn storage.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "Package 'open-iscsi' is installed",
+        "Service 'iscsid' is enabled and running"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe package('open-iscsi') { it { should be_installed } }"
+      }
+    },
+    {
+      "id": "REQ-STORAGE-002",
+      "category": "storage",
+      "title": "Multipath installed",
+      "description": "The multipath-tools package MUST be installed for storage redundancy.",
+      "priority": "medium",
+      "passes": false,
+      "acceptance_criteria": [
+        "Package 'multipath-tools' is installed",
+        "Service 'multipathd' is enabled and running"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe package('multipath-tools') { it { should be_installed } }"
+      }
+    },
+    {
+      "id": "REQ-INIT-001",
+      "category": "init",
+      "title": "Ironstone init service installed",
+      "description": "The ironstone-init.service MUST be installed to set hostname from MAC before cloud-init.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /etc/systemd/system/ironstone-init.service exists",
+        "Service runs before cloud-init-local.service",
+        "Service is enabled"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe file('/etc/systemd/system/ironstone-init.service') { it { should exist }; its('content') { should match /Before=cloud-init/ } }"
+      }
+    },
+    {
+      "id": "REQ-INIT-002",
+      "category": "init",
+      "title": "Ironstone init script installed",
+      "description": "The ironstone-init.sh script MUST be installed to derive hostname from MAC address.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "File /usr/local/bin/ironstone-init.sh exists",
+        "File is executable",
+        "Script sets hostname based on MAC address"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe file('/usr/local/bin/ironstone-init.sh') { it { should exist }; it { should be_executable }; its('content') { should match /hostnamectl|hostname/ } }"
+      }
+    },
+    {
+      "id": "REQ-BOOT-001",
+      "category": "boot",
+      "title": "Cloud-init completes successfully",
+      "description": "Cloud-init MUST complete successfully on first boot without errors.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "cloud-init status returns 'status: done'",
+        "No errors in /var/log/cloud-init.log"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe command('cloud-init status') { its('stdout') { should match /status: done/ } }"
+      }
+    },
+    {
+      "id": "REQ-BOOT-002",
+      "category": "boot",
+      "title": "K3s agent joins cluster",
+      "description": "The k3s agent MUST successfully join the cluster after first boot.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "Service k3s is running",
+        "K3s logs show successful connection to server OR etcdserver running (for server nodes)"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe systemd_service('k3s') { it { should be_running } }"
+      }
+    },
+    {
+      "id": "REQ-BOOT-003",
+      "category": "boot",
+      "title": "Root filesystem expanded",
+      "description": "The root filesystem MUST be expanded to use full disk space on first boot.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "Root filesystem size is greater than 4GB"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe command(\"df -h / | tail -1 | awk '{print $2}'\") { its('stdout.strip') { should_not match /^[0-3]\\./ } }"
+      }
+    }
+  ],
+  "test_profiles": {
+    "gold_image": {
+      "description": "Tests to run against the gold image before first boot",
+      "requirements": [
+        "REQ-CLOUD-001",
+        "REQ-CLOUD-002",
+        "REQ-CLOUD-003",
+        "REQ-CLOUD-004",
+        "REQ-CLOUD-005",
+        "REQ-SSH-003",
+        "REQ-SYSTEM-001",
+        "REQ-K3S-001",
+        "REQ-K3S-002",
+        "REQ-K3S-003",
+        "REQ-K3S-004",
+        "REQ-K3S-005",
+        "REQ-NFS-001",
+        "REQ-NFS-002",
+        "REQ-INIT-001",
+        "REQ-INIT-002"
+      ]
+    },
+    "running_system": {
+      "description": "Tests to run against a booted node after cloud-init completes",
+      "requirements": [
+        "REQ-USER-001",
+        "REQ-USER-002",
+        "REQ-SSH-001",
+        "REQ-SSH-002",
+        "REQ-SSH-003",
+        "REQ-SYSTEM-002",
+        "REQ-SYSTEM-003",
+        "REQ-SYSTEM-004",
+        "REQ-SYSTEM-005",
+        "REQ-KERNEL-001",
+        "REQ-KERNEL-002",
+        "REQ-KERNEL-003",
+        "REQ-KERNEL-004",
+        "REQ-NFS-003",
+        "REQ-STORAGE-001",
+        "REQ-STORAGE-002",
+        "REQ-BOOT-001",
+        "REQ-BOOT-002",
+        "REQ-BOOT-003"
+      ]
+    }
+  }
+}
