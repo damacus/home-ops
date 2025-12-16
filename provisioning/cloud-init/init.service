@@ -1,5 +1,5 @@
 [Unit]
-Description=Ironstone Cloud-Init Datasource Setup
+Description=Ironstone First-Boot Hostname Setup
 DefaultDependencies=no
 Before=cloud-init-local.service cloud-init.service
 After=systemd-networkd-wait-online.service network-online.target
@@ -7,8 +7,9 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/ironstone-datasource.sh
+ExecStart=/usr/local/bin/ironstone-init.sh
 RemainAfterExit=yes
+TimeoutStartSec=30
 
 [Install]
 WantedBy=cloud-init-local.service

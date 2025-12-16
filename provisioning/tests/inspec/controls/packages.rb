@@ -1,7 +1,9 @@
-control "packages-1.0" do
+# frozen_string_literal: true
+
+control 'packages-1.0' do
   impact 1.0
-  title "Required packages are installed"
-  desc "Essential packages for Kubernetes nodes"
+  title 'Required packages are installed'
+  desc 'Essential packages for Kubernetes nodes'
 
   %w[
     curl
@@ -18,10 +20,10 @@ control "packages-1.0" do
   end
 end
 
-control "packages-1.1" do
+control 'packages-1.1' do
   impact 0.7
-  title "Python packages for Ansible"
-  desc "Python packages required for cluster management"
+  title 'Python packages for Ansible'
+  desc 'Python packages required for cluster management'
 
   %w[
     python3

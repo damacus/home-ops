@@ -1,0 +1,12 @@
+name: ironstone-vm-test
+title: Ironstone VM Cloud-Init Test
+maintainer: Dan Webb
+copyright: Dan Webb
+copyright_email: dan.webb@damacus.io
+license: MIT
+summary: Lightweight VM test profile for validating cloud-init in QEMU/Lima
+version: 1.0.0
+supports:
+  - platform-family: debian
+
+inspec_version: ">= 5.0"
