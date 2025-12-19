@@ -189,8 +189,9 @@ sudo mount --bind /dev/pts "$MOUNT_DIR/dev/pts"
 sudo mount -t proc proc "$MOUNT_DIR/proc"
 sudo mount -t sysfs sysfs "$MOUNT_DIR/sys"
 
-# Copy resolv.conf for DNS
-sudo cp /etc/resolv.conf "$MOUNT_DIR/etc/resolv.conf"
+# Copy resolv.conf for DNS (handle symlinks in Lima/containers)
+sudo rm -f "$MOUNT_DIR/etc/resolv.conf" 2>/dev/null || true
+cat /etc/resolv.conf | sudo tee "$MOUNT_DIR/etc/resolv.conf" > /dev/null
 
 # Install cloud-init and nfs-common in chroot
 sudo chroot "$MOUNT_DIR" /bin/bash -c "
@@ -218,12 +219,12 @@ sudo mkdir -p "$MOUNT_DIR/etc/systemd/system"
 sudo mkdir -p "$MOUNT_DIR/etc/rancher/k3s"
 
 # Copy cloud-init user-data (template in values from config.env)
-sudo sed \
+sed \
     -e "s|__K3S_VIP__|${K3S_VIP}|g" \
     -e "s|__NFS_SERVER__|${NFS_SERVER}|g" \
     -e "s|__NFS_SHARE__|${NFS_SHARE}|g" \
     "$CLOUD_INIT_DIR/user-data.yaml" \
-    > "$MOUNT_DIR/var/lib/cloud/seed/nocloud/user-data"
+    | sudo tee "$MOUNT_DIR/var/lib/cloud/seed/nocloud/user-data" > /dev/null
 echo "instance-id: ironstone-${TARGET_BOARD}-${GIT_SHA}" | sudo tee "$MOUNT_DIR/var/lib/cloud/seed/nocloud/meta-data" > /dev/null
 
 # Configure datasource
@@ -259,11 +260,111 @@ fi
 
 sudo cp "$K3S_BINARY" "$MOUNT_DIR/usr/local/bin/k3s"
 sudo chmod 755 "$MOUNT_DIR/usr/local/bin/k3s"
+sudo chown root:root "$MOUNT_DIR/usr/local/bin/k3s"
 
 # Create symlinks
 sudo ln -sf k3s "$MOUNT_DIR/usr/local/bin/kubectl"
 sudo ln -sf k3s "$MOUNT_DIR/usr/local/bin/crictl"
 sudo ln -sf k3s "$MOUNT_DIR/usr/local/bin/ctr"
+
+# -----------------------------------------------------------------------------
+# Install K3s configuration
+# -----------------------------------------------------------------------------
+echo "Installing K3s configuration..."
+
+# K3s config directory and file
+sudo mkdir -p "$MOUNT_DIR/etc/rancher/k3s"
+cat <<EOF | sudo tee "$MOUNT_DIR/etc/rancher/k3s/config.yaml" > /dev/null
+server: https://${K3S_VIP}:6443
+token-file: /var/lib/rancher/k3s/server/token
+EOF
+
+# K3s init script (fetches token from NFS)
+cat <<'INITSCRIPT' | sed \
+    -e "s|__NFS_SERVER__|${NFS_SERVER}|g" \
+    -e "s|__NFS_SHARE__|${NFS_SHARE}|g" \
+    | sudo tee "$MOUNT_DIR/usr/local/bin/k3s-init.sh" > /dev/null
+#!/bin/bash
+set -euo pipefail
+
+NFS_SERVER="__NFS_SERVER__"
+NFS_SHARE="__NFS_SHARE__"
+TOKEN_FILE="/var/lib/rancher/k3s/server/token"
+MOUNT_POINT="/mnt/nfs-token"
+
+mkdir -p "$MOUNT_POINT"
+mkdir -p "$(dirname "$TOKEN_FILE")"
+
+if mount -t nfs -o ro,soft,timeo=10,retrans=2 "${NFS_SERVER}:${NFS_SHARE}" "$MOUNT_POINT"; then
+    if [ -f "$MOUNT_POINT/k3s-token" ]; then
+        cp "$MOUNT_POINT/k3s-token" "$TOKEN_FILE"
+        chmod 600 "$TOKEN_FILE"
+    fi
+    umount "$MOUNT_POINT" || true
+fi
+rmdir "$MOUNT_POINT" 2>/dev/null || true
+INITSCRIPT
+sudo chmod 755 "$MOUNT_DIR/usr/local/bin/k3s-init.sh"
+
+# K3s systemd service
+cat <<EOF | sudo tee "$MOUNT_DIR/etc/systemd/system/k3s.service" > /dev/null
+[Unit]
+Description=Lightweight Kubernetes
+Documentation=https://k3s.io
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+ExecStartPre=/usr/local/bin/k3s-init.sh
+ExecStart=/usr/local/bin/k3s agent
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# -----------------------------------------------------------------------------
+# Install kernel modules configuration
+# -----------------------------------------------------------------------------
+echo "Installing kernel modules configuration..."
+sudo mkdir -p "$MOUNT_DIR/etc/modules-load.d"
+cat <<EOF | sudo tee "$MOUNT_DIR/etc/modules-load.d/k8s-modules.conf" > /dev/null
+overlay
+br_netfilter
+ip_vs
+ip_vs_rr
+ip_vs_wrr
+ip_vs_sh
+nf_conntrack
+iscsi_tcp
+EOF
+
+# -----------------------------------------------------------------------------
+# Install sysctl configuration
+# -----------------------------------------------------------------------------
+echo "Installing sysctl configuration..."
+sudo mkdir -p "$MOUNT_DIR/etc/sysctl.d"
+cat <<EOF | sudo tee "$MOUNT_DIR/etc/sysctl.d/99-k8s.conf" > /dev/null
+net.ipv4.ip_forward = 1
+net.ipv6.conf.all.forwarding = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+fs.inotify.max_user_watches = 524288
+fs.inotify.max_user_instances = 512
+EOF
+
+# -----------------------------------------------------------------------------
+# Install SSH hardening configuration
+# -----------------------------------------------------------------------------
+echo "Installing SSH hardening configuration..."
+sudo mkdir -p "$MOUNT_DIR/etc/ssh/sshd_config.d"
+cat <<EOF | sudo tee "$MOUNT_DIR/etc/ssh/sshd_config.d/99-harden.conf" > /dev/null
+PasswordAuthentication no
+PermitRootLogin no
+AuthenticationMethods publickey
+EOF
 
 # -----------------------------------------------------------------------------
 # Clean up for gold image
