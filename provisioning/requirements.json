@@ -4,7 +4,10 @@
   "description": "Strict, testable requirements for zero-touch provisioning of K3s cluster nodes via cloud-init. Each requirement has a unique ID, clear acceptance criteria, and verification method.",
   "version": "1.0.0",
   "metadata": {
-    "target_platforms": ["Raspberry Pi 5", "Rock 5B+"],
+    "target_platforms": [
+      "Raspberry Pi 5",
+      "Rock 5B+"
+    ],
     "base_os": "Armbian/Debian",
     "k3s_version": "v1.31.3+k3s1",
     "author": "Dan Webb",
@@ -17,7 +20,7 @@
       "title": "Cloud-init package installed",
       "description": "The cloud-init package MUST be installed on the gold image.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Package 'cloud-init' is installed",
         "cloud-init version >= 23.0"
@@ -40,7 +43,7 @@
       "title": "NoCloud datasource configured",
       "description": "Cloud-init MUST be configured to use the NoCloud datasource with seed directory at /var/lib/cloud/seed/nocloud.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /etc/cloud/cloud.cfg.d/99-ironstone.cfg exists",
         "Datasource list contains 'NoCloud'",
@@ -63,7 +66,7 @@
       "title": "User-data file present",
       "description": "The user-data file MUST exist at /var/lib/cloud/seed/nocloud/user-data and contain valid cloud-init configuration.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /var/lib/cloud/seed/nocloud/user-data exists",
         "File starts with '#cloud-config'",
@@ -87,7 +90,7 @@
       "title": "Meta-data file present",
       "description": "The meta-data file MUST exist at /var/lib/cloud/seed/nocloud/meta-data.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /var/lib/cloud/seed/nocloud/meta-data exists"
       ],
@@ -108,7 +111,7 @@
       "title": "Cloud-init state clean on gold image",
       "description": "The gold image MUST have clean cloud-init state so it runs on first boot.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Directory /var/lib/cloud/instance does not exist OR is empty",
         "File /var/lib/cloud/instance/boot-finished does not exist"
@@ -197,7 +200,7 @@
       "title": "SSH host keys removed on gold image",
       "description": "The gold image MUST NOT contain SSH host keys. They MUST be regenerated on first boot.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "No files matching /etc/ssh/ssh_host_*_key exist on gold image",
         "SSH host keys are generated after first boot"
@@ -214,7 +217,7 @@
       "title": "Machine ID cleared on gold image",
       "description": "The gold image MUST have /etc/machine-id empty or cleared. It MUST be regenerated on first boot.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /etc/machine-id is empty OR contains only 'uninitialized' on gold image",
         "File /etc/machine-id contains a valid UUID after first boot"
@@ -354,7 +357,7 @@
       "title": "K3s binary installed",
       "description": "The k3s binary MUST be installed at /usr/local/bin/k3s and be executable.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /usr/local/bin/k3s exists",
         "File is executable",
@@ -371,7 +374,7 @@
       "title": "K3s symlinks created",
       "description": "K3s symlinks for kubectl, crictl, and ctr MUST exist.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Symlink /usr/local/bin/kubectl -> k3s exists",
         "Symlink /usr/local/bin/crictl -> k3s exists",
@@ -388,7 +391,7 @@
       "title": "K3s configuration file present",
       "description": "The k3s config.yaml MUST exist at /etc/rancher/k3s/config.yaml with correct server and token-file settings.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /etc/rancher/k3s/config.yaml exists",
         "File contains 'server:' with the K3S_VIP address",
@@ -405,7 +408,7 @@
       "title": "K3s systemd service configured",
       "description": "The k3s.service systemd unit MUST be installed and enabled.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /etc/systemd/system/k3s.service exists",
         "Service k3s is enabled",
@@ -422,7 +425,7 @@
       "title": "K3s init script present",
       "description": "The k3s-init.sh script MUST exist at /usr/local/bin/k3s-init.sh to handle NFS token retrieval.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /usr/local/bin/k3s-init.sh exists",
         "File is executable",
@@ -440,7 +443,7 @@
       "title": "NFS client installed",
       "description": "The nfs-common package MUST be installed for NFS token retrieval.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Package 'nfs-common' is installed"
       ],
@@ -455,7 +458,7 @@
       "title": "NFS mount uses safe options",
       "description": "The NFS mount in k3s-init.sh MUST use safe mount options.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Mount uses 'ro' (read-only) option",
         "Mount uses 'noexec' option",
@@ -522,7 +525,7 @@
       "title": "Ironstone init service installed",
       "description": "The ironstone-init.service MUST be installed to set hostname from MAC before cloud-init.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /etc/systemd/system/ironstone-init.service exists",
         "Service runs before cloud-init-local.service",
@@ -539,7 +542,7 @@
       "title": "Ironstone init script installed",
       "description": "The ironstone-init.sh script MUST be installed to derive hostname from MAC address.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /usr/local/bin/ironstone-init.sh exists",
         "File is executable",
