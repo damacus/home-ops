@@ -23,4 +23,4 @@ spec:
   allowFirstLastIPs: "Yes"
   blocks:
     - start: 192.168.1.221
-      stop: 192.168.1.250
+      stop: 192.168.1.240
