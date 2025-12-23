@@ -70,13 +70,13 @@ cp config.env config.env.local
 
 ### Configuration Options
 
-| Variable               | Description                        | Default                                 |
-|------------------------|------------------------------------|-----------------------------------------|
-| `NFS_SERVER`           | NFS server IP                      | `192.168.1.243`                         |
-| `NFS_SHARE`            | NFS share path                     | `/volume1/NFS`                          |
-| `CLOUD_INIT_URL`       | Cloud-init datasource              | `https://provision.ironstone.casa/` |
-| `K3S_VIP`              | K3s API server VIP                 | `192.168.1.200`                         |
-| `K3S_VERSION`          | K3s version to install             | `v1.31.3+k3s1`                          |
+| Variable         | Description            | Default                             |
+|------------------|------------------------|-------------------------------------|
+| `NFS_SERVER`     | NFS server IP          | `192.168.1.243`                     |
+| `NFS_SHARE`      | NFS share path         | `/volume1/NFS`                      |
+| `CLOUD_INIT_URL` | Cloud-init datasource  | `https://provision.ironstone.casa/` |
+| `K3S_VIP`        | K3s API server VIP     | `192.168.1.220`                     |
+| `K3S_VERSION`    | K3s version to install | `v1.31.3+k3s1`                      |
 
 ### Secrets Management
 
@@ -135,9 +135,9 @@ The provisioning system includes comprehensive InSpec tests to validate cloud-in
 
 ### Test Profiles
 
-| Profile | Description | When to Use |
-|---------|-------------|-------------|
-| `inspec-gold` | Tests gold image before first boot | Validate image is properly sealed |
+| Profile          | Description                           | When to Use                            |
+|------------------|---------------------------------------|----------------------------------------|
+| `inspec-gold`    | Tests gold image before first boot    | Validate image is properly sealed      |
 | `inspec-running` | Tests running system after cloud-init | Validate node is correctly provisioned |
 
 ### Running Tests

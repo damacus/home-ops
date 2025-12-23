@@ -246,7 +246,10 @@ control 'REQ-NFS-003' do
     it { should exist }
     its('mode') { should cmp '0600' }
     its('owner') { should eq 'root' }
-    its('content') { should_not be_empty }
+  end
+
+  describe command('sudo cat /etc/rancher/k3s/cluster-token | wc -c') do
+    its('stdout.strip.to_i') { should be > 0 }
   end
 end
 
@@ -314,8 +317,8 @@ end
 # -----------------------------------------------------------------------------
 control 'REQ-BOOT-002' do
   impact 1.0
-  title 'K3s agent joins cluster'
-  desc 'The k3s agent MUST successfully join the cluster after first boot'
+  title 'K3s service configured and running'
+  desc 'The k3s service MUST be enabled and attempting to connect to the cluster'
   tag requirement: 'REQ-BOOT-002'
   tag category: 'boot'
   tag priority: 'critical'
@@ -331,6 +334,9 @@ control 'REQ-BOOT-002' do
     end
     describe command('journalctl -u k3s --no-pager -n 500') do
       its('stdout') { should match(/Connecting to.*6443/) }
+    end
+    describe command('journalctl -u k3s --no-pager -n 500') do
+      its('stdout') { should match(/Starting k3s/) }
     end
   end
 end

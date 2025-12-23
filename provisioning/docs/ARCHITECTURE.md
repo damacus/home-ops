@@ -81,7 +81,7 @@ This document describes the architecture for building and deploying golden image
 │   │  3. Matchbox matches MAC to group, returns:                          │  │
 │   │     - hostname: "node-a"                                             │  │
 │   │     - k3s_token: "SECRET"                                            │  │
-│   │     - k3s_url: "https://192.168.1.200:6443"                          │  │
+│   │     - k3s_url: "https://192.168.1.220:6443"                          │  │
 │   └──────────────────────────────────────────────────────────────────────┘  │
 │                                      │                                       │
 │                                      ▼                                       │
@@ -146,7 +146,7 @@ Matchbox serves as the cloud-init datasource, matching nodes by MAC address:
 Cloud-init writes `/etc/rancher/k3s/config.yaml`:
 
 ```yaml
-server: https://192.168.1.200:6443
+server: https://192.168.1.220:6443
 token: "SECRET_TOKEN_HERE"
 ```
 
@@ -224,5 +224,5 @@ task provisioning:build-and-copy board=rpi5
 ### Node doesn't join cluster
 
 1. Verify K3s token is correct
-2. Check network connectivity to K3s VIP (192.168.1.200)
+2. Check network connectivity to K3s VIP (192.168.1.220)
 3. Verify firewall rules allow 6443/tcp
