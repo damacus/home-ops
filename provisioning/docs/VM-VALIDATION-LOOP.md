@@ -9,7 +9,10 @@ Fast iteration on cloud-init and k3s-init provisioning logic without flashing ph
 ```text
 provisioning/
 ├── cloud-init/
-│   └── user-data.yaml          # Production template (k3s, NFS, etc.)
+│   └── init.sh                 # Hostname bootstrap script (runs before cloud-init)
+├── templates/
+│   └── cloud-init/
+│       └── user-data.yaml.j2   # Jinja2 template (canonical cloud-init source)
 ├── config.env                  # Single source of truth for all config vars
 ├── build.sh                    # Builds gold master images for physical hardware
 ├── make-seed-iso.sh            # Generates NoCloud seed ISO from template
@@ -54,9 +57,9 @@ The user is building a k3s cluster on ARM64 SBCs (Raspberry Pi 5, Rock5B). The p
    - Image URLs and checksums
    - K3s version
 
-2. **`provisioning/cloud-init/user-data.yaml`** — Production cloud-init with placeholders:
-   - `__K3S_VIP__`, `__NFS_SERVER__`, `__NFS_SHARE__`
-   - These are templated by `build.sh`, `make-seed-iso.sh`, and `vm-lima.sh`
+2. **`provisioning/templates/cloud-init/user-data.yaml.j2`** — Jinja2 cloud-init template:
+   - `{{ K3S_VIP }}`, `{{ NFS_SERVER }}`, `{{ NFS_SHARE }}`
+   - Rendered by `makejinja` in `build.sh`, `make-seed-iso.sh`, and `vm-test.sh`
 
 3. **`provisioning/lima/ironstone-test.yaml`** — Lima VM config:
    - Uses bridged networking for real LAN IP

@@ -38,6 +38,23 @@ control 'repo-1.1' do
   end
 end
 
+control 'repo-1.1a' do
+  impact 1.0
+  title 'cloud-init template does not run redundant locale/ssh commands'
+
+  template = file('provisioning/templates/cloud-init/user-data.yaml.j2')
+
+  describe template do
+    its('content') { should match(/^runcmd:/) }
+    its('content') { should_not match(/locale-gen/) }
+    its('content') { should_not match(/update-locale/) }
+    its('content') { should_not match(%r{/etc/ssh/sshd_config(\s|"|$)}) }
+    its('content') { should_not match(/systemctl restart ssh/) }
+    its('content') { should_not match(/grep -qE '\^PasswordAuthentication/) }
+    its('content') { should_not match(/grep -qE '\^PermitRootLogin/) }
+  end
+end
+
 control 'repo-1.2' do
   impact 1.0
   title 'build.sh renders templates via makejinja and does not use sed'
@@ -497,5 +514,35 @@ control 'repo-1.31' do
 
     its('content') { should match(%r{ExecStart=/usr/local/bin/k3s\s+server\b}) }
     its('content') { should_not match(%r{ExecStart=/usr/local/bin/k3s\s+agent\b}) }
+  end
+end
+
+control 'repo-1.32' do
+  impact 0.7
+  title 'Cloud-init template writes etcd maintenance scripts to pi home'
+
+  template = file('provisioning/templates/cloud-init/user-data.yaml.j2')
+
+  describe template do
+    it { should exist }
+    its('content') { should match(/path:\s*\/home\/pi\/etcd-maint\.sh/) }
+    its('content') { should match(/path:\s*\/home\/pi\/etcd-reset\.sh/) }
+    its('content') { should match(/path:\s*\/home\/pi\/etcd-maint\.sh[\s\S]*?owner:\s*pi:pi/) }
+    its('content') { should match(/path:\s*\/home\/pi\/etcd-reset\.sh[\s\S]*?owner:\s*pi:pi/) }
+    its('content') { should match(/path:\s*\/home\/pi\/etcd-maint\.sh[\s\S]*?permissions:\s*'0755'/) }
+    its('content') { should match(/path:\s*\/home\/pi\/etcd-reset\.sh[\s\S]*?permissions:\s*'0755'/) }
+  end
+end
+
+control 'repo-1.33' do
+  impact 0.7
+  title 'K3s config uses explicit token-file path'
+
+  template = file('provisioning/templates/cloud-init/user-data.yaml.j2')
+
+  describe template do
+    it { should exist }
+    its('content') { should match(%r{token-file:\s*/etc/rancher/k3s/cluster-token}) }
+    its('content') { should match(%r{--token-file\s+/etc/rancher/k3s/cluster-token}) }
   end
 end

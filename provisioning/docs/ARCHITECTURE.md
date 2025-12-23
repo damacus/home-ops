@@ -113,14 +113,14 @@ This document describes the architecture for building and deploying golden image
 
 ### Golden Image Contents
 
-| Component | Purpose |
-|-----------|---------|
-| Debian Trixie / Armbian | Base operating system |
-| k3s binary | Kubernetes distribution (not started) |
-| cloud-init | First-boot configuration |
-| k3s-init.service | Starts k3s after cloud-init |
-| Kernel modules | overlay, br_netfilter, ip_vs, etc. |
-| Sysctl settings | IP forwarding, bridge netfilter |
+| Component               | Purpose                               |
+|-------------------------|---------------------------------------|
+| Debian Trixie / Armbian | Base operating system                 |
+| k3s binary              | Kubernetes distribution (not started) |
+| cloud-init              | First-boot configuration              |
+| k3s-init.service        | Starts k3s after cloud-init           |
+| Kernel modules          | overlay, br_netfilter, ip_vs, etc.    |
+| Sysctl settings         | IP forwarding, bridge netfilter       |
 
 ### Matchbox Configuration
 
