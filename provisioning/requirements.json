@@ -391,15 +391,15 @@
       "title": "K3s configuration file present",
       "description": "The k3s config.yaml MUST exist at /etc/rancher/k3s/config.yaml with correct server and token-file settings.",
       "priority": "critical",
-      "passes": true,
+      "passes": false,
       "acceptance_criteria": [
         "File /etc/rancher/k3s/config.yaml exists",
         "File contains 'server:' with the K3S_VIP address",
-        "File contains 'token-file: /etc/rancher/k3s/token'"
+        "File contains 'token-file: /etc/rancher/k3s/cluster-token'"
       ],
       "verification": {
         "method": "inspec",
-        "test": "describe file('/etc/rancher/k3s/config.yaml') { it { should exist }; its('content') { should match /server:/ }; its('content') { should match /token-file:/ } }"
+        "test": "describe file('/etc/rancher/k3s/config.yaml') { it { should exist }; its('content') { should match /server:/ }; its('content') { should match %r{token-file:\\s*/etc/rancher/k3s/cluster-token} } }"
       }
     },
     {
@@ -478,13 +478,101 @@
       "priority": "critical",
       "passes": false,
       "acceptance_criteria": [
-        "File /etc/rancher/k3s/token exists after first boot",
+        "File /etc/rancher/k3s/cluster-token exists after first boot",
         "File permissions are 0600",
         "File is owned by root:root"
       ],
       "verification": {
         "method": "inspec",
-        "test": "describe file('/etc/rancher/k3s/token') { it { should exist }; its('mode') { should cmp '0600' }; its('owner') { should eq 'root' } }"
+        "test": "describe file('/etc/rancher/k3s/cluster-token') { it { should exist }; its('mode') { should cmp '0600' }; its('owner') { should eq 'root' } }"
+      }
+    },
+
+    {
+      "id": "REQ-TOOL-001",
+      "category": "provisioning",
+      "title": "Provisioning uses Jinja2 templates",
+      "description": "Provisioning MUST render configuration from Jinja2 templates rather than using sed substitution.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "Source templates are stored under provisioning/templates",
+        "Rendering is performed using a Jinja-compatible renderer (makejinja)",
+        "Build and VM seed generation use the same template rendering approach"
+      ],
+      "verification": {
+        "method": "inspec",
+        "profile": "repo",
+        "test": "describe file('provisioning/templates') { it { should exist } }"
+      }
+    },
+    {
+      "id": "REQ-CLOUD-006",
+      "category": "cloud-init",
+      "title": "Cloud-init user-data is deduplicated",
+      "description": "The VM test path and the built image MUST use the same cloud-init user-data template and render pipeline.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "There is a single source user-data template",
+        "VM test and build render the same template",
+        "No separate user-data-vm.yaml exists"
+      ],
+      "verification": {
+        "method": "inspec",
+        "profile": "repo",
+        "test": "describe file('provisioning/cloud-init/user-data-vm.yaml') { it { should_not exist } }"
+      }
+    },
+    {
+      "id": "REQ-USER-003",
+      "category": "user",
+      "title": "Pi user SSH keys sourced from GitHub keys URL",
+      "description": "The pi user MUST have SSH authorized keys populated from https://github.com/damacus.keys (not ssh_import_id).",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "Cloud-init configuration references https://github.com/damacus.keys",
+        "Cloud-init does not use ssh_import_id",
+        "File /home/pi/.ssh/authorized_keys exists after first boot"
+      ],
+      "verification": {
+        "method": "inspec",
+        "profile": "running",
+        "test": "describe file('/home/pi/.ssh/authorized_keys') { it { should exist }; its('content') { should match(/ssh-/) } }"
+      }
+    },
+    {
+      "id": "REQ-K3S-006",
+      "category": "k3s",
+      "title": "Cluster token file path matches existing nodes",
+      "description": "The cluster token MUST be stored at /etc/rancher/k3s/cluster-token.",
+      "priority": "critical",
+      "passes": false,
+      "acceptance_criteria": [
+        "K3s config references token-file: /etc/rancher/k3s/cluster-token",
+        "Token retrieval scripts write /etc/rancher/k3s/cluster-token"
+      ],
+      "verification": {
+        "method": "inspec",
+        "profile": "running",
+        "test": "describe file('/etc/rancher/k3s/cluster-token') { it { should exist } }"
+      }
+    },
+    {
+      "id": "REQ-K3S-007",
+      "category": "k3s",
+      "title": "K3s directory content parity",
+      "description": "The image MUST provision the required /etc/rancher/k3s directory contents (previously created by the Ansible cookbook).",
+      "priority": "medium",
+      "passes": false,
+      "acceptance_criteria": [
+        "Required files under /etc/rancher/k3s are present (to be defined)",
+        "Configuration matches existing nodes"
+      ],
+      "verification": {
+        "method": "manual",
+        "test": "Compare /etc/rancher/k3s contents on an existing node vs a freshly provisioned node"
       }
     },
     {
@@ -522,27 +610,10 @@
     {
       "id": "REQ-INIT-001",
       "category": "init",
-      "title": "Ironstone init service installed",
-      "description": "The ironstone-init.service MUST be installed to set hostname from MAC before cloud-init.",
+      "title": "Hostname bootstrap script installed",
+      "description": "A hostname bootstrap script MUST exist to derive hostname from MAC address.",
       "priority": "high",
-      "passes": true,
-      "acceptance_criteria": [
-        "File /etc/systemd/system/ironstone-init.service exists",
-        "Service runs before cloud-init-local.service",
-        "Service is enabled"
-      ],
-      "verification": {
-        "method": "inspec",
-        "test": "describe file('/etc/systemd/system/ironstone-init.service') { it { should exist }; its('content') { should match /Before=cloud-init/ } }"
-      }
-    },
-    {
-      "id": "REQ-INIT-002",
-      "category": "init",
-      "title": "Ironstone init script installed",
-      "description": "The ironstone-init.sh script MUST be installed to derive hostname from MAC address.",
-      "priority": "high",
-      "passes": true,
+      "passes": false,
       "acceptance_criteria": [
         "File /usr/local/bin/ironstone-init.sh exists",
         "File is executable",
@@ -551,6 +622,22 @@
       "verification": {
         "method": "inspec",
         "test": "describe file('/usr/local/bin/ironstone-init.sh') { it { should exist }; it { should be_executable }; its('content') { should match /hostnamectl|hostname/ } }"
+      }
+    },
+    {
+      "id": "REQ-INIT-002",
+      "category": "init",
+      "title": "Hostname bootstrap runs via cloud-init bootcmd",
+      "description": "The hostname bootstrap script MUST run very early via cloud-init bootcmd.",
+      "priority": "high",
+      "passes": false,
+      "acceptance_criteria": [
+        "Cloud-init user-data contains bootcmd",
+        "bootcmd executes /usr/local/bin/ironstone-init.sh"
+      ],
+      "verification": {
+        "method": "inspec",
+        "test": "describe file('/var/lib/cloud/seed/nocloud/user-data') { its('content') { should match(/^bootcmd:/) }; its('content') { should match(%r{/usr/local/bin/ironstone-init\\.sh}) } }"
       }
     },
     {
@@ -602,6 +689,13 @@
     }
   ],
   "test_profiles": {
+    "repo": {
+      "description": "Repo-level tests to keep provisioning system consistent",
+      "requirements": [
+        "REQ-TOOL-001",
+        "REQ-CLOUD-006"
+      ]
+    },
     "gold_image": {
       "description": "Tests to run against the gold image before first boot",
       "requirements": [

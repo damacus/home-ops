@@ -1,0 +1,139 @@
+#cloud-config
+
+output:
+  all: "| tee -a /var/log/cloud-init-output.log"
+final_message: "cloud-init finished"
+
+preserve_hostname: false
+manage_etc_hosts: true
+timezone: Europe/London
+locale: en_GB.UTF-8
+
+ssh_pwauth: false
+disable_root: true
+
+bootcmd:
+  - [ bash, -c, "test -x /usr/local/bin/ironstone-init.sh && /usr/local/bin/ironstone-init.sh || true" ]
+
+users:
+  - name: pi
+    gecos: Ironstone Admin
+    groups: [adm, sudo]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: true
+
+write_files:
+  - path: /etc/rancher/k3s/config.yaml
+    owner: root:root
+    permissions: '0644'
+    content: |
+      ---
+      server: https://{{ K3S_VIP }}:6443
+      token-file: /etc/rancher/k3s/cluster-token
+
+      cluster-cidr: 10.69.0.0/16
+      service-cidr: 10.96.0.0/16
+
+      disable-cloud-controller: true
+      disable-kube-proxy: true
+      disable-network-policy: true
+
+      docker: false
+      embedded-registry: true
+      etcd-disable-snapshots: true
+      etcd-expose-metrics: true
+      flannel-backend: none
+      secrets-encryption: true
+      pause-image: registry.k8s.io/pause:3.9
+      write-kubeconfig-mode: 644
+
+      tls-san:
+        - 192.168.1.220
+
+      disable:
+        - flannel
+        - servicelb
+        - traefik
+        - local-storage
+        - metrics-server
+
+      kube-apiserver-arg:
+        - anonymous-auth=true
+
+      kube-controller-manager-arg:
+        - bind-address=0.0.0.0
+
+      kube-scheduler-arg:
+        - bind-address=0.0.0.0
+
+      kubelet-arg:
+        - image-gc-high-threshold=55
+        - image-gc-low-threshold=50
+
+  - path: /etc/ssh/sshd_config.d/99-ironstone-hardening.conf
+    owner: root:root
+    permissions: '0644'
+    content: |
+      PasswordAuthentication no
+      PermitRootLogin no
+
+  - path: /etc/rancher/k3s/registries.yaml
+    owner: root:root
+    permissions: '0644'
+    content: |
+      mirrors:
+        docker.io:
+        gcr.io:
+        ghcr.io:
+        k8s.gcr.io:
+        lscr.io:
+        mcr.microsoft.com:
+        public.ecr.aws:
+        quay.io:
+        registry.k8s.io:
+
+  - path: /etc/systemd/system/k3s.service
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=K3s
+      Documentation=https://k3s.io
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      Type=exec
+      EnvironmentFile=-/etc/default/k3s
+      ExecStart=/usr/local/bin/k3s server --server https://{{ K3S_VIP }}:6443 --config /etc/rancher/k3s/config.yaml --token-file /etc/rancher/k3s/cluster-token
+      KillMode=process
+      Delegate=yes
+      LimitNOFILE=1048576
+      LimitNPROC=infinity
+      LimitCORE=infinity
+      TasksMax=infinity
+      TimeoutStartSec=0
+      Restart=always
+      RestartSec=5s
+
+      [Install]
+      WantedBy=multi-user.target
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - curl
+  - nfs-common
+  - locales
+
+runcmd:
+  - [ bash, -lc, "set -euo pipefail; locale-gen en_GB.UTF-8; update-locale LANG=en_GB.UTF-8" ]
+  - [ bash, -lc, "set -euo pipefail; if grep -qE '^PasswordAuthentication\\s+' /etc/ssh/sshd_config; then sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; else printf '%s\\n' 'PasswordAuthentication no' >> /etc/ssh/sshd_config; fi" ]
+  - [ bash, -lc, "set -euo pipefail; if grep -qE '^PermitRootLogin\\s+' /etc/ssh/sshd_config; then sed -i 's/^PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config; else printf '%s\\n' 'PermitRootLogin no' >> /etc/ssh/sshd_config; fi" ]
+  - [ bash, -lc, "set -euo pipefail; systemctl restart ssh || systemctl restart sshd" ]
+  - [ bash, -lc, "set -euo pipefail; install -d -m 0700 -o pi -g pi /home/pi/.ssh; for i in $(seq 1 20); do if curl -fsSL --connect-timeout 5 --max-time 20 https://github.com/damacus.keys -o /home/pi/.ssh/authorized_keys; then break; fi; sleep 3; done; test -s /home/pi/.ssh/authorized_keys; chown pi:pi /home/pi/.ssh/authorized_keys; chmod 0644 /home/pi/.ssh/authorized_keys" ]
+  - [ bash, -lc, "set -euo pipefail; mkdir -p /etc/rancher/k3s; TOKEN_FILE=/etc/rancher/k3s/cluster-token; if [ ! -s \"$TOKEN_FILE\" ]; then for i in $(seq 1 30); do if timeout 10s mount -t nfs {{ NFS_SERVER }}:{{ NFS_SHARE }} /mnt -o ro,nolock,nfsvers=3,soft,timeo=10,retrans=1 2>/dev/null; then if [ -f /mnt/provisioning/token ]; then cp /mnt/provisioning/token \"$TOKEN_FILE\"; chmod 600 \"$TOKEN_FILE\"; umount /mnt 2>/dev/null || true; break; fi; umount /mnt 2>/dev/null || true; fi; sleep 2; done; fi; test -s \"$TOKEN_FILE\"" ]
+  - [ bash, -lc, "set -euo pipefail; NODE_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || true); if [ -z \"$NODE_IP\" ]; then NODE_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || true); fi; if [ -n \"$NODE_IP\" ] && [ -f /etc/rancher/k3s/config.yaml ] && ! grep -qE '^\\s*node-ip:' /etc/rancher/k3s/config.yaml; then echo '' >> /etc/rancher/k3s/config.yaml; echo \"node-ip: $NODE_IP\" >> /etc/rancher/k3s/config.yaml; fi" ]
+  - [ bash, -lc, "set -euo pipefail; systemctl daemon-reload; systemctl enable --now k3s.service" ]

@@ -41,7 +41,7 @@ check "REQ-K3S-005: k3s-init.sh" "$([ -x "$BASEDIR/usr/local/bin/k3s-init.sh" ] 
 check "REQ-NFS-001: nfs-common installed" "$([ -f "$BASEDIR/sbin/mount.nfs" ] && echo true || echo false)"
 
 # Init
-check "REQ-INIT-001: ironstone-init.service" "$([ -f "$BASEDIR/etc/systemd/system/ironstone-init.service" ] && echo true || echo false)"
+check "REQ-INIT-001: hostname bootstrap via cloud-init bootcmd" "$(grep -qE '^[[:space:]]*bootcmd:' "$BASEDIR/var/lib/cloud/seed/nocloud/user-data" 2>/dev/null && grep -q '/usr/local/bin/ironstone-init.sh' "$BASEDIR/var/lib/cloud/seed/nocloud/user-data" 2>/dev/null && echo true || echo false)"
 check "REQ-INIT-002: ironstone-init.sh" "$([ -x "$BASEDIR/usr/local/bin/ironstone-init.sh" ] && echo true || echo false)"
 
 # Kernel/Sysctl

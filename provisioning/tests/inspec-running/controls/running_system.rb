@@ -242,7 +242,7 @@ control 'REQ-NFS-003' do
   tag category: 'nfs'
   tag priority: 'critical'
 
-  describe file('/etc/rancher/k3s/token') do
+  describe file('/etc/rancher/k3s/cluster-token') do
     it { should exist }
     its('mode') { should cmp '0600' }
     its('owner') { should eq 'root' }
@@ -362,6 +362,100 @@ control 'RUNNING-MACHINE-ID' do
 
   describe file('/etc/machine-id') do
     it { should exist }
-    its('size') { should be.positive? }
+    its('content') { should match(/\S+/) }
+  end
+end
+
+control 'RUNNING-REGISTRIES' do
+  impact 0.0
+  title 'Registry configuration'
+  desc 'Registry configuration checks'
+  tag category: 'k3s'
+
+  registries_file = file('/etc/rancher/k3s/registries.yaml')
+
+  describe registries_file do
+    it { should exist }
+  end
+
+  describe registries_file.content do
+    it { should match(/^\s*mirrors:\s*$/m) }
+  end
+
+  expected_registries = [
+    'docker.io',
+    'gcr.io',
+    'ghcr.io',
+    'k8s.gcr.io',
+    'lscr.io',
+    'mcr.microsoft.com',
+    'public.ecr.aws',
+    'quay.io',
+    'registry.k8s.io'
+  ]
+
+  expected_registries.each do |registry|
+    describe "Registry mirror key: #{registry}" do
+      it 'exists in registries.yaml' do
+        expect(registries_file.content).to match(/^\s*#{Regexp.escape(registry)}\s*:/m)
+      end
+    end
+  end
+end
+
+control 'RUNNING-K3S-CONFIG' do
+  impact 0.0
+  title 'K3s configuration'
+  desc 'K3s config.yaml contains required cluster settings'
+  tag category: 'k3s'
+
+  k3s_config = file('/etc/rancher/k3s/config.yaml')
+
+  describe k3s_config do
+    it { should exist }
+  end
+
+  describe k3s_config.content do
+    it { should match(/^\s*---\s*$/m) }
+    it { should match(/^\s*cluster-cidr:\s*10\.69\.0\.0\/16\s*$/m) }
+    it { should match(/^\s*service-cidr:\s*10\.96\.0\.0\/16\s*$/m) }
+
+    it { should match(/^\s*disable-cloud-controller:\s*true\s*$/m) }
+    it { should match(/^\s*disable-kube-proxy:\s*true\s*$/m) }
+    it { should match(/^\s*disable-network-policy:\s*true\s*$/m) }
+
+    it { should match(/^\s*docker:\s*false\s*$/m) }
+    it { should match(/^\s*embedded-registry:\s*true\s*$/m) }
+    it { should match(/^\s*etcd-disable-snapshots:\s*true\s*$/m) }
+    it { should match(/^\s*etcd-expose-metrics:\s*true\s*$/m) }
+    it { should match(/^\s*flannel-backend:\s*none\s*$/m) }
+    it { should match(/^\s*secrets-encryption:\s*true\s*$/m) }
+    it { should match(/^\s*pause-image:\s*registry\.k8s\.io\/pause:3\.9\s*$/m) }
+    it { should match(/^\s*write-kubeconfig-mode:\s*['\"]?644['\"]?\s*$/m) }
+
+    it { should match(/^\s*node-ip:\s*\S+\s*$/m) }
+
+    it { should match(/^\s*tls-san:\s*$/m) }
+    it { should match(/^\s*-\s*192\.168\.1\.220\s*$/m) }
+
+    it { should match(/^\s*disable:\s*$/m) }
+    it { should match(/^\s*-\s*flannel\s*$/m) }
+    it { should match(/^\s*-\s*servicelb\s*$/m) }
+    it { should match(/^\s*-\s*traefik\s*$/m) }
+    it { should match(/^\s*-\s*local-storage\s*$/m) }
+    it { should match(/^\s*-\s*metrics-server\s*$/m) }
+
+    it { should match(/^\s*kube-apiserver-arg:\s*$/m) }
+    it { should match(/^\s*-\s*anonymous-auth=true\s*$/m) }
+
+    it { should match(/^\s*kube-controller-manager-arg:\s*$/m) }
+    it { should match(/^\s*-\s*bind-address=0\.0\.0\.0\s*$/m) }
+
+    it { should match(/^\s*kube-scheduler-arg:\s*$/m) }
+    it { should match(/^\s*-\s*bind-address=0\.0\.0\.0\s*$/m) }
+
+    it { should match(/^\s*kubelet-arg:\s*$/m) }
+    it { should match(/^\s*-\s*image-gc-high-threshold=55\s*$/m) }
+    it { should match(/^\s*-\s*image-gc-low-threshold=50\s*$/m) }
   end
 end

@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 usage() {
-  echo "Usage: $0 --ssh-host <host> [--ssh-port <port>] [--ssh-user <user>] [--identity-file <path>] [--profile <profile>] [--template <vm|production>]" >&2
+  echo "Usage: $0 --ssh-host <host> [--ssh-port <port>] [--ssh-user <user>] [--identity-file <path>] [--profile <profile>] [--template <production>]" >&2
   echo "" >&2
   echo "Generates a NoCloud seed ISO and runs InSpec checks against a VM over SSH." >&2
   echo "" >&2
@@ -14,11 +14,10 @@ usage() {
   echo "  --ssh-user       SSH user (default: pi)" >&2
   echo "  --identity-file  SSH key (default: ~/.ssh/id_ed25519)" >&2
   echo "  --profile        InSpec profile: gold, running, or vm (default: gold)" >&2
-  echo "  --template       Cloud-init template: production or vm (default: production)" >&2
+  echo "  --template       Cloud-init template: production (default: production)" >&2
   echo "" >&2
   echo "Templates:" >&2
   echo "  production  - Full cloud-init with K3s, NFS token, etc. (same as hardware)" >&2
-  echo "  vm          - Lightweight template for quick VM testing" >&2
 }
 
 SSH_HOST=""
@@ -85,15 +84,11 @@ mkdir -p "${SCRIPT_DIR}/.vm"
 
 case "$TEMPLATE_TYPE" in
   production)
-    TEMPLATE_FILE="${SCRIPT_DIR}/cloud-init/user-data.yaml"
+    TEMPLATE_FILE="${SCRIPT_DIR}/templates/cloud-init/user-data.yaml.j2"
     echo "Using PRODUCTION cloud-init template (same as hardware)" >&2
     ;;
-  vm)
-    TEMPLATE_FILE="${SCRIPT_DIR}/cloud-init/user-data-vm.yaml"
-    echo "Using lightweight VM cloud-init template" >&2
-    ;;
   *)
-    echo "ERROR: Unknown template type: $TEMPLATE_TYPE (use 'production' or 'vm')" >&2
+    echo "ERROR: Unknown template type: $TEMPLATE_TYPE (use 'production')" >&2
     exit 1
     ;;
 esac

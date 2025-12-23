@@ -5,7 +5,7 @@ silent: true
 
 vars:
   PROVISIONING_DIR: "{{.ROOT_DIR}}/provisioning"
-  BOARD: "{{.board | default \"rpi5\"}}"
+  BOARD: '{{.board | default "rpi5"}}'
   LIMA_VM: "ironstone"
 
 tasks:
@@ -82,21 +82,11 @@ tasks:
 
   test:
     desc: Run provisioning tests (CINC Auditor / InSpec)
-    cmds:
-      - |
-        AUDITOR=$(command -v cinc-auditor || command -v inspec || echo "")
-        if [ -z "$AUDITOR" ]; then
-          echo "Error: Neither cinc-auditor nor inspec found. Install with:"
-          echo "  brew install cinc-auditor"
-          exit 1
-        fi
-        echo "Running $AUDITOR repo checks..."
-        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-repo -t local:// --reporter cli
+    cmd: "{{.PROVISIONING_DIR}}/tests/harness/inspec-repo.sh"
 
-  test-bats:
-    desc: Run provisioning tests (Bats) (legacy)
-    cmds:
-      - "cd {{.PROVISIONING_DIR}} && bats tests/build.bats"
+  test-harness:
+    desc: Run provisioning harness tests (bash scripts)
+    cmd: "{{.PROVISIONING_DIR}}/tests/harness/run.sh"
 
   audit:
     desc: Run CINC Auditor (InSpec) tests against a running node
@@ -113,7 +103,7 @@ tasks:
           exit 1
         fi
         echo "Running $AUDITOR tests against {{.host}}..."
-        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec -t ssh://pi@{{.host}} -i ~/.ssh/id_ed25519 --reporter cli
+        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-running -t ssh://pi@{{.host}} -i ~/.ssh/id_ed25519 --reporter cli
 
   audit-gold:
     desc: Run gold image tests against a mounted image (via Lima VM)
@@ -151,6 +141,18 @@ tasks:
         fi
         echo "Running post-boot tests against {{.host}}..."
         $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-running -t ssh://pi@{{.host}} -i ~/.ssh/id_ed25519 --reporter cli
+
+  reapply-cloud-init:
+    desc: Re-apply rendered cloud-init to a running node, reboot, wait, then run post-boot tests
+    cmds:
+      - |
+        if [ -z "{{.host}}" ]; then
+          echo "Usage: task provisioning:reapply-cloud-init host=<ip-or-hostname> [port=22]"
+          exit 1
+        fi
+        PORT='{{.port | default "22"}}'
+        chmod +x {{.PROVISIONING_DIR}}/reapply-cloud-init.sh
+        {{.PROVISIONING_DIR}}/reapply-cloud-init.sh --ssh-host "{{.host}}" --ssh-port "$PORT"
 
   vm-test:
     desc: Validate cloud-init in a VM (seed ISO + InSpec against VM over SSH)

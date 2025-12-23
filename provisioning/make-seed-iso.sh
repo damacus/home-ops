@@ -79,7 +79,7 @@ trap cleanup EXIT
 if [ -n "$TEMPLATE" ]; then
     USER_DATA_TEMPLATE="$TEMPLATE"
 else
-    USER_DATA_TEMPLATE="${SCRIPT_DIR}/cloud-init/user-data.yaml"
+    USER_DATA_TEMPLATE="${SCRIPT_DIR}/templates/cloud-init/user-data.yaml.j2"
 fi
 
 if [ ! -f "$USER_DATA_TEMPLATE" ]; then
@@ -87,12 +87,35 @@ if [ ! -f "$USER_DATA_TEMPLATE" ]; then
     exit 1
 fi
 
-sed \
-    -e "s|__K3S_VIP__|${K3S_VIP}|g" \
-    -e "s|__NFS_SERVER__|${NFS_SERVER}|g" \
-    -e "s|__NFS_SHARE__|${NFS_SHARE}|g" \
-    "$USER_DATA_TEMPLATE" \
-    > "${WORKDIR}/user-data"
+if [[ "$USER_DATA_TEMPLATE" == *.j2 ]]; then
+    MAKEJINJA_BIN="$(command -v makejinja || true)"
+    MAKEJINJA_CMD=()
+    if [ -n "$MAKEJINJA_BIN" ]; then
+        MAKEJINJA_CMD=("$MAKEJINJA_BIN")
+    elif command -v uvx >/dev/null 2>&1; then
+        MAKEJINJA_CMD=(uvx makejinja)
+    else
+        echo "ERROR: makejinja not found and uvx is not available. Install uv (recommended) or install python deps to use templating." >&2
+        exit 1
+    fi
+
+    RENDER_DIR="${WORKDIR}/rendered"
+    mkdir -p "$RENDER_DIR"
+
+    "${MAKEJINJA_CMD[@]}" \
+        --input "$(dirname "$(dirname "$USER_DATA_TEMPLATE")")" \
+        --output "$RENDER_DIR" \
+        --jinja-suffix ".j2" \
+        --data-var "K3S_VIP=${K3S_VIP}" \
+        --data-var "NFS_SERVER=${NFS_SERVER}" \
+        --data-var "NFS_SHARE=${NFS_SHARE}" \
+        --force \
+        --quiet
+
+    cp "${RENDER_DIR}/cloud-init/user-data.yaml" "${WORKDIR}/user-data"
+else
+    cp "$USER_DATA_TEMPLATE" "${WORKDIR}/user-data"
+fi
 
 echo "instance-id: ironstone-vm" > "${WORKDIR}/meta-data"
 

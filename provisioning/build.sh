@@ -218,34 +218,73 @@ sudo mkdir -p "$MOUNT_DIR/usr/local/bin"
 sudo mkdir -p "$MOUNT_DIR/etc/systemd/system"
 sudo mkdir -p "$MOUNT_DIR/etc/rancher/k3s"
 
-# Copy cloud-init user-data (template in values from config.env)
-sed \
-    -e "s|__K3S_VIP__|${K3S_VIP}|g" \
-    -e "s|__NFS_SERVER__|${NFS_SERVER}|g" \
-    -e "s|__NFS_SHARE__|${NFS_SHARE}|g" \
-    "$CLOUD_INIT_DIR/user-data.yaml" \
-    | sudo tee "$MOUNT_DIR/var/lib/cloud/seed/nocloud/user-data" > /dev/null
+# Render cloud-init user-data from Jinja template
+MAKEJINJA_BIN="$(command -v makejinja || true)"
+if [ -z "$MAKEJINJA_BIN" ]; then
+    echo "ERROR: makejinja not found. Install python deps (requirements.txt) to use templating." >&2
+    exit 1
+fi
+
+RENDER_DIR="$(mktemp -d)"
+"$MAKEJINJA_BIN" \
+    --input "${SCRIPT_DIR}/templates" \
+    --output "$RENDER_DIR" \
+    --jinja-suffix ".j2" \
+    --data-var "K3S_VIP=${K3S_VIP}" \
+    --data-var "NFS_SERVER=${NFS_SERVER}" \
+    --data-var "NFS_SHARE=${NFS_SHARE}" \
+    --force \
+    --quiet
+
+sudo cp "$RENDER_DIR/cloud-init/user-data.yaml" "$MOUNT_DIR/var/lib/cloud/seed/nocloud/user-data"
+rm -rf "$RENDER_DIR" 2>/dev/null || true
 echo "instance-id: ironstone-${TARGET_BOARD}-${GIT_SHA}" | sudo tee "$MOUNT_DIR/var/lib/cloud/seed/nocloud/meta-data" > /dev/null
 
-# Configure datasource
+# Configure datasource for ds-identify detection
+# ds-identify checks: seed dir, config with seedfrom, or config with user-data+meta-data
 cat <<EOF | sudo tee "$MOUNT_DIR/etc/cloud/cloud.cfg.d/99-ironstone.cfg" > /dev/null
 datasource_list: [ NoCloud, None ]
 datasource:
   NoCloud:
     fs_label: null
+    seedfrom: /var/lib/cloud/seed/nocloud/
+EOF
+
+# Create ds-identify.cfg to force NoCloud datasource
+# Format: key: value (one per line)
+# datasource: forces ds-identify to use this datasource without detection
+# See: https://github.com/canonical/cloud-init/blob/main/tools/ds-identify
+cat <<EOF | sudo tee "$MOUNT_DIR/etc/cloud/ds-identify.cfg" > /dev/null
+datasource: NoCloud
 EOF
 
 # Copy bootstrap script
 sudo cp "$CLOUD_INIT_DIR/init.sh" "$MOUNT_DIR/usr/local/bin/ironstone-init.sh"
 sudo chmod 755 "$MOUNT_DIR/usr/local/bin/ironstone-init.sh"
 
-# Copy systemd service
-sudo cp "$CLOUD_INIT_DIR/init.service" "$MOUNT_DIR/etc/systemd/system/ironstone-init.service"
+# Enable cloud-init services (chroot install skips this)
+echo "Enabling cloud-init services..."
+sudo mkdir -p "$MOUNT_DIR/etc/systemd/system/cloud-init.target.wants"
+sudo mkdir -p "$MOUNT_DIR/etc/systemd/system/cloud-config.target.wants"
+sudo mkdir -p "$MOUNT_DIR/etc/systemd/system/multi-user.target.wants"
 
-# Enable the service
-sudo mkdir -p "$MOUNT_DIR/etc/systemd/system/cloud-init-local.service.wants"
-sudo ln -sf /etc/systemd/system/ironstone-init.service \
-    "$MOUNT_DIR/etc/systemd/system/cloud-init-local.service.wants/ironstone-init.service"
+# Cloud-init services
+sudo ln -sf /usr/lib/systemd/system/cloud-init-local.service \
+    "$MOUNT_DIR/etc/systemd/system/cloud-init.target.wants/cloud-init-local.service"
+sudo ln -sf /usr/lib/systemd/system/cloud-init.service \
+    "$MOUNT_DIR/etc/systemd/system/cloud-init.target.wants/cloud-init.service" 2>/dev/null || \
+sudo ln -sf /usr/lib/systemd/system/cloud-init-main.service \
+    "$MOUNT_DIR/etc/systemd/system/cloud-init.target.wants/cloud-init-main.service"
+sudo ln -sf /usr/lib/systemd/system/cloud-init-network.service \
+    "$MOUNT_DIR/etc/systemd/system/cloud-init.target.wants/cloud-init-network.service"
+sudo ln -sf /usr/lib/systemd/system/cloud-config.service \
+    "$MOUNT_DIR/etc/systemd/system/cloud-init.target.wants/cloud-config.service"
+sudo ln -sf /usr/lib/systemd/system/cloud-final.service \
+    "$MOUNT_DIR/etc/systemd/system/cloud-init.target.wants/cloud-final.service"
+
+# Cloud-init target in multi-user
+sudo ln -sf /usr/lib/systemd/system/cloud-init.target \
+    "$MOUNT_DIR/etc/systemd/system/multi-user.target.wants/cloud-init.target"
 
 # -----------------------------------------------------------------------------
 # Install k3s binary
@@ -276,34 +315,50 @@ echo "Installing K3s configuration..."
 sudo mkdir -p "$MOUNT_DIR/etc/rancher/k3s"
 cat <<EOF | sudo tee "$MOUNT_DIR/etc/rancher/k3s/config.yaml" > /dev/null
 server: https://${K3S_VIP}:6443
-token-file: /var/lib/rancher/k3s/server/token
+token-file: /etc/rancher/k3s/cluster-token
 EOF
 
 # K3s init script (fetches token from NFS)
-cat <<'INITSCRIPT' | sed \
-    -e "s|__NFS_SERVER__|${NFS_SERVER}|g" \
-    -e "s|__NFS_SHARE__|${NFS_SHARE}|g" \
-    | sudo tee "$MOUNT_DIR/usr/local/bin/k3s-init.sh" > /dev/null
+cat <<EOF | sudo tee "$MOUNT_DIR/usr/local/bin/k3s-init.sh" > /dev/null
 #!/bin/bash
 set -euo pipefail
 
-NFS_SERVER="__NFS_SERVER__"
-NFS_SHARE="__NFS_SHARE__"
-TOKEN_FILE="/var/lib/rancher/k3s/server/token"
+LOG_TAG="k3s-init"
+log() { logger -t "$LOG_TAG" "$*"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
+
+NFS_SERVER="${NFS_SERVER}"
+NFS_SHARE="${NFS_SHARE}"
+
+TOKEN_PATH="provisioning/token"
+TOKEN_FILE="/etc/rancher/k3s/cluster-token"
 MOUNT_POINT="/mnt/nfs-token"
 
 mkdir -p "$MOUNT_POINT"
 mkdir -p "$(dirname "$TOKEN_FILE")"
 
-if mount -t nfs -o ro,soft,timeo=10,retrans=2 "${NFS_SERVER}:${NFS_SHARE}" "$MOUNT_POINT"; then
-    if [ -f "$MOUNT_POINT/k3s-token" ]; then
-        cp "$MOUNT_POINT/k3s-token" "$TOKEN_FILE"
-        chmod 600 "$TOKEN_FILE"
+if [ -f "$TOKEN_FILE" ] && [ -s "$TOKEN_FILE" ]; then
+    log "K3s cluster token already exists, skipping NFS fetch"
+else
+    log "Fetching k3s cluster token from NFS..."
+
+    if timeout 10s mount -t nfs "${NFS_SERVER}:${NFS_SHARE}" "$MOUNT_POINT" -o ro,nolock,nfsvers=3,soft,timeo=10,retrans=1 2>/dev/null; then
+        if [ -f "$MOUNT_POINT/$TOKEN_PATH" ]; then
+            cp "$MOUNT_POINT/$TOKEN_PATH" "$TOKEN_FILE"
+            chmod 600 "$TOKEN_FILE"
+            log "K3s cluster token copied successfully"
+        else
+            log "ERROR: Token not found at $MOUNT_POINT/$TOKEN_PATH"
+            umount "$MOUNT_POINT" 2>/dev/null || true
+            exit 1
+        fi
+        umount "$MOUNT_POINT" 2>/dev/null || true
+    else
+        log "ERROR: Failed to mount NFS"
+        exit 1
     fi
-    umount "$MOUNT_POINT" || true
 fi
 rmdir "$MOUNT_POINT" 2>/dev/null || true
-INITSCRIPT
+EOF
 sudo chmod 755 "$MOUNT_DIR/usr/local/bin/k3s-init.sh"
 
 # K3s systemd service

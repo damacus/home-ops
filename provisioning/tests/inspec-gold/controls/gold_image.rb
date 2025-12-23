@@ -282,19 +282,20 @@ control 'REQ-NFS-002' do
 end
 
 # -----------------------------------------------------------------------------
-# REQ-INIT-001: Ironstone init service installed
+# REQ-INIT-001: Hostname bootstrap is wired via cloud-init bootcmd
 # -----------------------------------------------------------------------------
 control 'REQ-INIT-001' do
   impact 1.0
-  title 'Ironstone init service installed'
-  desc 'The ironstone-init.service MUST be installed to set hostname from MAC'
+  title 'Hostname bootstrap runs via cloud-init bootcmd'
+  desc 'The ironstone-init.sh script MUST be executed very early via cloud-init bootcmd'
   tag requirement: 'REQ-INIT-001'
   tag category: 'init'
   tag priority: 'high'
 
-  describe file('/etc/systemd/system/ironstone-init.service') do
+  describe file('/var/lib/cloud/seed/nocloud/user-data') do
     it { should exist }
-    its('content') { should match(/Before=cloud-init/) }
+    its('content') { should match(/^bootcmd:/) }
+    its('content') { should match(%r{/usr/local/bin/ironstone-init\.sh}) }
   end
 end
 
