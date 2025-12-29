@@ -1,0 +1,112 @@
+#!/bin/bash
+# Description: Resize the root partition to leave 10GB of unallocated space at the end of the disk.
+# Create a new partition in this space labeled 'K3S_DATA'.
+# CRITICAL: Do NOT touch the start of the disk (sectors 0-32768) as this contains the RK3588 bootloader.
+
+# Access the loop device provided by the framework
+# The loop device path is passed in $1 or available as $LOOP depending on where it's sourced
+# But typically in Armbian hooks, we rely on $LOOP or $SDCARD
+
+local disk="${LOOP:-$SDCARD}"
+
+if [ -z "$disk" ]; then
+    echo "Error: Disk device not found (LOOP/SDCARD empty)"
+    exit 1
+fi
+
+echo "Running post_create_partitions hook on $disk"
+
+# Get the total size of the disk in sectors
+total_sectors=$(blockdev --getsz "$disk")
+
+# We want to reserve 10GB for K3S_DATA at the end.
+# 10GB in sectors (assuming 512 byte sectors) = 10 * 1024 * 1024 * 1024 / 512 = 20971520 sectors
+reserved_sectors=20971520
+
+# Calculate the new end for the root partition (partition 2 usually, boot is 1)
+# NOTE: This assumes standard Armbian layout: p1=boot, p2=root.
+# We need to verify this assumption or parse the table.
+
+# List partitions
+sfdisk -d "$disk" > /tmp/partition_table.dump
+
+# We will act conservatively:
+# 1. Identify the root partition (usually the last one before we mess with it).
+# 2. Resize it to Total - 10GB.
+# 3. Create new partition in the remaining space.
+
+# For simplicity in this hook, we'll assume the standard layout where the last partition expands to fill the disk.
+# We want to stop it from filling the last 10GB.
+
+# However, Armbian's partitioning script might have already set it to max.
+# We will use parted to resize the last partition.
+
+# Get the partition number of the last partition
+last_part_num=$(parted -m "$disk" unit s print | tail -n 1 | cut -d: -f1)
+
+# Resize the last partition to end - 10GB
+# This is tricky with scripting parted non-interactively if we don't know the exact start.
+# Let's use sfdisk to modify the table.
+
+# Read current table
+# device : start : size : id : type
+# /dev/loop0p1 : ...
+# /dev/loop0p2 : ...
+
+# Let's try a safer approach: append the partition if there is space,
+# BUT Armbian usually expands root to 100%.
+# So we must shrink partition 2.
+
+# Get start sector of partition 2
+p2_start=$(sfdisk -d "$disk" | grep "${disk}p2" | awk '{print $4}' | tr -d ',')
+
+# Calculate new size for p2
+# New Size = Total Sectors - P2 Start - Reserved Sectors - Safety Margin (2048 sectors)
+new_p2_size=$((total_sectors - p2_start - reserved_sectors - 2048))
+
+if [ "$new_p2_size" -le 0 ]; then
+    echo "Error: Not enough space to reserve 10GB"
+    exit 1
+fi
+
+echo "Resizing root partition (p2) to size $new_p2_size sectors"
+
+# Use sfdisk to resize p2
+# We dump the table, modify the size of p2, and append p3
+sfdisk -d "$disk" > /tmp/ptable.orig
+
+# Construct new p3 line
+# Start of p3 = p2_start + new_p2_size
+p3_start=$((p2_start + new_p2_size))
+p3_size=$reserved_sectors
+
+# Write new table
+# We keep p1 as is.
+# We rewrite p2 with new size.
+# We add p3.
+
+# Grep p1 line
+grep "${disk}p1" /tmp/ptable.orig > /tmp/ptable.new
+
+# Create p2 line. Preserving type/uuid if possible, but standard Linux Filesystem is usually fine.
+# Armbian uses UUIDs. Let's try to preserve the line format but change size.
+# Ideally we use `sfdisk --dump` format which is `device : start= N, size= M, type=...`
+
+# Simplification: Use `sed` to replace the size of p2 in the dump file?
+# The dump format:
+# /dev/loop0p1 : start=        8192, size=      524288, type=...
+# /dev/loop0p2 : start=      532480, size=..., type=...
+
+# Let's just use sfdisk commands to delete and recreate, it's often cleaner if we know the layout.
+# But preserving UUIDs is good.
+
+# Let's try using `parted` resizepart. It's friendlier.
+parted -s "$disk" resizepart $last_part_num -10GB
+parted -s "$disk" mkpart primary ext4 -10GB 100%
+parted -s "$disk" name $(($last_part_num + 1)) "K3S_DATA"
+
+# Inform kernel
+partprobe "$disk"
+
+echo "Partition table updated."
+parted -s "$disk" print

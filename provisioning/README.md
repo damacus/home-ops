@@ -170,4 +170,4 @@ See `provisioning/features/cloud-init.json` for the complete list of test cases.
 ## Network Dependencies
 
 - **NFS Server**: Must be accessible for K3s token retrieval on first boot
-- **K3s VIP**: Used by nodes to join the cluster (192.168.1.200)
+- **K3s VIP**: Used by nodes to join the cluster (192.168.1.220)

@@ -266,4 +266,4 @@ packages:
 runcmd:
   - [ bash, -lc, "set -euo pipefail; install -d -m 0700 -o pi -g pi /home/pi/.ssh; for i in $(seq 1 20); do if curl -fsSL --connect-timeout 5 --max-time 20 https://github.com/damacus.keys -o /home/pi/.ssh/authorized_keys; then break; fi; sleep 3; done; test -s /home/pi/.ssh/authorized_keys; chown pi:pi /home/pi/.ssh/authorized_keys; chmod 0644 /home/pi/.ssh/authorized_keys" ]
   - [ /usr/local/bin/k3s-node-ip.sh ]
-  - [ bash, -lc, "set -euo pipefail; systemctl daemon-reload; systemctl enable --now k3s.service" ]
+  - [ bash, -lc, "set -euo pipefail; systemctl daemon-reload; systemctl enable k3s.service; systemctl start k3s.service" ]

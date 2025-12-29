@@ -134,7 +134,7 @@
       "title": "Pi user created",
       "description": "Cloud-init MUST create a user named 'pi' with sudo privileges.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "User 'pi' exists",
         "User 'pi' is member of groups: adm, sudo",
@@ -152,7 +152,7 @@
       "title": "SSH authorized keys configured",
       "description": "The pi user MUST have SSH authorized keys configured for passwordless login.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /home/pi/.ssh/authorized_keys exists",
         "File contains at least one SSH public key",
@@ -170,7 +170,7 @@
       "title": "SSH password authentication disabled",
       "description": "SSH MUST have password authentication disabled for security.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "PasswordAuthentication is set to 'no' in sshd_config or cloud-init"
       ],
@@ -185,7 +185,7 @@
       "title": "SSH root login disabled",
       "description": "SSH MUST have root login disabled for security.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "PermitRootLogin is set to 'no' in sshd_config or cloud-init"
       ],
@@ -234,7 +234,7 @@
       "title": "Hostname cleared on gold image",
       "description": "The gold image MUST have hostname cleared. Hostname is set dynamically from MAC address on first boot.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /etc/hostname is empty OR contains 'localhost' on gold image",
         "Hostname matches pattern 'node-[a-f0-9]{6}' after first boot (derived from MAC)"
@@ -250,7 +250,7 @@
       "title": "Timezone set to Europe/London",
       "description": "The system timezone MUST be set to Europe/London.",
       "priority": "medium",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Timezone is Europe/London"
       ],
@@ -280,7 +280,7 @@
       "title": "Swap disabled",
       "description": "Swap MUST be disabled for Kubernetes compatibility.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "No swap partitions are active",
         "swapon --show returns empty output"
@@ -296,7 +296,7 @@
       "title": "Overlay kernel module loaded",
       "description": "The overlay kernel module MUST be loaded for container storage.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Kernel module 'overlay' is loaded"
       ],
@@ -311,7 +311,7 @@
       "title": "br_netfilter kernel module loaded",
       "description": "The br_netfilter kernel module MUST be loaded for Kubernetes networking.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Kernel module 'br_netfilter' is loaded"
       ],
@@ -326,7 +326,7 @@
       "title": "IPv4 forwarding enabled",
       "description": "IPv4 forwarding MUST be enabled for Kubernetes networking.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "net.ipv4.ip_forward = 1"
       ],
@@ -341,7 +341,7 @@
       "title": "Bridge netfilter for iptables enabled",
       "description": "Bridge netfilter settings MUST be enabled for iptables to see bridged traffic.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "net.bridge.bridge-nf-call-iptables = 1",
         "net.bridge.bridge-nf-call-ip6tables = 1"
@@ -476,7 +476,7 @@
       "title": "Token file has secure permissions",
       "description": "The k3s token file MUST have secure permissions after retrieval.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "File /etc/rancher/k3s/cluster-token exists after first boot",
         "File permissions are 0600",
@@ -487,7 +487,6 @@
         "test": "describe file('/etc/rancher/k3s/cluster-token') { it { should exist }; its('mode') { should cmp '0600' }; its('owner') { should eq 'root' } }"
       }
     },
-
     {
       "id": "REQ-TOOL-001",
       "category": "provisioning",
@@ -581,7 +580,7 @@
       "title": "iSCSI initiator installed",
       "description": "The open-iscsi package MUST be installed for Longhorn storage.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Package 'open-iscsi' is installed",
         "Service 'iscsid' is enabled and running"
@@ -597,7 +596,7 @@
       "title": "Multipath installed",
       "description": "The multipath-tools package MUST be installed for storage redundancy.",
       "priority": "medium",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Package 'multipath-tools' is installed",
         "Service 'multipathd' is enabled and running"
@@ -646,7 +645,7 @@
       "title": "Cloud-init completes successfully",
       "description": "Cloud-init MUST complete successfully on first boot without errors.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "cloud-init status returns 'status: done'",
         "No errors in /var/log/cloud-init.log"
@@ -662,7 +661,7 @@
       "title": "K3s agent joins cluster",
       "description": "The k3s agent MUST successfully join the cluster after first boot.",
       "priority": "critical",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Service k3s is running",
         "K3s logs show successful connection to server OR etcdserver running (for server nodes)"
@@ -678,7 +677,7 @@
       "title": "Root filesystem expanded",
       "description": "The root filesystem MUST be expanded to use full disk space on first boot.",
       "priority": "high",
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Root filesystem size is greater than 4GB"
       ],

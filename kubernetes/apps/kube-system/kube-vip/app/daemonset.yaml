@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: kube-vip
-          image: ghcr.io/kube-vip/kube-vip:v1.0.2
+          image: ghcr.io/kube-vip/kube-vip:v1.0.3
           imagePullPolicy: IfNotPresent
           args: ["manager"]
           env:
@@ -55,8 +55,6 @@ spec:
               value: "true"
             - name: prometheus_server
               value: :2112
-            - name: vip_interface
-              value: eth0
             - name: vip_leasename
               value: plndr-cp-lock
             - name: vip_leaseduration

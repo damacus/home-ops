@@ -4,24 +4,25 @@
 
 This file tracks the progress of implementing and verifying the K3s node provisioning requirements.
 
-**Last Updated:** 2025-12-16
+**Last Updated:** 2025-12-24
 **Target Board:** Rock 5B+ (priority), Raspberry Pi 5
 
 ## Requirements Summary
 
 | Category | Total | Passing | Failing |
 |----------|-------|---------|---------|
-| cloud-init | 5 | 0 | 5 |
-| user | 2 | 0 | 2 |
-| ssh | 3 | 0 | 3 |
-| system | 5 | 0 | 5 |
+| cloud-init | 6 | 5 | 1 |
+| user | 3 | 0 | 3 |
+| ssh | 3 | 1 | 2 |
+| system | 5 | 1 | 4 |
 | kernel | 4 | 0 | 4 |
-| k3s | 5 | 0 | 5 |
-| nfs | 3 | 0 | 3 |
+| k3s | 7 | 4 | 3 |
+| nfs | 3 | 2 | 1 |
 | storage | 2 | 0 | 2 |
+| provisioning | 1 | 0 | 1 |
 | init | 2 | 0 | 2 |
 | boot | 3 | 0 | 3 |
-| **Total** | **34** | **0** | **34** |
+| **Total** | **39** | **13** | **26** |
 
 ## Test Profiles
 
@@ -118,13 +119,12 @@ jq '(.requirements[] | select(.id == "REQ-CLOUD-001")).passes = true' \
 
 ## Session Notes
 
-### 2025-12-16
+### 2025-12-24
 
-- Consolidated `features/cloud-init.json` into `requirements.json`
-- Added `passes: false` field to all 34 requirements
-- Updated InSpec profiles to use requirement IDs (REQ-XXX-NNN)
-- Updated `inspec-gold` and `inspec-running` controls
-- Deleted redundant `features/` directory
+- Updated progress tracking to match `requirements.json` state.
+- Total requirements increased to 39.
+- Currently passing 13/39 requirements.
+- Main focus areas for next session: fixing K3s config, SSH, and System configuration failures.
 
 ## How to Update Progress
 
