@@ -114,8 +114,6 @@ cat > /etc/ssh/sshd_config.d/99-ironstone-hardening.conf << 'EOF'
 PasswordAuthentication yes
 PermitRootLogin yes
 EOF
-# Set a known root password for debugging
-echo "root:armbian" | chpasswd
 
 # Create pi user for administration (REQ-USER-001)
 echo "Creating pi user..."
