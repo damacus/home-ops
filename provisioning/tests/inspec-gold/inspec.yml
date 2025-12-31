@@ -1,0 +1,12 @@
+name: ironstone-gold-image
+title: Ironstone Gold Image Pre-Boot Compliance
+maintainer: Dan Webb
+copyright: Dan Webb
+copyright_email: dan.webb@damacus.io
+license: MIT
+summary: Validates gold master image before first boot - checks image is properly sealed
+version: 1.0.0
+supports:
+  - platform-family: debian
+
+inspec_version: ">= 5.0"

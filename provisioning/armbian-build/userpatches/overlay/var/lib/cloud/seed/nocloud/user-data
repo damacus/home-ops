@@ -1,0 +1,48 @@
+#cloud-config
+# Ironstone K3s Node Configuration
+# This file is processed by cloud-init on first boot
+
+# User configuration - create pi user, disable default ubuntu user
+users:
+    - name: pi
+      groups: [adm, sudo]
+      shell: /bin/bash
+      sudo: ALL=(ALL) NOPASSWD:ALL
+      lock_passwd: true
+      create_groups: true
+      homedir: /home/pi
+      ssh_authorized_keys:
+          - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCLr7NoB34qERAAJNLHKgOy9EJ40smz4F9HhU5d5i8s
+
+# Override default user to be pi instead of ubuntu
+system_info:
+    default_user:
+        name: pi
+        groups: [adm, sudo]
+        shell: /bin/bash
+
+# Run ironstone-init early to set hostname from MAC
+bootcmd:
+    - /usr/local/bin/ironstone-init.sh
+
+# Timezone and locale
+timezone: Europe/London
+locale: en_GB.UTF-8
+
+# Disable root login
+disable_root: true
+
+# SSH configuration
+ssh_pwauth: false
+
+# Enable and configure services on first boot
+runcmd:
+    # Generate K3s config from template
+    - sed "s/\${K3S_VIP}/192.168.1.220/g" /etc/rancher/k3s/config.yaml.template > /etc/rancher/k3s/config.yaml
+    - chmod 0644 /etc/rancher/k3s/config.yaml
+
+    # Enable services
+    - systemctl enable k3s-init.service
+    - systemctl enable k3s.service
+    # k3s-init will run when NFS is available to fetch token
+    # k3s.service will start after token is retrieved

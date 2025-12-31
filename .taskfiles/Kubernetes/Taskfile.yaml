@@ -6,7 +6,6 @@ vars:
   KUBECONFORM_SCRIPT: "{{.SCRIPTS_DIR}}/kubeconform.sh"
 
 tasks:
-
   resources:
     desc: Gather common resources in your cluster, useful when asking for support
     cmds:
@@ -24,14 +23,18 @@ tasks:
         ingresses
         pods
 
+  check-kube-vip:
+    desc: Check all kube-vip pods
+    cmd: kubectl get pods -n kube-system -l app.kubernetes.io/name=kube-vip -o wide
+
   kubeconform:
     desc: Validate Kubernetes manifests with kubeconform
     cmd: bash {{.KUBECONFORM_SCRIPT}} {{.KUBERNETES_DIR}}
     preconditions:
       - {
-        msg: "Missing kubeconform script",
-        sh: "test -f {{.KUBECONFORM_SCRIPT}}"
-      }
+          msg: "Missing kubeconform script",
+          sh: "test -f {{.KUBECONFORM_SCRIPT}}",
+        }
 
   .reset:
     internal: true

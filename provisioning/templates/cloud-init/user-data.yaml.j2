@@ -1,0 +1,269 @@
+#cloud-config
+
+output:
+  all: "| tee -a /var/log/cloud-init-output.log"
+final_message: "cloud-init finished"
+
+preserve_hostname: false
+manage_etc_hosts: true
+timezone: Europe/London
+locale: en_GB.UTF-8
+
+ssh_pwauth: false
+disable_root: true
+
+bootcmd:
+  - [ bash, -c, "test -x /usr/local/bin/ironstone-init.sh && /usr/local/bin/ironstone-init.sh || true" ]
+  - [ bash, -c, "sed -i '/en_GB.UTF-8/s/^# //' /etc/locale.gen && locale-gen en_GB.UTF-8" ]
+
+users:
+  - name: pi
+    gecos: Ironstone Admin
+    groups: [adm, sudo]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: true
+
+write_files:
+  - path: /etc/rancher/k3s/config.yaml
+    owner: root:root
+    permissions: '0644'
+    content: |
+      ---
+      server: https://{{ K3S_VIP }}:6443
+      token-file: /etc/rancher/k3s/cluster-token
+
+      cluster-cidr: 10.69.0.0/16
+      service-cidr: 10.96.0.0/16
+
+      disable-cloud-controller: true
+      disable-kube-proxy: true
+      disable-network-policy: true
+
+      docker: false
+      embedded-registry: true
+      etcd-disable-snapshots: true
+      etcd-expose-metrics: true
+      flannel-backend: none
+      secrets-encryption: true
+      pause-image: registry.k8s.io/pause:3.9
+      write-kubeconfig-mode: 644
+
+      tls-san:
+        - 192.168.1.220
+
+      disable:
+        - flannel
+        - servicelb
+        - traefik
+        - local-storage
+        - metrics-server
+
+      kube-apiserver-arg:
+        - anonymous-auth=true
+
+      kube-controller-manager-arg:
+        - bind-address=0.0.0.0
+
+      kube-scheduler-arg:
+        - bind-address=0.0.0.0
+
+      kubelet-arg:
+        - image-gc-high-threshold=55
+        - image-gc-low-threshold=50
+
+  - path: /etc/ssh/sshd_config.d/99-ironstone-hardening.conf
+    owner: root:root
+    permissions: '0644'
+    content: |
+      PasswordAuthentication no
+      PermitRootLogin no
+
+  - path: /etc/rancher/k3s/registries.yaml
+    owner: root:root
+    permissions: '0644'
+    content: |
+      mirrors:
+        docker.io:
+        gcr.io:
+        ghcr.io:
+        k8s.gcr.io:
+        lscr.io:
+        mcr.microsoft.com:
+        public.ecr.aws:
+        quay.io:
+        registry.k8s.io:
+
+  - path: /etc/systemd/system/k3s.service
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=K3s
+      Documentation=https://k3s.io
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      Type=exec
+      EnvironmentFile=-/etc/default/k3s
+      ExecStart=/usr/local/bin/k3s server --server https://{{ K3S_VIP }}:6443 --config /etc/rancher/k3s/config.yaml --token-file /etc/rancher/k3s/cluster-token
+      KillMode=process
+      Delegate=yes
+      LimitNOFILE=1048576
+      LimitNPROC=infinity
+      LimitCORE=infinity
+      TasksMax=infinity
+      TimeoutStartSec=0
+      Restart=always
+      RestartSec=5s
+
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: /home/pi/etcd-maint.sh
+    owner: pi:pi
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      # Description: Automates the compaction and defragmentation of the k3s embedded etcd database.
+      # This helps maintain performance and reduce disk space usage on your etcd nodes (your Pi 5s).
+
+      # --- 1. Define Environment Variables for K3s Etcd Access ---
+      # These variables point etcdctl to the local k3s etcd instance using the required TLS certificates.
+      export ETCDCTL_ENDPOINTS='https://127.0.0.1:2379'
+      export ETCDCTL_CACERT='/var/lib/rancher/k3s/server/tls/etcd/server-ca.crt'
+      export ETCDCTL_CERT='/var/lib/rancher/k3s/server/tls/etcd/server-client.crt'
+      export ETCDCTL_KEY='/var/lib/rancher/k3s/server/tls/etcd/server-client.key'
+      export ETCDCTL_API=3
+
+      # A helper function to execute etcdctl commands and handle errors
+      run_etcdctl() {
+          echo "--> Running: etcdctl $@"
+          etcdctl "$@"
+          if [ $? -ne 0 ]; then
+              echo "ERROR: etcdctl command failed on $1. Maintenance halted." >&2
+              exit 1
+          fi
+      }
+
+      echo "--- K3s Embedded Etcd Maintenance Started ---"
+
+      # --- 2. Initial Health Check & Status ---
+      echo -e "\n--- Initial Status Check ---"
+      run_etcdctl endpoint health --cluster --write-out=table
+      run_etcdctl endpoint status --cluster --write-out=table
+
+      # --- 3. Compaction: Find the latest revision and compact ---
+      echo -e "\n--- Compaction Phase ---"
+
+      # Fetch the current revision from the endpoint status output (as seen in your history)
+      # We grep for 'Revision', cut by the colon separator, and clean up whitespace.
+      echo "Fetching latest revision for compaction..."
+      REV=$(run_etcdctl endpoint status --write-out fields | grep -i '"Revision"' | cut -d: -f2 | tr -d '[:space:]')
+
+      if [[ -z "$REV" ]]; then
+          echo "ERROR: Failed to retrieve a valid etcd revision. Cannot compact." >&2
+          exit 1
+      fi
+
+      echo "  -> Found latest revision: $REV"
+      echo "  -> Compacting etcd database up to revision $REV..."
+      run_etcdctl compact "$REV"
+      echo "  -> Compaction complete."
+
+      # --- 4. Defragmentation ---
+      echo -e "\n--- Defragmentation Phase ---"
+      echo "Defragmenting all etcd members in the cluster to reclaim disk space..."
+      # This command defrags the entire cluster, one member at a time.
+      run_etcdctl defrag --cluster
+      echo "  -> Defragmentation complete."
+
+      # --- 5. Final Health and Performance Check ---
+      echo -e "\n--- Final Checks ---"
+      echo "Checking final cluster health and status..."
+      run_etcdctl endpoint health --cluster --write-out=table
+      run_etcdctl endpoint status --cluster --write-out=table
+
+      echo -e "\nRunning etcd performance check (latency/throughput)..."
+      run_etcdctl check perf
+
+      echo -e "\n--- Etcd Maintenance finished successfully. ---"
+
+  - path: /home/pi/etcd-reset.sh
+    owner: pi:pi
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      systemctl stop k3s
+      rm -rf /var/lib/rancher/k3s/server/db/etcd
+      systemctl start k3s
+
+  - path: /usr/local/bin/k3s-node-ip.sh
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      # Inject node-ip into k3s config if not already set
+      set -euo pipefail
+
+      CONFIG_FILE="/etc/rancher/k3s/config.yaml"
+
+      # Get node IP from routing table
+      NODE_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || true)
+
+      # Fallback to first IP from hostname
+      if [ -z "$NODE_IP" ]; then
+          NODE_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || true)
+      fi
+
+      # Only add if we have an IP and config exists and node-ip not already set
+      if [ -n "$NODE_IP" ] && [ -f "$CONFIG_FILE" ]; then
+          if ! grep -qE '^\s*node-ip:' "$CONFIG_FILE"; then
+              echo "" >> "$CONFIG_FILE"
+              echo "node-ip: $NODE_IP" >> "$CONFIG_FILE"
+              echo "Added node-ip: $NODE_IP to $CONFIG_FILE"
+          else
+              echo "node-ip already configured in $CONFIG_FILE"
+          fi
+      else
+          echo "Skipping node-ip injection (IP=$NODE_IP, config exists=$(test -f "$CONFIG_FILE" && echo yes || echo no))"
+      fi
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - conntrack
+  - curl
+  - dirmngr
+  - gdisk
+  - gnupg
+  - hdparm
+  - htop
+  - iptables
+  - iputils-ping
+  - ipvsadm
+  - libseccomp2
+  - lm-sensors
+  - net-tools
+  - nfs-common
+  - nvme-cli
+  - open-iscsi
+  - parted
+  - psmisc
+  - python3
+  - python3-yaml
+  - smartmontools
+  - socat
+  - unzip
+  - util-linux
+  - locales
+
+runcmd:
+  - [ bash, -lc, "set -euo pipefail; install -d -m 0700 -o pi -g pi /home/pi/.ssh; for i in $(seq 1 20); do if curl -fsSL --connect-timeout 5 --max-time 20 https://github.com/damacus.keys -o /home/pi/.ssh/authorized_keys; then break; fi; sleep 3; done; test -s /home/pi/.ssh/authorized_keys; chown pi:pi /home/pi/.ssh/authorized_keys; chmod 0644 /home/pi/.ssh/authorized_keys" ]
+  - [ /usr/local/bin/k3s-node-ip.sh ]
+  - [ bash, -lc, "set -euo pipefail; systemctl daemon-reload; systemctl enable k3s.service; systemctl start k3s.service" ]

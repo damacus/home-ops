@@ -43,8 +43,6 @@ spec:
               value: "true"
             - name: prometheus_server
               value: :2112
-            - name: vip_interface
-              value: eth0
             - name: vip_leaseduration
               value: "5"
             - name: vip_renewdeadline

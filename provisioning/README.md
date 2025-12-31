@@ -70,13 +70,13 @@ cp config.env config.env.local
 
 ### Configuration Options
 
-| Variable               | Description                        | Default                                 |
-|------------------------|------------------------------------|-----------------------------------------|
-| `NFS_SERVER`           | NFS server IP                      | `192.168.1.243`                         |
-| `NFS_SHARE`            | NFS share path                     | `/volume1/NFS`                          |
-| `CLOUD_INIT_URL`       | Cloud-init datasource              | `https://provision.ironstone.casa/` |
-| `K3S_VIP`              | K3s API server VIP                 | `192.168.1.200`                         |
-| `K3S_VERSION`          | K3s version to install             | `v1.31.3+k3s1`                          |
+| Variable         | Description            | Default                             |
+|------------------|------------------------|-------------------------------------|
+| `NFS_SERVER`     | NFS server IP          | `192.168.1.243`                     |
+| `NFS_SHARE`      | NFS share path         | `/volume1/NFS`                      |
+| `CLOUD_INIT_URL` | Cloud-init datasource  | `https://provision.ironstone.casa/` |
+| `K3S_VIP`        | K3s API server VIP     | `192.168.1.220`                     |
+| `K3S_VERSION`    | K3s version to install | `v1.31.3+k3s1`                      |
 
 ### Secrets Management
 
@@ -129,8 +129,45 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture docum
 
 All Armbian images are verified against SHA256 checksums from the official Armbian mirrors before use.
 
+## Testing
+
+The provisioning system includes comprehensive InSpec tests to validate cloud-init configuration.
+
+### Test Profiles
+
+| Profile          | Description                           | When to Use                            |
+|------------------|---------------------------------------|----------------------------------------|
+| `inspec-gold`    | Tests gold image before first boot    | Validate image is properly sealed      |
+| `inspec-running` | Tests running system after cloud-init | Validate node is correctly provisioned |
+
+### Running Tests
+
+```bash
+# Test a built gold image in Lima VM
+task provisioning:test-cloud-init image=~/Downloads/rpi5-gold-abc123.img profile=gold
+
+# Test a running node over SSH
+task provisioning:audit-running host=192.168.1.100
+
+# Run both gold and running tests
+task provisioning:test-cloud-init image=~/Downloads/rpi5-gold-abc123.img profile=both
+```
+
+### Test Coverage
+
+The tests verify:
+
+- **Cloud-init**: Package installed, datasource configured, user-data/meta-data present
+- **K3s**: Binary installed, symlinks created, service configured, config.yaml present
+- **NFS Token**: Init script configured, NFS mount options, token retrieval logic
+- **Security**: SSH hardening, host keys removed, machine-id cleared
+- **System**: Kernel modules, sysctl settings, swap disabled, services enabled
+
+### Feature List
+
+See `provisioning/features/cloud-init.json` for the complete list of test cases.
+
 ## Network Dependencies
 
-- **NFS Server**: Must be accessible during build for Gold Master upload
-- **Cloud-init Server**: Must be running at `CLOUD_INIT_URL` for node bootstrap
-- **K3s VIP**: Used by nodes to join the cluster
+- **NFS Server**: Must be accessible for K3s token retrieval on first boot
+- **K3s VIP**: Used by nodes to join the cluster (192.168.1.220)

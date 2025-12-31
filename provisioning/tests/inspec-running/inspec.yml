@@ -1,0 +1,12 @@
+name: ironstone-running-system
+title: Ironstone Running System Compliance
+maintainer: Dan Webb
+copyright: Dan Webb
+copyright_email: dan.webb@damacus.io
+license: MIT
+summary: Validates a running Ironstone node after cloud-init has completed
+version: 1.0.0
+supports:
+  - platform-family: debian
+
+inspec_version: ">= 5.0"

@@ -1,0 +1,10 @@
+name: ironstone-provisioning-repo
+title: Ironstone Provisioning Repo Checks
+maintainer: Dan Webb
+license: MIT
+summary: Validates provisioning repository wiring (config.env, templating, scripts)
+version: 1.0.0
+supports:
+  - platform-family: darwin
+  - platform-family: linux
+inspec_version: ">= 5.0"

@@ -5,7 +5,7 @@ silent: true
 
 vars:
   PROVISIONING_DIR: "{{.ROOT_DIR}}/provisioning"
-  BOARD: "{{.board | default \"rpi5\"}}"
+  BOARD: '{{.board | default "rpi5"}}'
   LIMA_VM: "ironstone"
 
 tasks:
@@ -44,7 +44,7 @@ tasks:
     cmds:
       - |
         echo "Building {{.BOARD}}-gold image inside Lima VM..."
-        limactl shell {{.LIMA_VM}} bash -c "cd {{.PROVISIONING_DIR}} && GIT_SHA={{.GIT_SHA}} ./build-native.sh {{.BOARD}} gold"
+        limactl shell {{.LIMA_VM}} bash -c "cd {{.PROVISIONING_DIR}} && GIT_SHA={{.GIT_SHA}} ./build.sh {{.BOARD}}"
 
   copy:
     desc: Copy built image from Lima VM to ~/Downloads (for Raspberry Pi Imager/Etcher)
@@ -81,9 +81,12 @@ tasks:
         echo "Done. Build artifacts removed."
 
   test:
-    desc: Run provisioning tests (Bats)
-    cmds:
-      - "cd {{.PROVISIONING_DIR}} && bats tests/build.bats"
+    desc: Run provisioning tests (CINC Auditor / InSpec)
+    cmd: "{{.PROVISIONING_DIR}}/tests/harness/inspec-repo.sh"
+
+  test-harness:
+    desc: Run provisioning harness tests (bash scripts)
+    cmd: "{{.PROVISIONING_DIR}}/tests/harness/run.sh"
 
   audit:
     desc: Run CINC Auditor (InSpec) tests against a running node
@@ -100,4 +103,103 @@ tasks:
           exit 1
         fi
         echo "Running $AUDITOR tests against {{.host}}..."
-        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec -t ssh://pi@{{.host}} -i ~/.ssh/id_ed25519 --reporter cli
+        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-running -t ssh://pi@{{.host}} -i ~/.ssh/id_ed25519 --reporter cli
+
+  audit-gold:
+    desc: Run gold image tests against a mounted image (via Lima VM)
+    deps: [check-vm]
+    cmds:
+      - |
+        if [ -z "{{.mount}}" ]; then
+          echo "Usage: task provisioning:audit-gold mount=<path-to-mounted-rootfs>"
+          echo ""
+          echo "Mount the image first, then run this task against the mount point."
+          exit 1
+        fi
+        AUDITOR=$(command -v cinc-auditor || command -v inspec || echo "")
+        if [ -z "$AUDITOR" ]; then
+          echo "Error: Neither cinc-auditor nor inspec found. Install with:"
+          echo "  brew install cinc-auditor"
+          exit 1
+        fi
+        echo "Running gold image tests against {{.mount}}..."
+        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-gold -t local:// --basedir "{{.mount}}" --reporter cli
+
+  audit-running:
+    desc: Run running system tests against a booted node
+    cmds:
+      - |
+        if [ -z "{{.host}}" ]; then
+          echo "Usage: task provisioning:audit-running host=<ip-or-hostname>"
+          exit 1
+        fi
+        AUDITOR=$(command -v cinc-auditor || command -v inspec || echo "")
+        if [ -z "$AUDITOR" ]; then
+          echo "Error: Neither cinc-auditor nor inspec found. Install with:"
+          echo "  brew install cinc-auditor"
+          exit 1
+        fi
+        echo "Running post-boot tests against {{.host}}..."
+        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-running -t ssh://pi@{{.host}} -i ~/.ssh/id_ed25519 --reporter cli
+
+  reapply-cloud-init:
+    desc: Re-apply rendered cloud-init to a running node, reboot, wait, then run post-boot tests
+    cmds:
+      - |
+        if [ -z "{{.host}}" ]; then
+          echo "Usage: task provisioning:reapply-cloud-init host=<ip-or-hostname> [port=22]"
+          exit 1
+        fi
+        PORT='{{.port | default "22"}}'
+        chmod +x {{.PROVISIONING_DIR}}/reapply-cloud-init.sh
+        {{.PROVISIONING_DIR}}/reapply-cloud-init.sh --ssh-host "{{.host}}" --ssh-port "$PORT"
+
+  vm-test:
+    desc: Validate cloud-init in a VM (seed ISO + InSpec against VM over SSH)
+    cmds:
+      - |
+        if [ -z "{{.host}}" ]; then
+          echo "Usage: task provisioning:vm-test host=<ip-or-hostname> [port=22] [profile=gold|running] [template=production|vm]"
+          echo ""
+          echo "Options:"
+          echo "  host      - SSH host (required)"
+          echo "  port      - SSH port (default: 22)"
+          echo "  profile   - InSpec profile: gold or running (default: gold)"
+          echo "  template  - Cloud-init: production (same as hardware) or vm (lightweight) (default: production)"
+          exit 1
+        fi
+        PORT='{{.port | default "22"}}'
+        PROFILE='{{.profile | default "gold"}}'
+        TEMPLATE='{{.template | default "production"}}'
+        chmod +x {{.PROVISIONING_DIR}}/vm-test.sh
+        {{.PROVISIONING_DIR}}/vm-test.sh --ssh-host "{{.host}}" --ssh-port "$PORT" --profile "$PROFILE" --template "$TEMPLATE"
+
+  test-image:
+    desc: Boot a built gold master image in Lima for testing
+    cmds:
+      - |
+        if [ -z "{{.image}}" ]; then
+          echo "Usage: task provisioning:test-image image=<path-to-img>"
+          echo ""
+          echo "Example: task provisioning:test-image image=~/Downloads/rpi5-gold-abc123.img"
+          exit 1
+        fi
+        chmod +x {{.PROVISIONING_DIR}}/test-image.sh
+        {{.PROVISIONING_DIR}}/test-image.sh "{{.image}}" {{.CLI_ARGS}}
+
+  test-cloud-init:
+    desc: Test cloud-init configuration in Lima VM with InSpec
+    cmds:
+      - |
+        if [ -z "{{.image}}" ]; then
+          echo "Usage: task provisioning:test-cloud-init image=<path-to-img> [profile=gold|running|both]"
+          echo ""
+          echo "Profiles:"
+          echo "  gold    - Test gold image before cloud-init runs (default)"
+          echo "  running - Test running system after cloud-init completes"
+          echo "  both    - Run both test profiles"
+          exit 1
+        fi
+        PROFILE='{{.profile | default "gold"}}'
+        chmod +x {{.PROVISIONING_DIR}}/test-cloud-init.sh
+        {{.PROVISIONING_DIR}}/test-cloud-init.sh "{{.image}}" --profile "$PROFILE"
