@@ -18,10 +18,12 @@ echo "Copying userpatches to build directory..."
 rm -rf "$BUILD_DIR/userpatches"
 cp -r "$DIR/userpatches" "$BUILD_DIR/"
 
+K3S_VERSION="v1.33.2+k3s1"
+
 # Download K3s binary if defined in requirements (simulating the python driver logic for now)
 # In a real full impl, a python script would parse requirements.json and do this.
 # For now, we manually implement the "download_file" task from stage_3 since we are bootstrapping.
-K3S_URL="https://github.com/k3s-io/k3s/releases/download/v1.31.4%2Bk3s1/k3s-arm64"
+K3S_URL="https://github.com/k3s-io/k3s/releases/download/${K3S_VERSION}/k3s-arm64"
 K3S_DEST="$BUILD_DIR/userpatches/overlay/usr/local/bin/k3s"
 
 echo "Downloading K3s binary..."

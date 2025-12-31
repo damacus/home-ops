@@ -206,6 +206,7 @@ fi
 # Check systemd services
 REQUIRED_SERVICES=(
     "k3s-init.service"
+    "k3s.service"
 )
 
 for svc in "${REQUIRED_SERVICES[@]}"; do
@@ -215,6 +216,80 @@ for svc in "${REQUIRED_SERVICES[@]}"; do
         log_fail "Systemd service missing: $svc"
     fi
 done
+
+# REQ-SECURITY-001: Root login disabled
+if grep -q "^root:!" "$MOUNT_POINT/etc/shadow" 2>/dev/null || \
+   grep -q "^root:\*" "$MOUNT_POINT/etc/shadow" 2>/dev/null; then
+    log_pass "Root account is locked"
+else
+    log_fail "Root account is NOT locked"
+fi
+
+# REQ-SSH-001: SSH hardening config
+if [ -f "$MOUNT_POINT/etc/ssh/sshd_config.d/99-ironstone-hardening.conf" ]; then
+    if grep -q "PermitRootLogin no" "$MOUNT_POINT/etc/ssh/sshd_config.d/99-ironstone-hardening.conf"; then
+        log_pass "SSH root login disabled in config"
+    else
+        log_fail "SSH PermitRootLogin not set to no"
+    fi
+else
+    log_fail "SSH hardening config missing"
+fi
+
+# REQ-USER-001: Pi user exists
+if grep -q "^pi:" "$MOUNT_POINT/etc/passwd" 2>/dev/null; then
+    log_pass "Pi user exists"
+else
+    log_fail "Pi user missing"
+fi
+
+# REQ-USER-002: Pi user has sudo access
+if [ -f "$MOUNT_POINT/etc/sudoers.d/pi" ]; then
+    log_pass "Pi user sudoers config present"
+else
+    log_fail "Pi user sudoers config missing"
+fi
+
+# REQ-SCRIPT-001: Ironstone init script
+if [ -x "$MOUNT_POINT/usr/local/bin/ironstone-init.sh" ]; then
+    log_pass "ironstone-init.sh present and executable"
+else
+    log_fail "ironstone-init.sh missing or not executable"
+fi
+
+# REQ-SCRIPT-002: K3s node-ip script
+if [ -x "$MOUNT_POINT/usr/local/bin/k3s-node-ip.sh" ]; then
+    log_pass "k3s-node-ip.sh present and executable"
+else
+    log_fail "k3s-node-ip.sh missing or not executable"
+fi
+
+# REQ-K3S-004: K3s registries config
+if [ -f "$MOUNT_POINT/etc/rancher/k3s/registries.yaml" ]; then
+    log_pass "K3s registries.yaml present"
+else
+    log_fail "K3s registries.yaml missing"
+fi
+
+# REQ-K3S-005: K3s config template
+if [ -f "$MOUNT_POINT/etc/rancher/k3s/config.yaml.template" ]; then
+    log_pass "K3s config.yaml.template present"
+else
+    log_fail "K3s config.yaml.template missing"
+fi
+
+# REQ-MAINT-001: Etcd maintenance scripts (stored in /usr/local/share/ironstone/)
+if [ -f "$MOUNT_POINT/usr/local/share/ironstone/etcd-maint.sh" ]; then
+    log_pass "etcd-maint.sh present"
+else
+    log_fail "etcd-maint.sh missing"
+fi
+
+if [ -f "$MOUNT_POINT/usr/local/share/ironstone/etcd-reset.sh" ]; then
+    log_pass "etcd-reset.sh present"
+else
+    log_fail "etcd-reset.sh missing"
+fi
 
 # Cleanup
 umount "$MOUNT_POINT"

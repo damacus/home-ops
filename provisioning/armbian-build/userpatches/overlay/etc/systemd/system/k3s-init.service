@@ -4,12 +4,12 @@ Documentation=https://k3s.io
 After=network-online.target
 Wants=network-online.target
 ConditionPathExists=/usr/local/bin/k3s
-ConditionPathExists=!/etc/rancher/k3s/config.yaml
+ConditionPathExists=!/etc/rancher/k3s/cluster-token
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/bin/bash -c 'echo "K3s binary is ready. Configure via cloud-init or manually create /etc/rancher/k3s/config.yaml"'
+ExecStart=/usr/local/bin/k3s-init.sh
 StandardOutput=journal
 StandardError=journal
 

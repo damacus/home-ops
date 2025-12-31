@@ -6,24 +6,24 @@ set -e
 # or we use a discovery mechanism.
 # Based on REQ-K3S-005, this script handles token retrieval.
 
-NFS_SERVER="${NFS_SERVER:-192.168.1.10}"
-NFS_SHARE="${NFS_SHARE:-/volume1/k3s-token}"
+NFS_SHARE="${NFS_SHARE:-/var/nfs/shared/nfs}"
 MOUNT_POINT="/mnt/k3s-token"
 TOKEN_FILE="/etc/rancher/k3s/cluster-token"
+NFS_SERVER="${NFS_SERVER:-unas.ironstone.casa}"
 
 mkdir -p "${MOUNT_POINT}"
 
 # Mount NFS (REQ-NFS-002: safe options)
-mount -t nfs -o ro,noexec,nosuid,nfsvers=4 "${NFS_SERVER}:${NFS_SHARE}" "${MOUNT_POINT}"
+mount -t nfs -o ro,soft,noexec,nosuid,nfsvers=3 "${NFS_SERVER}:${NFS_SHARE}" "${MOUNT_POINT}"
 
-if [ -f "${MOUNT_POINT}/token" ]; then
+if [ -f "${MOUNT_POINT}/provisioning/token" ]; then
     mkdir -p "$(dirname "${TOKEN_FILE}")"
-    cp "${MOUNT_POINT}/token" "${TOKEN_FILE}"
+    cp "${MOUNT_POINT}/provisioning/token" "${TOKEN_FILE}"
     chmod 0600 "${TOKEN_FILE}"
     chown root:root "${TOKEN_FILE}"
     echo "Cluster token retrieved successfully."
 else
-    echo "Error: Token file not found on NFS share."
+    echo "Error: Token file not found on NFS share at ${MOUNT_POINT}/provisioning/token."
     umount "${MOUNT_POINT}"
     exit 1
 fi
