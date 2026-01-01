@@ -1,0 +1,204 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/ocirepository_v1.json
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: loki
+spec:
+  interval: 30m
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  ref:
+    tag: 6.46.0
+  url: oci://ghcr.io/grafana/helm-charts/loki
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: loki
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: loki
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    # Deploy in Simple Scalable mode (default)
+    deploymentMode: SimpleScalable
+
+    loki:
+      # Single tenant mode
+      auth_enabled: false
+
+      commonConfig:
+        replication_factor: 1
+
+      # Storage configuration - using filesystem (openebs-hostpath)
+      storage:
+        type: s3
+        bucketNames:
+          chunks: loki
+          ruler: loki
+          admin: loki
+        s3:
+          endpoint: http://minio.storage.svc.cluster.local:9000
+          region: us-east-1
+          s3ForcePathStyle: true
+          insecure: true
+
+      # Schema configuration
+      schemaConfig:
+        configs:
+          - from: "2024-01-01"
+            store: tsdb
+            object_store: s3
+            schema: v13
+            index:
+              prefix: loki_index_
+              period: 24h
+
+      # Limits configuration
+      limits_config:
+        retention_period: 168h  # 7 days
+        ingestion_rate_mb: 4
+        ingestion_burst_size_mb: 6
+        max_query_length: 168h
+        max_query_parallelism: 32
+        reject_old_samples: true
+        reject_old_samples_max_age: 168h
+
+      # Compactor configuration for retention
+      compactor:
+        working_directory: /var/loki/compactor
+        retention_enabled: true
+        retention_delete_delay: 2h
+        retention_delete_worker_count: 150
+
+      # Query configuration
+      query_range:
+        align_queries_with_step: true
+        cache_results: true
+
+      # Ruler configuration
+      rulerConfig:
+        storage:
+          type: local
+          local:
+            directory: /var/loki/rules
+        ring:
+          kvstore:
+            store: inmemory
+
+    # Write target configuration (Distributor + Ingester)
+    write:
+      replicas: 1
+
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+      persistence:
+        enabled: true
+        storageClass: openebs-hostpath
+        size: 20Gi
+        accessModes:
+          - ReadWriteOnce
+
+      extraEnv:
+        - name: TZ
+          value: "Europe/London"
+
+    # Read target configuration (Query Frontend + Querier)
+    read:
+      replicas: 1
+
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+      extraEnv:
+        - name: TZ
+          value: "Europe/London"
+
+    # Backend target configuration (Compactor + Index Gateway + Query Scheduler + Ruler)
+    backend:
+      replicas: 1
+
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+      persistence:
+        enabled: true
+        storageClass: openebs-hostpath
+        size: 10Gi
+        accessModes:
+          - ReadWriteOnce
+
+      extraEnv:
+        - name: TZ
+          value: "Europe/London"
+
+    # Disable SingleBinary mode
+    singleBinary:
+      replicas: 0
+
+    # Gateway configuration (nginx)
+    gateway:
+      enabled: true
+      replicas: 1
+
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+
+      service:
+        type: ClusterIP
+        port: 80
+
+    # Monitoring
+    monitoring:
+      serviceMonitor:
+        enabled: true
+        interval: 1m
+
+      selfMonitoring:
+        enabled: false
+        grafanaAgent:
+          installOperator: false
+
+      lokiCanary:
+        enabled: false
+
+    # Test configuration
+    test:
+      enabled: false
+
+  valuesFrom:
+    - kind: Secret
+      name: loki-s3
+      valuesKey: values.yaml
