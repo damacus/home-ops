@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 4.3.0
+      version: 4.5.0
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: n8nio/n8n
-              tag: 1.119.0@sha256:8f6834c399b5a764d5b0165db5d52d757652edb8f6b938b30b0cdf70fdfd3df1
+              tag: 2.2.1@sha256:ee59276d9d5c7daa97462830cfae12d71cea55adcad705e1756e0c616fcf26b9
             env:
               DB_TYPE: "postgresdb"
               DB_POSTGRESDB_DATABASE:

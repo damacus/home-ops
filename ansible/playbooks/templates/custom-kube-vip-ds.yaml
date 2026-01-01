@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: kube-vip
-          image: ghcr.io/kube-vip/kube-vip:v0.9.1@sha256:37036d0f81745c4a5948abd069006264b699b3a98d26aadb24e63f86b7a3fdef
+          image: ghcr.io/kube-vip/kube-vip:v1.0.3@sha256:4e2791cc0238ae01b3986d827f4d568a25d846c94bab51238fe6241281a27113
           imagePullPolicy: IfNotPresent
           args: ["manager"]
           env:
@@ -43,8 +43,6 @@ spec:
               value: "true"
             - name: prometheus_server
               value: :2112
-            - name: vip_interface
-              value: eth0
             - name: vip_leaseduration
               value: "5"
             - name: vip_renewdeadline

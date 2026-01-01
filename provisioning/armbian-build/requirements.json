@@ -1,0 +1,80 @@
+{
+	"meta": {
+		"project_name": "Rock5B-Plus-Edge-Node",
+		"target_board": "rock-5b-plus",
+		"target_os": "noble",
+		"kernel_branch": "vendor",
+		"maintainer": "damacus"
+	},
+	"build_environment": {
+		"host_requirements": {
+			"os": "Ubuntu 24.04",
+			"virtualization": "Docker"
+		},
+		"variables": {
+			"BOARD": "rock-5b-plus",
+			"BRANCH": "vendor",
+			"RELEASE": "noble",
+			"BUILD_MINIMAL": "yes",
+			"BUILD_DESKTOP": "no",
+			"KERNEL_CONFIGURE": "no",
+			"COMPRESS_OUTPUTIMAGE": "sha,gpg,img",
+			"FIXED_IMAGE_SIZE": "16384"
+		}
+	},
+	"pipeline": {
+		"stages": [
+			{
+				"id": "stage_1_preparation",
+				"name": "Framework Setup",
+				"tasks": [
+					{
+						"task_id": "clone_framework",
+						"action": "git_clone",
+						"repository": "https://github.com/armbian/build",
+						"branch": "main",
+						"description": "Clone the Armbian build framework. Ensure we use 'main' as Rock 5B+ support is recent."
+					},
+					{
+						"task_id": "setup_u_boot_config",
+						"action": "write_config",
+						"file": "userpatches/config-rock-5b-plus.conf",
+						"content": "BOOT_SCENARIO='spl-blobs'\nWIREGUARD='no'",
+						"description": "Enforce SPL blobs scenario. The RK3588 bootrom requires specific blobs at specific sectors; without this, the custom partition layout may corrupt the bootloader."
+					}
+				]
+			},
+			{
+				"id": "stage_2_storage",
+				"name": "Partitioning Strategy",
+				"tasks": [
+					{
+						"task_id": "configure_etcd_partition",
+						"action": "write_hook",
+						"hook_name": "post_create_partitions",
+						"description": "Resize the root partition to leave 10GB of unallocated space at the end of the disk. Create a new partition in this space labeled 'K3S_DATA'. CRITICAL: Do NOT touch the start of the disk (sectors 0-32768) as this contains the RK3588 bootloader."
+					}
+				]
+			},
+			{
+				"id": "stage_3_customization",
+				"name": "System Customization",
+				"tasks": [
+					{
+						"task_id": "install_k3s_prereqs",
+						"action": "write_script",
+						"file": "userpatches/customize-image.sh",
+						"description": "Install system dependencies from 'install-packages.sh' (e.g., conntrack, ipvsadm, socat, nvme-cli, smartmontools) plus K3s specific requirements: 'linux-headers-${BRANCH}-${BOARD}' (for Cilium eBPF), 'nfs-common', 'open-iscsi', and 'multipath-tools'."
+					},
+					{
+						"task_id": "inject_k3s_binary",
+						"action": "download_file",
+						"url": "https://github.com/k3s-io/k3s/releases/download/v1.31.4%2Bk3s1/k3s-arm64",
+						"destination": "userpatches/overlay/usr/local/bin/k3s",
+						"description": "Download K3s binary (ARM64). This version bundles Etcd v3.5.16 which is stable."
+					}
+				]
+			}
+		]
+	}
+}

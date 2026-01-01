@@ -10,6 +10,7 @@ spec:
   externalIPs: true
   interfaces:
     - ^eth[0-9]+
+    - ^en[0-9a-zA-Z]+
   nodeSelector:
     matchLabels:
       kubernetes.io/os: linux
@@ -23,4 +24,4 @@ spec:
   allowFirstLastIPs: "Yes"
   blocks:
     - start: 192.168.1.221
-      stop: 192.168.1.250
+      stop: 192.168.1.240

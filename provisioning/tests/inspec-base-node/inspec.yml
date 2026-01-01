@@ -1,0 +1,9 @@
+name: ironstone-base-node
+title: Ironstone Base Node Controls
+maintainer: Dan Webb
+license: MIT
+summary: Shared baseline controls for nodes (intended for inheritance)
+version: 1.0.0
+supports:
+  - platform-family: debian
+inspec_version: ">= 5.0"
