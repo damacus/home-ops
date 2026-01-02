@@ -1,0 +1,15 @@
+site_name: Home Ops Documentation
+theme:
+  name: material
+  palette:
+    scheme: default
+    primary: teal
+    accent: purple
+  features:
+    - navigation.expand
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Guides:
+    - Flashing Radxa 5B+: flashing.md

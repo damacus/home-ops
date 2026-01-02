@@ -18,7 +18,7 @@ spec:
             - name: MINIO_ENDPOINT
               value: "http://minio.storage.svc.cluster.local:9000"
             - name: BUCKETS
-              value: "app-data backups cloudnative-pg longhorn"
+              value: "app-data backups cloudnative-pg longhorn loki"
           envFrom:
             - secretRef:
                 name: minio-root-user
@@ -40,5 +40,7 @@ spec:
                 echo "Creating bucket: $b"
                 mc mb --ignore-existing "minio/${b}"
                 # Set a sensible default policy; adjust as needed
-                mc anonymous set download "minio/${b}" || true
+                if [ "${b}" != "loki" ]; then
+                  mc anonymous set download "minio/${b}" || true
+                fi
               done
