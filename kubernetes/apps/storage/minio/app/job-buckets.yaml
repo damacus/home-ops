@@ -18,7 +18,7 @@ spec:
             - name: MINIO_ENDPOINT
               value: "http://minio.storage.svc.cluster.local:9000"
             - name: BUCKETS
-              value: "app-data backups cloudnative-pg longhorn loki"
+              value: "app-data backups cloudnative-pg longhorn loki mimir-blocks mimir-alertmanager mimir-ruler"
           envFrom:
             - secretRef:
                 name: minio-root-user

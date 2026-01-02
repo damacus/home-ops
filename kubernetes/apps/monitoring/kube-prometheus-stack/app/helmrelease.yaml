@@ -98,6 +98,13 @@ spec:
         serviceMonitorSelectorNilUsesHelmValues: false
         enableAdminAPI: true
         walCompression: true
+        remoteWrite:
+          - url: http://mimir-single-binary.monitoring.svc.cluster.local:8080/api/v1/push
+            queueConfig:
+              maxSamplesPerSend: 10000
+              batchSendDeadline: 5s
+            metadataConfig:
+              send: true
         enableFeatures:
           - auto-gomemlimit
           - memory-snapshot-on-shutdown

@@ -103,12 +103,20 @@ spec:
         deleteDatasources:
           - { name: Alertmanager, orgId: 1 }
           - { name: Prometheus, orgId: 1 }
+          - { name: Mimir, orgId: 1 }
+          - { name: Loki, orgId: 1 }
         datasources:
           - name: Prometheus
             type: prometheus
             uid: prometheus
             url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
             isDefault: true
+          - name: Mimir
+            type: prometheus
+            uid: mimir
+            url: http://mimir-single-binary.monitoring.svc.cluster.local:8080/prometheus
+            jsonData:
+              timeInterval: 1m
           - name: Alertmanager
             type: alertmanager
             uid: alertmanager
