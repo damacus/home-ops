@@ -67,7 +67,7 @@ spec:
 
       # Limits configuration
       limits_config:
-        retention_period: 168h  # 7 days
+        retention_period: 168h # 7 days
         ingestion_rate_mb: 4
         ingestion_burst_size_mb: 6
         max_query_length: 168h
@@ -81,6 +81,7 @@ spec:
         retention_enabled: true
         retention_delete_delay: 2h
         retention_delete_worker_count: 150
+        delete_request_store: s3
 
       # Query configuration
       query_range:
