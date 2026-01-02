@@ -39,11 +39,9 @@ spec:
             - name: LowNodeUtilization
               args:
                 thresholds:
-                  cpu: 20
                   memory: 20
                 targetThresholds:
-                  cpu: 50
-                  memory: 50
+                  memory: 70
             - name: RemovePodsViolatingInterPodAntiAffinity
             - name: RemovePodsViolatingNodeAffinity
               args:
