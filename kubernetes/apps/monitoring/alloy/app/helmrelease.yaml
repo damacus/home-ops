@@ -86,13 +86,6 @@ spec:
           loki.write "default" {
             endpoint {
               url = "http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push"
-
-              // Optional: Add basic retry configuration
-              retry_backoff {
-                initial_interval = "500ms"
-                max_interval     = "5m"
-                max_elapsed_time = "10m"
-              }
             }
           }
 
