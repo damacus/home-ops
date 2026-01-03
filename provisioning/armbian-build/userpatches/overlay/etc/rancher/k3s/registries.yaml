@@ -1,0 +1,10 @@
+mirrors:
+  docker.io:
+  gcr.io:
+  ghcr.io:
+  k8s.gcr.io:
+  lscr.io:
+  mcr.microsoft.com:
+  public.ecr.aws:
+  quay.io:
+  registry.k8s.io:

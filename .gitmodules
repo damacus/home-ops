@@ -1,0 +1,3 @@
+[submodule "provisioning/armbian-build/armbian-build-repo"]
+	path = provisioning/armbian-build/armbian-build-repo
+	url = https://github.com/armbian/build

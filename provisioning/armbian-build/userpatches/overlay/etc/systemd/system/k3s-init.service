@@ -1,0 +1,17 @@
+[Unit]
+Description=K3s Initialization Service
+Documentation=https://k3s.io
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/usr/local/bin/k3s
+ConditionPathExists=!/etc/rancher/k3s/cluster-token
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/k3s-init.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

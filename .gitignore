@@ -39,4 +39,16 @@ secret-template.yaml
 kubeconfig
 age.key
 
+# macOS
+.DS_Store
+**/.DS_Store
+
 certificates/*
+
+# Provisioning
+provisioning/config.env.local
+provisioning/secrets/
+provisioning/packer/builds/
+provisioning/packer/.packer_cache/
+
+claude-progress.txt

@@ -1,0 +1,50 @@
+# K3s Configuration Template
+# This file is a TEMPLATE - cloud-init will generate the actual config.yaml
+# with the correct K3S_VIP value for your cluster.
+#
+# To use this template, copy it to config.yaml and replace ${K3S_VIP} with
+# your actual VIP address (e.g., 192.168.1.220)
+#
+# Example: sed 's/${K3S_VIP}/192.168.1.220/g' config.yaml.template > config.yaml
+---
+server: https://${K3S_VIP}:6443
+token-file: /etc/rancher/k3s/cluster-token
+
+cluster-cidr: 10.69.0.0/16
+service-cidr: 10.96.0.0/16
+
+disable-cloud-controller: true
+disable-kube-proxy: true
+disable-network-policy: true
+
+docker: false
+embedded-registry: true
+etcd-disable-snapshots: true
+etcd-expose-metrics: true
+flannel-backend: none
+secrets-encryption: true
+pause-image: registry.k8s.io/pause:3.9
+write-kubeconfig-mode: 644
+
+tls-san:
+  - ${K3S_VIP}
+
+disable:
+  - flannel
+  - servicelb
+  - traefik
+  - local-storage
+  - metrics-server
+
+kube-apiserver-arg:
+  - anonymous-auth=true
+
+kube-controller-manager-arg:
+  - bind-address=0.0.0.0
+
+kube-scheduler-arg:
+  - bind-address=0.0.0.0
+
+kubelet-arg:
+  - image-gc-high-threshold=55
+  - image-gc-low-threshold=50
