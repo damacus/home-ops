@@ -26,6 +26,7 @@ spec:
   values:
     fullnameOverride: vm
     victoria-metrics-operator:
+      fullnameOverride: vm-operator
       enabled: true
 
     vmsingle:
