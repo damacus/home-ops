@@ -11,4 +11,3 @@ resources:
   - ./vector/ks.yaml
   - ./victoria-metrics/ks.yaml
   # - ./mimir/ks.yaml
-  # - ./unpoller/ks.yaml
