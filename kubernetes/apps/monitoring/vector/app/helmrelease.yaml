@@ -92,3 +92,4 @@ spec:
     # Security Context
     securityContext:
       privileged: true # Required for log access
+      readOnlyRootFilesystem: false
