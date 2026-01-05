@@ -24,6 +24,7 @@ spec:
     remediation:
       retries: 3
   values:
+    fullnameOverride: vm
     victoria-metrics-operator:
       enabled: true
 

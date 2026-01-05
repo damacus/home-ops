@@ -24,6 +24,9 @@ spec:
   values:
     role: Agent
 
+    service:
+      enabled: false
+
     customConfig:
       data_dir: /var/lib/vector
 
