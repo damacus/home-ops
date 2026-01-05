@@ -1,0 +1,91 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vector
+  namespace: monitoring
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: vector
+      version: 0.36.x
+      sourceRef:
+        kind: HelmRepository
+        name: vector
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    role: Agent
+
+    customConfig:
+      data_dir: /var/lib/vector
+
+      # Sources
+      sources:
+        kubernetes_logs:
+          type: kubernetes_logs
+
+        host_metrics:
+          type: host_metrics
+          filesystem:
+            devices:
+              excludes: [binfmt_misc]
+
+        internal_metrics:
+          type: internal_metrics
+
+      # Transforms
+      transforms:
+        remap_kubernetes_logs:
+          type: remap
+          inputs: [kubernetes_logs]
+          source: |
+            # Standardize 'app' label
+            .label.app = .kubernetes.pod_labels.app || .kubernetes.pod_labels."app.kubernetes.io/name" || "unknown"
+            .label.container = .kubernetes.container_name
+            .label.namespace = .kubernetes.pod_namespace
+            .label.node = .kubernetes.pod_node_name
+            .label.pod = .kubernetes.pod_name
+
+      # Sinks
+      sinks:
+        loki:
+          type: loki
+          inputs: [remap_kubernetes_logs]
+          endpoint: http://loki-gateway.monitoring.svc.cluster.local
+          encoding:
+            codec: json
+          labels:
+            app: "{{ label.app }}"
+            container: "{{ label.container }}"
+            namespace: "{{ label.namespace }}"
+            node: "{{ label.node }}"
+            pod: "{{ label.pod }}"
+          remove_label_fields: true
+
+    # Persistence for buffering
+    dataDir: /var/lib/vector
+    persistence:
+      enabled: true
+      hostPath:
+        path: /var/lib/vector-data
+
+    # Resources
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+    # Security Context
+    securityContext:
+      privileged: true # Required for log access
