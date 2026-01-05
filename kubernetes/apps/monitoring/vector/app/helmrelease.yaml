@@ -24,8 +24,9 @@ spec:
   values:
     role: Agent
 
-    service:
-      enabled: false
+    image:
+      repository: timberio/vector
+      tag: 0.52.0-debian
 
     customConfig:
       data_dir: /var/lib/vector
