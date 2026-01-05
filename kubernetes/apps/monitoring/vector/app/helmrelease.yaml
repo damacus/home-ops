@@ -63,11 +63,11 @@ spec:
           encoding:
             codec: json
           labels:
-            app: "{{ label.app }}"
-            container: "{{ label.container }}"
-            namespace: "{{ label.namespace }}"
-            node: "{{ label.node }}"
-            pod: "{{ label.pod }}"
+            app: '{{ "{{" }} label.app }}'
+            container: '{{ "{{" }} label.container }}'
+            namespace: '{{ "{{" }} label.namespace }}'
+            node: '{{ "{{" }} label.node }}'
+            pod: '{{ "{{" }} label.pod }}'
           remove_label_fields: true
 
     # Persistence for buffering
