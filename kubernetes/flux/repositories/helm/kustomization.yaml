@@ -26,5 +26,7 @@ resources:
   - onepassword-connect.yaml
   - openebs.yaml
   - prometheus-community.yaml
-  - secrets-store-csi-driver.yaml
+  - ./secrets-store-csi-driver.yaml
+  - ./vector.yaml
+  - ./victoria-metrics.yaml
   - backube.yaml

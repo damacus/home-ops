@@ -108,7 +108,7 @@ spec:
           - name: Prometheus
             type: prometheus
             uid: prometheus
-            url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+            url: http://victoria-metrics-victoria-metrics-single-server.monitoring.svc.cluster.local:8429
             isDefault: true
           - name: Mimir
             type: prometheus
@@ -119,7 +119,7 @@ spec:
           - name: Alertmanager
             type: alertmanager
             uid: alertmanager
-            url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+            url: http://victoria-metrics-victoria-metrics-alertmanager.monitoring.svc.cluster.local:9093
             jsonData:
               implementation: prometheus
           - name: Loki

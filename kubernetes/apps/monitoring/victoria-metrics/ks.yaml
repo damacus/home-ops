@@ -1,9 +1,8 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app kube-prometheus-stack
+  name: &app victoria-metrics
   namespace: flux-system
 spec:
   targetNamespace: monitoring
@@ -12,7 +11,8 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: external-secrets-stores
-  path: ./kubernetes/apps/monitoring/kube-prometheus-stack/app
+    - name: prometheus-operator-crds # Depends on CRDs being present (though VM installs its own, it uses ServiceMonitors)
+  path: ./kubernetes/apps/monitoring/victoria-metrics/app
   prune: true
   sourceRef:
     kind: GitRepository
@@ -20,8 +20,3 @@ spec:
   wait: false
   interval: 30m
   timeout: 15m
-  postBuild:
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-settings
-        optional: true
