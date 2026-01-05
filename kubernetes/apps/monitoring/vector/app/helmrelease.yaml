@@ -24,11 +24,12 @@ spec:
   values:
     role: Agent
 
-    service:
-      enabled: false
+    image:
+      repository: timberio/vector
+      tag: 0.52.0-debian
 
     customConfig:
-      data_dir: /var/lib/vector
+      data_dir: /vector-data
 
       # Sources
       sources:
@@ -74,7 +75,7 @@ spec:
           remove_label_fields: true
 
     # Persistence for buffering
-    dataDir: /var/lib/vector
+    dataDir: /vector-data
     persistence:
       enabled: true
       hostPath:
