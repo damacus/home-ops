@@ -58,7 +58,7 @@
 
 ### 1Password Secrets Required
 Before deployment, create these items in 1Password:
-1. **rustfs** - with `RUSTFS_ROOT_USER` and `RUSTFS_ROOT_PASSWORD`
+1. **rustfs** - with `RUSTFS_ACCESS_KEY` and `RUSTFS_SECRET_KEY`
 2. **volsync** - with `RESTIC_PASSWORD`
 3. **cloudflare-r2** - with `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
 
