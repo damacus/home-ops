@@ -1,0 +1,599 @@
+[
+	{
+		"category": "flux",
+		"description": "Flux Operator bootstrap and reconciliation",
+		"steps": [
+			"Verify FluxInstance CRD is installed in the cluster",
+			"Check that flux-system namespace exists and is active",
+			"Validate FluxInstance resource in kubernetes/apps/flux-system/flux-instance/instance.yaml",
+			"Run 'flux check' to verify all Flux components are healthy",
+			"Confirm source-controller pod is running and ready",
+			"Confirm kustomize-controller pod is running and ready",
+			"Confirm helm-controller pod is running and ready",
+			"Confirm notification-controller pod is running and ready",
+			"Verify GitRepository 'flux-system' is synced and ready",
+			"Check that all Kustomizations show 'Ready: True' status",
+			"Validate that HelmReleases are being reconciled without errors",
+			"Test manual reconciliation with 'flux reconcile source git flux-system'"
+		],
+		"passes": true
+	},
+	{
+		"category": "flux",
+		"description": "Flux Kustomization health checks",
+		"steps": [
+			"List all Kustomizations with 'flux get kustomizations'",
+			"Verify cluster-apps Kustomization is enabled and syncing",
+			"Check for any suspended Kustomizations",
+			"Validate dependency ordering between Kustomizations",
+			"Confirm no Kustomizations are in failed state"
+		],
+		"passes": true
+	},
+	{
+		"category": "flux",
+		"description": "HelmRelease management and updates",
+		"steps": [
+			"List all HelmReleases with 'flux get helmreleases -A'",
+			"Check for any failed or pending HelmReleases",
+			"Verify HelmRepository sources are accessible",
+			"Test upgrading a HelmRelease manually",
+			"Validate rollback functionality works"
+		],
+		"passes": false
+	},
+	{
+		"category": "cilium",
+		"description": "Cilium CNI installation and health",
+		"steps": [
+			"Verify Cilium pods are running on all nodes",
+			"Run 'cilium status' to check overall health",
+			"Validate Cilium connectivity with 'cilium connectivity test'",
+			"Check that Cilium Operator is running",
+			"Verify Hubble is enabled and collecting flows",
+			"Confirm no network policies are blocking critical traffic",
+			"Test pod-to-pod connectivity across nodes",
+			"Validate service load balancing is working",
+			"Check BGP peering status if configured",
+			"Verify Cilium version matches expected"
+		],
+		"passes": true
+	},
+	{
+		"category": "cilium",
+		"description": "Gateway API implementation with Cilium",
+		"steps": [
+			"Verify Gateway API CRDs are installed",
+			"Check that GatewayClass 'cilium' exists and is accepted",
+			"Validate internal Gateway resource is configured correctly",
+			"Validate external Gateway resource is configured correctly",
+			"Confirm Gateway has valid IP address assigned",
+			"Test HTTPRoute creation and routing",
+			"Verify TLS termination is working with certificates",
+			"Check HTTP to HTTPS redirect is functioning",
+			"Validate backend service connectivity through Gateway",
+			"Test multiple hostnames routing to different services",
+			"Verify Gateway metrics are being collected",
+			"Confirm no Gateway errors in Cilium logs"
+		],
+		"passes": true
+	},
+	{
+		"category": "cilium",
+		"description": "Cilium L2 announcements for LoadBalancer services",
+		"steps": [
+			"Verify CiliumL2AnnouncementPolicy is configured",
+			"Check that LoadBalancer services get external IPs",
+			"Validate ARP responses for announced IPs",
+			"Test failover when node goes down",
+			"Confirm IP pool allocation is working"
+		],
+		"passes": true
+	},
+	{
+		"category": "storage",
+		"description": "Longhorn distributed storage deployment",
+		"steps": [
+			"Verify Longhorn namespace exists",
+			"Check all Longhorn pods are running",
+			"Validate Longhorn UI is accessible",
+			"Confirm default StorageClass is set",
+			"Test PVC creation and binding",
+			"Verify volume replication is working",
+			"Check backup target configuration",
+			"Validate snapshot functionality",
+			"Test volume expansion",
+			"Confirm node storage health"
+		],
+		"passes": true
+	},
+	{
+		"category": "storage",
+		"description": "NFS CSI driver for external storage",
+		"steps": [
+			"Verify NFS CSI driver pods are running",
+			"Check StorageClass for NFS is configured",
+			"Test PVC creation with NFS StorageClass",
+			"Validate mount options are correct",
+			"Confirm read/write access to NFS volumes"
+		],
+		"passes": true
+	},
+	{
+		"category": "storage",
+		"description": "Volsync backup and restore",
+		"steps": [
+			"Verify Volsync controller is running",
+			"Check ReplicationSource resources are configured",
+			"Validate backup schedule is executing",
+			"Test manual backup trigger",
+			"Verify backups are stored in target location",
+			"Test restore from backup",
+			"Confirm data integrity after restore",
+			"Check backup retention policy",
+			"Validate encryption of backups",
+			"Monitor backup success/failure metrics"
+		],
+		"passes": true
+	},
+	{
+		"category": "certificates",
+		"description": "cert-manager installation and ClusterIssuers",
+		"steps": [
+			"Verify cert-manager namespace and pods",
+			"Check ClusterIssuer for Let's Encrypt staging",
+			"Check ClusterIssuer for Let's Encrypt production",
+			"Validate webhook is functioning",
+			"Test certificate request and issuance",
+			"Confirm DNS01 challenge solver is configured",
+			"Verify Cloudflare API token secret exists",
+			"Check certificate renewal is working",
+			"Validate certificate secrets are created",
+			"Monitor cert-manager logs for errors"
+		],
+		"passes": true
+	},
+	{
+		"category": "certificates",
+		"description": "Wildcard certificate for domain",
+		"steps": [
+			"Verify Certificate resource for wildcard exists",
+			"Check certificate status is Ready",
+			"Validate DNS01 challenge completed successfully",
+			"Confirm certificate secret contains valid data",
+			"Test certificate is trusted by browsers"
+		],
+		"passes": true
+	},
+	{
+		"category": "secrets",
+		"description": "External Secrets Operator deployment",
+		"steps": [
+			"Verify external-secrets namespace and pods",
+			"Check ClusterSecretStore is configured",
+			"Validate connection to 1Password Connect",
+			"Test ExternalSecret creation and sync",
+			"Confirm secrets are populated correctly",
+			"Check refresh interval is appropriate",
+			"Validate error handling for missing secrets",
+			"Monitor sync status of all ExternalSecrets",
+			"Test secret rotation workflow",
+			"Verify RBAC permissions are correct"
+		],
+		"passes": true
+	},
+	{
+		"category": "secrets",
+		"description": "1Password Connect server deployment",
+		"steps": [
+			"Verify 1Password Connect pods are running",
+			"Check Connect server credentials are configured",
+			"Validate API connectivity from external-secrets",
+			"Test vault access permissions",
+			"Confirm high availability setup if configured"
+		],
+		"passes": true
+	},
+	{
+		"category": "monitoring",
+		"description": "Victoria Metrics stack deployment",
+		"steps": [
+			"Verify victoria-metrics HelmRelease is healthy",
+			"Check VMSingle pod is running with storage",
+			"Validate VMAgent is scraping targets",
+			"Confirm VMAlert is processing rules",
+			"Verify Alertmanager is configured",
+			"Test ServiceMonitor discovery",
+			"Verify PodMonitor discovery",
+			"Check kube-state-metrics is running",
+			"Validate prometheus-node-exporter on all nodes",
+			"Confirm persistent storage for metrics",
+			"Review active alerts for TooHighSlowInsertsRate",
+			"Review active alerts for CPUThrottlingHigh",
+			"Investigate ScrapePoolHasNoTargets alerts"
+		],
+		"passes": false
+	},
+	{
+		"category": "monitoring",
+		"description": "Grafana dashboards and datasources",
+		"steps": [
+			"Verify Grafana is accessible via Gateway",
+			"Check datasources are configured correctly",
+			"Validate Prometheus datasource connectivity",
+			"Import standard Kubernetes dashboards",
+			"Test custom dashboard creation",
+			"Confirm dashboard persistence"
+		],
+		"passes": true
+	},
+	{
+		"category": "monitoring",
+		"description": "Loki log aggregation",
+		"steps": [
+			"Verify Loki pods are running",
+			"Check Promtail/Alloy is collecting logs",
+			"Validate log ingestion pipeline",
+			"Test log queries in Grafana",
+			"Confirm log retention settings",
+			"Check storage backend configuration"
+		],
+		"passes": true
+	},
+	{
+		"category": "monitoring",
+		"description": "Alertmanager notification routing",
+		"steps": [
+			"Verify Alertmanager configuration",
+			"Check notification receivers are configured",
+			"Test Discord/Slack webhook integration",
+			"Validate alert routing rules",
+			"Confirm silencing functionality works"
+		],
+		"passes": false
+	},
+	{
+		"category": "monitoring",
+		"description": "Fix vmagent CPU throttling",
+		"steps": [
+			"Check current vmagent CPU limits in HelmRelease",
+			"Increase CPU limits to prevent throttling",
+			"Apply changes via Flux reconciliation",
+			"Verify CPUThrottlingHigh alert resolves",
+			"Confirm vmagent pod is no longer throttled"
+		],
+		"passes": false
+	},
+	{
+		"category": "monitoring",
+		"description": "Disable k3s component scrape targets",
+		"steps": [
+			"Identify scrape targets with no endpoints (kube-scheduler, kube-controller-manager, kube-etcd)",
+			"Disable kubeScheduler scraping in victoria-metrics HelmRelease",
+			"Disable kubeControllerManager scraping in victoria-metrics HelmRelease",
+			"Disable kubeEtcd scraping in victoria-metrics HelmRelease",
+			"Apply changes via Flux reconciliation",
+			"Verify ScrapePoolHasNoTargets alerts resolve"
+		],
+		"passes": false
+	},
+	{
+		"category": "monitoring",
+		"description": "Remove mimir-gateway scrape config",
+		"steps": [
+			"Identify mimir-gateway ServiceMonitor or VMServiceScrape",
+			"Remove or disable mimir-gateway scrape configuration",
+			"Apply changes via Flux reconciliation",
+			"Verify mimir-gateway ScrapePoolHasNoTargets alert resolves"
+		],
+		"passes": false
+	},
+	{
+		"category": "dns",
+		"description": "External DNS for automatic record management",
+		"steps": [
+			"Verify external-dns pods are running",
+			"Check Cloudflare provider configuration",
+			"Validate API token permissions",
+			"Test DNS record creation for new service",
+			"Confirm record updates on IP change",
+			"Check TXT record ownership verification",
+			"Validate domain filter settings",
+			"Test record deletion on service removal",
+			"Monitor external-dns logs for errors",
+			"Verify sync interval is appropriate"
+		],
+		"passes": true
+	},
+	{
+		"category": "dns",
+		"description": "CoreDNS configuration and customization",
+		"steps": [
+			"Verify CoreDNS pods are running",
+			"Check custom ConfigMap entries",
+			"Validate upstream DNS servers",
+			"Test internal DNS resolution",
+			"Confirm external DNS resolution"
+		],
+		"passes": true
+	},
+	{
+		"category": "dns",
+		"description": "k8s_gateway for split-horizon DNS",
+		"steps": [
+			"Verify k8s_gateway deployment",
+			"Check Gateway API integration",
+			"Validate internal DNS responses",
+			"Test external client resolution",
+			"Confirm zone delegation is working"
+		],
+		"passes": false
+	},
+	{
+		"category": "auth",
+		"description": "Authentik identity provider deployment",
+		"steps": [
+			"Verify Authentik pods are running",
+			"Check PostgreSQL database connectivity",
+			"Validate Redis cache connectivity",
+			"Confirm admin UI is accessible",
+			"Test user authentication flow",
+			"Verify OIDC provider configuration",
+			"Check LDAP outpost if configured",
+			"Validate proxy outpost for forward auth",
+			"Test SSO integration with applications",
+			"Confirm backup of Authentik data"
+		],
+		"passes": false
+	},
+	{
+		"category": "auth",
+		"description": "OAuth2 proxy for application protection",
+		"steps": [
+			"Verify oauth2-proxy deployment",
+			"Check OIDC provider configuration",
+			"Validate cookie settings",
+			"Test authentication redirect flow",
+			"Confirm session persistence"
+		],
+		"passes": false
+	},
+	{
+		"category": "database",
+		"description": "CloudNative-PG PostgreSQL operator",
+		"steps": [
+			"Verify CNPG operator pods are running",
+			"Check Cluster resources are healthy",
+			"Validate primary instance is running",
+			"Confirm replica instances are synced",
+			"Test automatic failover",
+			"Verify backup schedule is running",
+			"Check WAL archiving is working",
+			"Test point-in-time recovery",
+			"Validate connection pooling",
+			"Monitor database metrics"
+		],
+		"passes": true
+	},
+	{
+		"category": "database",
+		"description": "Redis deployment for caching",
+		"steps": [
+			"Verify Redis pods are running",
+			"Check persistence configuration",
+			"Validate Sentinel if configured",
+			"Test client connectivity",
+			"Confirm memory limits are set"
+		],
+		"passes": true
+	},
+	{
+		"category": "database",
+		"description": "Dragonfly as Redis alternative",
+		"steps": [
+			"Verify Dragonfly deployment",
+			"Check memory configuration",
+			"Validate Redis protocol compatibility",
+			"Test application connectivity",
+			"Monitor performance metrics"
+		],
+		"passes": false
+	},
+	{
+		"category": "scheduling",
+		"description": "Descheduler for pod rebalancing",
+		"steps": [
+			"Verify descheduler deployment",
+			"Check policy configuration",
+			"Validate eviction strategies",
+			"Test pod redistribution",
+			"Confirm PDB respect"
+		],
+		"passes": true
+	},
+	{
+		"category": "scheduling",
+		"description": "Node Feature Discovery",
+		"steps": [
+			"Verify NFD pods on all nodes",
+			"Check node labels are applied",
+			"Validate hardware feature detection",
+			"Test GPU detection if applicable",
+			"Confirm custom rules are working"
+		],
+		"passes": true
+	},
+	{
+		"category": "scheduling",
+		"description": "Intel Device Plugins for hardware acceleration",
+		"steps": [
+			"Verify device plugin pods",
+			"Check GPU resource availability",
+			"Validate QAT if configured",
+			"Test workload scheduling to GPU nodes",
+			"Confirm resource limits work"
+		],
+		"passes": false
+	},
+	{
+		"category": "networking",
+		"description": "Network policies for pod isolation",
+		"steps": [
+			"Verify default deny policies exist",
+			"Check namespace isolation rules",
+			"Validate ingress policies",
+			"Test egress restrictions",
+			"Confirm policy enforcement"
+		],
+		"passes": false
+	},
+	{
+		"category": "networking",
+		"description": "Spegel for peer-to-peer image distribution",
+		"steps": [
+			"Verify Spegel pods on all nodes",
+			"Check registry mirror configuration",
+			"Validate image pull through Spegel",
+			"Test bandwidth savings",
+			"Monitor cache hit rates"
+		],
+		"passes": false
+	},
+	{
+		"category": "system",
+		"description": "Node Problem Detector deployment",
+		"steps": [
+			"Verify NPD pods on all nodes",
+			"Check problem detection rules",
+			"Validate node condition reporting",
+			"Test alert integration",
+			"Confirm kernel log monitoring"
+		],
+		"passes": false
+	},
+	{
+		"category": "system",
+		"description": "Reloader for automatic rollouts",
+		"steps": [
+			"Verify Reloader deployment",
+			"Check annotation configuration",
+			"Validate ConfigMap change detection",
+			"Test Secret change rollout",
+			"Confirm selective reloading works"
+		],
+		"passes": true
+	},
+	{
+		"category": "system",
+		"description": "Kured for node reboots",
+		"steps": [
+			"Verify Kured pods on all nodes",
+			"Check reboot schedule configuration",
+			"Validate Slack/Discord notifications",
+			"Test manual reboot trigger",
+			"Confirm PDB respect during reboot"
+		],
+		"passes": false
+	},
+	{
+		"category": "system",
+		"description": "System Upgrade Controller for k3s updates",
+		"steps": [
+			"Verify SUC pods are running",
+			"Check Plan resources are configured",
+			"Validate version constraints",
+			"Test upgrade on single node",
+			"Confirm rollout strategy works"
+		],
+		"passes": true
+	},
+	{
+		"category": "validation",
+		"description": "Kubeconform manifest validation",
+		"steps": [
+			"Run kubeconform on all manifests",
+			"Check for schema validation errors",
+			"Validate CRD schemas are available",
+			"Fix any validation failures",
+			"Integrate into CI pipeline"
+		],
+		"passes": false
+	},
+	{
+		"category": "validation",
+		"description": "Flux-local for GitOps validation",
+		"steps": [
+			"Run flux-local build on repository",
+			"Check for Kustomization errors",
+			"Validate HelmRelease rendering",
+			"Test diff against live cluster",
+			"Integrate into PR checks"
+		],
+		"passes": false
+	},
+	{
+		"category": "validation",
+		"description": "Pre-commit hooks for code quality",
+		"steps": [
+			"Verify pre-commit is configured",
+			"Check YAML linting rules",
+			"Validate Kubernetes manifest checks",
+			"Test commit hook execution",
+			"Confirm CI integration"
+		],
+		"passes": false
+	},
+	{
+		"category": "backup",
+		"description": "Velero cluster backup solution",
+		"steps": [
+			"Verify Velero pods are running",
+			"Check backup storage location",
+			"Validate backup schedule",
+			"Test manual backup creation",
+			"Verify restore functionality",
+			"Check volume snapshot integration",
+			"Validate backup encryption",
+			"Test disaster recovery scenario",
+			"Monitor backup success metrics",
+			"Confirm retention policies"
+		],
+		"passes": false
+	},
+	{
+		"category": "apps",
+		"description": "Homepage dashboard deployment",
+		"steps": [
+			"Verify Homepage pods are running",
+			"Check ConfigMap for services",
+			"Validate Gateway HTTPRoute",
+			"Test service discovery",
+			"Confirm widget functionality"
+		],
+		"passes": false
+	},
+	{
+		"category": "apps",
+		"description": "Code-server web IDE",
+		"steps": [
+			"Verify code-server deployment",
+			"Check persistent storage",
+			"Validate Gateway access",
+			"Test authentication",
+			"Confirm extension installation"
+		],
+		"passes": true
+	},
+	{
+		"category": "apps",
+		"description": "Kubernetes Dashboard deployment",
+		"steps": [
+			"Verify Dashboard pods",
+			"Check RBAC configuration",
+			"Validate Gateway access",
+			"Test authentication flow",
+			"Confirm metrics display"
+		],
+		"passes": false
+	}
+]

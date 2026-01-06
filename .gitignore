@@ -52,3 +52,4 @@ provisioning/packer/builds/
 provisioning/packer/.packer_cache/
 
 claude-progress.txt
+message.txt

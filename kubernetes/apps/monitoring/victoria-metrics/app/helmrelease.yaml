@@ -61,6 +61,13 @@ spec:
         volumeMounts:
           - name: buffer-data
             mountPath: /var/lib/vmagent-data
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
 
     vmalert:
       enabled: true
@@ -92,13 +99,14 @@ spec:
       enabled: true
     kubeApiServer:
       enabled: true
+    # k3s runs these as static pods without service endpoints - disable to avoid ScrapePoolHasNoTargets alerts
     kubeControllerManager:
-      enabled: true
+      enabled: false
     kubeDns:
       enabled: true
     kubeEtcd:
-      enabled: true
+      enabled: false
     kubeScheduler:
-      enabled: true
+      enabled: false
     kubeProxy:
       enabled: false

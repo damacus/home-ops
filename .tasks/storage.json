@@ -1,0 +1,103 @@
+[
+	{
+		"category": "storage",
+		"description": "Longhorn distributed storage deployment",
+		"steps": [
+			"Verify Longhorn namespace exists",
+			"Check all Longhorn pods are running",
+			"Validate Longhorn UI is accessible",
+			"Confirm default StorageClass is set",
+			"Test PVC creation and binding",
+			"Verify volume replication is working",
+			"Check backup target configuration",
+			"Validate snapshot functionality",
+			"Test volume expansion",
+			"Confirm node storage health",
+			"Run InSpec tests for Longhorn compliance"
+		],
+		"passes": true
+	},
+	{
+		"category": "storage",
+		"description": "NFS CSI driver for external storage",
+		"steps": [
+			"Verify NFS CSI driver pods are running",
+			"Check StorageClass for NFS is configured",
+			"Test PVC creation with NFS StorageClass",
+			"Validate mount options are correct",
+			"Confirm read/write access to NFS volumes",
+			"Run InSpec tests for NFS connectivity"
+		],
+		"passes": true
+	},
+	{
+		"category": "storage",
+		"description": "SMB CSI driver for external storage",
+		"steps": [
+			"Verify SMB CSI driver pods are running",
+			"Check StorageClass for SMB is configured",
+			"Test PVC creation with SMB StorageClass",
+			"Validate mount options and credentials",
+			"Confirm read/write access to SMB volumes",
+			"Run InSpec tests for SMB connectivity"
+		],
+		"passes": true
+	},
+	{
+		"category": "storage",
+		"description": "OpenEBS local storage provisioner",
+		"steps": [
+			"Verify OpenEBS pods are running in openebs-system",
+			"Check openebs-hostpath StorageClass is available",
+			"Test PVC creation using local-path/hostpath",
+			"Verify data persistence on node restart",
+			"Run InSpec tests for OpenEBS health"
+		],
+		"passes": true
+	},
+	{
+		"category": "volsync",
+		"description": "Volsync backup and restore validation",
+		"steps": [
+			"Verify Volsync controller is running in volsync-system",
+			"Check ReplicationSource resources are configured and valid",
+			"Validate backup schedule is executing as expected",
+			"Test manual backup trigger for a sample PVC",
+			"Verify backups are stored in target location (MinIO/S3)",
+			"Test restore from backup and verify data integrity",
+			"Check backup retention policy and cleanup",
+			"Validate encryption of backups (Restic/Native)",
+			"Monitor backup success/failure metrics in Grafana",
+			"Run InSpec tests for VolSync operation"
+		],
+		"passes": false
+	},
+	{
+		"category": "migration",
+		"description": "Migrate object storage from MinIO to RustFS",
+		"steps": [
+			"Audit current MinIO buckets and data usage",
+			"Deploy RustFS instance in the cluster",
+			"Verify RustFS S3 compatibility and performance",
+			"Create sync jobs to move data from MinIO to RustFS",
+			"Update application secrets to point to RustFS endpoint",
+			"Validate application connectivity with RustFS",
+			"Verify data integrity post-migration",
+			"Decommission MinIO once migration is confirmed stable",
+			"Run InSpec tests for RustFS availability"
+		],
+		"passes": false
+	},
+	{
+		"category": "storage",
+		"description": "MinIO object storage (Legacy)",
+		"steps": [
+			"Verify MinIO pods are running",
+			"Check access to MinIO Console and S3 API",
+			"Validate IronBuckets integration",
+			"Confirm data persistence on PVC",
+			"Monitor MinIO health via ServiceMonitor"
+		],
+		"passes": true
+	}
+]

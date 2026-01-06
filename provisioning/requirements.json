@@ -640,6 +640,58 @@
       }
     },
     {
+      "id": "REQ-STORAGE-003",
+      "category": "storage",
+      "title": "Longhorn storage operational",
+      "description": "Longhorn MUST be operational with a Ready StorageClass.",
+      "priority": "high",
+      "passes": false,
+      "verification": {
+        "method": "inspec",
+        "profile": "storage",
+        "control": "storage-longhorn"
+      }
+    },
+    {
+      "id": "REQ-STORAGE-004",
+      "category": "storage",
+      "title": "OpenEBS storage operational",
+      "description": "OpenEBS MUST be operational with a Ready hostpath StorageClass.",
+      "priority": "high",
+      "passes": false,
+      "verification": {
+        "method": "inspec",
+        "profile": "storage",
+        "control": "storage-openebs"
+      }
+    },
+    {
+      "id": "REQ-STORAGE-005",
+      "category": "storage",
+      "title": "VolSync operational",
+      "description": "VolSync controller MUST be running.",
+      "priority": "medium",
+      "passes": false,
+      "verification": {
+        "method": "inspec",
+        "profile": "storage",
+        "control": "storage-volsync"
+      }
+    },
+    {
+      "id": "REQ-STORAGE-006",
+      "category": "storage",
+      "title": "CSI Drivers operational",
+      "description": "NFS and SMB CSI drivers MUST be running.",
+      "priority": "medium",
+      "passes": false,
+      "verification": {
+        "method": "inspec",
+        "profile": "storage",
+        "control": "storage-csi-drivers"
+      }
+    },
+    {
       "id": "REQ-BOOT-001",
       "category": "boot",
       "title": "Cloud-init completes successfully",
@@ -738,6 +790,15 @@
         "REQ-BOOT-001",
         "REQ-BOOT-002",
         "REQ-BOOT-003"
+      ]
+    },
+    "storage": {
+      "description": "Tests to validate cluster storage components",
+      "requirements": [
+        "REQ-STORAGE-003",
+        "REQ-STORAGE-004",
+        "REQ-STORAGE-005",
+        "REQ-STORAGE-006"
       ]
     }
   }

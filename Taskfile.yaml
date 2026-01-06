@@ -42,6 +42,7 @@ includes:
   provisioning:
     aliases: ["prov"]
     taskfile: .taskfiles/Provisioning/Taskfile.yaml
+  jq: .taskfiles/Jq/Taskfile.yaml
 
 tasks:
   default: task -l

@@ -1,0 +1,526 @@
+[
+    {
+        "category": "cloud-init",
+        "description": "Cloud-init template for k3s nodes",
+        "steps": [
+            "Verify cloud-init template exists in provisioning/cloud-init/",
+            "Check user-data includes correct SSH authorized keys",
+            "Validate network configuration for static IP assignment",
+            "Confirm hostname templating works correctly",
+            "Test timezone and locale settings (en_GB)",
+            "Verify package installation list is complete",
+            "Check that k3s installation script is included",
+            "Validate disk partitioning configuration",
+            "Test cloud-init on fresh VM boot",
+            "Confirm all runcmd scripts execute successfully",
+            "Verify final message indicates completion",
+            "Check cloud-init logs for any errors"
+        ],
+        "passes": false
+    },
+    {
+        "category": "cloud-init",
+        "description": "Network configuration for nodes",
+        "steps": [
+            "Verify static IP configuration template",
+            "Check gateway and DNS settings",
+            "Validate VLAN configuration if used",
+            "Test network connectivity after boot",
+            "Confirm MTU settings are correct"
+        ],
+        "passes": false
+    },
+    {
+        "category": "ansible",
+        "description": "Ansible inventory management",
+        "steps": [
+            "Verify inventory file structure",
+            "Check host groups are correctly defined",
+            "Validate host variables are set",
+            "Confirm group variables are configured",
+            "Test inventory with 'ansible-inventory --list'",
+            "Verify SSH connectivity to all hosts",
+            "Check ansible.cfg settings",
+            "Validate vault password file location",
+            "Test ping to all hosts",
+            "Confirm privilege escalation works"
+        ],
+        "passes": false
+    },
+    {
+        "category": "ansible",
+        "description": "k3s cluster installation playbook",
+        "steps": [
+            "Verify playbook exists and is valid YAML",
+            "Check role dependencies are installed",
+            "Validate variable definitions",
+            "Test playbook syntax with --check",
+            "Run playbook on test node",
+            "Verify k3s service is running after install",
+            "Check kubeconfig is generated",
+            "Validate cluster token is set correctly",
+            "Confirm node joins cluster successfully",
+            "Test idempotency by running playbook again",
+            "Verify no errors in k3s logs",
+            "Check systemd service configuration"
+        ],
+        "passes": false
+    },
+    {
+        "category": "ansible",
+        "description": "Node preparation playbook",
+        "steps": [
+            "Verify system packages are installed",
+            "Check kernel parameters are set",
+            "Validate sysctl configurations",
+            "Confirm swap is disabled",
+            "Test firewall rules are applied",
+            "Verify NTP synchronization",
+            "Check disk mounts are configured",
+            "Validate user accounts are created"
+        ],
+        "passes": false
+    },
+    {
+        "category": "ansible",
+        "description": "Ansible vault for secrets management",
+        "steps": [
+            "Verify vault file exists",
+            "Check vault password is accessible",
+            "Validate encrypted variables decrypt correctly",
+            "Test playbook with vault variables",
+            "Confirm no plaintext secrets in repository"
+        ],
+        "passes": false
+    },
+    {
+        "category": "ansible",
+        "description": "Node upgrade playbook",
+        "steps": [
+            "Verify upgrade playbook exists",
+            "Check rolling upgrade strategy",
+            "Validate drain and uncordon steps",
+            "Test upgrade on single node",
+            "Confirm cluster remains healthy during upgrade"
+        ],
+        "passes": false
+    },
+    {
+        "category": "hardware",
+        "description": "Rock Pi node configuration",
+        "steps": [
+            "Verify Rock Pi specific cloud-init",
+            "Check network interface name (enP4p65s0)",
+            "Validate ARM64 k3s binary is used",
+            "Test boot from SD card or eMMC",
+            "Confirm hardware acceleration settings",
+            "Verify power management configuration",
+            "Check thermal monitoring",
+            "Validate storage configuration",
+            "Test network performance",
+            "Confirm node joins cluster successfully"
+        ],
+        "passes": false
+    },
+    {
+        "category": "hardware",
+        "description": "Intel NUC node configuration",
+        "steps": [
+            "Verify NUC specific configuration",
+            "Check Intel GPU passthrough settings",
+            "Validate NVMe storage configuration",
+            "Test Quick Sync Video availability",
+            "Confirm network interface settings"
+        ],
+        "passes": false
+    },
+    {
+        "category": "hardware",
+        "description": "Generic x86 node configuration",
+        "steps": [
+            "Verify standard x86 cloud-init",
+            "Check network interface detection",
+            "Validate storage device naming",
+            "Test UEFI boot configuration",
+            "Confirm virtualization support"
+        ],
+        "passes": false
+    },
+    {
+        "category": "vm",
+        "description": "QEMU VM validation loop",
+        "steps": [
+            "Verify QEMU is installed on host",
+            "Check VM creation script exists",
+            "Validate cloud-init ISO generation",
+            "Test VM boot with cloud-init",
+            "Confirm SSH access to VM",
+            "Verify k3s installation completes",
+            "Check node joins test cluster",
+            "Validate cleanup script works",
+            "Test full provisioning cycle",
+            "Confirm VM resources are released"
+        ],
+        "passes": false
+    },
+    {
+        "category": "vm",
+        "description": "Proxmox VM template creation",
+        "steps": [
+            "Verify Proxmox API access",
+            "Check template creation script",
+            "Validate cloud-init integration",
+            "Test VM clone from template",
+            "Confirm network configuration applies"
+        ],
+        "passes": false
+    },
+    {
+        "category": "vm",
+        "description": "VM resource allocation standards",
+        "steps": [
+            "Define CPU allocation per node type",
+            "Set memory allocation standards",
+            "Configure storage allocation",
+            "Validate resource limits",
+            "Test resource constraints"
+        ],
+        "passes": false
+    },
+    {
+        "category": "inspec",
+        "description": "InSpec compliance profile for nodes",
+        "steps": [
+            "Verify InSpec profile exists",
+            "Check control definitions are valid",
+            "Validate SSH transport configuration",
+            "Test profile against running node",
+            "Confirm all controls pass",
+            "Check for security baseline compliance",
+            "Validate kernel hardening controls",
+            "Test network security controls",
+            "Verify user account controls",
+            "Generate compliance report",
+            "Integrate into CI pipeline",
+            "Document remediation steps for failures"
+        ],
+        "passes": false
+    },
+    {
+        "category": "inspec",
+        "description": "CIS benchmark compliance checks",
+        "steps": [
+            "Verify CIS profile is configured",
+            "Check filesystem controls",
+            "Validate process hardening",
+            "Test network configuration",
+            "Confirm audit logging"
+        ],
+        "passes": false
+    },
+    {
+        "category": "inspec",
+        "description": "k3s specific compliance controls",
+        "steps": [
+            "Verify k3s service configuration",
+            "Check kubelet security settings",
+            "Validate API server configuration",
+            "Test etcd security if applicable",
+            "Confirm RBAC is enabled"
+        ],
+        "passes": false
+    },
+    {
+        "category": "network",
+        "description": "VLAN configuration for node networks",
+        "steps": [
+            "Define VLAN IDs for each network segment",
+            "Configure switch port assignments",
+            "Validate node VLAN tagging",
+            "Test inter-VLAN routing",
+            "Confirm firewall rules between VLANs"
+        ],
+        "passes": false
+    },
+    {
+        "category": "network",
+        "description": "Static IP allocation scheme",
+        "steps": [
+            "Document IP allocation for all nodes",
+            "Verify no IP conflicts exist",
+            "Check DHCP reservations if used",
+            "Validate DNS entries for nodes",
+            "Test reverse DNS resolution"
+        ],
+        "passes": false
+    },
+    {
+        "category": "network",
+        "description": "Node network bonding configuration",
+        "steps": [
+            "Verify bonding module is loaded",
+            "Check bond interface configuration",
+            "Validate failover settings",
+            "Test link failure scenario",
+            "Confirm bandwidth aggregation"
+        ],
+        "passes": false
+    },
+    {
+        "category": "storage",
+        "description": "Local storage preparation for Longhorn",
+        "steps": [
+            "Verify dedicated disk for Longhorn",
+            "Check filesystem formatting",
+            "Validate mount point configuration",
+            "Test disk performance",
+            "Confirm Longhorn discovers storage"
+        ],
+        "passes": false
+    },
+    {
+        "category": "storage",
+        "description": "NFS client configuration on nodes",
+        "steps": [
+            "Verify NFS client packages installed",
+            "Check NFS mount options",
+            "Validate NFS server connectivity",
+            "Test mount and unmount operations",
+            "Confirm persistent mounts in fstab"
+        ],
+        "passes": false
+    },
+    {
+        "category": "storage",
+        "description": "iSCSI initiator configuration",
+        "steps": [
+            "Verify iSCSI packages installed",
+            "Check initiator name configuration",
+            "Validate target discovery",
+            "Test LUN attachment",
+            "Confirm multipath if configured"
+        ],
+        "passes": false
+    },
+    {
+        "category": "security",
+        "description": "SSH hardening on nodes",
+        "steps": [
+            "Verify SSH key-only authentication",
+            "Check root login is disabled",
+            "Validate SSH port configuration",
+            "Test fail2ban is running",
+            "Confirm SSH protocol version"
+        ],
+        "passes": false
+    },
+    {
+        "category": "security",
+        "description": "Firewall configuration on nodes",
+        "steps": [
+            "Verify firewall service is running",
+            "Check default deny policy",
+            "Validate allowed ports for k3s",
+            "Test inter-node communication",
+            "Confirm logging is enabled"
+        ],
+        "passes": false
+    },
+    {
+        "category": "security",
+        "description": "Automatic security updates",
+        "steps": [
+            "Verify unattended-upgrades is configured",
+            "Check update schedule",
+            "Validate security repository is enabled",
+            "Test automatic reboot settings",
+            "Confirm notification configuration"
+        ],
+        "passes": false
+    },
+    {
+        "category": "monitoring",
+        "description": "Node exporter deployment via Ansible",
+        "steps": [
+            "Verify node_exporter is installed",
+            "Check systemd service configuration",
+            "Validate metrics endpoint is accessible",
+            "Test Prometheus can scrape metrics",
+            "Confirm all collectors are enabled"
+        ],
+        "passes": false
+    },
+    {
+        "category": "monitoring",
+        "description": "Promtail log collection on nodes",
+        "steps": [
+            "Verify Promtail is installed",
+            "Check configuration file",
+            "Validate log file targets",
+            "Test log shipping to Loki",
+            "Confirm systemd journal collection"
+        ],
+        "passes": false
+    },
+    {
+        "category": "monitoring",
+        "description": "SMART disk monitoring",
+        "steps": [
+            "Verify smartmontools is installed",
+            "Check SMART enabled on disks",
+            "Validate monitoring schedule",
+            "Test alert on disk issues",
+            "Confirm metrics export"
+        ],
+        "passes": false
+    },
+    {
+        "category": "bootstrap",
+        "description": "First control plane node bootstrap",
+        "steps": [
+            "Verify cloud-init completes successfully",
+            "Check k3s server starts correctly",
+            "Validate kubeconfig is generated",
+            "Test kubectl access from node",
+            "Confirm cluster is initialized",
+            "Verify etcd is running (if applicable)",
+            "Check API server is responding",
+            "Validate node is Ready",
+            "Test pod scheduling works",
+            "Confirm CNI is functioning"
+        ],
+        "passes": false
+    },
+    {
+        "category": "bootstrap",
+        "description": "Additional control plane node join",
+        "steps": [
+            "Verify cluster token is available",
+            "Check k3s server join command",
+            "Validate node joins as control plane",
+            "Test etcd cluster membership",
+            "Confirm high availability"
+        ],
+        "passes": false
+    },
+    {
+        "category": "bootstrap",
+        "description": "Worker node join process",
+        "steps": [
+            "Verify cluster token is available",
+            "Check k3s agent configuration",
+            "Validate node joins as worker",
+            "Test pod scheduling to worker",
+            "Confirm node labels are applied"
+        ],
+        "passes": false
+    },
+    {
+        "category": "bootstrap",
+        "description": "Flux bootstrap after cluster creation",
+        "steps": [
+            "Verify GitHub token is available",
+            "Check flux bootstrap command",
+            "Validate GitRepository is created",
+            "Test Kustomization sync starts",
+            "Confirm applications deploy"
+        ],
+        "passes": false
+    },
+    {
+        "category": "maintenance",
+        "description": "Node drain and maintenance procedure",
+        "steps": [
+            "Verify drain command works",
+            "Check pod eviction completes",
+            "Validate PDB is respected",
+            "Test maintenance tasks",
+            "Confirm uncordon restores scheduling"
+        ],
+        "passes": false
+    },
+    {
+        "category": "maintenance",
+        "description": "Node replacement procedure",
+        "steps": [
+            "Document node removal steps",
+            "Verify data migration if needed",
+            "Check cluster remains healthy",
+            "Validate new node provisioning",
+            "Confirm workloads reschedule"
+        ],
+        "passes": false
+    },
+    {
+        "category": "maintenance",
+        "description": "Cluster backup and restore",
+        "steps": [
+            "Verify etcd backup procedure",
+            "Check backup storage location",
+            "Validate restore process",
+            "Test disaster recovery scenario",
+            "Confirm cluster state is restored"
+        ],
+        "passes": false
+    },
+    {
+        "category": "taskfile",
+        "description": "Taskfile commands for provisioning",
+        "steps": [
+            "Verify provisioning tasks exist",
+            "Check task dependencies",
+            "Validate variable substitution",
+            "Test each provisioning task",
+            "Confirm documentation is accurate"
+        ],
+        "passes": false
+    },
+    {
+        "category": "taskfile",
+        "description": "Ansible task wrappers",
+        "steps": [
+            "Verify ansible:ping task works",
+            "Check ansible:run task",
+            "Validate ansible:list task",
+            "Test ansible:vault tasks",
+            "Confirm error handling"
+        ],
+        "passes": false
+    },
+    {
+        "category": "taskfile",
+        "description": "VM management tasks",
+        "steps": [
+            "Verify VM creation task",
+            "Check VM destruction task",
+            "Validate VM status task",
+            "Test full VM lifecycle",
+            "Confirm cleanup works"
+        ],
+        "passes": false
+    },
+    {
+        "category": "documentation",
+        "description": "Node provisioning runbook",
+        "steps": [
+            "Verify runbook exists",
+            "Check step-by-step instructions",
+            "Validate prerequisites section",
+            "Test following runbook on new node",
+            "Confirm troubleshooting section"
+        ],
+        "passes": false
+    },
+    {
+        "category": "documentation",
+        "description": "Hardware inventory documentation",
+        "steps": [
+            "Document all physical nodes",
+            "Record specifications per node",
+            "Track warranty information",
+            "Note network port assignments",
+            "Maintain power requirements"
+        ],
+        "passes": false
+    }
+]

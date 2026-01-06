@@ -3,12 +3,12 @@ description: Coding Agent
 auto_execution_mode: 1
 ---
 
-# YOUR ROLE - CODING AGENT
+## YOUR ROLE - CODING AGENT
 
 You are continuing work on a long-running autonomous development task.
 This is a FRESH context window - you have no memory of previous sessions.
 
-## STEP 1: GET YOUR BEARINGS (MANDATORY)
+### STEP 1: GET YOUR BEARINGS (MANDATORY)
 
 Start by orienting yourself:
 
@@ -20,36 +20,39 @@ pwd
 ls -la
 
 # 3. Read the project specification to understand what you're building
-cat docs/app_spec.txt
+cat AGENTS.md
 
-# 4. Read the feature list to see all work
-# Require I give you a feature file:
-task jq:list-failing FILE=<feature>
+# 4. List task lists to see focus areas
+ls -la .tasks/
 
-# 5. Read progress notes from previous sessions
+# 5. Read a specific task list to see pending work
+# Example: task jq:list-failing FILE=.tasks/provisioning.json
+task jq:list-failing FILE=<path_to_json>
+
+# 6. Read progress notes from previous sessions
 cat claude-progress.txt
 
-# 6. Check recent git history
+# 7. Check recent git history
 git log --oneline -20
-
-# 7. Count remaining tests (across all feature files)
-task count-remaining-tests
 ```
 
-Understanding the `docs/app_spec.txt` is critical - it contains the full requirements
-for the application you're building.
+Understanding the `AGENTS.md` is critical - it contains the full infrastructure requirements, technology stack, and architectural decisions.
 
-## STEP 2: START TEST SERVERS (IF NOT RUNNING)
+### STEP 2: ORIENT WITH CLUSTER STATE (MANDATORY)
 
 ```fish
-# Start test environment (Docker-based with PostgreSQL)
-task test:up
-
-# Or for local development with standalone PostgreSQL container
-task local:db:up
+# Get a list of all running pods and their status
+task kubernetes:resources
 ```
 
-## STEP 3: VERIFICATION TEST (CRITICAL!)
+### STEP 3: RUN VALIDATION (IF APPLICABLE)
+
+```fish
+# Validate all Kubernetes manifests
+task k8s:kubeconform
+```
+
+### STEP 4: VERIFICATION TEST (CRITICAL!)
 
 **MANDATORY BEFORE NEW WORK:**
 
@@ -73,62 +76,53 @@ For example, if this were a chat app, you should perform a test that logs into t
   - Missing hover states
   - Console errors
 
-## STEP 4: CHOOSE ONE FEATURE TO IMPLEMENT
+### STEP 5: CHOOSE ONE TASK TO IMPLEMENT
 
-Look at feature_list.json and find the highest-priority feature with "passes": false.
+Look at the task lists in `.tasks/` and find the highest-priority task with `"passes": false`.
 
-Focus on completing one feature perfectly and completing its testing steps in this session before moving on to other features.
-It's ok if you only complete one feature in this session, as there will be more sessions later that continue to make progress.
+Focus on completing one task perfectly and completing its testing steps in this session before moving on to other tasks.
+It's ok if you only complete one task in this session, as there will be more sessions later that continue to make progress.
 
-### STEP 5: IMPLEMENT THE FEATURE
+### STEP 6: IMPLEMENT THE TASK
 
-Implement the chosen feature thoroughly:
+Implement the chosen task thoroughly:
 
-1. Write the code (frontend and/or backend as needed)
-2. Test manually using browser automation (see Step 6)
+1. Write the code (Kubernetes manifests, Ansible playbooks, or scripts as needed)
+2. Test manually using the cluster or VM validation loop
 3. Fix any issues discovered
-4. Verify the feature works end-to-end
+4. Verify the task works end-to-end according to the steps in the JSON
 
-## STEP 6: VERIFY WITH BROWSER AUTOMATION
+### STEP 7: VERIFY WITH APPROPRIATE TOOLS
 
-**CRITICAL:** You MUST verify features through the actual UI.
+**CRITICAL:** You MUST verify tasks through the actual infrastructure or tests.
 
-Use browser automation tools:
-
-- Navigate to the app in a real browser
-- Interact like a human user (click, type, scroll)
-- Take screenshots at each step
-- Verify both functionality AND visual appearance
+- For Kubernetes: Use `kubectl`, `flux`, and browser access to apps.
+- For Provisioning: Use the VM validation loop (`task provisioning:vm-qemu`).
+- For Security: Use `inspec` and policy enforcement checks.
 
 **DO:**
 
-- Test through the UI with clicks and keyboard input
-- Take screenshots to verify visual appearance
-- Check for console errors in browser
-- Verify complete user workflows end-to-end
+- Test through the CLI and UI as appropriate.
+- Take screenshots or capture terminal output to verify success.
+- Check for errors in pod logs or system services.
+- Verify complete workflows end-to-end.
 
 **DON'T:**
 
-- Only test with curl commands (backend testing alone is insufficient)
-- Use JavaScript evaluation to bypass UI (no shortcuts)
-- Skip visual verification
-- Mark tests passing without thorough verification
+- Mark tests passing without thorough verification.
+- Skip validation steps (e.g., `kubeconform`).
+- Use shortcuts that bypass policy enforcement.
 
-### STEP 7: UPDATE feature_list.json (CAREFULLY!)
+### STEP 8: UPDATE TASK LISTS (CAREFULLY!)
 
 **YOU CAN ONLY MODIFY ONE FIELD: "passes"**
 
 After thorough verification, use the task commands to update the JSON:
 
 ```fish
-# Update by feature ID using task command (preferred)
-task jq:update-field FILE=features/security.json ID=SEC-001 FIELD=passes VALUE=true
-
-# Or use raw jq for complex updates
-jq 'map(if .id == "FEATURE-001" then .passes = true else . end)' feature_list.json | sponge feature_list.json
-
-# Multiple updates at once
-jq 'map(if .id == "FEAT-001" or .id == "FEAT-002" then .passes = true else . end)' feature_list.json | sponge feature_list.json
+# Update by index or specific criteria using raw jq (be extremely careful)
+# Recommended: Read the file, identify the task, then update it.
+jq 'map(if .description == "Target Task Description" then .passes = true else . end)' .tasks/kubernetes.json > .tasks/kubernetes.json.tmp && mv .tasks/kubernetes.json.tmp .tasks/kubernetes.json
 ```
 
 **NEVER:**
@@ -139,42 +133,36 @@ jq 'map(if .id == "FEAT-001" or .id == "FEAT-002" then .passes = true else . end
 - Combine or consolidate tests
 - Reorder tests
 
-**ONLY CHANGE "passes" FIELD AFTER VERIFICATION WITH SCREENSHOTS.**
+**ONLY CHANGE "passes" FIELD AFTER VERIFICATION.**
 
-### STEP 8: COMMIT YOUR PROGRESS
+### STEP 9: COMMIT YOUR PROGRESS
 
-Make a descriptive git commit:
+Make a descriptive git commit using Conventional Commits:
 
 ```fish
 git add .
-git commit -m "Implement [feature name] - verified end-to-end
-
-- Added [specific changes]
-- Tested with browser automation
-- Updated feature_list.json: marked test #X as passing
-- Screenshots in verification/ directory
-"
+git commit -m "feat: implement [task name] - verified"
 ```
 
-### STEP 9: UPDATE PROGRESS NOTES
+### STEP 10: UPDATE PROGRESS NOTES
 
 Update `claude-progress.txt` with:
 
 - What you accomplished this session
-- Which test(s) you completed
+- Which task(s) you completed
 - Any issues discovered or fixed
 - What should be worked on next
-- Current completion status (e.g., "45/200 tests passing")
+- Current completion status (e.g., "45/200 tasks passing across all lists")
 
-### STEP 10: END SESSION CLEANLY
+### STEP 11: END SESSION CLEANLY
 
 Before context fills up:
 
 1. Commit all working code
 2. Update claude-progress.txt
-3. Update feature_list.json if tests verified
+3. Update task lists if verified
 4. Ensure no uncommitted changes
-5. Leave app in working state (no broken features)
+5. Leave the environment in a working state
 
 ---
 
@@ -182,90 +170,39 @@ Before context fills up:
 
 Run `task --list` to see all available commands. Key commands:
 
-### Testing
+### Kubernetes & Flux
 
 ```fish
-# Run all tests in Docker (PostgreSQL)
-task test
+# Reconcile Flux
+task flux:reconcile
 
-# Run specific test file
-task test TEST_FILE=spec/models/user_spec.rb
+# Apply specific Kustomization
+task flux:apply path=apps/my-app
 
-# Rebuild test environment (drops database)
-task test-rebuild
+# List cluster resources
+task k8s:resources
 
-# Start/stop test server
-task test:up
-task test:stop
-
-# View test logs
-task test:logs
+# Validate manifests
+task k8s:kubeconform
 ```
 
-### Local Testing (faster, standalone PostgreSQL)
+### Ansible & Provisioning
 
 ```fish
-# Start local PostgreSQL container
-task local:db:up
+# Ping all hosts
+task ansible:ping
 
-# Run non-browser tests locally
-task local:test
-task local:test TEST_FILE=spec/models/user_spec.rb
+# Run specific playbook
+task ansible:run playbook=cluster-installation
 
-# Run browser tests locally (requires Playwright)
-task local:test:browser
+# List hosts
+task ansible:list
 
-# Run all tests locally
-task local:test:all
+# Run node audit
+task provisioning:audit host=<ip>
 
-# Stop local database
-task local:clean
-```
-
-### Development
-
-```fish
-# Start development server
-task dev:up
-
-# Seed development database
-task dev:seed
-
-# View logs / stop server
-task dev:logs
-task dev:stop
-
-# Rebuild (drops database)
-task dev:rebuild
-
-# Open UI in browser
-task dev:open-ui
-```
-
-### Feature JSON Management
-
-```fish
-# List failing tests in a feature file
-task jq:list-failing FILE=security
-
-# Update a field by ID
-task jq:update-field FILE=features/security.json ID=SEC-001 FIELD=passes VALUE=true
-
-# Run arbitrary jq query
-task jq:query FILE=features/security.json QUERY='.[] | select(.passes == false) | .id'
-
-# Count remaining failing tests across all features
-task count-remaining-tests
-```
-
-### Linting
-
-```fish
-# Run RuboCop
-task rubocop
-
-# Run RuboCop with autocorrect
-task rubocop AUTOCORRECT=true
+# Run VM validation loop
+task provisioning:vm-qemu
 ```
 
 ---
@@ -289,18 +226,18 @@ Test like a human user with mouse and keyboard. Don't take shortcuts by using Ja
 
 ## IMPORTANT REMINDERS
 
-**Your Goal:** Production-quality application with all 200+ tests passing
+**Your Goal:** Production-grade home infrastructure with all 200+ tasks passing
 
-**This Session's Goal:** Complete at least one feature perfectly
+**This Session's Goal:** Complete at least one task perfectly
 
-**Priority:** Fix broken tests before implementing new features
+**Priority:** Fix broken systems before implementing new features
 
 **Quality Bar:**
 
-- Zero console errors
-- Polished UI matching the design specified in app_spec.txt
-- All features work end-to-end through the UI
-- Fast, responsive, professional
+- Validated Kubernetes manifests (`kubeconform`)
+- Small, atomic commits with Conventional Commits
+- All tasks verified end-to-end (manual or automated)
+- Documented progress in `claude-progress.txt`
 
 **You have unlimited time.** Take as long as needed to get it right. The most important thing is that you
 leave the code base in a clean state before terminating the session (Step 10).

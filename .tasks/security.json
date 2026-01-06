@@ -1,0 +1,541 @@
+[
+	{
+		"category": "secrets",
+		"description": "1Password Connect integration for secrets",
+		"steps": [
+			"Verify 1Password Connect server is deployed",
+			"Check Connect credentials secret exists in cluster",
+			"Validate API connectivity from external-secrets operator",
+			"Test secret retrieval from 1Password vault",
+			"Confirm secret sync to Kubernetes secrets",
+			"Verify secret rotation workflow",
+			"Check access logging for audit trail",
+			"Validate vault item permissions",
+			"Test failover if multiple Connect instances",
+			"Monitor Connect server health metrics",
+			"Confirm TLS encryption for API calls",
+			"Document secret naming conventions"
+		],
+		"passes": false
+	},
+	{
+		"category": "secrets",
+		"description": "External Secrets Operator configuration",
+		"steps": [
+			"Verify ESO pods are running and healthy",
+			"Check ClusterSecretStore configuration",
+			"Validate SecretStore for namespace-scoped access",
+			"Test ExternalSecret creation and sync",
+			"Confirm refresh interval is appropriate",
+			"Verify error handling for missing secrets",
+			"Check RBAC permissions for ESO",
+			"Validate webhook configuration",
+			"Test secret deletion handling",
+			"Monitor sync status metrics"
+		],
+		"passes": false
+	},
+	{
+		"category": "secrets",
+		"description": "PushSecret for bidirectional sync",
+		"steps": [
+			"Verify PushSecret CRD is installed",
+			"Check PushSecret resources are configured",
+			"Validate push to 1Password works",
+			"Test certificate secret pushing",
+			"Confirm no duplicate secrets created"
+		],
+		"passes": false
+	},
+	{
+		"category": "secrets",
+		"description": "Sealed Secrets as backup method",
+		"steps": [
+			"Verify sealed-secrets controller is deployed",
+			"Check sealing key is backed up securely",
+			"Validate kubeseal CLI is available",
+			"Test secret sealing and unsealing",
+			"Confirm sealed secrets work in GitOps flow"
+		],
+		"passes": false
+	},
+	{
+		"category": "auth",
+		"description": "Authentik identity provider setup",
+		"steps": [
+			"Verify Authentik pods are running",
+			"Check PostgreSQL database connectivity",
+			"Validate Redis cache connectivity",
+			"Confirm admin UI is accessible via Gateway",
+			"Test initial admin account setup",
+			"Configure SMTP for email notifications",
+			"Set up branding and customization",
+			"Verify backup configuration",
+			"Check high availability setup",
+			"Monitor authentication metrics",
+			"Validate session management",
+			"Test password policy enforcement"
+		],
+		"passes": false
+	},
+	{
+		"category": "auth",
+		"description": "OIDC provider configuration in Authentik",
+		"steps": [
+			"Create OIDC provider in Authentik",
+			"Configure client ID and secret",
+			"Set redirect URIs for applications",
+			"Validate token signing configuration",
+			"Test OIDC discovery endpoint",
+			"Verify userinfo endpoint returns claims",
+			"Check token expiration settings",
+			"Validate refresh token flow",
+			"Test logout functionality",
+			"Confirm PKCE support"
+		],
+		"passes": false
+	},
+	{
+		"category": "auth",
+		"description": "LDAP outpost for legacy applications",
+		"steps": [
+			"Deploy LDAP outpost in Authentik",
+			"Configure LDAP provider settings",
+			"Validate bind DN and password",
+			"Test LDAP search operations",
+			"Confirm user authentication via LDAP"
+		],
+		"passes": false
+	},
+	{
+		"category": "auth",
+		"description": "Proxy outpost for forward authentication",
+		"steps": [
+			"Deploy proxy outpost in Authentik",
+			"Configure forward auth settings",
+			"Validate header injection",
+			"Test protected application access",
+			"Confirm session cookie handling"
+		],
+		"passes": false
+	},
+	{
+		"category": "auth",
+		"description": "User and group management",
+		"steps": [
+			"Create user groups for access control",
+			"Configure group-based permissions",
+			"Set up user provisioning flow",
+			"Validate group membership sync",
+			"Test user self-service features"
+		],
+		"passes": false
+	},
+	{
+		"category": "auth",
+		"description": "Multi-factor authentication setup",
+		"steps": [
+			"Enable TOTP authentication",
+			"Configure WebAuthn/FIDO2 support",
+			"Set up MFA enrollment flow",
+			"Validate MFA enforcement policies",
+			"Test recovery code generation"
+		],
+		"passes": false
+	},
+	{
+		"category": "rbac",
+		"description": "Kubernetes RBAC for cluster access",
+		"steps": [
+			"Define ClusterRoles for different access levels",
+			"Create RoleBindings for namespaces",
+			"Validate admin access permissions",
+			"Test developer access restrictions",
+			"Confirm read-only access for monitoring",
+			"Check service account permissions",
+			"Validate RBAC for Flux controllers",
+			"Test namespace isolation",
+			"Audit existing RBAC policies",
+			"Document RBAC structure"
+		],
+		"passes": false
+	},
+	{
+		"category": "rbac",
+		"description": "Service account management",
+		"steps": [
+			"Review default service accounts",
+			"Create application-specific service accounts",
+			"Validate token auto-mounting settings",
+			"Test service account permissions",
+			"Confirm least privilege principle"
+		],
+		"passes": false
+	},
+	{
+		"category": "rbac",
+		"description": "OIDC integration for kubectl access",
+		"steps": [
+			"Configure API server OIDC settings",
+			"Set up kubelogin for authentication",
+			"Validate group claims mapping",
+			"Test kubectl access with OIDC",
+			"Confirm token refresh works"
+		],
+		"passes": false
+	},
+	{
+		"category": "network",
+		"description": "Network policies for namespace isolation",
+		"steps": [
+			"Create default deny ingress policy",
+			"Create default deny egress policy",
+			"Define allowed ingress rules per namespace",
+			"Configure egress rules for external access",
+			"Validate DNS egress is allowed",
+			"Test inter-namespace communication rules",
+			"Confirm monitoring namespace access",
+			"Validate Gateway namespace policies",
+			"Test policy enforcement with Cilium",
+			"Document network policy structure"
+		],
+		"passes": false
+	},
+	{
+		"category": "network",
+		"description": "Cilium network policy enforcement",
+		"steps": [
+			"Verify Cilium policy enforcement mode",
+			"Check CiliumNetworkPolicy resources",
+			"Validate L7 policy rules if used",
+			"Test DNS-based policies",
+			"Confirm policy audit logging"
+		],
+		"passes": false
+	},
+	{
+		"category": "network",
+		"description": "Egress gateway for controlled outbound traffic",
+		"steps": [
+			"Configure Cilium egress gateway",
+			"Define egress IP policies",
+			"Validate outbound traffic routing",
+			"Test egress IP assignment",
+			"Confirm logging of egress traffic"
+		],
+		"passes": false
+	},
+	{
+		"category": "certificates",
+		"description": "TLS certificate management with cert-manager",
+		"steps": [
+			"Verify cert-manager is deployed and healthy",
+			"Check ClusterIssuer for Let's Encrypt",
+			"Validate DNS01 challenge configuration",
+			"Test certificate issuance for new domain",
+			"Confirm certificate renewal process",
+			"Check certificate expiry monitoring",
+			"Validate wildcard certificate",
+			"Test certificate secret creation",
+			"Verify Cloudflare API token permissions",
+			"Monitor cert-manager metrics"
+		],
+		"passes": false
+	},
+	{
+		"category": "certificates",
+		"description": "Internal CA for cluster certificates",
+		"steps": [
+			"Set up internal ClusterIssuer",
+			"Generate root CA certificate",
+			"Configure intermediate CA if needed",
+			"Test internal certificate issuance",
+			"Validate trust chain"
+		],
+		"passes": false
+	},
+	{
+		"category": "certificates",
+		"description": "Certificate rotation and monitoring",
+		"steps": [
+			"Configure certificate expiry alerts",
+			"Validate automatic renewal works",
+			"Test manual certificate rotation",
+			"Check Grafana dashboard for certs",
+			"Confirm no expired certificates"
+		],
+		"passes": false
+	},
+	{
+		"category": "scanning",
+		"description": "Trivy vulnerability scanning",
+		"steps": [
+			"Deploy Trivy operator in cluster",
+			"Configure vulnerability scanning schedule",
+			"Validate image scanning on deployment",
+			"Check VulnerabilityReport resources",
+			"Set up alerts for critical vulnerabilities",
+			"Test scanning of all running images",
+			"Validate SBOM generation",
+			"Configure scan exclusions if needed",
+			"Monitor scanning metrics",
+			"Integrate with CI pipeline"
+		],
+		"passes": false
+	},
+	{
+		"category": "scanning",
+		"description": "Container image policy enforcement",
+		"steps": [
+			"Configure allowed image registries",
+			"Set up image signature verification",
+			"Validate policy admission controller",
+			"Test blocking of unsigned images",
+			"Confirm exception handling"
+		],
+		"passes": false
+	},
+	{
+		"category": "scanning",
+		"description": "Configuration audit with Trivy",
+		"steps": [
+			"Enable ConfigAuditReport scanning",
+			"Check Kubernetes manifest compliance",
+			"Validate security context requirements",
+			"Test remediation suggestions",
+			"Monitor compliance metrics"
+		],
+		"passes": false
+	},
+	{
+		"category": "policy",
+		"description": "Kyverno policy engine deployment",
+		"steps": [
+			"Verify Kyverno pods are running",
+			"Check ClusterPolicy resources",
+			"Validate policy enforcement mode",
+			"Test policy violation handling",
+			"Confirm policy reports generation",
+			"Check admission webhook configuration",
+			"Validate background scanning",
+			"Test policy exceptions",
+			"Monitor policy metrics",
+			"Document policy inventory"
+		],
+		"passes": false
+	},
+	{
+		"category": "policy",
+		"description": "Pod security policies via Kyverno",
+		"steps": [
+			"Create restricted pod security policy",
+			"Validate privileged container blocking",
+			"Test host namespace restrictions",
+			"Check capability dropping enforcement",
+			"Confirm read-only root filesystem"
+		],
+		"passes": false
+	},
+	{
+		"category": "policy",
+		"description": "Resource quota enforcement",
+		"steps": [
+			"Create default resource limits policy",
+			"Validate CPU/memory limit injection",
+			"Test quota enforcement per namespace",
+			"Check LimitRange configuration",
+			"Confirm over-provisioning prevention"
+		],
+		"passes": false
+	},
+	{
+		"category": "policy",
+		"description": "Label and annotation requirements",
+		"steps": [
+			"Create required labels policy",
+			"Validate app.kubernetes.io labels",
+			"Test annotation requirements",
+			"Check policy for metadata standards",
+			"Confirm mutation for missing labels"
+		],
+		"passes": false
+	},
+	{
+		"category": "audit",
+		"description": "Kubernetes audit logging",
+		"steps": [
+			"Verify audit policy is configured",
+			"Check audit log destination",
+			"Validate audit event levels",
+			"Test audit log collection",
+			"Confirm log retention settings",
+			"Set up audit log analysis",
+			"Create alerts for suspicious activity",
+			"Validate audit log integrity",
+			"Test audit log search",
+			"Document audit policy"
+		],
+		"passes": false
+	},
+	{
+		"category": "audit",
+		"description": "Falco runtime security monitoring",
+		"steps": [
+			"Deploy Falco in cluster",
+			"Configure Falco rules",
+			"Validate syscall monitoring",
+			"Test alert generation",
+			"Confirm log shipping to SIEM"
+		],
+		"passes": false
+	},
+	{
+		"category": "audit",
+		"description": "Security event alerting",
+		"steps": [
+			"Configure security alert rules",
+			"Set up notification channels",
+			"Validate alert routing",
+			"Test incident response workflow",
+			"Confirm alert documentation"
+		],
+		"passes": false
+	},
+	{
+		"category": "compliance",
+		"description": "CIS Kubernetes benchmark compliance",
+		"steps": [
+			"Run kube-bench against cluster",
+			"Review control plane findings",
+			"Validate worker node compliance",
+			"Check etcd security settings",
+			"Document remediation actions",
+			"Create compliance dashboard",
+			"Schedule regular compliance scans",
+			"Track compliance over time",
+			"Validate policy exceptions",
+			"Generate compliance reports"
+		],
+		"passes": false
+	},
+	{
+		"category": "compliance",
+		"description": "Pod Security Standards enforcement",
+		"steps": [
+			"Configure namespace PSS labels",
+			"Validate restricted profile enforcement",
+			"Test baseline profile namespaces",
+			"Check privileged namespace exceptions",
+			"Confirm PSS audit logging"
+		],
+		"passes": false
+	},
+	{
+		"category": "compliance",
+		"description": "RBAC audit and review",
+		"steps": [
+			"Run rbac-tool analysis",
+			"Identify overly permissive roles",
+			"Validate service account permissions",
+			"Check for cluster-admin usage",
+			"Document RBAC findings"
+		],
+		"passes": false
+	},
+	{
+		"category": "backup",
+		"description": "Secrets backup and recovery",
+		"steps": [
+			"Verify secrets are backed up",
+			"Check backup encryption",
+			"Validate recovery procedure",
+			"Test secret restoration",
+			"Confirm backup schedule"
+		],
+		"passes": false
+	},
+	{
+		"category": "backup",
+		"description": "Certificate backup procedures",
+		"steps": [
+			"Backup CA private keys securely",
+			"Verify certificate secret backup",
+			"Test certificate recovery",
+			"Document recovery procedures",
+			"Confirm offsite backup storage"
+		],
+		"passes": false
+	},
+	{
+		"category": "hardening",
+		"description": "API server hardening",
+		"steps": [
+			"Verify anonymous auth is disabled",
+			"Check RBAC authorization mode",
+			"Validate admission controllers",
+			"Test API rate limiting",
+			"Confirm audit logging enabled"
+		],
+		"passes": false
+	},
+	{
+		"category": "hardening",
+		"description": "etcd security configuration",
+		"steps": [
+			"Verify etcd encryption at rest",
+			"Check client certificate auth",
+			"Validate peer communication TLS",
+			"Test backup encryption",
+			"Confirm access restrictions"
+		],
+		"passes": false
+	},
+	{
+		"category": "hardening",
+		"description": "Kubelet security settings",
+		"steps": [
+			"Verify anonymous auth disabled",
+			"Check authorization mode",
+			"Validate read-only port disabled",
+			"Test certificate rotation",
+			"Confirm protect kernel defaults"
+		],
+		"passes": false
+	},
+	{
+		"category": "hardening",
+		"description": "Container runtime security",
+		"steps": [
+			"Verify seccomp profiles enabled",
+			"Check AppArmor/SELinux status",
+			"Validate runtime class configuration",
+			"Test gVisor/Kata if configured",
+			"Confirm no privileged containers"
+		],
+		"passes": false
+	},
+	{
+		"category": "documentation",
+		"description": "Security runbook documentation",
+		"steps": [
+			"Document incident response procedures",
+			"Create security contact list",
+			"Write vulnerability handling process",
+			"Document access request workflow",
+			"Maintain security architecture diagram"
+		],
+		"passes": false
+	},
+	{
+		"category": "sso",
+		"description": "Single Sign-On application integration",
+		"steps": [
+			"Configure SSO for Grafana",
+			"Set up SSO for Longhorn UI",
+			"Configure SSO for ArgoCD if used",
+			"Validate SSO for media applications",
+			"Test SSO logout propagation"
+		],
+		"passes": false
+	}
+]

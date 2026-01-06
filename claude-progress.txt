@@ -1,0 +1,32 @@
+# Claude Progress Notes - Storage Tasks
+
+## Session: 2026-01-06
+
+### Accomplished
+- Verified all storage components in the cluster
+- Ran InSpec storage validation tests (4/4 controls passing)
+- Marked 5 storage tasks as passing in `.tasks/storage.json`:
+  1. **Longhorn distributed storage** - 11 healthy volumes, 6 schedulable nodes, UI accessible at longhorn.ironstone.casa, backup target configured (s3://longhorn@auto/), snapshot jobs running
+  2. **NFS CSI driver** - Pods running, StorageClasses (nfs-csi-ssd, nfs-csi-unas) operational with bound PVCs
+  3. **SMB CSI driver** - Pods running, StorageClasses (smb, smb-ssd) operational
+  4. **OpenEBS local storage** - Pods running in openebs-system, openebs-hostpath StorageClass with 15+ bound PVCs
+  5. **MinIO object storage** - Pod running, Console accessible at minio.ironstone.casa, S3 API at s3.ironstone.casa
+
+### Remaining Tasks (passes=false)
+1. **Volsync backup and restore** - Controller running but NO ReplicationSources configured. Need to set up backup schedules for critical PVCs.
+2. **RustFS migration** - Not started. No RustFS deployment exists yet.
+
+### Storage Status Summary
+- **Total storage tasks**: 7
+- **Passing**: 5
+- **Failing**: 2
+
+### Cluster Storage Overview
+- 6 nodes with Longhorn storage (3.63 TiB total, 2.26 TiB schedulable)
+- StorageClasses: longhorn (default), nfs-csi-ssd, nfs-csi-unas, smb, smb-ssd, openebs-hostpath
+- Backup targets: S3 (Cloudflare R2) configured and available
+
+### Next Steps
+1. Configure Volsync ReplicationSources for critical PVCs (home-assistant, frigate, paperless)
+2. Plan RustFS deployment and migration from MinIO
+3. Add more comprehensive InSpec tests for storage validation
