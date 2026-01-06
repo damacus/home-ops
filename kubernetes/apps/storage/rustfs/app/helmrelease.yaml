@@ -30,17 +30,8 @@ spec:
           reloader.stakater.com/auto: "true"
         pod:
           securityContext:
-            fsGroup: 10001
+            fsGroup: 988
             fsGroupChangePolicy: OnRootMismatch
-        initContainers:
-          init-permissions:
-            image:
-              repository: busybox
-              tag: latest
-            command: ["sh", "-c", "chown -R 10001:10001 /data"]
-            securityContext:
-              runAsUser: 0
-              runAsGroup: 0
         containers:
           app:
             image:
@@ -68,8 +59,8 @@ spec:
                   failureThreshold: 6
               readiness: *probes
             securityContext:
-              runAsUser: 10001
-              runAsGroup: 10001
+              runAsUser: 977
+              runAsGroup: 988
               runAsNonRoot: true
             resources:
               requests:
