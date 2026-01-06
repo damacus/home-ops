@@ -1,0 +1,8 @@
+name: inspec-storage
+title: Ironstone Storage Validation
+maintainer: damacus
+license: Apache-2.0
+summary: Validation for Kubernetes storage components (Longhorn, OpenEBS, VolSync, CSI)
+version: 0.1.0
+supports:
+  - platform: os
