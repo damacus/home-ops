@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: volsync
-      version: 0.11.0
+      version: 0.14.0
       sourceRef:
         kind: HelmRepository
         name: backube
@@ -23,19 +23,6 @@ spec:
     remediation:
       retries: 3
   values:
-    fullnameOverride: volsync
-    image: &image
-      repository: ghcr.io/onedr0p/volsync
-      tag: 0.11.0
-    rclone: *image
-    restic: *image
-    rsync: *image
-    rsync-tls: *image
-    syncthing: *image
     manageCRDs: true
     metrics:
       disableAuth: true
-    podSecurityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
-      runAsGroup: 1000
