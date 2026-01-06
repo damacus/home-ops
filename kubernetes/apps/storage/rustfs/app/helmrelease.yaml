@@ -57,6 +57,12 @@ spec:
               runAsUser: 10001
               runAsGroup: 10001
               runAsNonRoot: true
+            resources:
+              requests:
+                memory: 512Mi
+                cpu: 200m
+              limits:
+                memory: 2Gi
 
     service:
       main:
@@ -108,10 +114,3 @@ spec:
         existingClaim: rustfs-data
         globalMounts:
           - path: /data
-
-    resources:
-      requests:
-        memory: 512Mi
-        cpu: 200m
-      limits:
-        memory: 2Gi
