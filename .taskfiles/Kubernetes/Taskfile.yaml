@@ -39,3 +39,9 @@ tasks:
   .reset:
     internal: true
     cmd: rm -rf {{.KUBERNETES_DIR}}
+
+  alerts:
+    desc: Get all alerts from VictoriaMetrics
+    silent: true
+    cmd: |
+      kubectl exec -n monitoring vmalertmanager-vm-0 -- wget -qO- 'http://localhost:9093/api/v2/alerts' 2>/dev/null | jq -r '.[] | "\(.labels.alertname): \(.status.state)"' | sort | uniq -c | sort -rn

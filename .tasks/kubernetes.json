@@ -262,7 +262,7 @@
 			"Verify CPUThrottlingHigh alert resolves",
 			"Confirm vmagent pod is no longer throttled"
 		],
-		"passes": false
+		"passes": true
 	},
 	{
 		"category": "monitoring",
@@ -275,7 +275,7 @@
 			"Apply changes via Flux reconciliation",
 			"Verify ScrapePoolHasNoTargets alerts resolve"
 		],
-		"passes": false
+		"passes": true
 	},
 	{
 		"category": "monitoring",
@@ -286,7 +286,7 @@
 			"Apply changes via Flux reconciliation",
 			"Verify mimir-gateway ScrapePoolHasNoTargets alert resolves"
 		],
-		"passes": false
+		"passes": true
 	},
 	{
 		"category": "dns",

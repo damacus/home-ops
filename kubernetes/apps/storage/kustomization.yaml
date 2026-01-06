@@ -9,3 +9,4 @@ resources:
   - ./csi-driver-smb/ks.yaml
   - ./longhorn/ks.yaml
   - ./minio/ks.yaml
+  - ./rustfs/ks.yaml

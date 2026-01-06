@@ -5,28 +5,71 @@
 ### Accomplished
 - Verified all storage components in the cluster
 - Ran InSpec storage validation tests (4/4 controls passing)
-- Marked 5 storage tasks as passing in `.tasks/storage.json`:
-  1. **Longhorn distributed storage** - 11 healthy volumes, 6 schedulable nodes, UI accessible at longhorn.ironstone.casa, backup target configured (s3://longhorn@auto/), snapshot jobs running
-  2. **NFS CSI driver** - Pods running, StorageClasses (nfs-csi-ssd, nfs-csi-unas) operational with bound PVCs
-  3. **SMB CSI driver** - Pods running, StorageClasses (smb, smb-ssd) operational
-  4. **OpenEBS local storage** - Pods running in openebs-system, openebs-hostpath StorageClass with 15+ bound PVCs
-  5. **MinIO object storage** - Pod running, Console accessible at minio.ironstone.casa, S3 API at s3.ironstone.casa
+- Marked 5 storage tasks as passing in `.tasks/storage.json`
 
-### Remaining Tasks (passes=false)
-1. **Volsync backup and restore** - Controller running but NO ReplicationSources configured. Need to set up backup schedules for critical PVCs.
-2. **RustFS migration** - Not started. No RustFS deployment exists yet.
+## Session: 2026-01-07 - RustFS & Volsync Configuration
 
-### Storage Status Summary
-- **Total storage tasks**: 7
-- **Passing**: 5
-- **Failing**: 2
+### Accomplished
 
-### Cluster Storage Overview
-- 6 nodes with Longhorn storage (3.63 TiB total, 2.26 TiB schedulable)
-- StorageClasses: longhorn (default), nfs-csi-ssd, nfs-csi-unas, smb, smb-ssd, openebs-hostpath
-- Backup targets: S3 (Cloudflare R2) configured and available
+#### 1. RustFS Deployment Created
+- **Location**: `kubernetes/apps/storage/rustfs/`
+- **Components**:
+  - HelmRelease using bjw-s app-template with rustfs/rustfs:1.0.0-alpha.76
+  - PVC (500Gi on nfs-csi-ssd)
+  - ExternalSecret for credentials (from 1Password)
+  - HTTPRoutes for console (rustfs.ironstone.casa) and S3 API (rustfs-s3.ironstone.casa)
+  - LoadBalancer IP: 192.168.1.229
+  - ServiceMonitor for metrics
+
+#### 2. Volsync ReplicationSources Configured
+- **home-assistant** (`kubernetes/apps/home-automation/home-assistant/app/volsync/`):
+  - Local backup to RustFS (daily at 2am)
+  - Off-site backup to Cloudflare R2 (daily at 4am)
+  - Using Direct copyMethod (NFS PVC doesn't support snapshots)
+
+- **paperless** (`kubernetes/apps/home-automation/paperless/app/volsync/`):
+  - Local backup to RustFS (daily at 3am)
+  - Off-site backup to Cloudflare R2 (daily at 5am)
+  - Using Direct copyMethod
+
+#### 3. CNPG Backups Migrated to RustFS
+- **home-assistant-db**: Updated to use `s3://cnpg-backups/home-assistant/` on local RustFS
+- **mealie-db**: Updated to use `s3://cnpg-backups/mealie/` on local RustFS
+- Created rustfs-cnpg ExternalSecrets in both namespaces
+
+#### 4. Off-site Backup Strategy
+- **Cloudflare R2** selected as off-site target:
+  - Already configured in cluster
+  - **Free egress** - no cost for restores
+  - $0.015/GB/month storage (very competitive)
+  - S3-compatible API
+
+### Files Created/Modified
+- `kubernetes/apps/storage/rustfs/` (new directory with full deployment)
+- `kubernetes/apps/storage/kustomization.yaml` (added rustfs)
+- `kubernetes/apps/volsync-system/volsync/app/helmrelease.yaml` (updated to onedr0p fork)
+- `kubernetes/apps/home-automation/home-assistant/app/volsync/` (new)
+- `kubernetes/apps/home-automation/paperless/app/volsync/` (new)
+- `kubernetes/apps/home-automation/home-assistant-db/app/cluster.yaml` (CNPG to RustFS)
+- `kubernetes/apps/home-automation/home-assistant-db/app/rustfs-externalsecret.yaml` (new)
+- `kubernetes/apps/home/mealie-db/app/cluster.yaml` (CNPG to RustFS)
+- `kubernetes/apps/home/mealie-db/app/rustfs-externalsecret.yaml` (new)
+- `kubernetes/apps/home/mealie-db/app/kustomization.yaml` (new)
+
+### 1Password Secrets Required
+Before deployment, create these items in 1Password:
+1. **rustfs** - with `RUSTFS_ACCESS_KEY` and `RUSTFS_SECRET_KEY`
+2. **volsync** - with `RESTIC_PASSWORD`
+3. **cloudflare-r2** - with `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
+
+### Validation
+- All manifests pass kubeconform validation
 
 ### Next Steps
-1. Configure Volsync ReplicationSources for critical PVCs (home-assistant, frigate, paperless)
-2. Plan RustFS deployment and migration from MinIO
-3. Add more comprehensive InSpec tests for storage validation
+1. Create required 1Password secrets
+2. Commit and push changes
+3. Wait for Flux to deploy RustFS
+4. Create buckets in RustFS: `volsync-backups`, `cnpg-backups`
+5. Verify Volsync ReplicationSources are running
+6. Test backup/restore workflow
+7. Monitor CNPG backup jobs
