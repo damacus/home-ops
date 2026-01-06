@@ -125,22 +125,17 @@ tasks:
         echo "Running gold image tests against {{.mount}}..."
         $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-gold -t local:// --basedir "{{.mount}}" --reporter cli
 
-  audit-running:
-    desc: Run running system tests against a booted node
+  audit-storage:
+    desc: Run storage validation tests (InSpec) against a cluster
     cmds:
       - |
-        if [ -z "{{.host}}" ]; then
-          echo "Usage: task provisioning:audit-running host=<ip-or-hostname>"
-          exit 1
-        fi
         AUDITOR=$(command -v cinc-auditor || command -v inspec || echo "")
         if [ -z "$AUDITOR" ]; then
-          echo "Error: Neither cinc-auditor nor inspec found. Install with:"
-          echo "  brew install cinc-auditor"
+          echo "Error: Neither cinc-auditor nor inspec found. Install with: brew install cinc-auditor"
           exit 1
         fi
-        echo "Running post-boot tests against {{.host}}..."
-        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-running -t ssh://pi@{{.host}} -i ~/.ssh/id_ed25519 --reporter cli
+        echo "Running storage validation tests..."
+        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-storage --reporter cli
 
   reapply-cloud-init:
     desc: Re-apply rendered cloud-init to a running node, reboot, wait, then run post-boot tests
