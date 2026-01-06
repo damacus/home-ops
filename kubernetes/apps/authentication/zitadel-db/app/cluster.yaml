@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: &name zitadel
+  namespace: authentication
+  annotations:
+    cnpg.io/skipWalArchiving: "enabled"
+spec:
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 16
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 10Gi
+    storageClass: openebs-hostpath
+
+  monitoring:
+    enablePodMonitor: true
+
+  bootstrap:
+    initdb:
+      database: *name
+      owner: *name
+      secret:
+        name: zitadel-db
+
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: zitadel-db-superuser
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: 256MB
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 2000m
+      memory: 1Gi
+
+  backup:
+    retentionPolicy: 30d
+    barmanObjectStore:
+      data:
+        compression: bzip2
+      wal:
+        compression: bzip2
+        maxParallel: 8
+      destinationPath: s3://cnpg-backups/zitadel/
+      endpointURL: http://minio.storage.svc.cluster.local:9000
+      serverName: *name
+      s3Credentials:
+        accessKeyId:
+          name: minio-cnpg
+          key: aws-access-key-id
+        secretAccessKey:
+          name: minio-cnpg
+          key: aws-secret-access-key
