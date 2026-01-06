@@ -1,0 +1,645 @@
+[
+    {
+        "category": "home-assistant",
+        "description": "Home Assistant Core deployment",
+        "steps": [
+            "Verify Home Assistant HelmRelease is deployed and healthy",
+            "Check persistent volume for configuration is mounted",
+            "Validate Gateway HTTPRoute is configured correctly",
+            "Confirm Home Assistant UI is accessible",
+            "Test initial onboarding or login flow",
+            "Verify integrations page loads without errors",
+            "Check automation engine is running",
+            "Validate recorder database connectivity",
+            "Test restart functionality from UI",
+            "Confirm backup configuration is set",
+            "Monitor Home Assistant logs for errors",
+            "Verify resource usage is within limits"
+        ],
+        "passes": false
+    },
+    {
+        "category": "home-assistant",
+        "description": "Home Assistant PostgreSQL database",
+        "steps": [
+            "Verify CNPG PostgreSQL cluster for HA is healthy",
+            "Check database connection from Home Assistant",
+            "Validate recorder configuration points to PostgreSQL",
+            "Test history and logbook functionality",
+            "Confirm database backup schedule",
+            "Monitor database size and growth",
+            "Validate connection pooling if configured",
+            "Test database failover scenario",
+            "Check query performance",
+            "Verify long-term statistics storage"
+        ],
+        "passes": false
+    },
+    {
+        "category": "home-assistant",
+        "description": "Home Assistant integrations setup",
+        "steps": [
+            "Configure MQTT integration",
+            "Set up Zigbee integration (ZHA or Z2M)",
+            "Configure Z-Wave integration if applicable",
+            "Set up weather integration",
+            "Configure mobile app integration",
+            "Validate all integrations show healthy status",
+            "Test device discovery",
+            "Check entity availability",
+            "Verify integration updates",
+            "Document integration credentials"
+        ],
+        "passes": false
+    },
+    {
+        "category": "home-assistant",
+        "description": "Home Assistant automations",
+        "steps": [
+            "Create test automation for validation",
+            "Verify automation triggers work",
+            "Test condition evaluation",
+            "Validate action execution",
+            "Check automation trace logging",
+            "Test script execution",
+            "Verify scene activation",
+            "Check automation scheduling",
+            "Validate notification actions",
+            "Test automation debugging"
+        ],
+        "passes": false
+    },
+    {
+        "category": "mqtt",
+        "description": "EMQX MQTT broker deployment",
+        "steps": [
+            "Verify EMQX HelmRelease is deployed",
+            "Check cluster formation if multi-node",
+            "Validate MQTT listener configuration",
+            "Test MQTT client connectivity",
+            "Confirm authentication is configured",
+            "Check ACL rules are applied",
+            "Validate TLS configuration",
+            "Test WebSocket connectivity",
+            "Monitor broker metrics",
+            "Verify persistent sessions work",
+            "Check message retention settings",
+            "Test QoS levels functionality"
+        ],
+        "passes": false
+    },
+    {
+        "category": "mqtt",
+        "description": "MQTT authentication and ACLs",
+        "steps": [
+            "Configure user authentication",
+            "Set up ACL rules for topics",
+            "Validate Home Assistant MQTT user",
+            "Test Zigbee2MQTT user permissions",
+            "Confirm device-specific ACLs"
+        ],
+        "passes": false
+    },
+    {
+        "category": "zigbee",
+        "description": "Zigbee2MQTT deployment",
+        "steps": [
+            "Verify Zigbee2MQTT HelmRelease is deployed",
+            "Check USB coordinator is passed through",
+            "Validate MQTT broker connectivity",
+            "Confirm web UI is accessible",
+            "Test device pairing mode",
+            "Verify existing devices are online",
+            "Check coordinator firmware version",
+            "Validate network map generation",
+            "Test device interview process",
+            "Monitor Zigbee network health",
+            "Verify OTA update functionality",
+            "Check backup of coordinator data"
+        ],
+        "passes": false
+    },
+    {
+        "category": "zigbee",
+        "description": "Zigbee device management",
+        "steps": [
+            "Pair test Zigbee device",
+            "Verify device appears in Z2M",
+            "Check device exposes correct entities",
+            "Test device control from Z2M",
+            "Validate Home Assistant discovery",
+            "Test device rename functionality",
+            "Check device grouping",
+            "Verify binding configuration",
+            "Test OTA firmware update",
+            "Monitor device battery levels"
+        ],
+        "passes": false
+    },
+    {
+        "category": "zigbee",
+        "description": "Zigbee network optimization",
+        "steps": [
+            "Review network map for mesh health",
+            "Identify weak links in network",
+            "Add router devices where needed",
+            "Optimize channel selection",
+            "Check for interference sources"
+        ],
+        "passes": false
+    },
+    {
+        "category": "zwave",
+        "description": "Z-Wave JS deployment",
+        "steps": [
+            "Verify Z-Wave JS HelmRelease is deployed",
+            "Check USB controller passthrough",
+            "Validate Z-Wave JS UI accessibility",
+            "Confirm Home Assistant integration",
+            "Test device inclusion mode",
+            "Verify existing devices are ready",
+            "Check controller firmware version",
+            "Validate S2 security configuration",
+            "Test device exclusion",
+            "Monitor network health"
+        ],
+        "passes": false
+    },
+    {
+        "category": "zwave",
+        "description": "Z-Wave device management",
+        "steps": [
+            "Include test Z-Wave device",
+            "Verify device interview completes",
+            "Check device configuration parameters",
+            "Test device control functionality",
+            "Validate association groups",
+            "Test firmware update if available",
+            "Check device health metrics",
+            "Verify secure inclusion worked",
+            "Test device re-interview",
+            "Monitor device communication"
+        ],
+        "passes": false
+    },
+    {
+        "category": "esphome",
+        "description": "ESPHome dashboard deployment",
+        "steps": [
+            "Verify ESPHome HelmRelease is deployed",
+            "Check persistent storage for configs",
+            "Validate Gateway HTTPRoute access",
+            "Confirm dashboard UI is accessible",
+            "Test device compilation",
+            "Verify OTA update functionality",
+            "Check secrets management",
+            "Validate Home Assistant API integration",
+            "Test device adoption workflow",
+            "Monitor compilation resources"
+        ],
+        "passes": false
+    },
+    {
+        "category": "esphome",
+        "description": "ESPHome device management",
+        "steps": [
+            "Create test ESPHome device config",
+            "Compile and flash device",
+            "Verify device connects to WiFi",
+            "Check Home Assistant discovery",
+            "Test sensor readings",
+            "Validate actuator control",
+            "Test OTA update from dashboard",
+            "Check device logs",
+            "Verify device availability",
+            "Monitor device memory usage"
+        ],
+        "passes": false
+    },
+    {
+        "category": "node-red",
+        "description": "Node-RED deployment",
+        "steps": [
+            "Verify Node-RED HelmRelease is deployed",
+            "Check persistent storage for flows",
+            "Validate Gateway HTTPRoute access",
+            "Confirm editor UI is accessible",
+            "Test Home Assistant nodes installation",
+            "Verify MQTT nodes connectivity",
+            "Check authentication configuration",
+            "Test flow deployment",
+            "Validate project mode if enabled",
+            "Monitor Node-RED logs"
+        ],
+        "passes": false
+    },
+    {
+        "category": "node-red",
+        "description": "Node-RED Home Assistant integration",
+        "steps": [
+            "Configure Home Assistant server node",
+            "Test entity state retrieval",
+            "Validate service call functionality",
+            "Test event subscription",
+            "Check webhook integration",
+            "Verify device trigger nodes",
+            "Test automation flows",
+            "Validate error handling",
+            "Check flow backup",
+            "Monitor flow execution"
+        ],
+        "passes": false
+    },
+    {
+        "category": "voice",
+        "description": "Whisper speech-to-text deployment",
+        "steps": [
+            "Verify Whisper HelmRelease is deployed",
+            "Check model download completed",
+            "Validate Wyoming protocol server",
+            "Test Home Assistant integration",
+            "Verify transcription accuracy",
+            "Check GPU acceleration if available",
+            "Monitor transcription latency",
+            "Test multiple languages",
+            "Validate audio format support",
+            "Check resource usage"
+        ],
+        "passes": false
+    },
+    {
+        "category": "voice",
+        "description": "Piper text-to-speech deployment",
+        "steps": [
+            "Verify Piper HelmRelease is deployed",
+            "Check voice model installation",
+            "Validate Wyoming protocol server",
+            "Test Home Assistant integration",
+            "Verify speech quality",
+            "Test different voices",
+            "Check synthesis latency",
+            "Validate SSML support",
+            "Monitor resource usage",
+            "Test notification announcements"
+        ],
+        "passes": false
+    },
+    {
+        "category": "voice",
+        "description": "Voice assistant pipeline",
+        "steps": [
+            "Configure voice assistant in HA",
+            "Set up wake word detection",
+            "Validate STT pipeline",
+            "Test intent recognition",
+            "Verify TTS response",
+            "Check conversation agent",
+            "Test device control via voice",
+            "Validate multi-room audio",
+            "Monitor pipeline latency",
+            "Test error handling"
+        ],
+        "passes": false
+    },
+    {
+        "category": "frigate",
+        "description": "Frigate NVR deployment",
+        "steps": [
+            "Verify Frigate HelmRelease is deployed",
+            "Check GPU passthrough for detection",
+            "Validate camera stream connectivity",
+            "Confirm MQTT integration",
+            "Test object detection functionality",
+            "Verify recording configuration",
+            "Check snapshot generation",
+            "Validate Home Assistant integration",
+            "Test notification on detection",
+            "Monitor detection performance",
+            "Verify storage retention settings",
+            "Check Coral TPU if available"
+        ],
+        "passes": false
+    },
+    {
+        "category": "frigate",
+        "description": "Frigate camera configuration",
+        "steps": [
+            "Configure camera streams",
+            "Set detection zones",
+            "Configure object filters",
+            "Validate motion detection",
+            "Test recording triggers",
+            "Check stream quality settings",
+            "Verify timestamp overlay",
+            "Test PTZ control if applicable",
+            "Configure camera-specific settings",
+            "Monitor camera health"
+        ],
+        "passes": false
+    },
+    {
+        "category": "frigate",
+        "description": "Frigate Home Assistant integration",
+        "steps": [
+            "Install Frigate integration",
+            "Verify camera entities appear",
+            "Test live stream in HA",
+            "Check event entities",
+            "Validate notification actions",
+            "Test automation triggers",
+            "Verify media browser integration",
+            "Check person detection",
+            "Test zone-based automations",
+            "Monitor integration health"
+        ],
+        "passes": false
+    },
+    {
+        "category": "scrypted",
+        "description": "Scrypted deployment for HomeKit",
+        "steps": [
+            "Verify Scrypted HelmRelease is deployed",
+            "Check persistent storage configuration",
+            "Validate Gateway HTTPRoute access",
+            "Configure HomeKit plugin",
+            "Add cameras to Scrypted",
+            "Test HomeKit pairing",
+            "Verify HomeKit Secure Video",
+            "Check transcoding settings",
+            "Monitor resource usage",
+            "Test remote access"
+        ],
+        "passes": false
+    },
+    {
+        "category": "unifi",
+        "description": "UniFi integration with Home Assistant",
+        "steps": [
+            "Configure UniFi integration in HA",
+            "Verify controller connectivity",
+            "Check device tracker entities",
+            "Validate presence detection",
+            "Test device control features",
+            "Monitor client statistics",
+            "Check PoE control if available",
+            "Verify network health sensors",
+            "Test automation triggers",
+            "Monitor integration updates"
+        ],
+        "passes": false
+    },
+    {
+        "category": "presence",
+        "description": "Presence detection system",
+        "steps": [
+            "Configure device trackers",
+            "Set up person entities",
+            "Validate zone configuration",
+            "Test arrival detection",
+            "Test departure detection",
+            "Configure presence timeout",
+            "Set up guest detection",
+            "Validate multi-device tracking",
+            "Test presence automations",
+            "Monitor detection accuracy"
+        ],
+        "passes": false
+    },
+    {
+        "category": "presence",
+        "description": "Room presence detection",
+        "steps": [
+            "Deploy room presence sensors",
+            "Configure mmWave sensors",
+            "Validate PIR sensor integration",
+            "Test room occupancy detection",
+            "Set up room-based automations"
+        ],
+        "passes": false
+    },
+    {
+        "category": "climate",
+        "description": "Climate control integration",
+        "steps": [
+            "Configure thermostat integration",
+            "Verify temperature sensors",
+            "Set up climate entities",
+            "Test heating/cooling control",
+            "Configure schedule automations",
+            "Validate zone-based climate",
+            "Test occupancy-based control",
+            "Check energy monitoring",
+            "Verify weather integration",
+            "Monitor climate history"
+        ],
+        "passes": false
+    },
+    {
+        "category": "lighting",
+        "description": "Lighting control system",
+        "steps": [
+            "Configure lighting integrations",
+            "Set up light groups",
+            "Create lighting scenes",
+            "Test dimming functionality",
+            "Validate color control",
+            "Configure circadian lighting",
+            "Set up motion-activated lights",
+            "Test adaptive lighting",
+            "Create lighting automations",
+            "Monitor light usage"
+        ],
+        "passes": false
+    },
+    {
+        "category": "energy",
+        "description": "Energy monitoring dashboard",
+        "steps": [
+            "Configure energy integration",
+            "Set up power monitoring sensors",
+            "Validate solar production if applicable",
+            "Configure grid consumption tracking",
+            "Set up device power monitoring",
+            "Create energy dashboard",
+            "Configure cost tracking",
+            "Set up energy alerts",
+            "Validate historical data",
+            "Monitor energy trends"
+        ],
+        "passes": false
+    },
+    {
+        "category": "notifications",
+        "description": "Notification system configuration",
+        "steps": [
+            "Configure mobile app notifications",
+            "Set up critical alerts",
+            "Configure notification groups",
+            "Test actionable notifications",
+            "Validate notification conditions",
+            "Set up TTS announcements",
+            "Configure email notifications",
+            "Test notification throttling",
+            "Validate notification history",
+            "Monitor notification delivery"
+        ],
+        "passes": false
+    },
+    {
+        "category": "backup",
+        "description": "Home Assistant backup configuration",
+        "steps": [
+            "Configure automatic backups",
+            "Set backup schedule",
+            "Validate backup storage location",
+            "Test backup creation",
+            "Verify backup includes add-ons",
+            "Test restore from backup",
+            "Configure backup retention",
+            "Set up offsite backup sync",
+            "Monitor backup success",
+            "Document restore procedure"
+        ],
+        "passes": false
+    },
+    {
+        "category": "backup",
+        "description": "Zigbee/Z-Wave backup procedures",
+        "steps": [
+            "Backup Zigbee coordinator",
+            "Backup Z-Wave controller",
+            "Verify backup integrity",
+            "Test restore procedure",
+            "Document recovery steps"
+        ],
+        "passes": false
+    },
+    {
+        "category": "security",
+        "description": "Home Assistant authentication",
+        "steps": [
+            "Configure authentication providers",
+            "Set up MFA for admin accounts",
+            "Validate OIDC integration if used",
+            "Test login flow",
+            "Configure session timeout",
+            "Set up trusted networks",
+            "Validate IP ban configuration",
+            "Check login attempt logging",
+            "Test password reset flow",
+            "Monitor authentication events"
+        ],
+        "passes": false
+    },
+    {
+        "category": "security",
+        "description": "Alarm system integration",
+        "steps": [
+            "Configure alarm panel integration",
+            "Set up alarm control panel entity",
+            "Validate arm/disarm functionality",
+            "Test sensor triggers",
+            "Configure alarm automations",
+            "Set up notification on alarm",
+            "Test entry delay",
+            "Validate panic button",
+            "Check alarm history",
+            "Monitor sensor status"
+        ],
+        "passes": false
+    },
+    {
+        "category": "dashboard",
+        "description": "Home Assistant dashboard design",
+        "steps": [
+            "Create main dashboard layout",
+            "Configure room-based views",
+            "Set up device control cards",
+            "Add climate control cards",
+            "Configure camera views",
+            "Add energy dashboard",
+            "Set up mobile-friendly layout",
+            "Configure conditional cards",
+            "Add custom cards if needed",
+            "Test dashboard responsiveness"
+        ],
+        "passes": false
+    },
+    {
+        "category": "dashboard",
+        "description": "Dashboard themes and customization",
+        "steps": [
+            "Install custom themes",
+            "Configure dark/light mode",
+            "Set up automatic theme switching",
+            "Customize card styles",
+            "Configure sidebar layout"
+        ],
+        "passes": false
+    },
+    {
+        "category": "monitoring",
+        "description": "Home automation monitoring",
+        "steps": [
+            "Configure Prometheus metrics export",
+            "Set up Grafana dashboards",
+            "Create alerting rules",
+            "Monitor automation execution",
+            "Track device availability",
+            "Monitor battery levels",
+            "Check integration health",
+            "Validate log aggregation",
+            "Set up uptime monitoring",
+            "Create SLA dashboards"
+        ],
+        "passes": false
+    },
+    {
+        "category": "documentation",
+        "description": "Home automation documentation",
+        "steps": [
+            "Document device inventory",
+            "Create automation documentation",
+            "Document integration credentials",
+            "Write troubleshooting guides",
+            "Maintain network diagram"
+        ],
+        "passes": false
+    },
+    {
+        "category": "matter",
+        "description": "Matter protocol integration",
+        "steps": [
+            "Enable Matter integration in Home Assistant",
+            "Configure Matter server",
+            "Test device commissioning",
+            "Validate Thread border router",
+            "Check multi-admin support"
+        ],
+        "passes": false
+    },
+    {
+        "category": "thread",
+        "description": "Thread network configuration",
+        "steps": [
+            "Configure Thread border router",
+            "Validate Thread network formation",
+            "Test Thread device pairing",
+            "Check network topology",
+            "Monitor Thread network health"
+        ],
+        "passes": false
+    },
+    {
+        "category": "bluetooth",
+        "description": "Bluetooth integration setup",
+        "steps": [
+            "Configure Bluetooth adapter passthrough",
+            "Enable Bluetooth integration",
+            "Test BLE device discovery",
+            "Validate Bluetooth proxy setup",
+            "Check device tracking via BLE"
+        ],
+        "passes": false
+    }
+]
