@@ -1,0 +1,53 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/volsync.backube/replicationsource_v1alpha1.json
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: paperless-local-backup
+  namespace: home-automation
+spec:
+  sourcePVC: paperless-localdata
+  trigger:
+    schedule: "0 3 * * *"
+  restic:
+    pruneIntervalDays: 14
+    repository: paperless-restic-local
+    retain:
+      hourly: 6
+      daily: 7
+      weekly: 4
+      monthly: 3
+      yearly: 1
+    copyMethod: Direct
+    cacheCapacity: 1Gi
+    cacheStorageClassName: openebs-hostpath
+    moverSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/volsync.backube/replicationsource_v1alpha1.json
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: paperless-r2-backup
+  namespace: home-automation
+spec:
+  sourcePVC: paperless-localdata
+  trigger:
+    schedule: "0 5 * * *"
+  restic:
+    pruneIntervalDays: 30
+    repository: paperless-restic-r2
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 6
+      yearly: 2
+    copyMethod: Direct
+    cacheCapacity: 1Gi
+    cacheStorageClassName: openebs-hostpath
+    moverSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000

@@ -44,8 +44,8 @@ spec:
   backup:
     retentionPolicy: 30d
     barmanObjectStore:
-      destinationPath: s3://cloudnative-pg/
-      endpointURL: https://eeded8796e30bfe7b412cd59df29bb34.r2.cloudflarestorage.com
+      destinationPath: s3://cnpg-backups/home-assistant/
+      endpointURL: http://rustfs.storage.svc.cluster.local:9000
       data:
         compression: bzip2
       wal:
@@ -53,8 +53,8 @@ spec:
         maxParallel: 8
       s3Credentials:
         accessKeyId:
-          name: r2-cloudnative-pg
+          name: rustfs-cnpg
           key: aws-access-key-id
         secretAccessKey:
-          name: r2-cloudnative-pg
+          name: rustfs-cnpg
           key: aws-secret-access-key
