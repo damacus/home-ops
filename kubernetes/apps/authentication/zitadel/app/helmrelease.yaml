@@ -30,7 +30,7 @@ spec:
 
     image:
       repository: ghcr.io/zitadel/zitadel
-      tag: v2.71.19
+      tag: v4.9.0
       pullPolicy: IfNotPresent
 
     annotations:
