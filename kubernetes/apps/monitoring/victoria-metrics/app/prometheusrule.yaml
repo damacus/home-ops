@@ -15,6 +15,16 @@ spec:
           for: 15m
           labels:
             severity: critical
+    - name: home-assistant
+      rules:
+        - alert: HomeAssistantNestAuthFailure
+          annotations:
+            summary: Home Assistant Nest Integration Authentication Failure
+            description: "The Nest integration in Home Assistant is failing to authenticate with Google API."
+          expr: increase(home_ops_home_assistant_nest_auth_failure_total[15m]) > 0
+          for: 5m
+          labels:
+            severity: warning
     - name: oom
       rules:
         - alert: OOMKilled

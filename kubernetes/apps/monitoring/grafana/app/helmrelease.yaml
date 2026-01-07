@@ -51,6 +51,18 @@ spec:
       passwordKey: admin-password
       userKey: admin-user
 
+    alerting:
+      contactpoints.yaml:
+        apiVersion: 1
+        contactPoints:
+          - orgId: 1
+            name: Alertmanager
+            receivers:
+              - uid: alertmanager
+                type: alertmanager
+                settings:
+                  url: http://victoria-metrics-victoria-metrics-alertmanager.monitoring.svc.cluster.local:9093
+
     dashboardProviders:
       dashboardproviders.yaml:
         apiVersion: 1
