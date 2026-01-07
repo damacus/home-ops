@@ -73,3 +73,54 @@ Before deployment, create these items in 1Password:
 5. Verify Volsync ReplicationSources are running
 6. Test backup/restore workflow
 7. Monitor CNPG backup jobs
+
+## Session: 2026-01-06 - Zitadel Identity Provider
+
+### Accomplished
+
+#### 1. Zitadel Deployment Created
+- **PR**: https://github.com/damacus/home-ops/pull/2703
+- **Location**: `kubernetes/apps/authentication/zitadel/`
+- **Components**:
+  - HelmRelease using zitadel chart v9.13.0
+  - CNPG PostgreSQL cluster (`zitadel-db`) with MinIO backups
+  - ExternalSecrets for masterkey, credentials, and Google IDP
+  - HTTPRoute for `zitadel.ironstone.casa`
+  - ServiceMonitor for metrics
+
+#### 2. Features Configured
+- **Passkeys/WebAuthn**: Enabled via `PasswordlessType: 1`
+- **Multi-user support**: Login policy allows multiple users
+- **Google OAuth**: Reuses existing Dex credentials via ExternalSecret
+- **LDAP support**: Can be configured post-deployment
+- **OIDC applications**: Ready for Mealie, Paperless-ngx, Grafana
+
+#### 3. Task List Updated
+- Updated `.tasks/kubernetes.json` to replace Authentik with Zitadel task
+- Task now has 15 detailed steps covering full deployment and configuration
+
+### Files Created
+- `kubernetes/flux/repositories/helm/zitadel.yaml` (HelmRepository)
+- `kubernetes/apps/authentication/zitadel-db/` (CNPG cluster)
+- `kubernetes/apps/authentication/zitadel/` (HelmRelease, HTTPRoute, ExternalSecrets)
+- `kubernetes/apps/authentication/zitadel/README.md` (documentation)
+
+### 1Password Secrets Required
+Before merging PR #2703, create these items:
+1. **zitadel-db** - `username: zitadel`, `password: <secure>`
+2. **zitadel-db-superuser** - `password: <secure>`
+3. **zitadel** - `masterkey` (32 chars), `db_password`, `db_superuser_password`, `admin_username`, `admin_email`, `admin_password`
+
+### Validation
+- All manifests pass kubeconform validation
+- PR created and awaiting CI checks
+
+### Next Steps
+1. Create required 1Password secrets
+2. Merge PR after CI passes
+3. Wait for Flux to deploy Zitadel
+4. Access console at `https://zitadel.ironstone.casa`
+5. Configure Google identity provider
+6. Create OIDC applications for Mealie, Paperless-ngx, Grafana
+7. Set up family user accounts
+8. Enable passkey enrollment
