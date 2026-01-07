@@ -30,3 +30,4 @@ resources:
   - ./vector.yaml
   - ./victoria-metrics.yaml
   - backube.yaml
+  - zitadel.yaml

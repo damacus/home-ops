@@ -2,6 +2,7 @@
 version: 3
 tasks:
   update-field:
+    silent: true
     desc: Update a field in a JSON file by ID
     summary: |
       Updates a specific field in a JSON array by matching an ID.
@@ -25,6 +26,7 @@ tasks:
         jq --arg targetId "{{ .ID }}" --argjson value {{ .VALUE }} 'map(if .id == $targetId then .{{ .FIELD }} = $value else . end)' "{{ .FILE }}" | sponge "{{ .FILE }}"
 
   query:
+    silent: true
     desc: Run a jq query on a JSON file
     summary: |
       Run an arbitrary jq query on a JSON file.
@@ -45,6 +47,7 @@ tasks:
         jq '{{ .QUERY }}' "{{ .FILE }}"
 
   list-failing:
+    silent: true
     desc: List all items with passes=false
     summary: |
       Lists descriptions of all items where passes is false.
@@ -58,34 +61,27 @@ tasks:
         jq -r '.[] | select(.passes == false) | "\(.category): \(.description)"' ".tasks/{{ .FILE }}.json"
 
   failing-by-area:
+    silent: true
     desc: Show failing tests grouped by area
     summary: |
       Shows count of failing tests by area, sorted by priority.
-
-      Usage:
-        task jq:failing-by-area
     cmds:
       - |
         jq -s '[.[][] | select(.passes == false)] | map(.category) | group_by(.) | map({category: .[0], count: length}) | sort_by(.count) | reverse' .tasks/*.json
 
   failing-by-category:
+    silent: true
     desc: Show failing tests grouped by category
     summary: |
       Shows count of failing tests by category (functional, ux, style, etc.).
-
-      Usage:
-        task jq:failing-by-category
     cmds:
       - |
         jq -s '[.[][] | select(.passes == false)] | group_by(.category) | map({category: .[0].category, count: length}) | sort_by(.count) | reverse' .tasks/*.json
 
   next-features:
+    silent: true
     desc: Show next 10 failing features to work on
-    summary: |
-      Lists the next 10 failing features by area and ID.
-
-      Usage:
-        task jq:next-features
+    summary: Lists the next 10 failing features by area and ID.
     cmds:
       - |
         jq -s '[.[][] | select(.passes == false)] | sort_by(.category) | .[0:10] | .[] | "\(.category): \(.description)"' .tasks/*.json

@@ -331,18 +331,23 @@
 	},
 	{
 		"category": "auth",
-		"description": "Authentik identity provider deployment",
+		"description": "Zitadel identity provider deployment",
 		"steps": [
-			"Verify Authentik pods are running",
-			"Check PostgreSQL database connectivity",
-			"Validate Redis cache connectivity",
-			"Confirm admin UI is accessible",
-			"Test user authentication flow",
-			"Verify OIDC provider configuration",
-			"Check LDAP outpost if configured",
-			"Validate proxy outpost for forward auth",
-			"Test SSO integration with applications",
-			"Confirm backup of Authentik data"
+			"Deploy Zitadel HelmRelease with CNPG PostgreSQL backend",
+			"Verify Zitadel pods are running and healthy",
+			"Check PostgreSQL database connectivity via CNPG cluster",
+			"Confirm Zitadel console UI is accessible via Gateway HTTPRoute",
+			"Configure initial admin user and organization",
+			"Set up family user accounts with appropriate roles",
+			"Enable passkey/WebAuthn authentication for all users",
+			"Configure Google OAuth identity provider using existing Dex credentials",
+			"Set up local LDAP authentication connector",
+			"Create OIDC application for Mealie with correct redirect URIs",
+			"Create OIDC application for Paperless-ngx with correct redirect URIs",
+			"Create OIDC application for Grafana with correct redirect URIs",
+			"Test SSO login flow for each application",
+			"Verify passkey enrollment and authentication works",
+			"Configure Zitadel backup via Volsync"
 		],
 		"passes": false
 	},
@@ -562,18 +567,6 @@
 	},
 	{
 		"category": "apps",
-		"description": "Homepage dashboard deployment",
-		"steps": [
-			"Verify Homepage pods are running",
-			"Check ConfigMap for services",
-			"Validate Gateway HTTPRoute",
-			"Test service discovery",
-			"Confirm widget functionality"
-		],
-		"passes": false
-	},
-	{
-		"category": "apps",
 		"description": "Code-server web IDE",
 		"steps": [
 			"Verify code-server deployment",
@@ -583,17 +576,5 @@
 			"Confirm extension installation"
 		],
 		"passes": true
-	},
-	{
-		"category": "apps",
-		"description": "Kubernetes Dashboard deployment",
-		"steps": [
-			"Verify Dashboard pods",
-			"Check RBAC configuration",
-			"Validate Gateway access",
-			"Test authentication flow",
-			"Confirm metrics display"
-		],
-		"passes": false
 	}
 ]

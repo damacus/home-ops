@@ -1,0 +1,146 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: zitadel
+  namespace: authentication
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: zitadel
+      version: 9.13.0
+      sourceRef:
+        kind: HelmRepository
+        name: zitadel
+        namespace: flux-system
+  maxHistory: 3
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    replicaCount: 1
+
+    image:
+      repository: ghcr.io/zitadel/zitadel
+      tag: v2.71.12
+      pullPolicy: IfNotPresent
+
+    annotations:
+      reloader.stakater.com/auto: "true"
+
+    zitadel:
+      masterkeySecretName: zitadel-masterkey
+      configSecretName: zitadel-credentials
+      configSecretKey: config-yaml
+
+      configmapConfig:
+        ExternalSecure: true
+        ExternalDomain: &host zitadel.ironstone.casa
+        ExternalPort: 443
+        TLS:
+          Enabled: false
+        Database:
+          Postgres:
+            MaxOpenConns: 20
+            MaxIdleConns: 10
+            MaxConnLifetime: 30m
+            MaxConnIdleTime: 5m
+        DefaultInstance:
+          SMTPConfiguration:
+            FromName: Zitadel
+          LoginPolicy:
+            AllowRegister: false
+            AllowUsernamePassword: true
+            AllowExternalIDP: true
+            ForceMFA: false
+            PasswordlessType: 1
+            HidePasswordReset: false
+            IgnoreUnknownUsernames: false
+            AllowDomainDiscovery: true
+            DisableLoginWithEmail: false
+            DisableLoginWithPhone: true
+          PasswordComplexityPolicy:
+            MinLength: 12
+            HasUppercase: true
+            HasLowercase: true
+            HasNumber: true
+            HasSymbol: false
+          LabelPolicy:
+            HideLoginNameSuffix: true
+            ErrorMsgPopup: true
+            DisableWatermark: true
+            PrimaryColor: "#3B82F6"
+            BackgroundColor: "#F8FAFC"
+            WarnColor: "#EF4444"
+            FontColor: "#1E293B"
+            PrimaryColorDark: "#60A5FA"
+            BackgroundColorDark: "#0F172A"
+            WarnColorDark: "#F87171"
+            FontColorDark: "#F1F5F9"
+          SecondFactors:
+            - 1
+            - 2
+          MultiFactors:
+            - 1
+          PasswordAgePolicyPolicy:
+            ExpireWarnDays: 14
+            MaxAgeDays: 0
+        WebAuthNName: Ironstone
+
+    ingress:
+      enabled: false
+
+    service:
+      type: ClusterIP
+      port: 8080
+      protocol: http2
+      annotations:
+        traefik.ingress.kubernetes.io/service.serversscheme: h2c
+
+    initJob:
+      enabled: true
+      backoffLimit: 20
+      command: zitadel
+
+    setupJob:
+      machinekeyWriter:
+        image:
+          tag: "1.34.1"
+
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      failureThreshold: 3
+
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      failureThreshold: 3
+
+    startupProbe:
+      enabled: true
+      periodSeconds: 1
+      failureThreshold: 30
+
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
