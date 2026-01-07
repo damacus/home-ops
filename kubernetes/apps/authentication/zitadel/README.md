@@ -26,11 +26,11 @@ Create the following items in 1Password before deploying:
 #### `zitadel` (Secure Note)
 
 - `masterkey`: 32-character random string (e.g., `openssl rand -base64 24 | tr -d '\n' | head -c 32`)
-- `db_password`: Same as `zitadel-db` password
-- `db_superuser_password`: Same as `zitadel-db-superuser` password
 - `admin_username`: Your admin username (e.g., `admin`)
 - `admin_email`: Your admin email
 - `admin_password`: Initial admin password
+
+> **Note**: Database credentials are automatically pulled from `zitadel-db` and `zitadel-db-superuser` secrets.
 
 ## Architecture
 
