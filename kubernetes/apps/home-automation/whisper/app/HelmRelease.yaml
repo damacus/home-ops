@@ -92,11 +92,10 @@ spec:
           - weight: 100
             preference:
               matchExpressions:
-                - key: kubernetes.io/hostname
+                - key: rockchip.feature.node.kubernetes.io/rk3588-npu
                   operator: In
                   values:
-                    - "node-0b06a7"
-                    - "node-0b06df"
+                    - "true"
       # Prefer to avoid home-assistant pods (soft anti-affinity)
       podAntiAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
