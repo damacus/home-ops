@@ -1,9 +1,0 @@
-name: ironstone-base-k3s
-title: Ironstone Base K3s Controls
-maintainer: Dan Webb
-license: MIT
-summary: Shared baseline controls for K3s (intended for inheritance)
-version: 1.0.0
-supports:
-  - platform-family: debian
-inspec_version: ">= 5.0"

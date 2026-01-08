@@ -50,6 +50,9 @@ provisioning/config.env.local
 provisioning/secrets/
 provisioning/packer/builds/
 provisioning/packer/.packer_cache/
+provisioning/armbian-build/armbian-build-repo/
+provisioning/.mypy_cache/
+provisioning/.ruby-lsp/
 
 claude-progress.txt
 message.txt
