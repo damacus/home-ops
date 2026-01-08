@@ -5,8 +5,6 @@ kind: Cluster
 metadata:
   name: &name mealie
   namespace: home
-  annotations:
-    cnpg.io/skipWalArchiving: "enabled"
 spec:
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
