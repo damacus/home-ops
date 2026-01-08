@@ -41,12 +41,12 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     parted \
     psmisc \
     python3 \
-    python3-yaml \
     rsync \
     smartmontools \
     socat \
     unzip \
-    util-linux
+    util-linux \
+    vim
 
 # Configure Locale (REQ-SYSTEM-004)
 echo "Generating en_GB.UTF-8 locale..."
@@ -104,16 +104,26 @@ echo "localhost" > /etc/hostname
 echo "Cleaning SSH host keys..."
 rm -f /etc/ssh/ssh_host_*_key
 
-# TEMPORARILY enable root login for debugging (REQ-SECURITY-001)
-# TODO: Re-disable root login after debugging is complete
-echo "TEMPORARILY enabling root login for debugging..."
-# passwd -l root  # Disabled for debugging
-# Ensure SSH config ALLOWS root login temporarily
+# SSH hardening - disable password auth and root login
+# Note: overlay/etc/ssh/sshd_config.d/99-security.conf also sets this
+# but we ensure it here in case overlay isn't applied
 mkdir -p /etc/ssh/sshd_config.d
 cat > /etc/ssh/sshd_config.d/99-ironstone-hardening.conf << 'EOF'
-PasswordAuthentication yes
-PermitRootLogin yes
+PasswordAuthentication no
+PermitRootLogin no
 EOF
+
+# Lock root account - no password, no login
+echo "Locking root account..."
+passwd -l root
+
+# Disable Armbian first-boot wizard (OOBE)
+# Armbian checks for /root/.not_logged_in_yet to trigger OOBE
+echo "Disabling Armbian first-boot wizard..."
+rm -f /root/.not_logged_in_yet
+
+# Mark system as configured to skip Armbian's first-run scripts
+touch /root/.config_done
 
 # Create pi user for administration (REQ-USER-001)
 echo "Creating pi user..."
@@ -225,5 +235,10 @@ if [ ! -f "$IMAGES_DIR/k3s-airgap-images-arm64.tar" ]; then
     curl -L -o "$IMAGES_DIR/k3s-airgap-images-arm64.tar" "$AIRGAP_IMAGE_URL"
     echo "K3s airgap images placed in $IMAGES_DIR"
 fi
+
+# Rebuild initramfs to include NVMe rescan hook
+# Required for Crucial CT1000P310SSD8 drives that don't auto-enumerate namespace
+echo "Rebuilding initramfs with NVMe rescan hook..."
+update-initramfs -u -k all
 
 # Clean up overlay if needed, though Armbian handles some cleanup.

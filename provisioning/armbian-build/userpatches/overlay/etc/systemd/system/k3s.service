@@ -1,8 +1,9 @@
 [Unit]
-Description=K3s
+Description=Lightweight Kubernetes
 Documentation=https://k3s.io
 Wants=network-online.target
-After=network-online.target
+After=network-online.target k3s-init.service
+Requires=k3s-init.service
 
 [Service]
 Type=exec
