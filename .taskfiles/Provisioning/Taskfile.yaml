@@ -4,7 +4,7 @@ version: "3"
 silent: true
 
 vars:
-  PROVISIONING_DIR: "{{.ROOT_DIR}}/provisioning"
+  PROVISIONING_DIR: "provisioning"
   ARMBIAN_DIR: "{{.PROVISIONING_DIR}}/armbian-build"
 
 tasks:
