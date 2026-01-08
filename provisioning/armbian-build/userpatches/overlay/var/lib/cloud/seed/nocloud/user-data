@@ -34,15 +34,13 @@ disable_root: true
 
 # SSH configuration
 ssh_pwauth: false
+ssh_genkeytypes: ["ed25519", "rsa"]
+ssh_deletekeys: true
 
 # Enable and configure services on first boot
 runcmd:
-    # Generate K3s config from template
-    - sed "s/\${K3S_VIP}/192.168.1.220/g" /etc/rancher/k3s/config.yaml.template > /etc/rancher/k3s/config.yaml
+    # Generate K3s config from template using build-time config
+    - bash -c 'source /etc/ironstone/config && sed "s/\${K3S_VIP}/$K3S_VIP/g" /etc/rancher/k3s/config.yaml.template > /etc/rancher/k3s/config.yaml'
     - chmod 0644 /etc/rancher/k3s/config.yaml
-
-    # Enable services
-    - systemctl enable k3s-init.service
     - systemctl enable k3s.service
-    # k3s-init will run when NFS is available to fetch token
-    # k3s.service will start after token is retrieved
+    - systemctl start k3s.service

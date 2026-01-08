@@ -40,19 +40,12 @@ cd "$BUILD_DIR"
 # Force standard terminal type to avoid build script issues with modern emulators (Ghostty/WezTerm)
 export TERM=xterm-256color
 
-# Run compile.sh with Docker
-# We need to pass the variables defined in requirements.json
-# BOARD="rock-5b-plus"
-# BRANCH="vendor"
-# RELEASE="noble"
-# BUILD_MINIMAL="yes"
-# BUILD_DESKTOP="no"
-# KERNEL_CONFIGURE="no"
-# COMPRESS_OUTPUTIMAGE="sha,gpg,img"
-
+# NOTE: Using "edge" branch for Rock 5B Plus - this board requires newer kernel
+# and BSP components only available in edge. The vendor/current branches don't
+# have full support for this hardware yet.
 ./compile.sh \
     BOARD="rock-5b-plus" \
-    BRANCH="vendor" \
+    BRANCH="edge" \
     RELEASE="noble" \
     BUILD_MINIMAL="yes" \
     BUILD_DESKTOP="no" \

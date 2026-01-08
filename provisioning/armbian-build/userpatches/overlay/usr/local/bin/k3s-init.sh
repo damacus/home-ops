@@ -1,31 +1,48 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# NFS Server and Share for cluster token
-# These should be replaced or templated, but for now we assume they are injected
-# or we use a discovery mechanism.
-# Based on REQ-K3S-005, this script handles token retrieval.
+# K3s Token Retrieval Script
+# Fetches cluster token from NFS share using config from /etc/ironstone/config
 
-NFS_SHARE="${NFS_SHARE:-/var/nfs/shared/nfs}"
-MOUNT_POINT="/mnt/k3s-token"
-TOKEN_FILE="/etc/rancher/k3s/cluster-token"
-NFS_SERVER="${NFS_SERVER:-unas.ironstone.casa}"
+LOG_TAG="k3s-init"
+log() { logger -t "$LOG_TAG" "$*"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
-mkdir -p "${MOUNT_POINT}"
-
-# Mount NFS (REQ-NFS-002: safe options)
-mount -t nfs -o ro,soft,noexec,nosuid,nfsvers=3 "${NFS_SERVER}:${NFS_SHARE}" "${MOUNT_POINT}"
-
-if [ -f "${MOUNT_POINT}/provisioning/token" ]; then
-    mkdir -p "$(dirname "${TOKEN_FILE}")"
-    cp "${MOUNT_POINT}/provisioning/token" "${TOKEN_FILE}"
-    chmod 0600 "${TOKEN_FILE}"
-    chown root:root "${TOKEN_FILE}"
-    echo "Cluster token retrieved successfully."
+# Source build-time configuration
+if [ -f /etc/ironstone/config ]; then
+    source /etc/ironstone/config
 else
-    echo "Error: Token file not found on NFS share at ${MOUNT_POINT}/provisioning/token."
-    umount "${MOUNT_POINT}"
+    log "ERROR: /etc/ironstone/config not found"
     exit 1
 fi
 
-umount "${MOUNT_POINT}"
+TOKEN_PATH="provisioning/token"
+TOKEN_FILE="/etc/rancher/k3s/cluster-token"
+MOUNT_POINT="/mnt/nfs-token"
+
+mkdir -p "$MOUNT_POINT"
+mkdir -p "$(dirname "$TOKEN_FILE")"
+
+if [ -f "$TOKEN_FILE" ] && [ -s "$TOKEN_FILE" ]; then
+    log "K3s cluster token already exists, skipping NFS fetch"
+    exit 0
+fi
+
+log "Fetching k3s cluster token from NFS..."
+
+if timeout 10s mount -t nfs "${NFS_SERVER}:${NFS_SHARE}" "$MOUNT_POINT" -o ro,nolock,nfsvers=3,soft,timeo=10,retrans=1 2>/dev/null; then
+    if [ -f "$MOUNT_POINT/$TOKEN_PATH" ]; then
+        cp "$MOUNT_POINT/$TOKEN_PATH" "$TOKEN_FILE"
+        chmod 600 "$TOKEN_FILE"
+        log "K3s cluster token copied successfully"
+    else
+        log "ERROR: Token not found at $MOUNT_POINT/$TOKEN_PATH"
+        umount "$MOUNT_POINT" 2>/dev/null || true
+        exit 1
+    fi
+    umount "$MOUNT_POINT" 2>/dev/null || true
+else
+    log "ERROR: Failed to mount NFS"
+    exit 1
+fi
+
+rmdir "$MOUNT_POINT" 2>/dev/null || true

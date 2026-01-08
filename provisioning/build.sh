@@ -307,78 +307,60 @@ sudo ln -sf k3s "$MOUNT_DIR/usr/local/bin/crictl"
 sudo ln -sf k3s "$MOUNT_DIR/usr/local/bin/ctr"
 
 # -----------------------------------------------------------------------------
-# Install K3s configuration
+# Install Ironstone configuration (for cloud-init to use)
 # -----------------------------------------------------------------------------
-echo "Installing K3s configuration..."
+echo "Installing Ironstone configuration..."
 
-# K3s config directory and file
-sudo mkdir -p "$MOUNT_DIR/etc/rancher/k3s"
-cat <<EOF | sudo tee "$MOUNT_DIR/etc/rancher/k3s/config.yaml" > /dev/null
-server: https://${K3S_VIP}:6443
-token-file: /etc/rancher/k3s/cluster-token
-EOF
-
-# K3s init script (fetches token from NFS)
-cat <<EOF | sudo tee "$MOUNT_DIR/usr/local/bin/k3s-init.sh" > /dev/null
-#!/bin/bash
-set -euo pipefail
-
-LOG_TAG="k3s-init"
-log() { logger -t "$LOG_TAG" "$*"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
-
+# Create ironstone config directory with build-time variables
+# Cloud-init will source this to render templates
+sudo mkdir -p "$MOUNT_DIR/etc/ironstone"
+cat <<EOF | sudo tee "$MOUNT_DIR/etc/ironstone/config" > /dev/null
+# Ironstone build-time configuration
+# Sourced by cloud-init to render templates
+K3S_VIP="${K3S_VIP}"
 NFS_SERVER="${NFS_SERVER}"
 NFS_SHARE="${NFS_SHARE}"
+EOF
+sudo chmod 644 "$MOUNT_DIR/etc/ironstone/config"
 
-TOKEN_PATH="provisioning/token"
-TOKEN_FILE="/etc/rancher/k3s/cluster-token"
-MOUNT_POINT="/mnt/nfs-token"
+# K3s config directory (config.yaml will be rendered by cloud-init from template)
+# The template is already in the cloud-init user-data at /etc/rancher/k3s/config.yaml.template
+sudo mkdir -p "$MOUNT_DIR/etc/rancher/k3s"
 
-mkdir -p "$MOUNT_POINT"
-mkdir -p "$(dirname "$TOKEN_FILE")"
+# -----------------------------------------------------------------------------
+# Copy k3s-node-ip.sh script
+# -----------------------------------------------------------------------------
+# Note: k3s-init.sh, k3s.service, modules, and sysctl configs come from cloud-init user-data
+# We only need k3s-node-ip.sh here as it's called by k3s.service
+cat <<'NODEIPEOF' | sudo tee "$MOUNT_DIR/usr/local/bin/k3s-node-ip.sh" > /dev/null
+#!/bin/bash
+# Inject node-ip into k3s config if not already set
+set -euo pipefail
 
-if [ -f "$TOKEN_FILE" ] && [ -s "$TOKEN_FILE" ]; then
-    log "K3s cluster token already exists, skipping NFS fetch"
-else
-    log "Fetching k3s cluster token from NFS..."
+CONFIG_FILE="/etc/rancher/k3s/config.yaml"
 
-    if timeout 10s mount -t nfs "${NFS_SERVER}:${NFS_SHARE}" "$MOUNT_POINT" -o ro,nolock,nfsvers=3,soft,timeo=10,retrans=1 2>/dev/null; then
-        if [ -f "$MOUNT_POINT/$TOKEN_PATH" ]; then
-            cp "$MOUNT_POINT/$TOKEN_PATH" "$TOKEN_FILE"
-            chmod 600 "$TOKEN_FILE"
-            log "K3s cluster token copied successfully"
-        else
-            log "ERROR: Token not found at $MOUNT_POINT/$TOKEN_PATH"
-            umount "$MOUNT_POINT" 2>/dev/null || true
-            exit 1
-        fi
-        umount "$MOUNT_POINT" 2>/dev/null || true
-    else
-        log "ERROR: Failed to mount NFS"
-        exit 1
-    fi
+# Get node IP from routing table
+NODE_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || true)
+
+# Fallback to first IP from hostname
+if [ -z "$NODE_IP" ]; then
+    NODE_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || true)
 fi
-rmdir "$MOUNT_POINT" 2>/dev/null || true
-EOF
-sudo chmod 755 "$MOUNT_DIR/usr/local/bin/k3s-init.sh"
 
-# K3s systemd service
-cat <<EOF | sudo tee "$MOUNT_DIR/etc/systemd/system/k3s.service" > /dev/null
-[Unit]
-Description=Lightweight Kubernetes
-Documentation=https://k3s.io
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=exec
-ExecStartPre=/usr/local/bin/k3s-init.sh
-ExecStart=/usr/local/bin/k3s agent
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
+# Only add if we have an IP and config exists and node-ip not already set
+if [ -n "$NODE_IP" ] && [ -f "$CONFIG_FILE" ]; then
+    if ! grep -qE '^\s*node-ip:' "$CONFIG_FILE"; then
+        echo "" >> "$CONFIG_FILE"
+        echo "node-ip: $NODE_IP" >> "$CONFIG_FILE"
+        echo "Added node-ip: $NODE_IP to $CONFIG_FILE"
+    else
+        echo "node-ip already configured in $CONFIG_FILE"
+    fi
+else
+    echo "Skipping node-ip injection (IP=$NODE_IP, config exists=$(test -f "$CONFIG_FILE" && echo yes || echo no))"
+fi
+NODEIPEOF
+sudo chmod 755 "$MOUNT_DIR/usr/local/bin/k3s-node-ip.sh"
 
 # -----------------------------------------------------------------------------
 # Install kernel modules configuration
@@ -420,6 +402,40 @@ PasswordAuthentication no
 PermitRootLogin no
 AuthenticationMethods publickey
 EOF
+
+# -----------------------------------------------------------------------------
+# Install NVMe rescan hook for Crucial P310 drives
+# -----------------------------------------------------------------------------
+echo "Installing NVMe rescan initramfs hook..."
+sudo mkdir -p "$MOUNT_DIR/etc/initramfs-tools/scripts/local-premount"
+cat <<'NVMEHOOK' | sudo tee "$MOUNT_DIR/etc/initramfs-tools/scripts/local-premount/nvme-rescan" > /dev/null
+#!/bin/sh
+# Force NVMe namespace rescan for drives that do not auto-enumerate
+# Required for: Crucial CT1000P310SSD8 (firmware VACR001)
+
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0;; esac
+
+if [ -e /sys/class/nvme/nvme0 ] && [ ! -b /dev/nvme0n1 ]; then
+    echo "NVMe rescan..."
+    echo 1 > /sys/class/nvme/nvme0/rescan_controller
+    for i in 1 2 3 4 5; do [ -b /dev/nvme0n1 ] && break; sleep 1; done
+fi
+NVMEHOOK
+sudo chmod 755 "$MOUNT_DIR/etc/initramfs-tools/scripts/local-premount/nvme-rescan"
+
+# Rebuild initramfs to include the hook
+echo "Rebuilding initramfs..."
+sudo mount --bind /dev "$MOUNT_DIR/dev"
+sudo mount --bind /dev/pts "$MOUNT_DIR/dev/pts"
+sudo mount -t proc proc "$MOUNT_DIR/proc"
+sudo mount -t sysfs sysfs "$MOUNT_DIR/sys"
+sudo chroot "$MOUNT_DIR" /bin/bash -c "update-initramfs -u -k all"
+sudo umount "$MOUNT_DIR/sys" || true
+sudo umount "$MOUNT_DIR/proc" || true
+sudo umount "$MOUNT_DIR/dev/pts" || true
+sudo umount "$MOUNT_DIR/dev" || true
 
 # -----------------------------------------------------------------------------
 # Clean up for gold image
