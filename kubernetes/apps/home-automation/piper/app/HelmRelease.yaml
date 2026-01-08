@@ -78,13 +78,13 @@ spec:
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
+          - weight: 100
             preference:
               matchExpressions:
-                - key: kubernetes.io/hostname
+                - key: rockchip.feature.node.kubernetes.io/rk3588-npu
                   operator: In
                   values:
-                    - "rocky"
+                    - "true"
       # Prefer to avoid home-assistant pods (soft anti-affinity)
       podAntiAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:

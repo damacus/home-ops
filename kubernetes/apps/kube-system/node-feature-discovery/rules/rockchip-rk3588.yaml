@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/nfd.k8s-sigs.io/nodefeaturerule_v1alpha1.json
+apiVersion: nfd.k8s-sigs.io/v1alpha1
+kind: NodeFeatureRule
+metadata:
+  name: rockchip-rk3588
+spec:
+  rules:
+    - # Rockchip RK3588 SoC (Rock 5B+, Orange Pi 5, etc.)
+      name: rockchip.rk3588
+      labels:
+        rockchip.feature.node.kubernetes.io/rk3588: "true"
+      matchFeatures:
+        - feature: pci.device
+          matchExpressions:
+            vendor: { op: In, value: ["1d87"] }
+            device: { op: In, value: ["3588"] }
+
+    - # Rockchip RKNPU (Neural Processing Unit / AI Accelerator)
+      name: rockchip.rknpu
+      labels:
+        rockchip.feature.node.kubernetes.io/npu: "true"
+      matchFeatures:
+        - feature: kernel.loadedmodule
+          matchExpressions:
+            rknpu: { op: Exists }
+
+    - # Combined: Rock 5B+ with NPU available
+      name: rockchip.rk3588-npu
+      labels:
+        rockchip.feature.node.kubernetes.io/rk3588-npu: "true"
+      matchFeatures:
+        - feature: pci.device
+          matchExpressions:
+            vendor: { op: In, value: ["1d87"] }
+            device: { op: In, value: ["3588"] }
+        - feature: kernel.loadedmodule
+          matchExpressions:
+            rknpu: { op: Exists }

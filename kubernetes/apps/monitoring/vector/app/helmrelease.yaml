@@ -89,12 +89,15 @@ spec:
           endpoint: http://loki-gateway.monitoring.svc.cluster.local
           encoding:
             codec: json
+          # NOTE: Labels use Vector template syntax {{ label.* }}, NOT Helm templates.
+          # The curly braces must be escaped so Helm passes them through literally.
+          # Do not simplify to "{{ label.app }}" - Helm will fail with "function label not defined"
           labels:
-            app: "{{ label.app }}"
-            container: "{{ label.container }}"
-            namespace: "{{ label.namespace }}"
-            node: "{{ label.node }}"
-            pod: "{{ label.pod }}"
+            app: '{{ "{{" }} label.app {{ "}}" }}'
+            container: '{{ "{{" }} label.container {{ "}}" }}'
+            namespace: '{{ "{{" }} label.namespace {{ "}}" }}'
+            node: '{{ "{{" }} label.node {{ "}}" }}'
+            pod: '{{ "{{" }} label.pod {{ "}}" }}'
           remove_label_fields: true
 
         prometheus_sink:
