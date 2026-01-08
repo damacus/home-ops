@@ -28,6 +28,15 @@ spec:
       repository: timberio/vector
       tag: 0.52.0-debian
 
+    service:
+      enabled: true
+      ports:
+        - name: prometheus-exporter
+          port: 9090
+
+    serviceMonitor:
+      enabled: true
+
     customConfig:
       data_dir: /vector-data
 
@@ -58,6 +67,20 @@ spec:
             .label.node = .kubernetes.pod_node_name
             .label.pod = .kubernetes.pod_name
 
+        filter_nest_logs:
+          type: filter
+          inputs: [remap_kubernetes_logs]
+          condition: .label.app == "home-assistant" && contains(string!(.message), "nest integration could not authenticate")
+
+        nest_auth_metric:
+          type: log_to_metric
+          inputs: [filter_nest_logs]
+          metrics:
+            - type: counter
+              field: message
+              name: home_assistant_nest_auth_failure_total
+              namespace: home_ops
+
       # Sinks
       sinks:
         loki:
@@ -66,13 +89,21 @@ spec:
           endpoint: http://loki-gateway.monitoring.svc.cluster.local
           encoding:
             codec: json
+          # NOTE: Labels use Vector template syntax {{ label.* }}, NOT Helm templates.
+          # The curly braces must be escaped so Helm passes them through literally.
+          # Do not simplify to "{{ label.app }}" - Helm will fail with "function label not defined"
           labels:
-            app: '{{ "{{" }} label.app }}'
-            container: '{{ "{{" }} label.container }}'
-            namespace: '{{ "{{" }} label.namespace }}'
-            node: '{{ "{{" }} label.node }}'
-            pod: '{{ "{{" }} label.pod }}'
+            app: '{{ "{{" }} label.app {{ "}}" }}'
+            container: '{{ "{{" }} label.container {{ "}}" }}'
+            namespace: '{{ "{{" }} label.namespace {{ "}}" }}'
+            node: '{{ "{{" }} label.node {{ "}}" }}'
+            pod: '{{ "{{" }} label.pod {{ "}}" }}'
           remove_label_fields: true
+
+        prometheus_sink:
+          type: prometheus_exporter
+          inputs: [nest_auth_metric, internal_metrics]
+          address: 0.0.0.0:9090
 
     # Persistence for buffering
     dataDir: /vector-data
