@@ -18,6 +18,10 @@ tasks:
         echo ""
         echo "Build complete. Image is in:"
         ls -lh armbian-build-repo/output/images/*.img 2>/dev/null || echo "  (check armbian-build-repo/output/images/)"
+        echo ""
+        echo "SHA256 of image:"
+        bat -p armbian-build-repo/output/images/*.img.sha
+        echo ""
 
   copy:
     desc: Copy built image to ~/Downloads for flashing
@@ -48,6 +52,7 @@ tasks:
         echo "Cleaning Armbian build artifacts..."
         rm -rf armbian-build-repo/output/images/*.img
         rm -rf armbian-build-repo/output/images/*.img.xz
+        rm -rf armbian-build-repo/output/images/*.img.sha
         rm -rf armbian-build-repo/.tmp
         echo "Done."
 

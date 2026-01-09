@@ -85,6 +85,9 @@ passwd -l root
 rm -f /root/.not_logged_in_yet
 touch /root/.config_done
 
+echo "Re-enabling MOTD..."
+chmod +x /etc/update-motd.d/* 2>/dev/null || true
+
 # =============================================================================
 # K3s Binary and Airgap Images (build-time download)
 # =============================================================================

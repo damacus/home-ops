@@ -1,0 +1,24 @@
+#!/bin/sh
+# Force NVMe namespace rescan for drives that do not auto-enumerate
+# Required for: Crucial CT1000P310SSD8 (firmware VACR001)
+# This runs during initramfs local-premount phase, before root is mounted.
+
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "$1" in prereqs) prereqs; exit 0;; esac
+
+# Only act if NVMe controller exists but namespace block device doesn't
+if [ -e /sys/class/nvme/nvme0 ] && [ ! -b /dev/nvme0n1 ]; then
+    echo "NVMe rescan: Controller found but no namespace, triggering rescan..."
+    echo 1 > /sys/class/nvme/nvme0/rescan_controller
+    # Wait up to 5 seconds for namespace to appear
+    for i in 1 2 3 4 5; do
+        [ -b /dev/nvme0n1 ] && break
+        sleep 1
+    done
+    if [ -b /dev/nvme0n1 ]; then
+        echo "NVMe rescan: Namespace /dev/nvme0n1 now available"
+    else
+        echo "NVMe rescan: WARNING - Namespace still not available after rescan"
+    fi
+fi
