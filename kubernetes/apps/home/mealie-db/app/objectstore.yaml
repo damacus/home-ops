@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/barmancloud.cnpg.io/objectstore_v1.json
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: minio-store
+  namespace: home
+spec:
+  retentionPolicy: 30d
+  configuration:
+    destinationPath: s3://cnpg-backups/mealie/
+    endpointURL: http://minio.storage.svc.cluster.local:9000
+    serverName: mealie
+    s3Credentials:
+      accessKeyId:
+        name: minio-cnpg
+        key: aws-access-key-id
+      secretAccessKey:
+        name: minio-cnpg
+        key: aws-secret-access-key
+    data:
+      compression: bzip2
+    wal:
+      compression: bzip2
+      maxParallel: 8
