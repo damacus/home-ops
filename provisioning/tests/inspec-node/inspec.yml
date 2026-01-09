@@ -1,10 +1,10 @@
-name: ironstone-vm-test
-title: Ironstone VM Cloud-Init Test
+name: ironstone-node
+title: Ironstone Running Node Compliance
 maintainer: Dan Webb
 copyright: Dan Webb
 copyright_email: dan.webb@damacus.io
 license: MIT
-summary: Lightweight VM test profile for validating cloud-init in QEMU/Lima
+summary: Validates a running K3s node after cloud-init completes
 version: 1.0.0
 supports:
   - platform-family: debian

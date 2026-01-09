@@ -4,197 +4,90 @@ version: "3"
 silent: true
 
 vars:
-  PROVISIONING_DIR: "{{.ROOT_DIR}}/provisioning"
-  BOARD: '{{.board | default "rpi5"}}'
-  LIMA_VM: "ironstone"
+  PROVISIONING_DIR: "provisioning"
+  ARMBIAN_DIR: "{{.PROVISIONING_DIR}}/armbian-build"
 
 tasks:
-  check-lima:
-    desc: Check if Lima is installed
-    internal: true
-    silent: true
-    preconditions:
-      - sh: command -v limactl
-        msg: "Lima is not installed. Install with: brew install lima"
-
-  check-vm:
-    desc: Check if Lima VM is running, start if not
-    internal: true
-    deps: [check-lima]
-    cmds:
-      - |
-        STATUS=$(limactl list --format '{{`{{.Status}}`}}' {{.LIMA_VM}} 2>/dev/null || echo "NotFound")
-        if [ "$STATUS" = "NotFound" ]; then
-          echo "Error: Lima VM '{{.LIMA_VM}}' does not exist."
-          echo "Create it with: limactl create --name={{.LIMA_VM}} template://default"
-          exit 1
-        elif [ "$STATUS" != "Running" ]; then
-          echo "Starting Lima VM '{{.LIMA_VM}}'..."
-          limactl start {{.LIMA_VM}}
-        else
-          echo "Lima VM '{{.LIMA_VM}}' is running."
-        fi
-
   build:
-    desc: Build provisioning image via Lima VM
-    deps: [check-vm]
-    vars:
-      GIT_SHA:
-        sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+    desc: Build Armbian image for Rock 5B+
+    dir: "{{.ARMBIAN_DIR}}"
     cmds:
       - |
-        echo "Building {{.BOARD}}-gold image inside Lima VM..."
-        limactl shell {{.LIMA_VM}} bash -c "cd {{.PROVISIONING_DIR}} && GIT_SHA={{.GIT_SHA}} ./build.sh {{.BOARD}}"
+        echo "Building Armbian image for Rock 5B+..."
+        ./build.sh
+        echo ""
+        echo "Build complete. Image is in:"
+        ls -lh armbian-build-repo/output/images/*.img 2>/dev/null || echo "  (check armbian-build-repo/output/images/)"
+        echo ""
+        echo "SHA256 of image:"
+        bat -p armbian-build-repo/output/images/*.img.sha
+        echo ""
 
   copy:
-    desc: Copy built image from Lima VM to ~/Downloads (for Raspberry Pi Imager/Etcher)
-    deps: [check-lima]
+    desc: Copy built image to ~/Downloads for flashing
+    dir: "{{.ARMBIAN_DIR}}"
     cmds:
       - |
-        echo "Copying latest {{.BOARD}}-gold image from Lima VM..."
-        # Get the most recent image file
-        LATEST=$(limactl shell {{.LIMA_VM}} bash -c "ls -t ~/ironstone-builds/{{.BOARD}}-gold-*.img 2>/dev/null | head -1")
+        LATEST=$(ls -t armbian-build-repo/output/images/*.img 2>/dev/null | head -1)
         if [ -z "$LATEST" ]; then
-          echo "Error: No {{.BOARD}}-gold image found in Lima VM"
+          echo "Error: No image found in armbian-build-repo/output/images/"
           exit 1
         fi
         FILENAME=$(basename "$LATEST")
         echo "Copying: $FILENAME to ~/Downloads/"
-        limactl copy "{{.LIMA_VM}}:$LATEST" ~/Downloads/
+        cp "$LATEST" ~/Downloads/
         echo "Done. Image ready at ~/Downloads/$FILENAME"
 
   build-and-copy:
-    desc: Build image and copy to local machine
+    desc: Build image and copy to ~/Downloads
     cmds:
       - task: build
       - task: copy
 
   clean:
-    desc: Remove built images from Lima VM to free disk space
-    deps: [check-lima]
+    desc: Remove build artifacts to free disk space
+    dir: "{{.ARMBIAN_DIR}}"
     cmds:
       - |
-        echo "Cleaning build artifacts from Lima VM..."
-        limactl shell {{.LIMA_VM}} bash -c "rm -rf ~/ironstone-builds/*.img ~/ironstone-builds/*.img.xz 2>/dev/null || true"
-        echo "Checking Lima VM disk usage..."
-        limactl shell {{.LIMA_VM}} df -h /home
-        echo "Done. Build artifacts removed."
-
-  test:
-    desc: Run provisioning tests (CINC Auditor / InSpec)
-    cmd: "{{.PROVISIONING_DIR}}/tests/harness/inspec-repo.sh"
-
-  test-harness:
-    desc: Run provisioning harness tests (bash scripts)
-    cmd: "{{.PROVISIONING_DIR}}/tests/harness/run.sh"
+        echo "Cleaning Armbian build artifacts..."
+        rm -rf armbian-build-repo/output/images/*.img
+        rm -rf armbian-build-repo/output/images/*.img.xz
+        rm -rf armbian-build-repo/output/images/*.img.sha
+        rm -rf armbian-build-repo/.tmp
+        echo "Done."
 
   audit:
-    desc: Run CINC Auditor (InSpec) tests against a running node
+    desc: Run InSpec tests against a running node
+    requires:
+      vars: [host]
+    vars:
+      AUDITOR:
+        sh: command -v cinc-auditor || command -v inspec
+    preconditions:
+      - sh: command -v cinc-auditor || command -v inspec
+        msg: "Neither cinc-auditor nor inspec found. Install with: brew install cinc-auditor"
     cmds:
       - |
-        if [ -z "{{.host}}" ]; then
-          echo "Usage: task provisioning:audit host=<ip-or-hostname>"
-          exit 1
-        fi
-        AUDITOR=$(command -v cinc-auditor || command -v inspec || echo "")
-        if [ -z "$AUDITOR" ]; then
-          echo "Error: Neither cinc-auditor nor inspec found. Install with:"
-          echo "  brew install cinc-auditor"
-          exit 1
-        fi
-        echo "Running $AUDITOR tests against {{.host}}..."
-        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-running -t ssh://pi@{{.host}} -i ~/.ssh/id_ed25519 --reporter cli
+        echo "Running node tests against {{.host}}..."
+        {{.AUDITOR}} exec {{.PROVISIONING_DIR}}/tests/inspec-node \
+          -t ssh://pi@{{.host}} \
+          -i ~/.ssh/id_ed25519 \
+          --reporter cli
 
-  audit-gold:
-    desc: Run gold image tests against a mounted image (via Lima VM)
-    deps: [check-vm]
+  audit-image:
+    desc: Run InSpec tests against a mounted image
+    requires:
+      vars: [mount]
+    vars:
+      AUDITOR:
+        sh: command -v cinc-auditor || command -v inspec
+    preconditions:
+      - sh: command -v cinc-auditor || command -v inspec
+        msg: "Neither cinc-auditor nor inspec found. Install with: brew install cinc-auditor"
     cmds:
       - |
-        if [ -z "{{.mount}}" ]; then
-          echo "Usage: task provisioning:audit-gold mount=<path-to-mounted-rootfs>"
-          echo ""
-          echo "Mount the image first, then run this task against the mount point."
-          exit 1
-        fi
-        AUDITOR=$(command -v cinc-auditor || command -v inspec || echo "")
-        if [ -z "$AUDITOR" ]; then
-          echo "Error: Neither cinc-auditor nor inspec found. Install with:"
-          echo "  brew install cinc-auditor"
-          exit 1
-        fi
-        echo "Running gold image tests against {{.mount}}..."
-        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-gold -t local:// --basedir "{{.mount}}" --reporter cli
-
-  audit-storage:
-    desc: Run storage validation tests (InSpec) against a cluster
-    cmds:
-      - |
-        AUDITOR=$(command -v cinc-auditor || command -v inspec || echo "")
-        if [ -z "$AUDITOR" ]; then
-          echo "Error: Neither cinc-auditor nor inspec found. Install with: brew install cinc-auditor"
-          exit 1
-        fi
-        echo "Running storage validation tests..."
-        $AUDITOR exec {{.PROVISIONING_DIR}}/tests/inspec-storage --reporter cli
-
-  reapply-cloud-init:
-    desc: Re-apply rendered cloud-init to a running node, reboot, wait, then run post-boot tests
-    cmds:
-      - |
-        if [ -z "{{.host}}" ]; then
-          echo "Usage: task provisioning:reapply-cloud-init host=<ip-or-hostname> [port=22]"
-          exit 1
-        fi
-        PORT='{{.port | default "22"}}'
-        chmod +x {{.PROVISIONING_DIR}}/reapply-cloud-init.sh
-        {{.PROVISIONING_DIR}}/reapply-cloud-init.sh --ssh-host "{{.host}}" --ssh-port "$PORT"
-
-  vm-test:
-    desc: Validate cloud-init in a VM (seed ISO + InSpec against VM over SSH)
-    cmds:
-      - |
-        if [ -z "{{.host}}" ]; then
-          echo "Usage: task provisioning:vm-test host=<ip-or-hostname> [port=22] [profile=gold|running] [template=production|vm]"
-          echo ""
-          echo "Options:"
-          echo "  host      - SSH host (required)"
-          echo "  port      - SSH port (default: 22)"
-          echo "  profile   - InSpec profile: gold or running (default: gold)"
-          echo "  template  - Cloud-init: production (same as hardware) or vm (lightweight) (default: production)"
-          exit 1
-        fi
-        PORT='{{.port | default "22"}}'
-        PROFILE='{{.profile | default "gold"}}'
-        TEMPLATE='{{.template | default "production"}}'
-        chmod +x {{.PROVISIONING_DIR}}/vm-test.sh
-        {{.PROVISIONING_DIR}}/vm-test.sh --ssh-host "{{.host}}" --ssh-port "$PORT" --profile "$PROFILE" --template "$TEMPLATE"
-
-  test-image:
-    desc: Boot a built gold master image in Lima for testing
-    cmds:
-      - |
-        if [ -z "{{.image}}" ]; then
-          echo "Usage: task provisioning:test-image image=<path-to-img>"
-          echo ""
-          echo "Example: task provisioning:test-image image=~/Downloads/rpi5-gold-abc123.img"
-          exit 1
-        fi
-        chmod +x {{.PROVISIONING_DIR}}/test-image.sh
-        {{.PROVISIONING_DIR}}/test-image.sh "{{.image}}" {{.CLI_ARGS}}
-
-  test-cloud-init:
-    desc: Test cloud-init configuration in Lima VM with InSpec
-    cmds:
-      - |
-        if [ -z "{{.image}}" ]; then
-          echo "Usage: task provisioning:test-cloud-init image=<path-to-img> [profile=gold|running|both]"
-          echo ""
-          echo "Profiles:"
-          echo "  gold    - Test gold image before cloud-init runs (default)"
-          echo "  running - Test running system after cloud-init completes"
-          echo "  both    - Run both test profiles"
-          exit 1
-        fi
-        PROFILE='{{.profile | default "gold"}}'
-        chmod +x {{.PROVISIONING_DIR}}/test-cloud-init.sh
-        {{.PROVISIONING_DIR}}/test-cloud-init.sh "{{.image}}" --profile "$PROFILE"
+        echo "Running image tests against {{.mount}}..."
+        {{.AUDITOR}} exec {{.PROVISIONING_DIR}}/tests/inspec-image \
+          -t local:// \
+          --basedir "{{.mount}}" \
+          --reporter cli

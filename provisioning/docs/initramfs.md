@@ -1,4 +1,4 @@
-# Initramfs Boot Issues - NVMe Root Filesystem
+ Initramfs Boot Issues - NVMe Root Filesystem
 
 ## Problem Summary
 
