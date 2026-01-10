@@ -3,10 +3,10 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: home-assistant-db
-  namespace: home-automation
+  name: zitadel-db
+  namespace: authentication
 spec:
-  schedule: "0 0 0 * * *"
+  schedule: "0 4 * * *"
   immediate: true
   backupOwnerReference: self
   method: plugin
@@ -15,4 +15,4 @@ spec:
     parameters:
       objectStore: minio-store
   cluster:
-    name: home-assistant
+    name: zitadel
