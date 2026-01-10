@@ -3,19 +3,19 @@
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
-  name: r2-store
+  name: minio-store
   namespace: home
 spec:
   retentionPolicy: 30d
   configuration:
-    destinationPath: s3://cnpg/
-    endpointURL: https://eeded8796e30bfe7b412cd59df29bb34.r2.cloudflarestorage.com
+    destinationPath: s3://cnpg-backups/immich/
+    endpointURL: http://minio.storage.svc.cluster.local:9000
     s3Credentials:
       accessKeyId:
-        name: r2-cloudnative-pg
+        name: minio-cnpg
         key: aws-access-key-id
       secretAccessKey:
-        name: r2-cloudnative-pg
+        name: minio-cnpg
         key: aws-secret-access-key
     data:
       compression: bzip2

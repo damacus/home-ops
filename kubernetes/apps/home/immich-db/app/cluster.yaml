@@ -39,7 +39,7 @@ spec:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: r2-store
+        barmanObjectName: minio-store
         serverName: immich
 
   resources:
