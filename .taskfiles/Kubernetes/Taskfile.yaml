@@ -45,3 +45,46 @@ tasks:
     silent: true
     cmd: |
       kubectl exec -n monitoring vmalertmanager-vm-0 -- wget -qO- 'http://localhost:9093/api/v2/alerts' 2>/dev/null | jq -r '.[] | "\(.labels.alertname): \(.status.state)"' | sort | uniq -c | sort -rn
+
+  log-noise:
+    desc: Identify top log-producing applications by volume (requires Loki)
+    summary: |
+      Queries Loki to find which applications are generating the most logs.
+      Useful for identifying noisy services that may need log level adjustments
+      or filtering. Results show app name and log count over the specified period.
+
+      Examples:
+        task kubernetes:log-noise              # Top 20 apps, last 1 hour
+        task kubernetes:log-noise -- --top=10  # Top 10 apps
+        task kubernetes:log-noise -- --period=24h  # Last 24 hours
+    silent: true
+    vars:
+      TOP: '{{.TOP | default "20"}}'
+      PERIOD: '{{.PERIOD | default "1h"}}'
+    cmd: |
+      echo "=== Top {{.TOP}} Log-Producing Apps (last {{.PERIOD}}) ==="
+      echo ""
+      kubectl exec -n monitoring deploy/loki-gateway -- \
+        wget -qO- "http://localhost:8080/loki/api/v1/query?query=sum(count_over_time({namespace=~\".%2B\"}[{{.PERIOD}}]))%20by%20(app)&limit=100" 2>/dev/null \
+        | jq -r '.data.result | sort_by(.value[1] | tonumber) | reverse | .[:{{.TOP}}] | .[] | "\(.metric.app)\t\(.value[1])"' \
+        | awk 'BEGIN {printf "%-40s %s\n", "APP", "LOG_COUNT"; printf "%-40s %s\n", "---", "---------"} {printf "%-40s %s\n", $1, $2}'
+
+  log-noise-by-namespace:
+    desc: Identify top log-producing namespaces by volume (requires Loki)
+    summary: |
+      Queries Loki to find which namespaces are generating the most logs.
+      Useful for identifying noisy namespaces that may need investigation.
+
+      Examples:
+        task kubernetes:log-noise-by-namespace              # Last 1 hour
+        task kubernetes:log-noise-by-namespace -- --period=6h  # Last 6 hours
+    silent: true
+    vars:
+      PERIOD: '{{.PERIOD | default "1h"}}'
+    cmd: |
+      echo "=== Log Volume by Namespace (last {{.PERIOD}}) ==="
+      echo ""
+      kubectl exec -n monitoring deploy/loki-gateway -- \
+        wget -qO- "http://localhost:8080/loki/api/v1/query?query=sum(count_over_time({namespace=~\".%2B\"}[{{.PERIOD}}]))%20by%20(namespace)&limit=100" 2>/dev/null \
+        | jq -r '.data.result | sort_by(.value[1] | tonumber) | reverse | .[] | "\(.metric.namespace)\t\(.value[1])"' \
+        | awk 'BEGIN {printf "%-30s %s\n", "NAMESPACE", "LOG_COUNT"; printf "%-30s %s\n", "---------", "---------"} {printf "%-30s %s\n", $1, $2}'
