@@ -61,6 +61,13 @@ spec:
                   timeoutSeconds: 10
                   failureThreshold: 6
               readiness: *probes
+            resources:
+              requests:
+                cpu: 200m
+                memory: 512Mi
+              limits:
+                cpu: 1000m
+                memory: 2Gi
           ironbuckets:
             image:
               repository: ghcr.io/damacus/ironbuckets
@@ -90,6 +97,13 @@ spec:
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 3
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
     service:
       main:
         controller: main
@@ -111,21 +125,21 @@ spec:
         parentRefs:
           - name: internal
             namespace: kube-system
-            sectionName: https  # Uses port 443 with TLS
+            sectionName: https # Uses port 443 with TLS
         rules:
           - backendRefs:
               - name: minio
-                port: 9001  # MinIO console port
+                port: 9001 # MinIO console port
       s3:
         hostnames: ["s3.ironstone.casa"]
         parentRefs:
           - name: internal
             namespace: kube-system
-            sectionName: s3  # Uses port 9000 for S3 API
+            sectionName: s3 # Uses port 9000 for S3 API
         rules:
           - backendRefs:
               - name: minio
-                port: 9000  # MinIO S3 API port
+                port: 9000 # MinIO S3 API port
       ironbuckets:
         hostnames: ["ironbuckets.ironstone.casa"]
         parentRefs:
@@ -135,7 +149,7 @@ spec:
         rules:
           - backendRefs:
               - name: minio
-                port: 8080  # IronBuckets UI port
+                port: 8080 # IronBuckets UI port
 
     serviceMonitor:
       main:
@@ -153,10 +167,3 @@ spec:
         existingClaim: minio-data
         globalMounts:
           - path: /data
-
-    resources:
-      requests:
-        memory: 750Mi
-        cpu: 400m
-      limits:
-        memory: 2Gi
