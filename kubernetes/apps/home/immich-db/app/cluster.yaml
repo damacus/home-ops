@@ -35,6 +35,13 @@ spec:
       max_connections: "100"
       shared_buffers: 256MB
 
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: minio-store
+        serverName: immich
+
   resources:
     requests:
       cpu: 100m
@@ -42,22 +49,3 @@ spec:
     limits:
       cpu: 500m
       memory: 512Mi
-
-  backup:
-    retentionPolicy: 30d
-    barmanObjectStore:
-      data:
-        compression: bzip2
-      wal:
-        compression: bzip2
-        maxParallel: 8
-      destinationPath: s3://cnpg/
-      endpointURL: https://eeded8796e30bfe7b412cd59df29bb34.r2.cloudflarestorage.com
-      serverName: *name
-      s3Credentials:
-        accessKeyId:
-          name: r2-cloudnative-pg
-          key: aws-access-key-id
-        secretAccessKey:
-          name: r2-cloudnative-pg
-          key: aws-secret-access-key

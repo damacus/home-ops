@@ -4,9 +4,15 @@ apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
   name: immich-db
+  namespace: home
 spec:
   schedule: "0 3 * * *"
   immediate: true
   backupOwnerReference: self
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+    parameters:
+      objectStore: minio-store
   cluster:
     name: immich
