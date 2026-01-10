@@ -10,7 +10,6 @@ spec:
   configuration:
     destinationPath: s3://cnpg-backups/mealie/
     endpointURL: http://minio.storage.svc.cluster.local:9000
-    serverName: mealie
     s3Credentials:
       accessKeyId:
         name: minio-cnpg
