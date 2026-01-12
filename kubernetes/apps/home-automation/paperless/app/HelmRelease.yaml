@@ -58,22 +58,11 @@ spec:
               # Configure Remote User auth
               PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: "false"
               PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS: "false"
-              PAPERLESS_SOCIALACCOUNT_PROVIDERS: |
-                {
-                  "openid_connect": {
-                    "APPS": [
-                      {
-                        "provider_id": "dex",
-                        "name": "Dex",
-                        "client_id": "paperless",
-                        "secret": "paperless-client",
-                        "settings": {
-                          "server_url": "https://dex.damacus.io/.well-known/openid-configuration"
-                        }
-                      }
-                    ]
-                  }
-                }
+              PAPERLESS_SOCIALACCOUNT_PROVIDERS:
+                valueFrom:
+                  secretKeyRef:
+                    name: paperless-zitadel-oidc
+                    key: providers
               # Configure folders
               PAPERLESS_CONSUMPTION_DIR: /data/nas-mount/incoming
               PAPERLESS_DATA_DIR: /data/local/data

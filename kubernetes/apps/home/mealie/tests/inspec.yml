@@ -1,0 +1,11 @@
+---
+name: mealie-oidc-tests
+title: Mealie OIDC Authentication Tests
+maintainer: Dan Webb
+copyright: Dan Webb
+copyright_email: dan.webb@damacus.io
+license: Apache-2.0
+summary: Tests for Mealie OIDC authentication with Zitadel
+version: 1.0.0
+supports:
+  - platform: kubernetes

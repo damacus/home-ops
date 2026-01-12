@@ -1,0 +1,11 @@
+---
+name: paperless-oidc-tests
+title: Paperless OIDC Authentication Tests
+maintainer: Dan Webb
+copyright: Dan Webb
+copyright_email: dan.webb@damacus.io
+license: Apache-2.0
+summary: Tests for Paperless OIDC authentication with Zitadel
+version: 1.0.0
+supports:
+  - platform: kubernetes

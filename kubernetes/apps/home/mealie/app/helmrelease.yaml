@@ -55,15 +55,19 @@ spec:
               # OIDC Configuration
               OIDC_AUTH_ENABLED: "true"
               OIDC_SIGNUP_ENABLED: "true"
-              OIDC_CONFIGURATION_URL: "https://dex.damacus.io/.well-known/openid-configuration"
+              OIDC_CONFIGURATION_URL: "https://zitadel.ironstone.casa/.well-known/openid-configuration"
               OIDC_AUTO_REDIRECT: "false"
-              OIDC_PROVIDER_NAME: "Dex"
+              OIDC_PROVIDER_NAME: "Zitadel"
               OIDC_REMEMBER_ME: "false"
-              OIDC_SCOPES: "openid profile email groups"
+              OIDC_SCOPES: "openid profile email"
               OIDC_USER_CLAIM: "email"
-              OIDC_NAME_CLAIM: "email"
+              OIDC_NAME_CLAIM: "name"
               OIDC_GROUPS_CLAIM: "groups"
-              OIDC_CLIENT_ID: "mealie"
+              OIDC_CLIENT_ID:
+                valueFrom:
+                  secretKeyRef:
+                    name: mealie-zitadel-oidc
+                    key: client-id
 
             envFrom:
               - secretRef:
