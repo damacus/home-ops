@@ -33,12 +33,24 @@ spec:
       effective_io_concurrency: "200"
       maintenance_work_mem: 256MB
 
-  plugins:
-    - name: barman-cloud.cloudnative-pg.io
-      isWALArchiver: true
-      parameters:
-        barmanObjectName: minio-store
-        serverName: home-assistant
+  backup:
+    retentionPolicy: 30d
+    barmanObjectStore:
+      data:
+        compression: bzip2
+      wal:
+        compression: bzip2
+        maxParallel: 2
+      destinationPath: s3://cnpg-backups/home-assistant
+      endpointURL: http://minio.storage.svc.cluster.local:9000
+      serverName: home-assistant
+      s3Credentials:
+        accessKeyId:
+          name: minio-cnpg
+          key: aws-access-key-id
+        secretAccessKey:
+          name: minio-cnpg
+          key: aws-secret-access-key
 
   resources:
     requests:
