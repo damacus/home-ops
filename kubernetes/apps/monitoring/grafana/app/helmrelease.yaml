@@ -26,11 +26,9 @@ spec:
       GF_FEATURE_TOGGLES_ENABLE: publicDashboards
       GF_SECURITY_COOKIE_SAMESITE: grafana
       GF_SERVER_ROOT_URL: https://grafana.ironstone.casa
-    envFrom:
-      - secretRef:
-          name: grafana-oncall-secret
-      - secretRef:
-          name: zitadel-grafana-oidc
+    envFromSecrets:
+      - name: grafana-oncall-secret
+      - name: zitadel-grafana-oidc
 
     grafana.ini:
       analytics:
