@@ -78,7 +78,7 @@ spec:
       replicaCount: 1
       image:
         repository: penpotapp/backend
-        tag: 2.6.1
+        tag: 2.12.1
       resources:
         requests:
           cpu: 100m
