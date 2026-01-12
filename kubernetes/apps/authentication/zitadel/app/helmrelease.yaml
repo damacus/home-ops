@@ -98,6 +98,9 @@ spec:
       - name: ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE
         value: disable
 
+    login:
+      enabled: true
+
     ingress:
       enabled: false
 
