@@ -36,24 +36,12 @@ spec:
       max_connections: "100"
       shared_buffers: 256MB
 
-  backup:
-    retentionPolicy: 30d
-    barmanObjectStore:
-      data:
-        compression: bzip2
-      wal:
-        compression: bzip2
-        maxParallel: 2
-      destinationPath: s3://cnpg-backups/zitadel
-      endpointURL: http://minio.storage.svc.cluster.local:9000
-      serverName: zitadel-v2
-      s3Credentials:
-        accessKeyId:
-          name: minio-cnpg
-          key: aws-access-key-id
-        secretAccessKey:
-          name: minio-cnpg
-          key: aws-secret-access-key
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: minio-store
+        serverName: zitadel
 
   resources:
     requests:

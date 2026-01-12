@@ -29,6 +29,8 @@ spec:
     envFrom:
       - secretRef:
           name: grafana-oncall-secret
+      - secretRef:
+          name: zitadel-grafana-oidc
 
     grafana.ini:
       analytics:
@@ -37,6 +39,18 @@ spec:
         reporting_enabled: false
       auth:
         disable_login_form: false
+      auth.generic_oauth:
+        enabled: true
+        name: Zitadel
+        client_id: $GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+        client_secret: $GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+        scopes: openid profile email groups
+        auth_url: https://zitadel.ironstone.casa/oauth/v2/authorize
+        token_url: https://zitadel.ironstone.casa/oauth/v2/token
+        api_url: https://zitadel.ironstone.casa/oidc/v1/userinfo
+        use_pkce: true
+        allow_sign_up: true
+        role_attribute_path: contains(groups[*], 'admin') && 'Admin' || 'Viewer'
 
     deploymentStrategy:
       type: RollingUpdate
