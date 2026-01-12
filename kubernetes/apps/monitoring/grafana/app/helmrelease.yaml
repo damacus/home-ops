@@ -120,12 +120,12 @@ spec:
           - name: Prometheus
             type: prometheus
             uid: prometheus
-            url: http://victoria-metrics-victoria-metrics-single-server.monitoring.svc.cluster.local:8429
+            url: http://vmsingle-vm.monitoring.svc.cluster.local:8428
             isDefault: true
           - name: Alertmanager
             type: alertmanager
             uid: alertmanager
-            url: http://victoria-metrics-victoria-metrics-alertmanager.monitoring.svc.cluster.local:9093
+            url: http://vmalertmanager-vm.monitoring.svc.cluster.local:9093
             jsonData:
               implementation: prometheus
           - name: Loki
