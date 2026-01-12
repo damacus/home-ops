@@ -7,4 +7,6 @@ resources:
   - ./mealie-db/ks.yaml
   - ./mealie/ks.yaml
   - ./namespace.yaml
+  - ./penpot-db/ks.yaml
+  - ./penpot/ks.yaml
   # - ./trillium-next/ks.yaml

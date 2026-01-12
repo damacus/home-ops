@@ -124,3 +124,58 @@ Before merging PR #2703, create these items:
 6. Create OIDC applications for Mealie, Paperless-ngx, Grafana
 7. Set up family user accounts
 8. Enable passkey enrollment
+
+## Session: 2026-01-12 - Penpot Design Platform
+
+### Accomplished
+
+#### 1. Penpot Deployment Created
+- **PR**: https://github.com/damacus/home-ops/pull/2748
+- **Location**: `kubernetes/apps/home/penpot/`
+- **Components**:
+  - HelmRelease using official Penpot chart v0.32.0
+  - CNPG PostgreSQL cluster (`penpot-db`) with MinIO backups
+  - Valkey for session storage (Redis replacement)
+  - ExternalSecrets for database and application credentials
+  - HTTPRoute for `penpot.ironstone.casa`
+
+#### 2. Features Configured
+- **OIDC Authentication**: Integrated with Dex identity provider
+- **Persistent Storage**: 50Gi on NFS for assets
+- **Email Verification**: Disabled for easier onboarding
+- **Registration**: Enabled with password login
+
+#### 3. Dex OIDC Client Added
+- Added Penpot as static client in Dex HelmRelease
+- Created ExternalSecret for Penpot OIDC client credentials
+- Configured redirect URI for OIDC callback
+
+### Files Created
+- `kubernetes/flux/repositories/helm/penpot.yaml` (HelmRepository)
+- `kubernetes/apps/home/penpot-db/` (CNPG cluster, ExternalSecrets)
+- `kubernetes/apps/home/penpot/` (HelmRelease, HTTPRoute, ExternalSecrets)
+- Updated `kubernetes/apps/authentication/dex/app/helmrelease.yaml` (added Penpot client)
+- Updated `kubernetes/apps/authentication/dex/app/config/clients.yaml` (added Penpot ExternalSecret)
+
+### 1Password Secrets Required
+Before deployment, create these items in 1Password:
+
+1. **penpot-db**:
+   - `password` - Database user password
+   - `superuser_password` - PostgreSQL superuser password
+
+2. **penpot**:
+   - `api_secret_key` - Generate with: `python3 -c "import secrets; print(secrets.token_urlsafe(64))"`
+   - `oidc_client_secret` - OIDC client secret for Dex integration
+
+### Validation
+- All manifests pass kubeconform validation
+- PR created and awaiting CI checks
+
+### Next Steps
+1. Create required 1Password secrets
+2. Merge PR #2748 after CI passes
+3. Wait for Flux to deploy Penpot
+4. Access Penpot at `https://penpot.ironstone.casa`
+5. Test OIDC login via Dex
+6. Create initial design project to verify functionality

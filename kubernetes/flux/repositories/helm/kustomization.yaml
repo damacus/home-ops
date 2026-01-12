@@ -31,3 +31,4 @@ resources:
   - ./victoria-metrics.yaml
   - backube.yaml
   - zitadel.yaml
+  - penpot.yaml
