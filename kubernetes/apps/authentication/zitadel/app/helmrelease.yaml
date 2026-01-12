@@ -38,13 +38,18 @@ spec:
 
     zitadel:
       masterkeySecretName: zitadel-masterkey
-      configSecretName: zitadel-credentials
-      configSecretKey: config-yaml
-
       configmapConfig:
-        ExternalSecure: true
+        FirstInstance:
+          Org:
+            Machine:
+              Machine:
+                Username: zitadel-admin-sa
+                Name: Admin
+              MachineKey:
+                Type: 1
         ExternalDomain: &host zitadel.ironstone.casa
         ExternalPort: 443
+        ExternalSecure: true
         TLS:
           Enabled: false
         Database:
@@ -53,47 +58,45 @@ spec:
             MaxIdleConns: 10
             MaxConnLifetime: 30m
             MaxConnIdleTime: 5m
-        DefaultInstance:
-          SMTPConfiguration:
-            FromName: Zitadel
-          LoginPolicy:
-            AllowRegister: false
-            AllowUsernamePassword: true
-            AllowExternalIDP: true
-            ForceMFA: false
-            PasswordlessType: 1
-            HidePasswordReset: false
-            IgnoreUnknownUsernames: false
-            AllowDomainDiscovery: true
-            DisableLoginWithEmail: false
-            DisableLoginWithPhone: true
-          PasswordComplexityPolicy:
-            MinLength: 12
-            HasUppercase: true
-            HasLowercase: true
-            HasNumber: true
-            HasSymbol: false
-          LabelPolicy:
-            HideLoginNameSuffix: true
-            ErrorMsgPopup: true
-            DisableWatermark: true
-            PrimaryColor: "#3B82F6"
-            BackgroundColor: "#F8FAFC"
-            WarnColor: "#EF4444"
-            FontColor: "#1E293B"
-            PrimaryColorDark: "#60A5FA"
-            BackgroundColorDark: "#0F172A"
-            WarnColorDark: "#F87171"
-            FontColorDark: "#F1F5F9"
-          SecondFactors:
-            - 1
-            - 2
-          MultiFactors:
-            - 1
-          PasswordAgePolicyPolicy:
-            ExpireWarnDays: 14
-            MaxAgeDays: 0
         WebAuthNName: Ironstone
+
+    env:
+      - name: ZITADEL_DATABASE_POSTGRES_HOST
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-credentials
+            key: POSTGRES_HOST
+      - name: ZITADEL_DATABASE_POSTGRES_PORT
+        value: "5432"
+      - name: ZITADEL_DATABASE_POSTGRES_DATABASE
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-credentials
+            key: POSTGRES_DB
+      - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-credentials
+            key: POSTGRES_USER
+      - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-credentials
+            key: POSTGRES_PASS
+      - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
+        value: disable
+      - name: ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-credentials
+            key: POSTGRES_ADMIN_USER
+      - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: zitadel-credentials
+            key: POSTGRES_ADMIN_PASS
+      - name: ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE
+        value: disable
 
     ingress:
       enabled: false
