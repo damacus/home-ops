@@ -39,10 +39,10 @@ spec:
         resources:
           requests:
             cpu: 500m
-            memory: 8Gi
+            memory: 2Gi
           limits:
             cpu: 2000m
-            memory: 16Gi
+            memory: 4Gi
         storage:
           accessModes:
             - ReadWriteOnce
