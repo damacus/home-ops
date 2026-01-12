@@ -29,6 +29,15 @@ spec:
     envFromSecrets:
       - name: grafana-oncall-secret
       - name: zitadel-grafana-oidc
+    # envValueFrom:
+    #   GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
+    #     secretKeyRef:
+    #       name: zitadel-grafana-oidc
+    #       key: GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+    #   GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+    #     secretKeyRef:
+    #       name: zitadel-grafana-oidc
+    #       key: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
 
     grafana.ini:
       analytics:
