@@ -1,0 +1,27 @@
+---
+name: zitadel
+title: Zitadel Application Health
+maintainer: Dan Webb
+copyright: Dan Webb
+copyright_email: dan.webb@damacus.io
+license: MIT
+summary: Validates Zitadel identity provider is running and accessible
+version: 1.0.0
+
+inspec_version: ">= 5.0"
+
+inputs:
+  - name: zitadel_url
+    type: String
+    value: https://zitadel.ironstone.casa
+    description: Base URL for Zitadel instance
+
+  - name: zitadel_internal_url
+    type: String
+    value: http://zitadel.authentication.svc.cluster.local:8080
+    description: Internal cluster URL for Zitadel
+
+  - name: expected_issuer
+    type: String
+    value: https://zitadel.ironstone.casa
+    description: Expected OIDC issuer URL

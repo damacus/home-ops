@@ -69,6 +69,23 @@ tasks:
         | jq -r '.data.result | sort_by(.value[1] | tonumber) | reverse | .[:{{.TOP}}] | .[] | "\(.metric.app)\t\(.value[1])"' \
         | awk 'BEGIN {printf "%-40s %s\n", "APP", "LOG_COUNT"; printf "%-40s %s\n", "---", "---------"} {printf "%-40s %s\n", $1, $2}'
 
+  test-app:
+    desc: Run InSpec tests for a Kubernetes application
+    summary: |
+      Runs InSpec tests located in the application's tests/ directory.
+
+      Examples:
+        task kubernetes:test-app app=authentication/zitadel
+        task kubernetes:test-app app=home-automation/home-assistant
+    vars:
+      APP_PATH: "{{.KUBERNETES_DIR}}/apps/{{.app}}/tests"
+    cmd: inspec exec {{.APP_PATH}} --reporter cli
+    preconditions:
+      - msg: "Missing app parameter. Usage: task kubernetes:test-app app=<namespace>/<app>"
+        sh: test -n "{{.app}}"
+      - msg: "No tests found at {{.APP_PATH}}"
+        sh: test -d "{{.APP_PATH}}"
+
   log-noise-by-namespace:
     desc: Identify top log-producing namespaces by volume (requires Loki)
     summary: |
