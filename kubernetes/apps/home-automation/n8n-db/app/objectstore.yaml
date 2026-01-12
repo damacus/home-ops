@@ -8,7 +8,7 @@ metadata:
 spec:
   retentionPolicy: 30d
   configuration:
-    destinationPath: s3://cloudnative-pg/n8n/
+    destinationPath: s3://cloudnative-pg/n8n
     endpointURL: http://s3.ironstone.casa
     s3Credentials:
       accessKeyId:
