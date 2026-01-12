@@ -42,8 +42,6 @@ spec:
       auth.generic_oauth:
         enabled: true
         name: Zitadel
-        client_id: $GF_AUTH_GENERIC_OAUTH_CLIENT_ID
-        client_secret: $GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
         scopes: openid profile email groups
         auth_url: https://zitadel.ironstone.casa/oauth/v2/authorize
         token_url: https://zitadel.ironstone.casa/oauth/v2/token
