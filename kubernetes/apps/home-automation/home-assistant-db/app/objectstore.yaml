@@ -8,7 +8,7 @@ metadata:
 spec:
   retentionPolicy: 30d
   configuration:
-    destinationPath: s3://cnpg-backups/home-assistant/
+    destinationPath: s3://cnpg-backups/home-assistant
     endpointURL: http://minio.storage.svc.cluster.local:9000
     s3Credentials:
       accessKeyId:
