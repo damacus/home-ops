@@ -33,6 +33,13 @@ spec:
       enabled: true
       spec:
         retentionPeriod: 14d
+        resources:
+          requests:
+            cpu: 200m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
         storage:
           accessModes:
             - ReadWriteOnce
@@ -72,6 +79,13 @@ spec:
     vmalert:
       enabled: true
       spec:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
         # Select all PrometheusRules to capture existing KPS rules
         ruleSelector: {}
         selectAllRules: true
@@ -79,6 +93,13 @@ spec:
     alertmanager:
       enabled: true
       spec:
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
         # Use the existing Alertmanager configuration secret from KPS/ExternalSecret
         configSecret: alertmanager-secret
 
@@ -93,6 +114,13 @@ spec:
     # Enable KubeStateMetrics to be self-contained (duplicates KPS KSM for now)
     kube-state-metrics:
       enabled: true
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
 
     # Scrape Core Components
     kubelet:
