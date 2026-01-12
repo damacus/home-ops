@@ -143,8 +143,7 @@ spec:
                 serverName: kubernetes
               metricRelabelConfigs:
                 - action: drop
-                  sourceLabels: [__name__]
-                  regex: "apiserver_request_duration_seconds_bucket|apiserver_request_sli_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket|apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket|apiserver_watch_cache_read_wait_seconds_bucket|etcd_request_duration_seconds_bucket"
+                  if: '{__name__=~"apiserver_request_duration_seconds_bucket|apiserver_request_sli_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket|apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket|apiserver_watch_cache_read_wait_seconds_bucket|etcd_request_duration_seconds_bucket"}'
           jobLabel: component
           namespaceSelector:
             matchNames:
