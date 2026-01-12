@@ -33,13 +33,16 @@ spec:
       enabled: true
       spec:
         retentionPeriod: 14d
+        # Increase search query timeout to allow cardinality queries
+        extraArgs:
+          search.maxQueryDuration: 120s
         resources:
           requests:
-            cpu: 200m
-            memory: 1Gi
+            cpu: 500m
+            memory: 2Gi
           limits:
             cpu: 2000m
-            memory: 2Gi
+            memory: 4Gi
         storage:
           accessModes:
             - ReadWriteOnce
@@ -70,11 +73,11 @@ spec:
             mountPath: /var/lib/vmagent-data
         resources:
           requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            cpu: 500m
+            cpu: 200m
             memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
 
     vmalert:
       enabled: true
@@ -127,6 +130,14 @@ spec:
       enabled: true
     kubeApiServer:
       enabled: true
+      spec:
+        # Drop high-cardinality histogram buckets to reduce series count
+        # These 5 metrics alone create ~500K series (51% of total cardinality)
+        metricRelabelConfigs:
+          - action: drop
+            if: '{__name__=~"apiserver_request_duration_seconds_bucket|apiserver_request_sli_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket|apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket|apiserver_watch_cache_read_wait_seconds_bucket"}'
+          - action: drop
+            if: '{__name__=~"etcd_request_duration_seconds_bucket"}'
     # k3s runs these as static pods without service endpoints - disable to avoid ScrapePoolHasNoTargets alerts
     kubeControllerManager:
       enabled: false
