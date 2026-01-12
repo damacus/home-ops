@@ -60,6 +60,13 @@ spec:
         podMonitorSelector: {}
         selectAllServiceMonitors: true
         selectAllPodMonitors: true
+        # Global metric relabeling to drop high-cardinality apiserver histogram buckets
+        inlineScrapeConfig: |
+          global:
+            scrape_interval: 30s
+        inlineRelabelConfig:
+          - action: drop
+            if: '{__name__=~"apiserver_request_duration_seconds_bucket|apiserver_request_sli_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket|apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket|apiserver_watch_cache_read_wait_seconds_bucket|etcd_request_duration_seconds_bucket"}'
         # Disk buffering configuration
         extraArgs:
           remoteWrite.tmpDataPath: /var/lib/vmagent-data
