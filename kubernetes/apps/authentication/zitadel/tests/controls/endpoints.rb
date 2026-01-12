@@ -141,6 +141,29 @@ control 'ZITADEL-OIDC-003' do
   end
 end
 
+control 'ZITADEL-LOGIN-002' do
+  impact 1.0
+  title 'Login page renders without errors'
+  desc 'The login page MUST render without API errors'
+
+  describe http("#{zitadel_url}/ui/login/login", ssl_verify: true, max_redirects: 3) do
+    its('status') { should be_in [200, 302] }
+    its('body') { should_not match(/"code":\s*5/) }
+    its('body') { should_not match(/"message":\s*"Not Found"/) }
+  end
+end
+
+control 'ZITADEL-LOGIN-003' do
+  impact 1.0
+  title 'V2 login UI is available'
+  desc 'The v2 login UI endpoint MUST NOT return 404 Not Found'
+
+  describe http("#{zitadel_url}/ui/v2/login/login", ssl_verify: true, max_redirects: 0) do
+    its('status') { should_not eq 404 }
+    its('body') { should_not match(/\{"code":5,\s*"message":"Not Found"\}/) }
+  end
+end
+
 # -----------------------------------------------------------------------------
 # API Endpoints
 # -----------------------------------------------------------------------------
