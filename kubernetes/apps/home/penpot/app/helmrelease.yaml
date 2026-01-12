@@ -1,0 +1,119 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: penpot
+  namespace: home
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: penpot
+      version: 0.32.0
+      sourceRef:
+        kind: HelmRepository
+        name: penpot
+        namespace: flux-system
+  maxHistory: 3
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    global:
+      postgresqlEnabled: false
+      redisEnabled: false
+      valkeyEnabled: true
+
+    config:
+      publicUri: "https://penpot.ironstone.casa"
+      flags: "enable-registration enable-login-with-password disable-email-verification enable-smtp enable-login-with-oidc"
+      existingSecret: "penpot-secret"
+
+      postgresql:
+        host: "penpot-rw.home.svc.cluster.local"
+        port: 5432
+        database: "penpot"
+        existingSecret: "penpot-db-credentials"
+        secretKeys:
+          usernameKey: "username"
+          passwordKey: "password"
+
+      objectsStorage:
+        storageBackend: "fs"
+        filesystem:
+          directory: "/opt/data/assets"
+
+      providers:
+        oidc:
+          enabled: true
+          baseURI: "https://dex.damacus.io"
+          clientID: "penpot"
+          scopes: "openid profile email"
+
+    frontend:
+      replicaCount: 1
+      image:
+        repository: penpotapp/frontend
+        tag: 2.6.1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+
+    backend:
+      replicaCount: 1
+      image:
+        repository: penpotapp/backend
+        tag: 2.6.1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
+
+    exporter:
+      replicaCount: 1
+      image:
+        repository: penpotapp/exporter
+        tag: 2.6.1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+
+    valkey:
+      architecture: standalone
+      auth:
+        enabled: false
+      master:
+        persistence:
+          enabled: false
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+
+    persistence:
+      assets:
+        enabled: true
+        storageClass: "nfs-csi-ssd"
+        size: 50Gi
+        accessModes:
+          - ReadWriteOnce
+
+    ingress:
+      enabled: false
