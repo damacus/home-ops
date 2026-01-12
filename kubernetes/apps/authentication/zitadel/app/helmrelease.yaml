@@ -38,6 +38,8 @@ spec:
 
     zitadel:
       masterkeySecretName: zitadel-masterkey
+      configSecretName: zitadel-admin-user
+      configSecretKey: config-yaml
       configmapConfig:
         FirstInstance:
           Org:

@@ -145,15 +145,14 @@ end
 # API Endpoints
 # -----------------------------------------------------------------------------
 control 'ZITADEL-API-001' do
-  impact 0.7
-  title 'gRPC-Web endpoint responds'
-  desc 'The gRPC-Web API endpoint SHOULD respond to requests'
+  impact 1.0
+  title 'Admin API healthz endpoint returns healthy'
+  desc 'The Admin API healthz endpoint MUST return 200 and NOT return a Not Found error'
 
-  describe http("#{zitadel_url}/zitadel.admin.v1.AdminService/Healthz",
-                method: 'POST',
-                headers: { 'Content-Type' => 'application/grpc-web+proto' },
-                ssl_verify: true) do
-    its('status') { should be_in [200, 400, 415] }
+  describe http("#{zitadel_url}/admin/v1/healthz", ssl_verify: true) do
+    its('status') { should eq 200 }
+    its('body') { should_not match(/"code":\s*5/) }
+    its('body') { should_not match(/Not Found/) }
   end
 end
 
@@ -164,6 +163,46 @@ control 'ZITADEL-API-002' do
 
   describe http("#{zitadel_url}/management/v1/healthz", ssl_verify: true) do
     its('status') { should be_in [200, 401, 403] }
+  end
+end
+
+# -----------------------------------------------------------------------------
+# Login Flow Tests
+# -----------------------------------------------------------------------------
+control 'ZITADEL-LOGIN-001' do
+  impact 1.0
+  title 'Login flow initiates successfully'
+  desc 'Starting an OAuth flow MUST NOT return a Not Found (code 5) error - 400 is acceptable for missing client'
+
+  describe http("#{zitadel_url}/oauth/v2/authorize?client_id=console&response_type=code&redirect_uri=#{zitadel_url}/ui/console/auth/callback&scope=openid", ssl_verify: true) do
+    its('status') { should be_in [200, 302, 303, 400] }
+    its('body') { should_not match(/"code":\s*5/) }
+  end
+end
+
+control 'ZITADEL-LOGIN-002' do
+  impact 1.0
+  title 'Login page renders without errors'
+  desc 'The login page MUST render without API errors'
+
+  describe http("#{zitadel_url}/ui/login/login", ssl_verify: true, max_redirects: 3) do
+    its('status') { should be_in [200, 302] }
+    its('body') { should_not match(/"code":\s*5/) }
+    its('body') { should_not match(/"message":\s*"Not Found"/) }
+  end
+end
+
+# -----------------------------------------------------------------------------
+# Instance Configuration
+# -----------------------------------------------------------------------------
+control 'ZITADEL-INSTANCE-001' do
+  impact 1.0
+  title 'Default instance exists'
+  desc 'Zitadel MUST have a default instance configured'
+
+  describe http("#{zitadel_url}/admin/v1/instances/me", ssl_verify: true) do
+    its('status') { should be_in [200, 401, 403] }
+    its('body') { should_not match(/"code":\s*5/) }
   end
 end
 
