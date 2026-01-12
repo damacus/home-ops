@@ -22,3 +22,4 @@ spec:
   dependsOn:
     - name: penpot-db
     - name: external-secrets-stores
+    - name: redis

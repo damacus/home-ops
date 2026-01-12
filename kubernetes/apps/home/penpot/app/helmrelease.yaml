@@ -29,7 +29,7 @@ spec:
     global:
       postgresqlEnabled: false
       redisEnabled: false
-      valkeyEnabled: true
+      valkeyEnabled: false
 
     config:
       publicUri: "https://penpot.ironstone.casa"
@@ -50,10 +50,15 @@ spec:
         filesystem:
           directory: "/opt/data/assets"
 
+      redis:
+        host: "redis-master.database.svc.cluster.local"
+        port: 6379
+        database: "0"
+
       providers:
         oidc:
           enabled: true
-          baseURI: "https://dex.damacus.io"
+          baseURI: "https://zitadel.ironstone.casa"
           clientID: "penpot"
           scopes: "openid profile email"
 
@@ -92,20 +97,6 @@ spec:
           memory: 128Mi
         limits:
           memory: 512Mi
-
-    valkey:
-      architecture: standalone
-      auth:
-        enabled: false
-      master:
-        persistence:
-          enabled: false
-        resources:
-          requests:
-            cpu: 50m
-            memory: 64Mi
-          limits:
-            memory: 128Mi
 
     persistence:
       assets:
