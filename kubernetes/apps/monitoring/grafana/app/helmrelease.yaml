@@ -29,8 +29,8 @@ spec:
     envFrom:
       - secretRef:
           name: grafana-oncall-secret
-      - secretRef:
-          name: zitadel-grafana-oidc
+    envFromSecrets:
+      - name: zitadel-grafana-oidc
 
     grafana.ini:
       analytics:
