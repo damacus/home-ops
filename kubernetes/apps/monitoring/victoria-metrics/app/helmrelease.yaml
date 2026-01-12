@@ -130,14 +130,30 @@ spec:
       enabled: true
     kubeApiServer:
       enabled: true
-      spec:
-        # Drop high-cardinality histogram buckets to reduce series count
-        # These 5 metrics alone create ~500K series (51% of total cardinality)
-        metricRelabelConfigs:
-          - action: drop
-            if: '{__name__=~"apiserver_request_duration_seconds_bucket|apiserver_request_sli_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket|apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket|apiserver_watch_cache_read_wait_seconds_bucket"}'
-          - action: drop
-            if: '{__name__=~"etcd_request_duration_seconds_bucket"}'
+      # Drop high-cardinality histogram buckets to reduce series count
+      # These metrics create ~500K series (51% of total cardinality)
+      vmScrape:
+        spec:
+          endpoints:
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+              port: https
+              scheme: https
+              tlsConfig:
+                caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                serverName: kubernetes
+              metricRelabelConfigs:
+                - action: drop
+                  if: '{__name__=~"apiserver_request_duration_seconds_bucket|apiserver_request_sli_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket|apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket|apiserver_watch_cache_read_wait_seconds_bucket"}'
+                - action: drop
+                  if: '{__name__=~"etcd_request_duration_seconds_bucket"}'
+          jobLabel: component
+          namespaceSelector:
+            matchNames:
+              - default
+          selector:
+            matchLabels:
+              component: apiserver
+              provider: kubernetes
     # k3s runs these as static pods without service endpoints - disable to avoid ScrapePoolHasNoTargets alerts
     kubeControllerManager:
       enabled: false
