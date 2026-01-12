@@ -29,6 +29,9 @@ spec:
     envFrom:
       - secretRef:
           name: grafana-oncall-secret
+      - secretRef:
+          name: zitadel-grafana-oidc
+          optional: false
 
     grafana.ini:
       analytics:
@@ -40,8 +43,8 @@ spec:
       auth.generic_oauth:
         enabled: true
         name: Zitadel
-        client_id: $__file{/etc/secrets/oidc/client-id}
-        client_secret: $__file{/etc/secrets/oidc/client-secret}
+        client_id: $GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+        client_secret: $GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
         scopes: openid profile email groups
         auth_url: https://zitadel.ironstone.casa/oauth/v2/authorize
         token_url: https://zitadel.ironstone.casa/oauth/v2/token
@@ -247,13 +250,6 @@ spec:
       accessModes:
         - ReadWriteMany
       size: 50Gi
-
-    extraSecretMounts:
-      - name: oidc-secret
-        secretName: zitadel-grafana-oidc
-        defaultMode: 0440
-        mountPath: /etc/secrets/oidc
-        readOnly: true
 
     topologySpreadConstraints:
       - maxSkew: 1
