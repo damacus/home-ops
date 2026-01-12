@@ -31,7 +31,6 @@ spec:
           name: grafana-oncall-secret
       - secretRef:
           name: zitadel-grafana-oidc
-          optional: false
 
     grafana.ini:
       analytics:
