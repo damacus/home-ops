@@ -36,3 +36,22 @@ spec:
   dataFrom:
     - extract:
         key: dex-grafana
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/external-secrets.io/externalsecret_v1beta1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: penpot-client
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: onepassword-connect
+  target:
+    name: penpot-client
+    template:
+      data:
+        client-id: "penpot"
+        client-secret: "{{ .oidc_client_secret }}"
+  dataFrom:
+    - extract:
+        key: penpot

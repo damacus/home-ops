@@ -101,6 +101,12 @@ spec:
             - "https://mealie.ironstone.casa/login?direct=1"
             - "https://mealie.ironstone.casa/api/auth/oauth/callback"
 
+        - name: penpot
+          id: penpot
+          secret: penpot-client
+          redirectURIs:
+            - "https://penpot.ironstone.casa/api/rpc/command/auth-oidc-callback"
+
   valuesFrom:
     - kind: Secret
       name: dex-connectors
