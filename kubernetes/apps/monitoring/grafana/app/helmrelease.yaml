@@ -85,9 +85,9 @@ spec:
             name: Alertmanager
             receivers:
               - uid: alertmanager
-                type: alertmanager
+                type: prometheus-alertmanager
                 settings:
-                  url: http://victoria-metrics-victoria-metrics-alertmanager.monitoring.svc.cluster.local:9093
+                  url: http://vmalertmanager-vm.monitoring.svc.cluster.local:9093
 
     dashboardProviders:
       dashboardproviders.yaml:
