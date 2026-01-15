@@ -27,7 +27,6 @@ spec:
       GF_SECURITY_COOKIE_SAMESITE: grafana
       GF_SERVER_ROOT_URL: https://grafana.ironstone.casa
     envFromSecrets:
-      - name: grafana-oncall-secret
       - name: zitadel-grafana-oidc
     # envValueFrom:
     #   GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
@@ -222,28 +221,7 @@ spec:
       datasources:
         enabled: false
 
-    plugins:
-      - grafana-clock-panel
-      - grafana-piechart-panel
-      - grafana-worldmap-panel
-      - grafana-oncall-app
-      - natel-discrete-panel
-      - pr0ps-trackmap-panel
-      - vonage-status-panel
-      - grafana-cloudflare-datasource
-      - redis-datasource
-
-    pluginManagement:
-      plugins.yaml:
-        apiVersion: 1
-        apps:
-          - type: grafana-oncall-app
-            org_id: 1
-            enabled: true
-            jsonData:
-              stackId: 1k
-              orgId: 1
-              onCallApiUrl: $__env{GF_PLUGIN_GRAFANA_ONCALL_APP_ONCALL_API_URL}
+    plugins: []
 
     serviceMonitor:
       enabled: true
