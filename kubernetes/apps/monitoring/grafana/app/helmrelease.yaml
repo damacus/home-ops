@@ -27,7 +27,6 @@ spec:
       GF_SECURITY_COOKIE_SAMESITE: grafana
       GF_SERVER_ROOT_URL: https://grafana.ironstone.casa
     envFromSecrets:
-      - name: grafana-oncall-secret
       - name: zitadel-grafana-oidc
     # envValueFrom:
     #   GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
@@ -86,9 +85,9 @@ spec:
             name: Alertmanager
             receivers:
               - uid: alertmanager
-                type: alertmanager
+                type: prometheus-alertmanager
                 settings:
-                  url: http://victoria-metrics-victoria-metrics-alertmanager.monitoring.svc.cluster.local:9093
+                  url: http://vmalertmanager-vm.monitoring.svc.cluster.local:9093
 
     dashboardProviders:
       dashboardproviders.yaml:
@@ -222,17 +221,7 @@ spec:
       datasources:
         enabled: false
 
-    plugins:
-      - grafana-clock-panel
-      - grafana-piechart-panel
-      - grafana-worldmap-panel
-      - grafana-oncall-app
-      - natel-discrete-panel
-      - pr0ps-trackmap-panel
-      - vonage-status-panel
-      - grafana-cloudflare-datasource
-      - victoria-logs-datasource
-      - redis-datasource
+    plugins: []
 
     pluginManagement:
       plugins.yaml:
