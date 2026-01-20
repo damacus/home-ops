@@ -1,0 +1,36 @@
+---
+# Deploy NVMe rescan initramfs hook for Crucial P310 drives
+# These drives don't auto-enumerate their namespace at boot
+# See: provisioning/docs/initramfs.md
+
+- name: NVMe Rescan Hook | Create initramfs scripts directory
+  ansible.builtin.file:
+    path: /etc/initramfs-tools/scripts/local-premount
+    state: directory
+    mode: "0755"
+
+- name: NVMe Rescan Hook | Deploy hook script
+  ansible.builtin.copy:
+    src: templates/nvme-rescan.sh
+    dest: /etc/initramfs-tools/scripts/local-premount/nvme-rescan
+    mode: "0755"
+  register: nvme_hook_deployed
+
+- name: NVMe Rescan Hook | Deploy kernel postinst hook
+  ansible.builtin.copy:
+    dest: /etc/kernel/postinst.d/zz-nvme-rescan
+    mode: "0755"
+    content: |
+      #!/bin/sh
+      # Ensure nvme-rescan hook is included after kernel updates
+      # This script runs after update-initramfs during kernel installs
+      HOOK=/etc/initramfs-tools/scripts/local-premount/nvme-rescan
+      if [ ! -x "$HOOK" ]; then
+          echo "WARNING: NVMe rescan hook missing, initramfs may not boot from NVMe"
+      fi
+  register: kernel_hook_deployed
+
+- name: NVMe Rescan Hook | Rebuild initramfs
+  ansible.builtin.command: update-initramfs -u -k all
+  when: nvme_hook_deployed.changed or kernel_hook_deployed.changed
+  changed_when: true
