@@ -7,8 +7,29 @@ PREREQ=""
 prereqs() { echo "$PREREQ"; }
 case "$1" in prereqs) prereqs; exit 0;; esac
 
-if [ -e /sys/class/nvme/nvme0 ] && [ ! -b /dev/nvme0n1 ]; then
-    echo "NVMe rescan..."
+# Only proceed if NVMe controller exists
+[ -e /sys/class/nvme/nvme0 ] || exit 0
+
+# If block device already exists, nothing to do
+[ -b /dev/nvme0n1 ] && exit 0
+
+echo "NVMe: controller found but no namespace, triggering rescan..."
+
+# Try multiple rescan attempts with increasing delays
+for attempt in 1 2 3; do
+    echo "NVMe: rescan attempt $attempt..."
     echo 1 > /sys/class/nvme/nvme0/rescan_controller
-    for i in 1 2 3 4 5; do [ -b /dev/nvme0n1 ] && break; sleep 1; done
-fi
+
+    # Wait up to 10 seconds for block device to appear
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        if [ -b /dev/nvme0n1 ]; then
+            echo "NVMe: namespace enumerated successfully after ${i}s"
+            # Give udev a moment to create partition devices
+            sleep 1
+            exit 0
+        fi
+        sleep 1
+    done
+done
+
+echo "NVMe: WARNING - namespace still not available after 3 rescan attempts"
