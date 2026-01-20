@@ -7,7 +7,7 @@ metadata:
 spec:
   repo: https://helm.cilium.io/
   chart: cilium
-  # renovate: datasource=helm depName=cilium repository=https://helm.cilium.io
+  # renovate: depName=cilium datasource=helm repository=https://helm.cilium.io
   version: 1.17.1
   targetNamespace: kube-system
   bootstrap: true
