@@ -15,7 +15,7 @@ k3s_registries:
     quay.io:
     registry.k8s.io:
 # renovate: depName=k3s-io/k3s datasource=github-releases versioning=semver-coerced
-k3s_release_version: v1.33.2+k3s1
+k3s_release_version: v1.35.0+k3s1
 
 # /var/lib/rancher/k3s/server/manifests
 k3s_server_manifests_templates:

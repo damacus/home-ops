@@ -23,4 +23,4 @@ spec:
   postBuild:
     substitute:
       # renovate: depName=k3s-io/k3s datasource=github-releases versioning=semver-coerced
-      KUBE_VERSION: v1.33.2+k3s1
+      KUBE_VERSION: v1.35.0+k3s1
