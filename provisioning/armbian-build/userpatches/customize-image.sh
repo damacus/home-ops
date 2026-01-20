@@ -124,7 +124,11 @@ if [ ! -f "$IMAGES_DIR/k3s-airgap-images-arm64.tar" ]; then
     curl -L -o "$IMAGES_DIR/k3s-airgap-images-arm64.tar" "$AIRGAP_IMAGE_URL"
 fi
 
-# Rebuild initramfs to include NVMe rescan hook
+# Ensure NVMe rescan hook is executable and rebuild initramfs
+# This hook is required for Crucial P310 drives that don't auto-enumerate
+echo "Setting up NVMe rescan hook..."
+chmod +x /etc/initramfs-tools/scripts/local-premount/nvme-rescan 2>/dev/null || true
+
 echo "Rebuilding initramfs..."
 update-initramfs -u -k all
 

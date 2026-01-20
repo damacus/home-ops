@@ -65,6 +65,11 @@
               search .
               nameserver 192.168.1.254
 
+    - name: NVMe Boot Support
+      block:
+        - name: NVMe Boot Support | Deploy rescan hook
+          ansible.builtin.include_tasks: tasks/nvme-rescan-hook.yaml
+
     - name: System Configuration
       # notify: Reboot
       block:
@@ -85,15 +90,7 @@
             dest: "/etc/modules-load.d/{{ item }}.conf"
             mode: "0644"
             content: "{{ item }}"
-          loop:
-            [
-              "br_netfilter",
-              "ip_vs",
-              "ip_vs_rr",
-              "nbd",
-              "overlay",
-              "rbd",
-            ]
+          loop: ["br_netfilter", "ip_vs", "ip_vs_rr", "nbd", "overlay", "rbd"]
           register: modules_status
         - name: System Configuration | Reload Kernel modules # noqa: no-changed-when no-handler
           when: modules_status.changed
