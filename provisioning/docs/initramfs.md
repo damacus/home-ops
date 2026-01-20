@@ -265,3 +265,41 @@ After installing the `nvme-rescan` script and rebuilding initramfs:
 
 - `/etc/initramfs-tools/scripts/local-premount/nvme-rescan` - Initramfs hook script
 - `/Users/damacus/repos/damacus/home-ops/provisioning/scripts/nvme-rescan` - Source copy
+
+## Prevention: Surviving Kernel Upgrades
+
+The initramfs hook can be lost when the kernel is upgraded and initramfs is regenerated.
+Two mechanisms ensure the hook persists:
+
+### 1. Ansible Deployment (for existing nodes)
+
+Run `cluster-prepare.yaml` to deploy the hook to all nodes:
+
+```bash
+task ansible:run -- playbooks/cluster-prepare.yaml
+```
+
+This deploys:
+- `/etc/initramfs-tools/scripts/local-premount/nvme-rescan` - The hook script
+- `/etc/kernel/postinst.d/zz-nvme-rescan` - Kernel postinst hook that warns if hook is missing
+
+### 2. Image Build (for new nodes)
+
+The hook is baked into the Armbian image via:
+- `provisioning/armbian-build/userpatches/overlay/etc/initramfs-tools/scripts/local-premount/nvme-rescan`
+- `provisioning/armbian-build/userpatches/customize-image.sh` ensures it's executable and rebuilds initramfs
+
+### Recovery Steps (if node drops to initramfs)
+
+1. At the `(initramfs)` prompt:
+
+   ```bash
+   echo 1 > /sys/class/nvme/nvme0/rescan_controller
+   exit
+   ```
+
+2. Once booted, reinstall the hook:
+
+   ```bash
+   task ansible:run -- playbooks/cluster-prepare.yaml --limit <node-name>
+   ```
