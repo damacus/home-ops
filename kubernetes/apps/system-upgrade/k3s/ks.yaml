@@ -22,5 +22,5 @@ spec:
   timeout: 5m
   postBuild:
     substitute:
-      # renovate: datasource=github-releases depName=k3s-io/k3s versioning=semver-coerced
+      # renovate: depName=k3s-io/k3s datasource=github-releases versioning=semver-coerced
       KUBE_VERSION: v1.33.2+k3s1
