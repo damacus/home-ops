@@ -4,7 +4,7 @@ kind: Plan
 metadata:
   name: controllers
 spec:
-  # renovate: datasource=github-releases depName=k3s-io/k3s versioning=semver-coerced
+  # renovate: depName=k3s-io/k3s datasource=github-releases versioning=semver-coerced
   version: v1.33.2+k3s1
   upgrade:
     image: rancher/k3s-upgrade
@@ -49,5 +49,5 @@ spec:
     args: ["prepare", "controllers"]
   upgrade:
     image: rancher/k3s-upgrade
-  # renovate: datasource=github-releases depName=k3s-io/k3s versioning=semver-coerced
+  # renovate: depName=k3s-io/k3s datasource=github-releases versioning=semver-coerced
   version: v1.33.2+k3s1
