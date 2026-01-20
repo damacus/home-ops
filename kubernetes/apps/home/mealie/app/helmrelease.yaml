@@ -68,11 +68,6 @@ spec:
                   secretKeyRef:
                     name: mealie-zitadel-oidc
                     key: client-id
-              OIDC_CLIENT_SECRET:
-                valueFrom:
-                  secretKeyRef:
-                    name: mealie-zitadel-oidc
-                    key: client-secret
 
             envFrom:
               - secretRef:
