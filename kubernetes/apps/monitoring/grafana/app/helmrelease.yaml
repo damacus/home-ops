@@ -223,6 +223,18 @@ spec:
 
     plugins: []
 
+    pluginManagement:
+      plugins.yaml:
+        apiVersion: 1
+        apps:
+          - type: grafana-oncall-app
+            org_id: 1
+            enabled: true
+            jsonData:
+              stackId: 1
+              orgId: 1
+              onCallApiUrl: $__env{GF_PLUGIN_GRAFANA_ONCALL_APP_ONCALL_API_URL}
+
     serviceMonitor:
       enabled: true
       metricRelabelings:
