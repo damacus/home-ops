@@ -20,7 +20,7 @@ This directory contains Zitadel Actions - JavaScript functions that execute duri
 
 ### Step 1: Create the Action in Zitadel Console
 
-1. Navigate to <https://zitadel.ironstone.casa>
+1. Navigate to <https://zitadel.damacus.io>
 2. Go to **Actions** in the left sidebar
 3. Click **"New Action"**
 4. Fill in the form:

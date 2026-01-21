@@ -7,13 +7,13 @@ control 'mealie-oidc-config' do
   title 'Verify Mealie OIDC configuration'
   desc 'Ensure Mealie is configured to use Zitadel OIDC authentication'
 
-  describe http('https://mealie.ironstone.casa',
+  describe http('https://mealie.damacus.io',
                 enable_remote_worker: true,
                 max_redirects: 0) do
     its('status') { should be_in [200, 302] }
   end
 
-  describe http('https://mealie.ironstone.casa/login',
+  describe http('https://mealie.damacus.io/login',
                 enable_remote_worker: true,
                 max_redirects: 0) do
     its('status') { should be_in [200, 302] }
@@ -42,7 +42,7 @@ control 'mealie-oidc-endpoints' do
   title 'Verify Zitadel OIDC endpoints are accessible'
   desc 'Ensure Zitadel OIDC discovery endpoint is accessible'
 
-  describe http('https://zitadel.ironstone.casa/.well-known/openid-configuration',
+  describe http('https://zitadel.damacus.io/.well-known/openid-configuration',
                 enable_remote_worker: true) do
     its('status') { should eq 200 }
     its('headers.Content-Type') { should match(/application\/json/) }
@@ -57,7 +57,7 @@ control 'mealie-oidc-api-endpoint' do
   title 'Verify Mealie OIDC callback endpoint'
   desc 'Ensure Mealie OIDC callback endpoint is accessible'
 
-  describe http('https://mealie.ironstone.casa/api/auth/oauth/callback',
+  describe http('https://mealie.damacus.io/api/auth/oauth/callback',
                 enable_remote_worker: true,
                 max_redirects: 0) do
     its('status') { should be_in [200, 302, 400, 405] }

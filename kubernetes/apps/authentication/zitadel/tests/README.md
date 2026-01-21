@@ -7,7 +7,7 @@ This directory contains InSpec tests to validate the Zitadel identity provider i
 ### Prerequisites
 
 - InSpec installed (`brew install inspec` or `gem install inspec`)
-- Network access to `zitadel.ironstone.casa`
+- Network access to `zitadel.damacus.io`
 
 ### Run All Tests
 

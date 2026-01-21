@@ -52,7 +52,7 @@ Create the following items in 1Password before deploying:
 After Zitadel is deployed, configure OIDC applications for:
 
 1. **Grafana** - `https://grafana.ironstone.casa/login/generic_oauth`
-2. **Mealie** - `https://mealie.ironstone.casa/api/auth/oauth/callback`
+2. **Mealie** - `https://mealie.damacus.io/api/auth/oauth/callback`
 3. **Paperless-ngx** - `https://paperless.ironstone.casa/accounts/oidc/zitadel/login/callback/`
 
 ## Google Identity Provider
@@ -67,5 +67,5 @@ Users can enroll passkeys from their account settings.
 
 ## Access
 
-- Console: `https://zitadel.ironstone.casa`
-- API: `https://zitadel.ironstone.casa/oauth/v2/`
+- Console: `https://zitadel.damacus.io`
+- API: `https://zitadel.damacus.io/oauth/v2/`
