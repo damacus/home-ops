@@ -52,9 +52,9 @@ spec:
         client_id: $__env{GF_AUTH_GENERIC_OAUTH_CLIENT_ID}
         client_secret: $__env{GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
         scopes: openid profile email groups
-        auth_url: https://zitadel.ironstone.casa/oauth/v2/authorize
-        token_url: https://zitadel.ironstone.casa/oauth/v2/token
-        api_url: https://zitadel.ironstone.casa/oidc/v1/userinfo
+        auth_url: https://zitadel.damacus.io/oauth/v2/authorize
+        token_url: https://zitadel.damacus.io/oauth/v2/token
+        api_url: https://zitadel.damacus.io/oidc/v1/userinfo
         login_attribute_path: email
         name_attribute_path: name
         role_attribute_path: contains(groups[*], 'admin') && 'Admin' || 'Viewer'
