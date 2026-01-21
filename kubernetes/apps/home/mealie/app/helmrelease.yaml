@@ -62,7 +62,7 @@ spec:
               OIDC_NAME_CLAIM: "name"
               OIDC_PROVIDER_NAME: "Zitadel"
               OIDC_REMEMBER_ME: "false"
-              OIDC_SCOPES: "openid profile email"
+              OIDC_SCOPES: "openid profile email groups"
               OIDC_SIGNUP_ENABLED: "true"
               OIDC_USER_CLAIM: "email"
               OPENAI_API_KEY:
