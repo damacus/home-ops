@@ -7,12 +7,12 @@ ingress:
     service: https://ingress-nginx-external-controller.network.svc.cluster.local:443
   - hostname: "external.damacus.io"
     service: https://ingress-nginx-external-controller.network.svc.cluster.local:443
-  # Cilium Gateway routes (new)
+  # Cilium Gateway routes
+  - hostname: "gateway.damacus.io"
+    service: https://cilium-gateway-external.kube-system.svc.cluster.local:443
   - hostname: "mealie.damacus.io"
     service: https://cilium-gateway-external.kube-system.svc.cluster.local:443
   - hostname: "zitadel.damacus.io"
-    service: https://cilium-gateway-external.kube-system.svc.cluster.local:443
-  - hostname: "gateway.damacus.io"
     service: https://cilium-gateway-external.kube-system.svc.cluster.local:443
   # Fallback to nginx for other *.damacus.io
   - hostname: "*.damacus.io"
