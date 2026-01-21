@@ -1,0 +1,11 @@
+# Approved users for Zitadel authentication
+# This list is used by Zitadel Actions to enforce access control
+---
+admins:
+  - dan.m.webb@gmail.com
+
+users:
+  - 28lauracummings@gmail.com
+  - webbglor@googlemail.com
+  - gtxthor37@gmail.com
+  - dan.webb@damacus.io
