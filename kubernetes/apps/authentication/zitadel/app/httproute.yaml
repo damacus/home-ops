@@ -13,14 +13,26 @@ spec:
   hostnames:
     - zitadel.damacus.io
   rules:
-    - matches:
+    - filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            set:
+              - name: X-Forwarded-Proto
+                value: https
+      matches:
         - path:
             type: PathPrefix
             value: /ui/v2/login
       backendRefs:
         - name: zitadel-login
           port: 3000
-    - matches:
+    - filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            set:
+              - name: X-Forwarded-Proto
+                value: https
+      matches:
         - path:
             type: PathPrefix
             value: /
