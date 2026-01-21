@@ -46,6 +46,8 @@ spec:
               MAX_WORKERS: 1
               WEB_CONCURRENCY: 1
               BASE_URL: "https://{{ .Release.Name }}.ironstone.casa"
+              DEFAULT_GROUP: "Home"
+              DEFAULT_HOUSEHOLD: "Ironstone"
               # Postgres Configuration
               DB_ENGINE: postgres
               POSTGRES_USER: "{{ .Release.Name }}"
