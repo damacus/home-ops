@@ -12,7 +12,7 @@ Zitadel is now configured with:
 
 ## Admin Access
 
-Console URL: <https://zitadel.ironstone.casa/ui/console/>
+Console URL: <https://zitadel.damacus.io/ui/console/>
 Permissions: IAM_OWNER (full instance administration)
 
 ## Authentication Options
@@ -38,11 +38,11 @@ OIDC clients can be created using the `zitadel-create-oidc-clients.fish` script 
 When configuring applications, use these Zitadel endpoints:
 
 ```yaml
-issuer: https://zitadel.ironstone.casa
-authorization_endpoint: https://zitadel.ironstone.casa/oauth/v2/authorize
-token_endpoint: https://zitadel.ironstone.casa/oauth/v2/token
-userinfo_endpoint: https://zitadel.ironstone.casa/oidc/v1/userinfo
-jwks_uri: https://zitadel.ironstone.casa/oauth/v2/keys
+issuer: https://zitadel.damacus.io
+authorization_endpoint: https://zitadel.damacus.io/oauth/v2/authorize
+token_endpoint: https://zitadel.damacus.io/oauth/v2/token
+userinfo_endpoint: https://zitadel.damacus.io/oidc/v1/userinfo
+jwks_uri: https://zitadel.damacus.io/oauth/v2/keys
 ```
 
 ## Management Scripts
@@ -70,7 +70,7 @@ set PAT (kubectl get secret -n authentication zitadel-admin-sa-pat -o jsonpath='
 set PROJECT_ID "355223427969320100"
 set APP_ID "your-app-id"
 
-curl -X DELETE "https://zitadel.ironstone.casa/management/v1/projects/$PROJECT_ID/apps/$APP_ID" \
+curl -X DELETE "https://zitadel.damacus.io/management/v1/projects/$PROJECT_ID/apps/$APP_ID" \
   -H "Authorization: Bearer $PAT"
 ```
 

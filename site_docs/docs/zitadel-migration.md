@@ -6,7 +6,7 @@ This guide documents the migration from Dex to Zitadel for OIDC authentication a
 
 ## Prerequisites
 
-1. Zitadel instance running at `https://zitadel.ironstone.casa`
+1. Zitadel instance running at `https://zitadel.damacus.io`
 2. Google OAuth configured in Zitadel
 3. Admin user with IAM_OWNER role in Zitadel
 4. 1Password items created for each OIDC client
@@ -120,12 +120,12 @@ inspec exec kubernetes/apps/home/mealie/tests
 All applications use these Zitadel endpoints:
 
 ```yaml
-issuer: https://zitadel.ironstone.casa
-authorization_endpoint: https://zitadel.ironstone.casa/oauth/v2/authorize
-token_endpoint: https://zitadel.ironstone.casa/oauth/v2/token
-userinfo_endpoint: https://zitadel.ironstone.casa/oidc/v1/userinfo
-jwks_uri: https://zitadel.ironstone.casa/oauth/v2/keys
-discovery: https://zitadel.ironstone.casa/.well-known/openid-configuration
+issuer: https://zitadel.damacus.io
+authorization_endpoint: https://zitadel.damacus.io/oauth/v2/authorize
+token_endpoint: https://zitadel.damacus.io/oauth/v2/token
+userinfo_endpoint: https://zitadel.damacus.io/oidc/v1/userinfo
+jwks_uri: https://zitadel.damacus.io/oauth/v2/keys
+discovery: https://zitadel.damacus.io/.well-known/openid-configuration
 ```
 
 ## Rollback Plan
@@ -161,7 +161,7 @@ Once all applications are successfully migrated and tested:
 
 ### OIDC Discovery Fails
 
-- Verify Zitadel is accessible: `curl https://zitadel.ironstone.casa/.well-known/openid-configuration`
+- Verify Zitadel is accessible: `curl https://zitadel.damacus.io/.well-known/openid-configuration`
 - Check network policies allow egress to Zitadel
 - Verify DNS resolution
 
