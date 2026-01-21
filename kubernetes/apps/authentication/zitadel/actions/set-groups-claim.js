@@ -14,7 +14,8 @@
 function setGroupsClaim(ctx, api) {
     // Define admin users
     const adminEmails = [
-        'dan.m.webb@gmail.com'
+        'dan.m.webb@gmail.com',
+        'dan.webb@damacus.io'
     ];
 
     // Define approved regular users
@@ -34,6 +35,7 @@ function setGroupsClaim(ctx, api) {
     // Check if user is admin
     if (adminEmails.includes(userEmail)) {
         groups.push('admin');
+        groups.push('consoleAdmin'); // MinIO console admin
         groups.push('user'); // Admins are also users
     }
     // Check if user is approved regular user
