@@ -44,22 +44,6 @@ spec:
               MINIO_AUTH_TYPE: public
               MINIO_UPDATE: "off"
               MINIO_API_REQUESTS_MAX: "1600"
-              # OIDC Configuration
-              MINIO_IDENTITY_OPENID_CONFIG_URL: "https://zitadel.damacus.io/.well-known/openid-configuration"
-              MINIO_IDENTITY_OPENID_CLIENT_ID:
-                valueFrom:
-                  secretKeyRef:
-                    name: minio-client
-                    key: client-id
-              MINIO_IDENTITY_OPENID_CLIENT_SECRET:
-                valueFrom:
-                  secretKeyRef:
-                    name: minio-client
-                    key: client-secret
-              MINIO_IDENTITY_OPENID_SCOPES: "openid profile email groups"
-              MINIO_IDENTITY_OPENID_REDIRECT_URI: "https://minio.ironstone.casa/oauth_callback"
-              MINIO_IDENTITY_OPENID_DISPLAY_NAME: "Login with Zitadel"
-              MINIO_IDENTITY_OPENID_CLAIM_NAME: "groups"
             envFrom:
               - secretRef:
                   name: minio-root-user
