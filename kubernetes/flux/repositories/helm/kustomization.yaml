@@ -13,7 +13,6 @@ resources:
   - csi-driver-nfs.yaml
   - csi-driver-smb.yaml
   - descheduler.yaml
-  - dex.yaml
   - external-dns.yaml
   - external-secrets.yaml
   - ingress-nginx.yaml

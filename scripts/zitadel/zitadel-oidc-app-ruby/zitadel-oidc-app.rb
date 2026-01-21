@@ -9,7 +9,7 @@ require 'base64'
 require 'optparse'
 require 'time'
 
-ZITADEL_URL = 'https://zitadel.ironstone.casa'
+ZITADEL_URL = 'https://zitadel.damacus.io'
 SA_KEY_FILE = '/tmp/zitadel-sa.json'
 
 module ZitadelOidcApp
