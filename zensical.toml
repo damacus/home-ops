@@ -1,5 +1,5 @@
 [site]
-name = "Home Ops Documentation"
+site_name = "Home Ops Documentation"
 url = "https://damacus.github.io/home-ops"
 
 [build]
@@ -11,6 +11,6 @@ items = [
     { name = "Home", path = "index.md" },
     { name = "Guides", items = [
         { name = "Flashing Radxa 5B+", path = "flashing.md" },
-        { name = "Zitadel Setup", path = "zitadel-setup.md" }
-    ]}
+        { name = "Zitadel Setup", path = "zitadel-setup.md" },
+    ] },
 ]
