@@ -59,6 +59,7 @@ spec:
               MINIO_IDENTITY_OPENID_SCOPES: "openid profile email groups"
               MINIO_IDENTITY_OPENID_REDIRECT_URI: "https://minio.ironstone.casa/oauth_callback"
               MINIO_IDENTITY_OPENID_DISPLAY_NAME: "Login with Zitadel"
+              MINIO_IDENTITY_OPENID_CLAIM_NAME: "groups"
             envFrom:
               - secretRef:
                   name: minio-root-user
