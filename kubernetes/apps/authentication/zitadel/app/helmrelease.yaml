@@ -47,7 +47,7 @@ spec:
                 Name: Admin
               MachineKey:
                 Type: 1
-        ExternalDomain: &host zitadel.ironstone.casa
+        ExternalDomain: &host zitadel.damacus.io
         ExternalPort: 443
         ExternalSecure: true
         TLS:

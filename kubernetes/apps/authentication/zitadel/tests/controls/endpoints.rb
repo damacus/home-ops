@@ -27,7 +27,7 @@ control 'ZITADEL-HTTPS-002' do
   title 'Zitadel TLS certificate is valid'
   desc 'The Zitadel TLS certificate MUST be valid and not expired'
 
-  describe command('echo | openssl s_client -connect zitadel.ironstone.casa:443 -servername zitadel.ironstone.casa 2>/dev/null | openssl x509 -noout -checkend 1209600') do
+  describe command('echo | openssl s_client -connect zitadel.damacus.io:443 -servername zitadel.damacus.io 2>/dev/null | openssl x509 -noout -checkend 1209600') do
     its('exit_status') { should eq 0 }
   end
 end

@@ -7,11 +7,11 @@ metadata:
   namespace: authentication
 spec:
   parentRefs:
-    - name: internal
+    - name: external
       namespace: kube-system
       sectionName: https
   hostnames:
-    - zitadel.ironstone.casa
+    - zitadel.damacus.io
   rules:
     - matches:
         - path:

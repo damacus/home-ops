@@ -13,7 +13,7 @@ inspec_version: ">= 5.0"
 inputs:
   - name: zitadel_url
     type: String
-    value: https://zitadel.ironstone.casa
+    value: https://zitadel.damacus.io
     description: Base URL for Zitadel instance
 
   - name: zitadel_internal_url
@@ -23,5 +23,5 @@ inputs:
 
   - name: expected_issuer
     type: String
-    value: https://zitadel.ironstone.casa
+    value: https://zitadel.damacus.io
     description: Expected OIDC issuer URL

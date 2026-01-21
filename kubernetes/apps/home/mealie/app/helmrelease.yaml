@@ -40,7 +40,7 @@ spec:
 
             env:
               ALLOW_SIGNUP: "false"
-              BASE_URL: "https://{{ .Release.Name }}.ironstone.casa"
+              BASE_URL: "https://{{ .Release.Name }}.damacus.io"
               DB_ENGINE: postgres
               DEFAULT_GROUP: "Home"
               DEFAULT_HOUSEHOLD: "Ironstone"
@@ -57,7 +57,7 @@ spec:
                   secretKeyRef:
                     name: mealie-zitadel-oidc
                     key: client-secret
-              OIDC_CONFIGURATION_URL: "https://zitadel.ironstone.casa/.well-known/openid-configuration"
+              OIDC_CONFIGURATION_URL: "https://zitadel.damacus.io/.well-known/openid-configuration"
               OIDC_GROUPS_CLAIM: "groups"
               OIDC_NAME_CLAIM: "name"
               OIDC_PROVIDER_NAME: "Zitadel"
@@ -101,11 +101,11 @@ spec:
     route:
       app:
         parentRefs:
-          - name: internal
+          - name: external
             namespace: kube-system
             sectionName: https
         hostnames:
-          - "{{ .Release.Name }}.ironstone.casa"
+          - "{{ .Release.Name }}.damacus.io"
         rules:
           - matches:
               - path:
