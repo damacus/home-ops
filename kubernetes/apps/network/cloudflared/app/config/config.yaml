@@ -13,4 +13,11 @@ ingress:
   # Wildcard to Cilium Gateway (all other *.damacus.io services)
   - hostname: "*.damacus.io"
     service: https://cilium-gateway-external.kube-system.svc.cluster.local:443
+  - hostname: "mealie.damacus.io"
+    service: https://cilium-gateway-external.kube-system.svc.cluster.local:443
+  - hostname: "zitadel.damacus.io"
+    service: https://cilium-gateway-external.kube-system.svc.cluster.local:443
+  # Fallback to nginx for other *.damacus.io
+  - hostname: "*.damacus.io"
+    service: https://ingress-nginx-external-controller.network.svc.cluster.local:443
   - service: http_status:404
