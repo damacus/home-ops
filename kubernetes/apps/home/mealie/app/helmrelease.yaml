@@ -39,32 +39,14 @@ spec:
               tag: v3.9.2@sha256:57713693dceca9a124f00f165eaf8f5c41de757e7f63f8a7b80625488605dc61
 
             env:
-              TZ: "Europe/London"
-              PUID: 1000
-              PGID: 1000
-              ALLOW_SIGNUP: "true"
-              MAX_WORKERS: 1
-              WEB_CONCURRENCY: 1
+              ALLOW_SIGNUP: "false"
               BASE_URL: "https://{{ .Release.Name }}.ironstone.casa"
+              DB_ENGINE: postgres
               DEFAULT_GROUP: "Home"
               DEFAULT_HOUSEHOLD: "Ironstone"
-              # Postgres Configuration
-              DB_ENGINE: postgres
-              POSTGRES_USER: "{{ .Release.Name }}"
-              POSTGRES_DB: "{{ .Release.Name }}"
-              POSTGRES_PORT: "5432"
-              POSTGRES_SERVER: "{{ .Release.Name }}-rw"
-              # OIDC Configuration
+              MAX_WORKERS: 1
               OIDC_AUTH_ENABLED: "true"
-              OIDC_SIGNUP_ENABLED: "true"
-              OIDC_CONFIGURATION_URL: "https://zitadel.ironstone.casa/.well-known/openid-configuration"
               OIDC_AUTO_REDIRECT: "false"
-              OIDC_PROVIDER_NAME: "Zitadel"
-              OIDC_REMEMBER_ME: "false"
-              OIDC_SCOPES: "openid profile email"
-              OIDC_USER_CLAIM: "email"
-              OIDC_NAME_CLAIM: "name"
-              OIDC_GROUPS_CLAIM: "groups"
               OIDC_CLIENT_ID:
                 valueFrom:
                   secretKeyRef:
@@ -75,10 +57,33 @@ spec:
                   secretKeyRef:
                     name: mealie-zitadel-oidc
                     key: client-secret
+              OIDC_CONFIGURATION_URL: "https://zitadel.ironstone.casa/.well-known/openid-configuration"
+              OIDC_GROUPS_CLAIM: "groups"
+              OIDC_NAME_CLAIM: "name"
+              OIDC_PROVIDER_NAME: "Zitadel"
+              OIDC_REMEMBER_ME: "false"
+              OIDC_SCOPES: "openid profile email"
+              OIDC_SIGNUP_ENABLED: "true"
+              OIDC_USER_CLAIM: "email"
+              OPENAI_API_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: mealie-secret
+                    key: OPENAI_API_KEY
+              PGID: 1000
+              POSTGRES_DB: "{{ .Release.Name }}"
+              POSTGRES_PORT: "5432"
+              POSTGRES_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: mealie-secret
+                    key: POSTGRES_PASSWORD
+              POSTGRES_SERVER: "{{ .Release.Name }}-rw"
+              POSTGRES_USER: "{{ .Release.Name }}"
+              PUID: 1000
+              TZ: "Europe/London"
+              WEB_CONCURRENCY: 1
 
-            envFrom:
-              - secretRef:
-                  name: mealie-secret
             probes:
               liveness:
                 enabled: false
