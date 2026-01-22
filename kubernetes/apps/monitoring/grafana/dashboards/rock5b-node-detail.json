@@ -1876,15 +1876,38 @@
                     "type": "prometheus",
                     "uid": "prometheus"
                 },
-                "definition": "label_values(node_uname_info, instance)",
+                "definition": "label_values(node_uname_info, nodename)",
                 "hide": 0,
                 "includeAll": false,
                 "label": "Node",
                 "multi": false,
+                "name": "hostname",
+                "options": [],
+                "query": {
+                    "query": "label_values(node_uname_info, nodename)",
+                    "refId": "StandardVariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {},
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                },
+                "definition": "label_values(node_uname_info{nodename=\"$hostname\"}, instance)",
+                "hide": 2,
+                "includeAll": false,
+                "label": "Instance",
+                "multi": false,
                 "name": "node",
                 "options": [],
                 "query": {
-                    "query": "label_values(node_uname_info, instance)",
+                    "query": "label_values(node_uname_info{nodename=\"$hostname\"}, instance)",
                     "refId": "StandardVariableQuery"
                 },
                 "refresh": 1,
