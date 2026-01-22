@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '../lib/zitadel_tui'
+require_relative '../lib/zitadel_tui/app'
+
+ZitadelTui::App.new.run

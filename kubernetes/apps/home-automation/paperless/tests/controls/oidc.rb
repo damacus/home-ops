@@ -50,7 +50,7 @@ control 'paperless-oidc-endpoints' do
   title 'Verify Zitadel OIDC endpoints are accessible'
   desc 'Ensure Zitadel OIDC discovery endpoint is accessible'
 
-  describe http('https://zitadel.ironstone.casa/.well-known/openid-configuration',
+  describe http('https://zitadel.damacus.io/.well-known/openid-configuration',
                 enable_remote_worker: true) do
     its('status') { should eq 200 }
     its('headers.Content-Type') { should match(/application\/json/) }

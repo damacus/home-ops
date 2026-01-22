@@ -51,9 +51,9 @@ This directory contains Zitadel Actions - JavaScript functions that execute duri
 
 After installation, test the groups claim:
 
-1. Log in to Mealie as admin user (dan.m.webb@gmail.com)
+1. Log in to Mealie as admin user
 2. Check that you have admin privileges
-3. Log in as regular user (e.g., 28lauracummings@gmail.com)
+3. Log in as regular user
 4. Check that you have standard user access
 
 ### Debug Token Claims

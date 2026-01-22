@@ -22,6 +22,7 @@ Run the setup script to create OIDC clients for all applications:
 ```
 
 This script will:
+
 - Create OIDC clients for Grafana, Paperless, and Mealie
 - Store credentials in Kubernetes secrets in the `authentication` namespace
 - Output client IDs and secrets for 1Password storage
