@@ -7,7 +7,7 @@ metadata:
   namespace: home-automation
 spec:
   trigger:
-    manual: restore-once
+    schedule: "*/30 * * * *" # Sync every 30 minutes from latest snapshot
   restic:
     repository: paperless-restic-local
     destinationPVC: paperless-data-ssd

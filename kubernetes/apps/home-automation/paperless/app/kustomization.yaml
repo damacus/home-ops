@@ -9,5 +9,4 @@ resources:
   - pvc.yaml
   - pvc-ssd.yaml
   - secret.yaml
-  - sync-job.yaml
   - ./volsync
