@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/volsync.backube/replicationdestination_v1alpha1.json
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationDestination
+metadata:
+  name: paperless-data-ssd
+  namespace: home-automation
+spec:
+  trigger:
+    manual: restore-once
+  restic:
+    repository: paperless-restic-local
+    destinationPVC: paperless-data-ssd
+    copyMethod: Direct
+    storageClassName: nfs-csi-ssd
+    accessModes:
+      - ReadWriteOnce
+    capacity: 100Gi
+    cacheCapacity: 1Gi
+    cacheStorageClassName: openebs-hostpath
+    moverSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
