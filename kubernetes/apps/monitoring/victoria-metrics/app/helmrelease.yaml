@@ -134,7 +134,7 @@ spec:
     kubeControllerManager:
       enabled: false
     kubeDns:
-      enabled: true
+      enabled: false
     kubeEtcd:
       enabled: false
     kubeScheduler:
