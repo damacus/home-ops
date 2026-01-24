@@ -20,7 +20,7 @@ gem 'pastel', '~> 0.8'
 gem 'faraday', '~> 2.0'
 
 # JWT handling
-gem 'jwt', '~> 2.7'
+gem 'jwt', '~> 3.0'
 
 group :development, :test do
   gem 'rspec', '~> 3.12'
