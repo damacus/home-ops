@@ -37,6 +37,8 @@ spec:
             env:
               - name: HASS_HTTP_TRUSTED_PROXY_1
                 value: "${CLUSTER_CIDR}"
+              - name: HASS_HTTP_TRUSTED_PROXY_2
+                value: "192.168.1.0/24"
               - name: HASS_EXTERNAL_URL
                 value: "https://{{ .Release.Name }}.damacus.io"
               - name: HASS_INTERNAL_URL
