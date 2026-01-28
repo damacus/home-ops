@@ -144,25 +144,3 @@ spec:
         globalMounts:
           - path: /sys
             readOnly: true
-
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-                - key: kubernetes.io/hostname
-                  operator: In
-                  values:
-                    - "rocky"
-      # Prefer to avoid home-assistant pods (soft anti-affinity)
-      podAntiAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values: ["home-assistant"]
-              topologyKey: kubernetes.io/hostname
