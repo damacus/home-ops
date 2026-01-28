@@ -6,3 +6,4 @@ resources:
   - HelmRelease.yaml
   - externalsecret.yaml
   - ingress.yaml
+  - websocket-patch.yaml
