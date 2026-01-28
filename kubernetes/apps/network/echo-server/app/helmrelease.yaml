@@ -72,7 +72,7 @@ spec:
 
     service:
       app:
-        controller: echo-server
+        controller: "{{ .Release.Name }}"
         ports:
           http:
             port: *port
@@ -81,18 +81,15 @@ spec:
       app:
         annotations:
           external-dns.alpha.kubernetes.io/target: "gateway.ironstone.casa"
-        hostnames:
-          - "{{ .Release.Name }}.ironstone.casa"
+        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
         parentRefs:
           - name: internal
             namespace: kube-system
             sectionName: https
-
       external:
         annotations:
           external-dns.alpha.kubernetes.io/target: "gateway.damacus.io"
-        hostnames:
-          - "{{ .Release.Name }}.damacus.io"
+        hostnames: ["{{ .Release.Name }}.damacus.io"]
         parentRefs:
           - name: external
             namespace: kube-system
