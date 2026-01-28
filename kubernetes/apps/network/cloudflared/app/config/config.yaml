@@ -1,11 +1,9 @@
 ---
 originRequest:
-  originServerName: "external.damacus.io"
+  originServerName: "gateway.damacus.io"
 
 ingress:
   - hostname: "damacus.io"
-    service: https://ingress-nginx-external-controller.network.svc.cluster.local:443
-  - hostname: "external.damacus.io"
-    service: https://ingress-nginx-external-controller.network.svc.cluster.local:443
+    service: https://cilium-gateway-external.kube-system.svc.cluster.local:443
   - hostname: "*.damacus.io"
     service: https://cilium-gateway-external.kube-system.svc.cluster.local:443
