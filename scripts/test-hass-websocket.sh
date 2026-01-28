@@ -18,7 +18,7 @@ echo ""
 
 # Test 1: WebSocket upgrade headers
 echo "1. Testing WebSocket upgrade headers:"
-WS_RESPONSE=$(curl -s -i -N -H "Connection: Upgrade" \
+WS_RESPONSE=$(curl -s -i -N --http1.1 -H "Connection: Upgrade" \
      -H "Upgrade: websocket" \
      -H "Sec-WebSocket-Version: 13" \
      -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
