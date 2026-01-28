@@ -92,19 +92,6 @@ spec:
             protocol: UDP
             targetPort: 5353
 
-    ingress:
-      external:
-        className: external
-        annotations:
-          external-dns.alpha.kubernetes.io/target: external.damacus.io
-        hosts:
-          - host: "hass.damacus.io"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-
     route:
       app:
         hostnames:
@@ -129,6 +116,7 @@ spec:
       external:
         hostnames:
           - "{{ .Release.Name }}.damacus.io"
+          - hass.damacus.io
         parentRefs:
           - name: external
             namespace: kube-system
