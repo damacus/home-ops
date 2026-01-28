@@ -26,7 +26,7 @@ spec:
 
     image:
       repository: timberio/vector
-      tag: 0.52.0-debian
+      tag: 0.53.0-debian
 
     service:
       enabled: true
