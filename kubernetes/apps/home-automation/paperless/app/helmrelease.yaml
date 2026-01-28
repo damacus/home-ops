@@ -181,17 +181,6 @@ spec:
           - path: /data/nas-mount
 
     affinity:
-      # Prefer to avoid home-assistant pods (soft anti-affinity)
-      podAntiAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values: ["home-assistant"]
-              topologyKey: kubernetes.io/hostname
       # Prefer to be scheduled with redis (soft affinity)
       podAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:

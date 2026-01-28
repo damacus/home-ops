@@ -72,7 +72,7 @@ spec:
 
     service:
       app:
-        controller: "{{ .Release.Name }}"
+        controller: echo-server
         ports:
           http:
             port: *port
