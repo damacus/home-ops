@@ -5,3 +5,5 @@ resources:
   - ./namespace.yaml
   - ./webhooks/ks.yaml
   - ./flux-operator/ks.yaml
+  # TODO: Enable flux-instance after consolidating receivers and secrets
+  # - ./flux-instance/ks.yaml

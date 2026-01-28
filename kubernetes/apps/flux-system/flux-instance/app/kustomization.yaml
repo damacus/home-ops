@@ -5,9 +5,10 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ./httproute.yaml
   - ./prometheusrule.yaml
   - ./receiver.yaml
+  # TODO: HTTPRoute moved to webhooks/app/github/ for now
+  # When enabling flux-instance, consolidate receiver to trigger all resources
 configMapGenerator:
   - name: flux-instance-values
     files:
