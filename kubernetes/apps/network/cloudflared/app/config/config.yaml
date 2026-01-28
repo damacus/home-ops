@@ -8,3 +8,4 @@ ingress:
   - hostname: "external.damacus.io"
     service: https://ingress-nginx-external-controller.network.svc.cluster.local:443
   - hostname: "*.damacus.io"
+    service: https://cilium-gateway-external.kube-system.svc.cluster.local:443
