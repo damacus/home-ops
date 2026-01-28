@@ -160,6 +160,14 @@ spec:
                 subPath: hass-tmp
 
     affinity:
+      # Force to node-0b06a7 to test if node-0b06df has issues
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: In
+                  values: ["node-0b06a7"]
       # Prefer to avoid paperless and frigate (soft anti-affinity)
       podAntiAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
