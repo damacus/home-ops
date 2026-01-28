@@ -40,7 +40,7 @@ spec:
               - name: HASS_EXTERNAL_URL
                 value: "https://{{ .Release.Name }}.damacus.io"
               - name: HASS_INTERNAL_URL
-                value: "https://hass.ironstone.casa"
+                value: "https://{{ .Release.Name }}.ironstone.casa"
               - name: HASS_POSTGRES_URL
                 valueFrom:
                   secretKeyRef:
@@ -98,7 +98,7 @@ spec:
         annotations:
           external-dns.alpha.kubernetes.io/target: external.damacus.io
         hosts:
-          - host: "home-assistant.damacus.io"
+          - host: "hass.damacus.io"
             paths:
               - path: /
                 service:
