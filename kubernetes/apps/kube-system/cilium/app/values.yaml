@@ -68,6 +68,11 @@ kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256
 l2announcements:
   enabled: true
 
+encryption:
+  enabled: true
+  type: wireguard
+  nodeEncryption: false
+
 loadBalancer:
   algorithm: maglev
   mode: snat
