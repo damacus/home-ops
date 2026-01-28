@@ -68,8 +68,8 @@ spec:
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
         pod:
-          hostNetwork: true
-          dnsPolicy: ClusterFirstWithHostNet
+          hostNetwork: false
+          # dnsPolicy: ClusterFirstWithHostNet
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
