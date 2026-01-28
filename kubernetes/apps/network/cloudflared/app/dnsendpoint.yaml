@@ -6,10 +6,6 @@ metadata:
   name: cloudflared
 spec:
   endpoints:
-    - dnsName: "external.damacus.io"
-      recordType: CNAME
-      targets:
-        - "4cd48d19-1058-4f75-91a5-3f8619afe500.cfargotunnel.com"
     - dnsName: "gateway.damacus.io"
       recordType: CNAME
       targets:
