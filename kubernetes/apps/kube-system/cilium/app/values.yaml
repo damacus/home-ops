@@ -24,7 +24,7 @@ endpointRoutes:
   enabled: true
 
 gatewayAPI:
-  enableAlpn: false
+  enableAlpn: true
   enableAppProtocol: true
   enabled: true
   gatewayClass:
