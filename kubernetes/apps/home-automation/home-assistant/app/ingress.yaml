@@ -5,7 +5,7 @@ kind: Ingress
 metadata:
   name: home-assistant-external
   annotations:
-    external-dns.alpha.kubernetes.io/target: external.damacus.io
+    external-dns.alpha.kubernetes.io/target: gateway.damacus.io
 spec:
   ingressClassName: external
   rules:
@@ -22,3 +22,25 @@ spec:
   tls:
     - hosts:
         - hass.damacus.io
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/networking.k8s.io/ingress_v1.json
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: home-assistant-internal
+spec:
+  ingressClassName: internal
+  rules:
+    - host: hass.ironstone.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: home-assistant
+                port:
+                  number: 8123
+  tls:
+    - hosts:
+        - hass.ironstone.casa
