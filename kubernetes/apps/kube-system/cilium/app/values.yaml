@@ -32,7 +32,7 @@ gatewayAPI:
   xffNumTrustedHops: 1
 
 hubble:
-  enabled: false
+  enabled: true
   metrics:
     enabled:
       - dns:query;ignoreAAAA
@@ -42,13 +42,15 @@ hubble:
       - icmp
       - port-distribution
       - tcp
+    serviceMonitor:
+      enabled: true
   relay:
-    enabled: false
+    enabled: true
     rollOutPods: true
   serviceMonitor:
-    enabled: false
+    enabled: true
   ui:
-    enabled: false
+    enabled: true
     ingress:
       enabled: false
     rollOutPods: true
