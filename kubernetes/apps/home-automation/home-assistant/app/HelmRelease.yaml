@@ -96,8 +96,6 @@ spec:
 
     route:
       app:
-        annotations:
-          io.cilium.gateway/force-http-1.1: "true"
         hostnames:
           - "{{ .Release.Name }}.ironstone.casa"
         parentRefs:
@@ -117,8 +115,6 @@ spec:
                 weight: 1
 
       external:
-        annotations:
-          io.cilium.gateway/force-http-1.1: "true"
         hostnames:
           - "{{ .Release.Name }}.damacus.io"
         parentRefs:

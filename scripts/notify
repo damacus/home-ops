@@ -40,6 +40,7 @@ Status types:
   success  - Task completed successfully (normal priority, green)
   failure  - Task failed (high priority, red, persistent)
   stuck    - Agent stuck on task >10 min (high priority, orange)
+  info     - General information (normal priority, blue)
 
 Environment variables:
   PUSHOVER_USER_KEY   - Your Pushover user key (required)
@@ -111,8 +112,13 @@ case $STATUS in
     SOUND="mechanical"
     TITLE="${TITLE} ⚠️"
     ;;
+  info)
+    PRIORITY=0
+    SOUND="cosmic"
+    TITLE="${TITLE} 📚"
+    ;;
   *)
-    error "Invalid status: $STATUS. Use success, failure, or stuck"
+    error "Invalid status: $STATUS. Use success, failure, stuck, or info"
     ;;
 esac
 
