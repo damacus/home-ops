@@ -134,6 +134,19 @@ spec:
                 port: *port
                 weight: 1
 
+    ingress:
+      external:
+        className: external
+        annotations:
+          external-dns.alpha.kubernetes.io/target: external.damacus.io
+        hosts:
+          - host: "home-assistant.damacus.io"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+
     persistence:
       config:
         existingClaim: home-assistant-nfs-csi-ssd
