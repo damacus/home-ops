@@ -53,8 +53,8 @@ spec:
                 cpu: 3000m
                 memory: 1Gi
         pod:
-          hostNetwork: true
-          dnsPolicy: ClusterFirstWithHostNet
+          hostNetwork: false
+          # dnsPolicy: ClusterFirstWithHostNet
 
     service:
       app:
