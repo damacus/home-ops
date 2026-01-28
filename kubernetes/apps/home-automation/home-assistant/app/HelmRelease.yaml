@@ -96,7 +96,6 @@ spec:
       app:
         hostnames:
           - "{{ .Release.Name }}.ironstone.casa"
-          - "hass.ironstone.casa"
         parentRefs:
           - name: internal
             namespace: kube-system
@@ -116,7 +115,6 @@ spec:
       external:
         hostnames:
           - "{{ .Release.Name }}.damacus.io"
-          - hass.damacus.io
         parentRefs:
           - name: external
             namespace: kube-system
