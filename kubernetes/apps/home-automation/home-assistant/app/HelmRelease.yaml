@@ -88,7 +88,7 @@ spec:
           io.cilium/lb-ipam-ips: "192.168.1.226"
         ports:
           http:
-            appProtocol: kubernetes.io/ws
+            appProtocol: http/1.1
             port: &port 8123
           mdns:
             port: 5353
@@ -140,7 +140,7 @@ spec:
         annotations:
           external-dns.alpha.kubernetes.io/target: external.damacus.io
         hosts:
-          - host: "home-assistant.damacus.io"
+          - host: "hass.damacus.io"
             paths:
               - path: /
                 service:
