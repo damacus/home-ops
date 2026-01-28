@@ -7,5 +7,6 @@ resources:
   - helmrelease.yaml
   - externalsecret.yaml
   - pvc.yaml
+  - pvc-ssd.yaml
   - secret.yaml
   - ./volsync

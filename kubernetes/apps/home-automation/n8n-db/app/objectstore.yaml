@@ -9,7 +9,7 @@ spec:
   retentionPolicy: 30d
   configuration:
     destinationPath: s3://cloudnative-pg/n8n
-    endpointURL: http://s3.ironstone.casa
+    endpointURL: http://minio.storage.svc.cluster.local:9000
     s3Credentials:
       accessKeyId:
         name: minio-cnpg-credentials
