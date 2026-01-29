@@ -95,47 +95,6 @@ spec:
             protocol: UDP
             targetPort: 5353
 
-    route:
-      app:
-        hostnames:
-          - "home-assistant.ironstone.casa"
-        parentRefs:
-          - name: envoy-internal
-            namespace: network
-            sectionName: https
-        rules:
-          - matches:
-              - path:
-                  type: PathPrefix
-                  value: /
-            backendRefs:
-              - kind: Service
-                name: home-assistant
-                namespace: home-automation
-                port: *port
-                weight: 1
-
-      external:
-        annotations:
-          external-dns.alpha.kubernetes.io/target: "envoy-ext.damacus.io"
-        hostnames:
-          - "home-assistant.damacus.io"
-        parentRefs:
-          - name: envoy-external
-            namespace: network
-            sectionName: https
-        rules:
-          - matches:
-              - path:
-                  type: PathPrefix
-                  value: /
-            backendRefs:
-              - kind: Service
-                name: home-assistant
-                namespace: home-automation
-                port: *port
-                weight: 1
-
     persistence:
       config:
         existingClaim: home-assistant-nfs-csi-ssd
