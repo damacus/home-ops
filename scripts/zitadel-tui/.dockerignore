@@ -1,8 +1,0 @@
-.git
-.gitignore
-.rspec
-.rubocop.yml
-README.md
-spec/
-tmp/
-*.md
