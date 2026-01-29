@@ -68,6 +68,7 @@ spec:
   tcpKeepalive: {}
   timeout:
     http:
+      connectionIdleTimeout: 0s
       requestTimeout: 0s
   httpUpgrade:
     - type: websocket
@@ -95,6 +96,7 @@ spec:
   tcpKeepalive: {}
   timeout:
     http:
+      idleTimeout: 0s
       requestReceivedTimeout: 0s
   tls:
     minVersion: "1.2"
