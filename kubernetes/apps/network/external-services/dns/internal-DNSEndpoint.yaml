@@ -21,3 +21,17 @@ spec:
     - dnsName: "gateway.ironstone.casa"
       recordType: A
       targets: ["192.168.1.224"]
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: envoy-gateway-internal
+  namespace: network
+spec:
+  endpoints:
+    - dnsName: "envoy-int.ironstone.casa"
+      recordType: A
+      targets: ["192.168.1.240"]
+    - dnsName: "home-assistant.ironstone.casa"
+      recordType: A
+      targets: ["192.168.1.240"]
