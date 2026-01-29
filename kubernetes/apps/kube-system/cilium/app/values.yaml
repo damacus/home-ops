@@ -24,12 +24,7 @@ endpointRoutes:
   enabled: true
 
 gatewayAPI:
-  enabled: true
-  enableAlpn: true
-  enableAppProtocol: true
-  gatewayClass:
-    create: "true"
-  xffNumTrustedHops: 1
+  enabled: false
 
 hubble:
   enabled: true
