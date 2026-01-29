@@ -6,25 +6,44 @@ Applications using WebSocket connections (e.g., Home Assistant) fail to load whe
 
 ## Root Cause
 
-Envoy Gateway negotiates HTTP/2 by default via ALPN. WebSocket upgrade requires HTTP/1.1 with a `101 Switching Protocols` response. Without explicit configuration, the protocol mismatch causes WebSocket connections to fail.
+Envoy Gateway's `ClientTrafficPolicy` advertises ALPN protocols in order `[h2, http/1.1]` by default. Browsers negotiate HTTP/2 via ALPN, but WebSocket upgrade requires HTTP/1.1 with a `101 Switching Protocols` response. HTTP/2 WebSocket requires RFC 8441 Extended CONNECT, which is not widely supported.
 
 ### Diagnosis
 
 ```bash
-# HTTP/2 (default) - hangs, no upgrade possible
+# HTTP/2 (default ALPN) - fails, no upgrade possible
 curl -v https://home-assistant.ironstone.casa/api/websocket
 # Output: ALPN: server accepted h2
-# Result: Connection hangs
+# Result: HTTP/2 400 Bad Request
 
 # HTTP/1.1 (forced) - works correctly
 curl -v --http1.1 https://home-assistant.ironstone.casa/api/websocket
+# Output: ALPN: server accepted http/1.1
 # Output: HTTP/1.1 101 Switching Protocols
 # Result: WebSocket upgrade successful
 ```
 
 ## Solution
 
-Add `httpUpgrade` configuration to the `BackendTrafficPolicy` in `/kubernetes/apps/network/envoy-gateway/config/envoy.yaml`:
+### 1. Change ALPN Order (Required)
+
+Update `ClientTrafficPolicy` to prefer HTTP/1.1:
+
+```yaml
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: envoy
+spec:
+  tls:
+    alpnProtocols:
+      - http/1.1  # First for WebSocket support
+      - h2        # Fallback for other traffic
+```
+
+### 2. Enable httpUpgrade in BackendTrafficPolicy (Optional)
+
+WebSocket is enabled by default, but can be explicitly configured:
 
 ```yaml
 apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -32,9 +51,40 @@ kind: BackendTrafficPolicy
 metadata:
   name: envoy
 spec:
-  # ... other config ...
   httpUpgrade:
     - type: websocket
+```
+
+### 3. Backend CRD with appProtocols (Optional)
+
+For explicit WebSocket protocol declaration per-service:
+
+```yaml
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: home-assistant
+spec:
+  appProtocols:
+    - gateway.envoyproxy.io/ws   # WebSocket over HTTP
+    - gateway.envoyproxy.io/wss  # WebSocket over HTTPS
+  endpoints:
+    - fqdn:
+        hostname: home-assistant.home-automation.svc.cluster.local
+        port: 8123
+```
+
+Reference the Backend in HTTPRoute:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+spec:
+  rules:
+    - backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: home-assistant
 ```
 
 ## Affected Applications
@@ -50,12 +100,24 @@ Any application that uses WebSocket connections:
 
 After applying the fix:
 
-1. Check Home Assistant loads fully (not stuck on loading screen)
-2. Open browser DevTools → Network → WS tab
-3. Verify WebSocket connection shows `101 Switching Protocols`
+```bash
+curl -v https://home-assistant.ironstone.casa/api/websocket 2>&1 | grep -E "(ALPN|HTTP)"
+# Expected output:
+# ALPN: server accepted http/1.1
+# HTTP/1.1 101 Switching Protocols
+```
+
+Or in browser:
+
+1. Open DevTools → Network → WS tab
+2. Verify WebSocket connection shows `101 Switching Protocols`
 
 ## References
 
-- [Envoy Gateway BackendTrafficPolicy API](https://gateway.envoyproxy.io/docs/api/extension_types/#backendtrafficpolicyspec)
-- [ProtocolUpgradeConfig](https://gateway.envoyproxy.io/docs/api/extension_types/#protocolupgradeconfig)
-- PR #2922 - Implementation fix
+- [Envoy Gateway BackendTrafficPolicy API](https://gateway.envoyproxy.io/latest/api/extension_types/#backendtrafficpolicyspec)
+- [ProtocolUpgradeConfig](https://gateway.envoyproxy.io/latest/api/extension_types/#protocolupgradeconfig)
+- [Backend CRD appProtocols](https://gateway.envoyproxy.io/latest/api/extension_types/#appprotocoltype)
+- [ClientTrafficPolicy TLS Settings](https://gateway.envoyproxy.io/latest/api/extension_types/#clienttlssettings)
+- PR #2922 - httpUpgrade fix
+- PR #2923 - Backend CRD + HTTPRoute
+- PR #2924 - ALPN order fix
