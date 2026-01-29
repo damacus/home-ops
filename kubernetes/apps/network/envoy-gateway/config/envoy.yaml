@@ -69,6 +69,8 @@ spec:
   timeout:
     http:
       requestTimeout: 0s
+  httpUpgrade:
+    - type: websocket
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/clienttrafficpolicy_v1alpha1.json
 apiVersion: gateway.envoyproxy.io/v1alpha1
