@@ -28,6 +28,7 @@ spec:
       GF_SERVER_ROOT_URL: https://grafana.ironstone.casa
     envFromSecrets:
       - name: zitadel-grafana-oidc
+      - name: grafana-oncall-secret
     # envValueFrom:
     #   GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
     #     secretKeyRef:
