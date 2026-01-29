@@ -80,17 +80,17 @@ spec:
     route:
       app:
         annotations:
-          external-dns.alpha.kubernetes.io/target: "gateway.ironstone.casa"
+          external-dns.alpha.kubernetes.io/target: "envoy-int.ironstone.casa"
         hostnames: ["{{ .Release.Name }}.ironstone.casa"]
         parentRefs:
-          - name: internal
-            namespace: kube-system
+          - name: envoy-internal
+            namespace: network
             sectionName: https
       external:
         annotations:
-          external-dns.alpha.kubernetes.io/target: "gateway.damacus.io"
+          external-dns.alpha.kubernetes.io/target: "envoy-ext.damacus.io"
         hostnames: ["{{ .Release.Name }}.damacus.io"]
         parentRefs:
-          - name: external
-            namespace: kube-system
+          - name: envoy-external
+            namespace: network
             sectionName: https
