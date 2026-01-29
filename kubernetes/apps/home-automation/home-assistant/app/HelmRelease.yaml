@@ -116,6 +116,8 @@ spec:
                 weight: 1
 
       external:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: "envoy-ext.damacus.io"
         hostnames:
           - "home-assistant.damacus.io"
         parentRefs:
