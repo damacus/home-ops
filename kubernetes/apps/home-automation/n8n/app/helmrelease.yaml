@@ -126,6 +126,15 @@ spec:
           - name: envoy-internal
             namespace: network
             sectionName: https
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: n8n
+                port: 5678
       webhooks:
         hostnames:
           - "n8n-webhooks.damacus.io"
@@ -133,6 +142,15 @@ spec:
           - name: envoy-external
             namespace: network
             sectionName: https
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: n8n
+                port: 5678
 
     persistence:
       data:
