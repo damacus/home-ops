@@ -1,0 +1,53 @@
+---
+connectivity:
+  checker:
+    target: 1.1.1.1:53
+    interval: 1m
+
+endpoints:
+  - name: Echo Server (External)
+    group: cluster
+    url: https://echo-server.damacus.io
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 5000"
+
+  - name: Echo Server (Internal)
+    group: cluster
+    url: https://echo-server.ironstone.casa
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 2000"
+
+  - name: Cloudflare DNS
+    group: connectivity
+    url: icmp://1.1.1.1
+    interval: 1m
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: Google DNS
+    group: connectivity
+    url: icmp://8.8.8.8
+    interval: 1m
+    conditions:
+      - "[CONNECTED] == true"
+
+metrics: true
+
+storage:
+  type: sqlite
+  caching: true
+  path: /data/gatus.db
+
+ui:
+  title: Status | Home Cluster
+  header: Home Cluster Status
+  buttons:
+    - name: GitHub
+      link: https://github.com/damacus/home-ops
+
+web:
+  port: ${GATUS_WEB_PORT}
