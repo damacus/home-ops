@@ -5,12 +5,11 @@ kind: Gateway
 metadata:
   name: envoy-external
   annotations:
-    external-dns.alpha.kubernetes.io/target: &hostname envoy-ext.damacus.io
+    external-dns.alpha.kubernetes.io/target: envoy-ext.damacus.io
 spec:
   gatewayClassName: envoy
   infrastructure:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: *hostname
       lbipam.cilium.io/ips: 192.168.1.238
   listeners:
     - name: http
