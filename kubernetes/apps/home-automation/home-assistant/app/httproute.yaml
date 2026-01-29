@@ -13,9 +13,9 @@ spec:
       sectionName: https
   rules:
     - backendRefs:
-        - group: gateway.envoyproxy.io
-          kind: Backend
+        - kind: Service
           name: home-assistant
+          port: 8123
       matches:
         - path:
             type: PathPrefix
@@ -37,9 +37,9 @@ spec:
       sectionName: https
   rules:
     - backendRefs:
-        - group: gateway.envoyproxy.io
-          kind: Backend
+        - kind: Service
           name: home-assistant
+          port: 8123
       matches:
         - path:
             type: PathPrefix
