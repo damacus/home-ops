@@ -7,3 +7,4 @@ resources:
   - HelmRelease.yaml
   - externalsecret.yaml
   - backend.yaml
+  - httproute.yaml
