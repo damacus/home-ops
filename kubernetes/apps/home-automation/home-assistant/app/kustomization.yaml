@@ -6,3 +6,4 @@ namespace: home-automation
 resources:
   - HelmRelease.yaml
   - externalsecret.yaml
+  - backend.yaml
