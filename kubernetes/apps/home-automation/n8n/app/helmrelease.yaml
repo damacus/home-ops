@@ -126,24 +126,13 @@ spec:
           - name: envoy-internal
             namespace: network
             sectionName: https
-        rules:
-          - backendRefs:
-              - name: n8n
-                namespace: authentication
-                port: 80
-
-    webhooks:
-      hostnames:
-        - *webhooks
-      parentRefs:
-        - name: envoy-external
-          namespace: network
-          sectionName: https
-      rules:
-        - backendRefs:
-            - name: n8n
-              namespace: authentication
-              port: 80
+      webhooks:
+        hostnames:
+          - "n8n-webhooks.damacus.io"
+        parentRefs:
+          - name: envoy-external
+            namespace: network
+            sectionName: https
 
     persistence:
       data:
