@@ -125,6 +125,41 @@ Before merging PR #2703, create these items:
 7. Set up family user accounts
 8. Enable passkey enrollment
 
+## Session: 2026-01-29 - GATUS Cluster Uptime Monitoring
+
+### Accomplished
+
+#### 1. GATUS Deployment Created
+- **PR**: https://github.com/damacus/home-ops/pull/2915
+- **Location**: `kubernetes/apps/monitoring/gatus/`
+- **Components**:
+  - HelmRelease using bjw-s app-template v4.6.2 with gatus v5.17.0
+  - ConfigMap for endpoint configuration
+  - HTTPRoute for `gatus.ironstone.casa` via Envoy Gateway
+  - ServiceMonitor for Prometheus metrics
+
+#### 2. Endpoints Configured
+- **Echo Server (External)**: https://echo-server.damacus.io (~104ms)
+- **Echo Server (Internal)**: https://echo-server.ironstone.casa (~32ms)
+- **Cloudflare DNS**: DNS query check (~10ms)
+- **Google DNS**: DNS query check (~7ms)
+
+#### 3. Issues Fixed
+- **Grafana OCIRepository**: Removed orphaned HelmRelease from home-automation namespace
+- **ICMP checks**: Changed to DNS query checks (ICMP requires NET_RAW capability which is dropped for security)
+
+### Validation
+- All manifests pass kubeconform validation
+- GATUS UI accessible and all checks passing
+- PR created with auto-merge enabled
+
+### Next Steps
+1. PR will auto-merge when checks pass
+2. Add more endpoints to monitor (Home Assistant, Grafana, etc.)
+3. Configure alerting via webhook
+
+---
+
 ## Session: 2026-01-12 - Penpot Design Platform
 
 ### Accomplished
