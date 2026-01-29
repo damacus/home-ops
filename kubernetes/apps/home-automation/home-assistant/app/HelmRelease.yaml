@@ -85,10 +85,10 @@ spec:
         controller: home-assistant
         type: LoadBalancer
         annotations:
-          io.cilium/lb-ipam-ips: "192.168.1.226"
+          lbipam.cilium.io/ips: "192.168.1.226"
         ports:
           http:
-            appProtocol: http/1.1
+            appProtocol: kubernetes.io/wss
             port: &port 8123
           mdns:
             port: 5353
@@ -98,10 +98,10 @@ spec:
     route:
       app:
         hostnames:
-          - "{{ .Release.Name }}.ironstone.casa"
+          - "home-assistant.ironstone.casa"
         parentRefs:
-          - name: internal
-            namespace: kube-system
+          - name: envoy-internal
+            namespace: network
             sectionName: https
         rules:
           - matches:
@@ -117,10 +117,10 @@ spec:
 
       external:
         hostnames:
-          - "{{ .Release.Name }}.damacus.io"
+          - "home-assistant.damacus.io"
         parentRefs:
-          - name: external
-            namespace: kube-system
+          - name: envoy-external
+            namespace: network
             sectionName: https
         rules:
           - matches:
@@ -133,19 +133,6 @@ spec:
                 namespace: home-automation
                 port: *port
                 weight: 1
-
-    ingress:
-      external:
-        className: external
-        annotations:
-          external-dns.alpha.kubernetes.io/target: external.damacus.io
-        hosts:
-          - host: "hass.damacus.io"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
 
     persistence:
       config:
