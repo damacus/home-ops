@@ -30,7 +30,7 @@ spec:
           app:
             image:
               repository: ghcr.io/twin/gatus
-              tag: v5.34.0
+              tag: v5.17.0
             env:
               TZ: Europe/London
               GATUS_CONFIG_PATH: /config
@@ -109,3 +109,14 @@ spec:
           - name: envoy-internal
             namespace: network
             sectionName: https
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                port: 8080
+                name: gatus
+                namespace: monitoring
+                weight: 1

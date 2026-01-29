@@ -23,17 +23,23 @@ endpoints:
 
   - name: Cloudflare DNS
     group: connectivity
-    url: icmp://1.1.1.1
+    url: 1.1.1.1
+    dns:
+      query-name: "cloudflare.com"
+      query-type: "A"
     interval: 1m
     conditions:
-      - "[CONNECTED] == true"
+      - "[DNS_RCODE] == NOERROR"
 
   - name: Google DNS
     group: connectivity
-    url: icmp://8.8.8.8
+    url: 8.8.8.8
+    dns:
+      query-name: "google.com"
+      query-type: "A"
     interval: 1m
     conditions:
-      - "[CONNECTED] == true"
+      - "[DNS_RCODE] == NOERROR"
 
 metrics: true
 
