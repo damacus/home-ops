@@ -1,0 +1,9 @@
+---
+services:
+  flux-local:
+    image: ghcr.io/allenporter/flux-local:v8.1.0
+    volumes:
+      - .:/workspace:ro
+    working_dir: /workspace
+    environment:
+      - PYTHONUNBUFFERED=1
