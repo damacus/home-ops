@@ -70,3 +70,28 @@ tasks:
           msg: "Missing Github deploy key file",
           sh: "test -f {{.GITHUB_DEPLOY_KEY_FILE}}",
         }
+
+  local-test:
+    desc: Run flux-local test in container (validates cluster builds)
+    summary: |
+      Runs flux-local test to validate that all Kustomizations and HelmReleases
+      can be built successfully. This matches the GitHub Action behavior.
+
+      Args:
+        path: Path to test (default: ./kubernetes)
+        verbose: Enable verbose output (default: false)
+    cmd: bash {{.ROOT_DIR}}/scripts/flux-local-container.sh test --enable-helm --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" --path {{.path}} {{if eq .verbose "true"}}--verbosity 1{{end}}
+    vars:
+      path: '{{.path | default "./kubernetes"}}'
+      verbose: '{{.verbose | default "false"}}'
+
+  local-build:
+    desc: Build flux resources locally in container
+    summary: |
+      Builds all Kustomizations in the cluster to verify they are valid.
+
+      Args:
+        path: Path to build (default: ./kubernetes)
+    cmd: bash {{.ROOT_DIR}}/scripts/flux-local-container.sh build --enable-helm --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" --path {{.path}}
+    vars:
+      path: '{{.path | default "./kubernetes"}}'

@@ -25,3 +25,12 @@ repos:
     rev: v2.1.1
     hooks:
       - id: forbid-secrets
+  - repo: local
+    hooks:
+      - id: flux-local-test
+        name: flux-local test
+        entry: bash scripts/flux-local-container.sh test --enable-helm --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" --path ./kubernetes
+        language: system
+        pass_filenames: false
+        files: ^kubernetes/
+        stages: [commit]
