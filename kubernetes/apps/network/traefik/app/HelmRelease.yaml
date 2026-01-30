@@ -1,0 +1,150 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: traefik
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: traefik
+      version: 37.0.0
+      sourceRef:
+        kind: HelmRepository
+        name: traefik
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  values:
+    deployment:
+      replicas: 2
+
+    # Enable Gateway API provider
+    providers:
+      kubernetesCRD:
+        enabled: true
+        allowCrossNamespace: true
+        allowEmptyServices: true
+      kubernetesIngress:
+        enabled: true
+        allowEmptyServices: true
+      kubernetesGateway:
+        enabled: true
+        experimentalChannel: true
+
+    # Gateway configuration
+    gateway:
+      enabled: true
+      name: traefik-internal
+      namespace: network
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: "*.ironstone.casa"
+      listeners:
+        web:
+          port: 8000
+          protocol: HTTP
+          namespacePolicy:
+            from: All
+        websecure:
+          port: 8443
+          protocol: HTTPS
+          namespacePolicy:
+            from: All
+          certificateRefs:
+            - name: ironstone-casa-production-tls
+              namespace: network
+          mode: Terminate
+
+    gatewayClass:
+      enabled: true
+      name: traefik
+
+    # Entrypoints
+    ports:
+      traefik:
+        port: 8080
+        expose:
+          default: false
+      web:
+        port: 8000
+        expose:
+          default: true
+        exposedPort: 80
+        protocol: TCP
+        # Redirect HTTP to HTTPS
+        http:
+          redirections:
+            entryPoint:
+              to: websecure
+              scheme: https
+              permanent: true
+      websecure:
+        port: 8443
+        expose:
+          default: true
+        exposedPort: 443
+        protocol: TCP
+        http3:
+          enabled: true
+        tls:
+          enabled: true
+
+    # Service configuration
+    service:
+      enabled: true
+      type: LoadBalancer
+      annotations:
+        lbipam.cilium.io/ips: "192.168.1.237"
+      spec:
+        externalTrafficPolicy: Local
+
+    # IngressRoute for dashboard (disabled by default)
+    ingressRoute:
+      dashboard:
+        enabled: false
+
+    # Logging
+    logs:
+      general:
+        level: INFO
+      access:
+        enabled: true
+
+    # Metrics
+    metrics:
+      prometheus:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+          namespace: monitoring
+
+    # Resources
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+    # Pod disruption budget
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
+
+    # Affinity - spread across nodes
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: traefik
+              topologyKey: kubernetes.io/hostname

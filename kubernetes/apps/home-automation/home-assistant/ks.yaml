@@ -16,6 +16,7 @@ spec:
     - name: external-dns-cloudflare
     - name: cloudnative-pg
     - name: home-assistant-db
+    - name: traefik
 
   sourceRef:
     kind: GitRepository
