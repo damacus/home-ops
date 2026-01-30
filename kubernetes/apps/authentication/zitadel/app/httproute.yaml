@@ -11,7 +11,7 @@ spec:
   parentRefs:
     - name: traefik-internal
       namespace: network
-      sectionName: https
+      sectionName: websecure
   hostnames:
     - zitadel.damacus.io
   rules:

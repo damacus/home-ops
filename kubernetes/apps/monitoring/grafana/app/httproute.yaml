@@ -11,7 +11,7 @@ spec:
       kind: Gateway
       name: traefik-internal
       namespace: network
-      sectionName: https
+      sectionName: websecure
   hostnames:
     - grafana.ironstone.casa
   rules:
