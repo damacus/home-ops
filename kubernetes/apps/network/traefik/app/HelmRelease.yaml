@@ -90,8 +90,6 @@ spec:
         protocol: TCP
         http3:
           enabled: true
-        tls:
-          enabled: true
 
     # Service configuration
     service:
