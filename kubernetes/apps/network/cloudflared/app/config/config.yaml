@@ -1,6 +1,6 @@
 ---
 originRequest:
-  originServerName: "gateway.damacus.io"
+  noTLSVerify: true
 
 ingress:
   - hostname: "*.damacus.io"
