@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: traefik
-      version: 37.0.0
+      version: 39.0.0
       sourceRef:
         kind: HelmRepository
         name: traefik
@@ -59,6 +59,8 @@ spec:
             from: All
           certificateRefs:
             - name: ironstone-casa-production-tls
+              namespace: network
+            - name: damacus-io-production-tls
               namespace: network
           mode: Terminate
 
