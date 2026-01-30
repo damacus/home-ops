@@ -85,7 +85,7 @@ spec:
         parentRefs:
           - name: traefik-internal
             namespace: network
-            sectionName: https
+            sectionName: websecure
       external:
         annotations:
           external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
@@ -93,4 +93,4 @@ spec:
         parentRefs:
           - name: traefik-internal
             namespace: network
-            sectionName: https
+            sectionName: websecure

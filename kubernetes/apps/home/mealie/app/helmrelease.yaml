@@ -105,7 +105,7 @@ spec:
         parentRefs:
           - name: traefik-internal
             namespace: network
-            sectionName: https
+            sectionName: websecure
         hostnames:
           - "{{ .Release.Name }}.damacus.io"
         rules:

@@ -125,7 +125,7 @@ spec:
         parentRefs:
           - name: traefik-internal
             namespace: network
-            sectionName: https
+            sectionName: websecure
         rules:
           - backendRefs:
               - name: minio
@@ -135,7 +135,7 @@ spec:
         parentRefs:
           - name: traefik-internal
             namespace: network
-            sectionName: https
+            sectionName: websecure
         rules:
           - backendRefs:
               - name: minio
@@ -145,7 +145,7 @@ spec:
         parentRefs:
           - name: traefik-internal
             namespace: network
-            sectionName: https
+            sectionName: websecure
         rules:
           - backendRefs:
               - name: minio
