@@ -64,9 +64,7 @@ l2announcements:
   enabled: true
 
 encryption:
-  enabled: true
-  type: wireguard
-  nodeEncryption: false
+  enabled: false
 
 loadBalancer:
   algorithm: maglev
