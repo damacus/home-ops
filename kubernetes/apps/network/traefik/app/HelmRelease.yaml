@@ -6,14 +6,9 @@ metadata:
   name: traefik
 spec:
   interval: 30m
-  chart:
-    spec:
-      chart: traefik
-      version: 39.0.0
-      sourceRef:
-        kind: HelmRepository
-        name: traefik
-        namespace: flux-system
+  chartRef:
+    kind: OCIRepository
+    name: traefik
   install:
     remediation:
       retries: 3
