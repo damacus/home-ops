@@ -6,10 +6,10 @@ metadata:
   name: zitadel
   namespace: authentication
   annotations:
-    external-dns.alpha.kubernetes.io/target: "envoy-ext.damacus.io"
+    external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
 spec:
   parentRefs:
-    - name: envoy-external
+    - name: traefik-internal
       namespace: network
       sectionName: https
   hostnames:

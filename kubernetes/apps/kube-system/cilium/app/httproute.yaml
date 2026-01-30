@@ -7,7 +7,7 @@ metadata:
 spec:
   hostnames: ["hubble.ironstone.casa"]
   parentRefs:
-    - name: envoy-internal
+    - name: traefik-internal
       namespace: network
       sectionName: https
   rules:

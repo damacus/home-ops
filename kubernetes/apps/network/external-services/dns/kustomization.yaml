@@ -5,6 +5,5 @@ kind: Kustomization
 namespace: network
 resources:
   - drive.yaml
-  - internal-DNSEndpoint.yaml
   - unifi-dns-endpoints.yaml
   - unifi.yaml

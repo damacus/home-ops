@@ -4,12 +4,12 @@ kind: HTTPRoute
 metadata:
   name: grafana
   annotations:
-    external-dns.alpha.kubernetes.io/target: "envoy-int.ironstone.casa"
+    external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      name: envoy-internal
+      name: traefik-internal
       namespace: network
       sectionName: https
   hostnames:
