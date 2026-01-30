@@ -80,7 +80,7 @@ tasks:
       Args:
         path: Path to test (default: ./kubernetes)
         verbose: Enable verbose output (default: false)
-    cmd: bash {{.ROOT_DIR}}/scripts/flux-local-container.sh test --enable-helm --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" --path {{.path}} {{if eq .verbose "true"}}--verbosity 1{{end}}
+    cmd: bash {{.ROOT_DIR}}/scripts/flux-local-container.sh test --enable-helm --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" --path {{.path}} {{if eq .verbose "true"}}--verbosity 1{{end}}
     vars:
       path: '{{.path | default "./kubernetes"}}'
       verbose: '{{.verbose | default "false"}}'
@@ -92,6 +92,6 @@ tasks:
 
       Args:
         path: Path to build (default: ./kubernetes)
-    cmd: bash {{.ROOT_DIR}}/scripts/flux-local-container.sh build --enable-helm --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" --path {{.path}}
+    cmd: bash {{.ROOT_DIR}}/scripts/flux-local-container.sh build --enable-helm --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" --path {{.path}}
     vars:
       path: '{{.path | default "./kubernetes"}}'

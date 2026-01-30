@@ -3,16 +3,6 @@ originRequest:
   originServerName: "gateway.damacus.io"
 
 ingress:
-  - hostname: "damacus.io"
-    service: https://envoy-external.network.svc.cluster.local:443
-  - hostname: "hass.damacus.io"
-    service: https://traefik.network.svc.cluster.local:443
-    originRequest:
-      originServerName: "hass.damacus.io"
-  - hostname: "home-assistant.damacus.io"
-    service: https://traefik.network.svc.cluster.local:443
-    originRequest:
-      originServerName: "home-assistant.damacus.io"
   - hostname: "*.damacus.io"
-    service: https://envoy-external.network.svc.cluster.local:443
+    service: https://traefik.network.svc.cluster.local:443
   - service: http_status:404

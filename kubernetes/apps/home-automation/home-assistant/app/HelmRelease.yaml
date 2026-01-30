@@ -83,9 +83,7 @@ spec:
     service:
       app:
         controller: home-assistant
-        type: LoadBalancer
-        annotations:
-          lbipam.cilium.io/ips: "192.168.1.226"
+        type: ClusterIP
         ports:
           http:
             port: &port 8123
