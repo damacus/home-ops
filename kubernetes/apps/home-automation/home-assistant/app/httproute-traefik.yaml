@@ -6,7 +6,7 @@ metadata:
   name: home-assistant-traefik
 spec:
   hostnames:
-    - home-assistant.ironstone.casa
+    - hass.ironstone.casa
   parentRefs:
     - name: traefik-internal
       namespace: network
