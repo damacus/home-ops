@@ -117,7 +117,7 @@ spec:
       prometheus:
         enabled: true
         serviceMonitor:
-          enabled: true
+          enabled: false
           namespace: monitoring
           disableNamespaceCheck: true
 
