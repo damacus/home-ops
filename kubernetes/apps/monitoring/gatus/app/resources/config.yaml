@@ -47,6 +47,7 @@ endpoints:
     interval: 1m
     conditions:
       - "[CONNECTED] == true"
+      - "[BODY] == pat(*auth_required*)"
 
 metrics: true
 

@@ -2,11 +2,19 @@
 
 ## Problem
 
-Applications using WebSocket connections (e.g., Home Assistant) fail to load when accessed through Envoy Gateway. The UI shows a loading screen indefinitely.
+Applications using WebSocket connections (e.g., Home Assistant) experience:
+
+1. Slow page loads that get progressively worse over time
+2. WebSocket connections failing intermittently
+3. Static file requests timing out while WebSocket connections work
+
+Restarting the application temporarily fixes the issue, but it returns.
 
 ## Root Cause
 
-Envoy Gateway's `ClientTrafficPolicy` advertises ALPN protocols in order `[h2, http/1.1]` by default. Browsers negotiate HTTP/2 via ALPN, but WebSocket upgrade requires HTTP/1.1 with a `101 Switching Protocols` response. HTTP/2 WebSocket requires RFC 8441 Extended CONNECT, which is not widely supported.
+**Connection Multiplexing Issue**: When Envoy uses HTTP/2 to communicate with backends, multiple requests share a single connection. Long-lived WebSocket connections can block other requests on the same connection, causing static file requests to hang.
+
+Additionally, Envoy Gateway's `ClientTrafficPolicy` advertises ALPN protocols in order `[h2, http/1.1]` by default. Browsers negotiate HTTP/2 via ALPN, but WebSocket upgrade requires HTTP/1.1 with a `101 Switching Protocols` response.
 
 ### Diagnosis
 
@@ -55,37 +63,48 @@ spec:
     - type: websocket
 ```
 
-### 3. Backend CRD with appProtocols (Optional)
+### 3. Per-Service BackendTrafficPolicy (Recommended for WebSocket apps)
 
-For explicit WebSocket protocol declaration per-service:
+For applications with mixed HTTP/WebSocket traffic like Home Assistant, create a dedicated `BackendTrafficPolicy`:
 
 ```yaml
 apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: Backend
+kind: BackendTrafficPolicy
 metadata:
   name: home-assistant
 spec:
-  appProtocols:
-    - gateway.envoyproxy.io/ws   # WebSocket over HTTP
-    - gateway.envoyproxy.io/wss  # WebSocket over HTTPS
-  endpoints:
-    - fqdn:
-        hostname: home-assistant.home-automation.svc.cluster.local
-        port: 8123
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: home-assistant-internal
+  # Force HTTP/1.1 to backend - prevents HTTP/2 multiplexing issues
+  useClientProtocol: true
+  # WebSocket upgrade support
+  httpUpgrade:
+    - type: websocket
+  # Connection settings to prevent exhaustion
+  circuitBreaker:
+    maxConnections: 1024
+    maxPendingRequests: 1024
+    maxParallelRequests: 1024
+  # TCP keepalive to detect dead connections
+  tcpKeepalive:
+    probes: 3
+    idleTime: 60s
+    interval: 10s
+  # Timeout settings - 0s means no timeout for long-lived connections
+  timeout:
+    http:
+      requestTimeout: 0s
+      connectionIdleTimeout: 3600s
 ```
 
-Reference the Backend in HTTPRoute:
+Key settings:
 
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-spec:
-  rules:
-    - backendRefs:
-        - group: gateway.envoyproxy.io
-          kind: Backend
-          name: home-assistant
-```
+- **`useClientProtocol: true`**: Forces Envoy to use the same protocol the client used (HTTP/1.1), preventing HTTP/2 multiplexing issues with backends that don't support it
+- **`connectionIdleTimeout`**: Closes idle connections after 1 hour to prevent connection exhaustion
+- **`tcpKeepalive`**: Detects and closes dead connections
+- **`circuitBreaker`**: Prevents connection pool exhaustion
 
 ## Affected Applications
 
