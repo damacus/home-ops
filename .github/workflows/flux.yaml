@@ -63,6 +63,7 @@ jobs:
           path: ./kubernetes
           enable-helm: true
           debug: false
+          api-versions: policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule
 
   flux-diff:
     name: Flux Local Diff
