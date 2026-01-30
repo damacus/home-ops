@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/networking.k8s.io/ingress_v1.json
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zitadel-external
+  annotations:
+    external-dns.alpha.kubernetes.io/target: traefik-ext.damacus.io
+spec:
+  ingressClassName: external
+  rules:
+    - host: zitadel.damacus.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: zitadel
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - zitadel.damacus.io
