@@ -103,10 +103,10 @@ spec:
     route:
       app:
         annotations:
-          external-dns.alpha.kubernetes.io/target: "envoy-int.ironstone.casa"
+          external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
         hostnames: ["{{ .Release.Name }}.ironstone.casa"]
         parentRefs:
-          - name: envoy-internal
+          - name: traefik-internal
             namespace: network
             sectionName: https
         rules:

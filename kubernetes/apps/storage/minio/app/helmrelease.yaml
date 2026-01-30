@@ -123,7 +123,7 @@ spec:
       console:
         hostnames: ["minio.ironstone.casa"]
         parentRefs:
-          - name: envoy-internal
+          - name: traefik-internal
             namespace: network
             sectionName: https
         rules:
@@ -133,7 +133,7 @@ spec:
       s3:
         hostnames: ["s3.ironstone.casa"]
         parentRefs:
-          - name: envoy-internal
+          - name: traefik-internal
             namespace: network
             sectionName: https
         rules:
@@ -143,7 +143,7 @@ spec:
       ironbuckets:
         hostnames: ["ironbuckets.ironstone.casa"]
         parentRefs:
-          - name: envoy-internal
+          - name: traefik-internal
             namespace: network
             sectionName: https
         rules:

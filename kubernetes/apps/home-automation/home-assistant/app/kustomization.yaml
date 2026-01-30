@@ -6,5 +6,4 @@ namespace: home-automation
 resources:
   - HelmRelease.yaml
   - externalsecret.yaml
-  - httproute.yaml
   - httproute-traefik.yaml

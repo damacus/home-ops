@@ -123,7 +123,7 @@ spec:
         hostnames:
           - "n8n.ironstone.casa"
         parentRefs:
-          - name: envoy-internal
+          - name: traefik-internal
             namespace: network
             sectionName: https
         rules:
@@ -139,7 +139,7 @@ spec:
         hostnames:
           - "n8n-webhooks.damacus.io"
         parentRefs:
-          - name: envoy-external
+          - name: traefik-internal
             namespace: network
             sectionName: https
         rules:
