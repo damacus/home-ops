@@ -248,7 +248,7 @@ spec:
       hosts:
         - grafana.ironstone.casa
       annotations:
-        external-dns.alpha.kubernetes.io/target: "192.168.1.224"
+        external-dns.alpha.kubernetes.io/target: "192.168.3.11"
       path: /
       tls:
         - secretName: grafana-tls
