@@ -90,7 +90,7 @@ spec:
         type: LoadBalancer
         externalTrafficPolicy: Cluster
         annotations:
-          io.cilium/lb-ipam-ips: "192.168.1.234"
+          io.cilium/lb-ipam-ips: "192.168.3.18"
         ports:
           api:
             enabled: true
