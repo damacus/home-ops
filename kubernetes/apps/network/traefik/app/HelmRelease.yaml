@@ -96,7 +96,7 @@ spec:
       enabled: true
       type: LoadBalancer
       annotations:
-        lbipam.cilium.io/ips: "192.168.1.238"
+        lbipam.cilium.io/ips: "192.168.3.10"
         external-dns.alpha.kubernetes.io/hostname: "traefik-int.ironstone.casa"
         external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
       spec:
