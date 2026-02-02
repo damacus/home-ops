@@ -1,0 +1,13 @@
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: coffee-damacus-io
+  namespace: network
+spec:
+  endpoints:
+    - dnsName: coffee.damacus.io
+      recordTTL: 300
+      recordType: CNAME
+      targets:
+        - coffee-pulse-822224128218.us-west1.run.app
