@@ -22,7 +22,7 @@ metadata:
   name: l2-pool
 spec:
   allowFirstLastIPs: "Yes"
-  disabled: true
+  disabled: false
   blocks:
     - start: 192.168.1.221
       stop: 192.168.1.240

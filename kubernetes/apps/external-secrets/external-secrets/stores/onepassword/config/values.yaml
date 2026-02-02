@@ -105,7 +105,7 @@ ingress:
   app:
     className: internal
     annotations:
-      external-dns.alpha.kubernetes.io/target: 192.168.3.11
+      external-dns.alpha.kubernetes.io/target: 192.168.1.224
     hosts:
       - host: "{{ .Release.Name }}.ironstone.casa"
         paths:
