@@ -7,4 +7,3 @@ resources:
   - HelmRelease.yaml
   - externalsecret.yaml
   - httproute-traefik.yaml
-  - ingress.yaml
