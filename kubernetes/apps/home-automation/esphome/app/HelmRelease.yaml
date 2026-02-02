@@ -60,7 +60,7 @@ spec:
       app:
         controller: esphome
         annotations:
-          io.cilium/lb-ipam-ips: "192.168.1.227"
+          io.cilium/lb-ipam-ips: "192.168.3.12"
         type: LoadBalancer
         ports:
           http:
@@ -70,7 +70,7 @@ spec:
       app:
         className: internal
         annotations:
-          external-dns.alpha.kubernetes.io/target: 192.168.1.224
+          external-dns.alpha.kubernetes.io/target: 192.168.3.11
         hosts:
           - host: esphome.ironstone.casa
             paths:
