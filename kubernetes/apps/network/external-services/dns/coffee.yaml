@@ -10,4 +10,4 @@ spec:
       recordTTL: 300
       recordType: CNAME
       targets:
-        - coffee-pulse-822224128218.us-west1.run.app
+        - ghs.googlehosted.com
