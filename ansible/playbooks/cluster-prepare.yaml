@@ -110,6 +110,23 @@
               fs.inotify.max_user_watches: 524288
               fs.inotify.max_user_instances: 8192
 
+    - name: Multipath Configuration
+      block:
+        - name: Multipath Configuration | Create config
+          ansible.builtin.copy:
+            dest: /etc/multipath.conf
+            mode: "0644"
+            content: |
+              blacklist {
+                  devnode "^sd[a-z0-9]+"
+              }
+          register: multipath_status
+        - name: Multipath Configuration | Restart service # noqa: no-changed-when no-handler
+          when: multipath_status.changed
+          ansible.builtin.systemd:
+            name: multipathd
+            state: restarted
+
   # handlers:
   #   - name: Reboot
   #     ansible.builtin.reboot:
