@@ -5,7 +5,7 @@ metadata:
   name: controllers
 spec:
   # renovate: depName=k3s-io/k3s datasource=github-releases versioning=semver-coerced
-  version: v1.35.0+k3s1
+  version: v1.35.0+k3s3
   upgrade:
     image: rancher/k3s-upgrade
   serviceAccountName: system-upgrade
@@ -50,4 +50,4 @@ spec:
   upgrade:
     image: rancher/k3s-upgrade
   # renovate: depName=k3s-io/k3s datasource=github-releases versioning=semver-coerced
-  version: v1.35.0+k3s1
+  version: v1.35.0+k3s3
