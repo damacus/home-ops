@@ -51,7 +51,7 @@ spec:
                 memory: 100Mi
               limits:
                 cpu: 3000m
-                memory: 1Gi
+                memory: 3Gi
         pod:
           hostNetwork: true
           dnsPolicy: ClusterFirstWithHostNet
