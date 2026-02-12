@@ -120,6 +120,8 @@ spec:
 
     route:
       app:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
         hostnames:
           - "n8n.ironstone.casa"
         parentRefs:
@@ -136,6 +138,8 @@ spec:
                 name: n8n
                 port: 5678
       webhooks:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
         hostnames:
           - "n8n-webhooks.damacus.io"
         parentRefs:
