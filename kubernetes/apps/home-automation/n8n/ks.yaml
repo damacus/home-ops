@@ -10,7 +10,7 @@ spec:
   prune: true
   dependsOn:
     - name: n8n-db
-    - name: cilium-gateway
+    - name: traefik
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
