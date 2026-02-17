@@ -5,4 +5,6 @@ resources:
   - ./externalsecret.yaml
   - ./mealie-db/ks.yaml
   - ./mealie/ks.yaml
+  - ./med-tracker-db/ks.yaml
+  - ./med-tracker/ks.yaml
   - ./namespace.yaml

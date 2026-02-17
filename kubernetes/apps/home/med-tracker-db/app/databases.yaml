@@ -1,0 +1,33 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: med-tracker-cache
+  namespace: home
+spec:
+  name: medtracker_production_cache
+  owner: med-tracker
+  cluster:
+    name: med-tracker
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: med-tracker-queue
+  namespace: home
+spec:
+  name: medtracker_production_queue
+  owner: med-tracker
+  cluster:
+    name: med-tracker
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: med-tracker-cable
+  namespace: home
+spec:
+  name: medtracker_production_cable
+  owner: med-tracker
+  cluster:
+    name: med-tracker
