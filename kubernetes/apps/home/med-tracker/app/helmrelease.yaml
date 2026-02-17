@@ -1,0 +1,144 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: med-tracker
+  namespace: home
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.2
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  maxHistory: 3
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      med-tracker:
+        type: deployment
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/damacus/med-tracker
+              tag: sha-8e94fbd9cb67419e69d72b1591860b8ea1a430c4
+
+            env:
+              RAILS_ENV: production
+              RAILS_FORCE_SSL: "false"
+              RAILS_LOG_LEVEL: info
+              DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-secret
+                    key: DATABASE_URL
+              SOLID_CACHE_DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-secret
+                    key: SOLID_CACHE_DATABASE_URL
+              SOLID_QUEUE_DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-secret
+                    key: SOLID_QUEUE_DATABASE_URL
+              SOLID_CABLE_DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-secret
+                    key: SOLID_CABLE_DATABASE_URL
+              SECRET_KEY_BASE:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-secret
+                    key: SECRET_KEY_BASE
+
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /up
+                    port: &port 80
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /up
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /up
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                  failureThreshold: 30
+
+            resources:
+              requests:
+                cpu: 10m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+
+    route:
+      app:
+        parentRefs:
+          - name: traefik-internal
+            namespace: network
+            sectionName: websecure
+        hostnames:
+          - "med-tracker.ironstone.casa"
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: med-tracker
+                namespace: home
+                port: 80
+                weight: 1
+
+    service:
+      app:
+        controller: med-tracker
+        ports:
+          http:
+            port: 80
+
+    persistence:
+      storage:
+        existingClaim: med-tracker-storage
+        globalMounts:
+          - path: /app/storage
