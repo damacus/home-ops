@@ -65,18 +65,6 @@ spec:
               value: "2113"
             - name: backend_health_check_interval
               value: "5"
-          livenessProbe:
-            httpGet:
-              port: 2113
-              path: /healthz
-            initialDelaySeconds: 10
-            periodSeconds: 5
-          readinessProbe:
-            httpGet:
-              port: 2113
-              path: /healthz
-            initialDelaySeconds: 5
-            periodSeconds: 3
           securityContext:
             capabilities:
               add: ["NET_ADMIN", "NET_RAW"]
