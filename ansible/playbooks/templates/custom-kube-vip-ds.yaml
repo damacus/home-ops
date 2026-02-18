@@ -21,6 +21,10 @@ spec:
           imagePullPolicy: IfNotPresent
           args: ["manager"]
           env:
+            - name: KUBERNETES_SERVICE_HOST
+              value: "127.0.0.1"
+            - name: KUBERNETES_SERVICE_PORT
+              value: "6443"
             - name: address
               value: "192.168.1.220"
             - name: vip_arp
@@ -29,7 +33,7 @@ spec:
               value: "true"
             - name: port
               value: "6443"
-            - name: vip_cidr
+            - name: vip_subnet
               value: "32"
             - name: cp_enable
               value: "true"
@@ -53,22 +57,35 @@ spec:
               value: "true"
             - name: enable_endpointslices
               value: "true"
+            - name: enable_service_security
+              value: "true"
+            - name: vip_arpRate
+              value: "3"
+            - name: health_check_port
+              value: "2113"
+            - name: backend_health_check_interval
+              value: "5"
+          livenessProbe:
+            httpGet:
+              port: 2113
+              path: /healthz
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              port: 2113
+              path: /healthz
+            initialDelaySeconds: 5
+            periodSeconds: 3
           securityContext:
             capabilities:
-              add: ["NET_ADMIN", "NET_RAW", "SYS_TIME"]
-      hostAliases:
-        - hostnames:
-            - kubernetes
-          ip: 127.0.0.1
+              add: ["NET_ADMIN", "NET_RAW"]
       hostNetwork: true
       serviceAccountName: kube-vip
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-              - matchExpressions:
-                  - key: node-role.kubernetes.io/master
-                    operator: Exists
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: Exists
