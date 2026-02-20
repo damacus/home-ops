@@ -67,6 +67,26 @@ spec:
                   secretKeyRef:
                     name: med-tracker-secret
                     key: SECRET_KEY_BASE
+              ADMIN_EMAIL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-secret
+                    key: ADMIN_EMAIL
+              ADMIN_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-secret
+                    key: ADMIN_PASSWORD
+              ADMIN_NAME:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-secret
+                    key: ADMIN_NAME
+              ADMIN_DOB:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-secret
+                    key: ADMIN_DOB
 
             probes:
               liveness:
