@@ -32,7 +32,7 @@ spec:
 
     persistence:
       defaultClass: true
-      defaultClassReplicaCount: 3
+      defaultClassReplicaCount: 2
       defaultDataLocality: best-effort
       defaultReplicaAutoBalance: best-effort
       migratable: false # ReadWriteMany doesn't work if storage is migratable
