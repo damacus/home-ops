@@ -36,6 +36,15 @@ spec:
           securityContext:
             supplementalGroups:
               - 100
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: kubernetes.io/hostname
+                        operator: NotIn
+                        values:
+                          - node-0b06a7
 
         containers:
           app:
@@ -181,7 +190,14 @@ spec:
           - path: /data/nas-mount
 
     affinity:
-      # Prefer to be scheduled with redis (soft affinity)
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: NotIn
+                  values:
+                    - node-0b06a7
       podAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
           - weight: 80
