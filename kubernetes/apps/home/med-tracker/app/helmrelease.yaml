@@ -36,7 +36,7 @@ spec:
           app:
             image:
               repository: ghcr.io/damacus/med-tracker
-              tag: 0.3.9
+              tag: 0.3.11
 
             env:
               RAILS_ENV: production
