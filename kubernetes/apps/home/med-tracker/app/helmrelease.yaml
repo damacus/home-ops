@@ -32,9 +32,8 @@ spec:
         type: deployment
         annotations:
           reloader.stakater.com/auto: "true"
-        containers:
+        initContainers:
           migrate:
-            type: init
             image:
               repository: ghcr.io/damacus/med-tracker
               tag: 0.3.7
@@ -44,6 +43,7 @@ spec:
                   name: med-tracker-secret
             env:
               RAILS_ENV: production
+        containers:
           app:
             image:
               repository: ghcr.io/damacus/med-tracker
