@@ -32,61 +32,30 @@ spec:
         type: deployment
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          migrate:
+            image:
+              repository: ghcr.io/damacus/med-tracker
+              tag: 0.3.7
+            command: ["bin/rails", "db:prepare"]
+            envFrom:
+              - secretRef:
+                  name: med-tracker-secret
+            env:
+              RAILS_ENV: production
         containers:
           app:
             image:
               repository: ghcr.io/damacus/med-tracker
               tag: 0.3.18
 
+            envFrom:
+              - secretRef:
+                  name: med-tracker-secret
             env:
               RAILS_ENV: production
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
-              DATABASE_URL:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-secret
-                    key: DATABASE_URL
-              SOLID_CACHE_DATABASE_URL:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-secret
-                    key: SOLID_CACHE_DATABASE_URL
-              SOLID_QUEUE_DATABASE_URL:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-secret
-                    key: SOLID_QUEUE_DATABASE_URL
-              SOLID_CABLE_DATABASE_URL:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-secret
-                    key: SOLID_CABLE_DATABASE_URL
-              SECRET_KEY_BASE:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-secret
-                    key: SECRET_KEY_BASE
-              ADMIN_EMAIL:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-secret
-                    key: ADMIN_EMAIL
-              ADMIN_PASSWORD:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-secret
-                    key: ADMIN_PASSWORD
-              ADMIN_NAME:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-secret
-                    key: ADMIN_NAME
-              ADMIN_DOB:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-secret
-                    key: ADMIN_DOB
 
             probes:
               liveness:
