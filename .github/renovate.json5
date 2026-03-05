@@ -11,4 +11,18 @@
     "github>damacus/renovate-config:packageRules.json5",
     "github>damacus/renovate-config:autoMergeSelect.json5",
   ],
+  packageRules: [
+    {
+      description: "Auto-merge non-major updates for selected home-ops assets",
+      matchPackageNames: [
+        "ghcr.io/damacus/med-tracker",
+        "ghcr.io/paperless-ngx/paperless-ngx",
+        "ghcr.io/zitadel/zitadel",
+        "victoria-metrics-k8s-stack",
+        "zitadel",
+      ],
+      matchUpdateTypes: ["digest", "minor", "patch", "pin", "pinDigest"],
+      automerge: true,
+    },
+  ],
 }
