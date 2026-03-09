@@ -66,19 +66,6 @@ spec:
           http:
             port: 6052
 
-    ingress:
-      app:
-        className: internal
-        annotations:
-          external-dns.alpha.kubernetes.io/target: 192.168.1.224
-        hosts:
-          - host: esphome.ironstone.casa
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-
     persistence:
       cache:
         existingClaim: esphome-cache

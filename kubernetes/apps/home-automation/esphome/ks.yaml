@@ -9,7 +9,6 @@ spec:
   path: ./kubernetes/apps/home-automation/esphome/app
   prune: true
   dependsOn:
-    - name: ingress-nginx-internal
     - name: cert-manager
     - name: external-dns-unifi
     - name: csi-driver-nfs
