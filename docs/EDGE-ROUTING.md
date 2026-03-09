@@ -41,7 +41,6 @@ Supporting references:
 | Paperless | `paperless.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
 | Mealie | `mealie.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
 | Med Tracker | `med-tracker.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
-| Trillium Next | `trillium-next.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | Unknown | No | H1/H2/H3 | Minimal fix candidate |
 | Zitadel | `zitadel.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 edge, h2c backend | Leave as-is |
 | Grafana | `grafana.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | Possible live UI traffic, not a blocker | No | H1/H2/H3 | Already good |
 | Victoria Metrics | `metrics.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 | Already good |
@@ -52,11 +51,9 @@ Supporting references:
 | Flux webhook | `flux-webhook.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 | Already good |
 | Hubble UI | `hubble.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
 | PiKVM | `pikvm.ironstone.casa` | HTTPRoute | stale `internal` / `kube-system` | Possible WS / console streaming | No | Unknown | Not minimal |
-| Unifi | `unifi.ironstone.casa` | Ingress | nginx `internal` | Possible WS | No | H1/H2 | Keep legacy for now |
-| Drive | `drive.ironstone.casa` | Ingress | nginx `internal` | Unknown | No | H1/H2 | Keep legacy for now |
-| Unas | `unas.ironstone.casa` | Ingress | nginx `internal` | Unknown | No | H1/H2 | Keep legacy for now |
-
 Direct `LoadBalancer` services outside the HTTP edge: `matter`, `mosquitto`, `whisper`, and `wakeword`.
+
+Direct appliance DNS aliases outside the HTTP edge: `drive.ironstone.casa` and `unas.ironstone.casa` on UNAS-Pro `192.168.1.243`, plus `unifi.ironstone.casa` on Ironstone `192.168.1.254`.
 
 ## Validation Workflow
 
