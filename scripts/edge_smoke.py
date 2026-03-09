@@ -42,7 +42,6 @@ BASELINE_HTTP_CHECKS: Final[tuple[HttpCheck, ...]] = (
     HttpCheck("Home Assistant", "https://home-assistant.ironstone.casa/"),
     HttpCheck("code-server", "https://code.ironstone.casa/"),
     HttpCheck("Echo Server", "https://echo-server.ironstone.casa/"),
-    HttpCheck("Trillium Next", "https://trillium-next.ironstone.casa/"),
 )
 
 ESPHOME_CANARY_HTTP_CHECKS: Final[tuple[HttpCheck, ...]] = (

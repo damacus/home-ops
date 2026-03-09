@@ -5,6 +5,4 @@ kind: Kustomization
 namespace: network
 resources:
   - coffee.yaml
-  - drive.yaml
   - unifi-dns-endpoints.yaml
-  - unifi.yaml
