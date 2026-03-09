@@ -4,5 +4,6 @@ kind: Kustomization
 namespace: home-automation
 resources:
   - ./HelmRelease.yaml
+  - ./httproute-traefik.yaml
   - ./externalsecret.yaml
   - ./pvc.yaml

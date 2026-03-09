@@ -103,9 +103,6 @@ spec:
       service:
         appProtocol: ""
 
-    ingress:
-      enabled: false
-
     service:
       type: ClusterIP
       port: 8080

@@ -146,17 +146,6 @@ spec:
           http:
             port: 8000
 
-    # ingress:
-    #   app:
-    #     className: "internal"
-    #     hosts:
-    #       - host: paperless.ironstone.casa
-    #         paths:
-    #           - path: /
-    #             service:
-    #               identifier: app
-    #               port: http
-
     route:
       app:
         hostnames: ["{{ .Release.Name }}.ironstone.casa"]

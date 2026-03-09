@@ -242,19 +242,6 @@ spec:
         - action: labeldrop
           regex: (pod)
 
-    ingress:
-      enabled: false
-      ingressClassName: internal
-      hosts:
-        - grafana.ironstone.casa
-      annotations:
-        external-dns.alpha.kubernetes.io/target: "192.168.1.224"
-      path: /
-      tls:
-        - secretName: grafana-tls
-          hosts:
-            - grafana.ironstone.casa
-
     persistence:
       enabled: true
       storageClassName: longhorn
