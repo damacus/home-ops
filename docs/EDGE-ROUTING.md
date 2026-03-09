@@ -4,9 +4,8 @@
 
 - Traefik is the default HTTP edge for Kubernetes applications.
 - `HTTPRoute` is the preferred route type for new and migrated services.
-- `ingress-nginx-internal` remains as a temporary compatibility lane for services that still require classic `Ingress` behavior.
 - Do not add a separate `traefik-external` controller or a second Traefik `LoadBalancer`; public and private hostnames share the same Traefik edge and differ by DNS and tunnel exposure.
-- `ingress-nginx-external` should not be used for new work.
+- `ingress-nginx` has been retired from the cluster; any remaining nginx `Ingress` resources should be treated as drift and removed.
 
 ## Why HTTPRoute Stays The Default
 
@@ -34,7 +33,7 @@ Supporting references:
 | Service | Hosts | Type | Parent / Class | WS | UDP | Edge proto | Bucket |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Home Assistant | `hass.ironstone.casa`, `home-assistant.ironstone.casa`, `hass.damacus.io`, `home-assistant.damacus.io` | HTTPRoute | Traefik `traefik-internal` | Yes, active `wss` monitor | mDNS UDP on Service | H1/H2/H3 | Validate only |
-| ESPHome | `esphome.ironstone.casa` | Ingress | nginx `internal` | Likely yes | No | H1/H2 | Migrate carefully |
+| ESPHome | `esphome.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | Likely yes | No | H1/H2/H3 | Migrated |
 | code-server | `code.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | Likely yes | No | H1/H2/H3 | Validate only |
 | Frigate | `frigate.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | Likely yes | Separate RTSP TCP | H1/H2/H3 | Validate only |
 | n8n | `n8n.ironstone.casa`, `n8n-webhooks.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
@@ -50,7 +49,7 @@ Supporting references:
 | Echo Server | `echo-server.ironstone.casa`, `echo-server.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 | Canary route |
 | Flux webhook | `flux-webhook.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 | Already good |
 | Hubble UI | `hubble.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
-| 1Password Connect | `onepassword-connect.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 | Migration target |
+| 1Password Connect | `onepassword-connect.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 | Migrated |
 | PiKVM | `pikvm.ironstone.casa` | HTTPRoute | stale `internal` / `kube-system` | Possible WS / console streaming | No | Unknown | Not minimal |
 Direct `LoadBalancer` services outside the HTTP edge: `matter`, `mosquitto`, `whisper`, and `wakeword`.
 
