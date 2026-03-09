@@ -53,7 +53,7 @@ Supporting references:
 | PiKVM | `pikvm.ironstone.casa` | HTTPRoute | stale `internal` / `kube-system` | Possible WS / console streaming | No | Unknown | Not minimal |
 Direct `LoadBalancer` services outside the HTTP edge: `matter`, `mosquitto`, `whisper`, and `wakeword`.
 
-Direct appliance DNS aliases outside the HTTP edge: `drive.ironstone.casa`, `unas.ironstone.casa`, and `unifi.ironstone.casa`.
+Direct appliance DNS aliases outside the HTTP edge: `drive.ironstone.casa` and `unas.ironstone.casa` on UNAS-Pro `192.168.1.243`, plus `unifi.ironstone.casa` on Ironstone `192.168.1.254`.
 
 ## Validation Workflow
 
