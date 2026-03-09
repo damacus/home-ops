@@ -63,6 +63,7 @@ spec:
         # Disk buffering configuration
         extraArgs:
           remoteWrite.tmpDataPath: /var/lib/vmagent-data
+          promscrape.maxScrapeSize: "33554432"
         volumes:
           - name: buffer-data
             hostPath:
