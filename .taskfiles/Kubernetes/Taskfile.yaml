@@ -36,6 +36,42 @@ tasks:
           sh: "test -f {{.KUBECONFORM_SCRIPT}}",
         }
 
+  edge-smoke:
+    desc: Run baseline HTTP and WebSocket smoke checks for the Traefik edge
+    summary: |
+      Uses curl plus a lightweight WebSocket handshake to validate the main
+      internal Traefik routes. HTTP/3 checks are informational and only run
+      when the local curl build supports them.
+
+      Examples:
+        task kubernetes:edge-smoke
+        task kubernetes:edge-smoke skip_http3=true
+    cmd: "{{.PYTHON_BIN}} {{.ROOT_DIR}}/scripts/edge_smoke.py {{if eq .skip_http3 \"true\"}}--skip-http3{{end}}"
+    vars:
+      skip_http3: '{{.skip_http3 | default "false"}}'
+    preconditions:
+      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
+      - { msg: "Missing edge smoke script", sh: "test -f {{.ROOT_DIR}}/scripts/edge_smoke.py" }
+
+  edge-smoke-esphome:
+    desc: Run edge smoke checks plus the ESPHome Traefik canary hostname
+    summary: |
+      Extends the baseline edge smoke checks with the ESPHome Traefik canary
+      hostname before cutting over the production internal hostname. Supply
+      esphome_ws_path and esphome_ws_contains when a stable WebSocket endpoint
+      is known and should be enforced by the smoke test.
+
+      Example:
+        task kubernetes:edge-smoke-esphome esphome_ws_path=/ws
+    cmd: "{{.PYTHON_BIN}} {{.ROOT_DIR}}/scripts/edge_smoke.py --include-esphome-canary {{if eq .skip_http3 \"true\"}}--skip-http3{{end}} {{if .esphome_ws_path}}--esphome-websocket-path {{.esphome_ws_path}}{{end}} {{if .esphome_ws_contains}}--esphome-websocket-contains {{.esphome_ws_contains}}{{end}}"
+    vars:
+      skip_http3: '{{.skip_http3 | default "false"}}'
+      esphome_ws_path: '{{.esphome_ws_path | default ""}}'
+      esphome_ws_contains: '{{.esphome_ws_contains | default ""}}'
+    preconditions:
+      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
+      - { msg: "Missing edge smoke script", sh: "test -f {{.ROOT_DIR}}/scripts/edge_smoke.py" }
+
   .reset:
     internal: true
     cmd: rm -rf {{.KUBERNETES_DIR}}
