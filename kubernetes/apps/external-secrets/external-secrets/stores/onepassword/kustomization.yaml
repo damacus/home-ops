@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./clustersecretstore.yaml
+  - ./httproute.yaml
 
 configMapGenerator:
   - name: one-password-config

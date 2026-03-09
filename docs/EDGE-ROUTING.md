@@ -50,6 +50,7 @@ Supporting references:
 | Echo Server | `echo-server.ironstone.casa`, `echo-server.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 | Canary route |
 | Flux webhook | `flux-webhook.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 | Already good |
 | Hubble UI | `hubble.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
+| 1Password Connect | `onepassword-connect.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 | Migration target |
 | PiKVM | `pikvm.ironstone.casa` | HTTPRoute | stale `internal` / `kube-system` | Possible WS / console streaming | No | Unknown | Not minimal |
 Direct `LoadBalancer` services outside the HTTP edge: `matter`, `mosquitto`, `whisper`, and `wakeword`.
 
