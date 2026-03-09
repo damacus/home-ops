@@ -35,6 +35,9 @@ spec:
               TZ: Europe/London
               GATUS_CONFIG_PATH: /config
               GATUS_WEB_PORT: &port 8080
+            envFrom:
+              - secretRef:
+                  name: gatus-secret
             probes:
               liveness: &probes
                 enabled: true
