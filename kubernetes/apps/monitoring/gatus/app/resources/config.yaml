@@ -4,6 +4,11 @@ connectivity:
     target: 1.1.1.1:53
     interval: 1m
 
+external-endpoints:
+  - name: alertmanager-watchdog
+    group: cluster
+    token: "${GATUS_WATCHDOG_TOKEN}"
+
 endpoints:
   - name: Echo Server (External)
     group: cluster
