@@ -106,8 +106,6 @@ spec:
             memory: 256Mi
         # Use the existing Alertmanager configuration secret from KPS/ExternalSecret
         configSecret: alertmanager-secret
-        secrets:
-          - gatus-secret
 
     # Disable components we don't need or are duplicated
     grafana:

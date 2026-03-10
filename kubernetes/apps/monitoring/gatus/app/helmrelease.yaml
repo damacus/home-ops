@@ -35,9 +35,11 @@ spec:
               TZ: Europe/London
               GATUS_CONFIG_PATH: /config
               GATUS_WEB_PORT: &port 8080
-            envFrom:
-              - secretRef:
-                  name: gatus-secret
+              GATUS_WATCHDOG_TOKEN:
+                valueFrom:
+                  secretKeyRef:
+                    name: gatus-secret
+                    key: GATUS_WATCHDOG_TOKEN
             probes:
               liveness: &probes
                 enabled: true
