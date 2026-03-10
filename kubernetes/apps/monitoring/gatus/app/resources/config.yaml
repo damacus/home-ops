@@ -41,14 +41,6 @@ endpoints:
     conditions:
       - "[DNS_RCODE] == NOERROR"
 
-  - name: Home Assistant WebSocket
-    group: home-automation
-    url: wss://home-assistant.ironstone.casa/api/websocket
-    interval: 1m
-    conditions:
-      - "[CONNECTED] == true"
-      - "[BODY] == pat(*auth_required*)"
-
 external-endpoints:
   - name: Alertmanager Watchdog
     group: cluster
