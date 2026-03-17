@@ -72,6 +72,16 @@ spec:
           inputs: [remap_kubernetes_logs]
           condition: .label.app == "home-assistant" && contains(string!(.message), "nest integration could not authenticate")
 
+        filter_home_assistant_bluetooth_recovery_logs:
+          type: filter
+          inputs: [remap_kubernetes_logs]
+          condition: |
+            .label.app == "home-assistant" && (
+              contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not determine the power state of the Bluetooth adapter hci1") ||
+              contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not cycle the Bluetooth adapter hci1") ||
+              contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not reset the power state of the Bluetooth adapter hci1")
+            )
+
         nest_auth_metric:
           type: log_to_metric
           inputs: [filter_nest_logs]
@@ -81,11 +91,32 @@ spec:
               name: home_assistant_nest_auth_failure_total
               namespace: home_ops
 
+        home_assistant_bluetooth_recovery_metric:
+          type: log_to_metric
+          inputs: [filter_home_assistant_bluetooth_recovery_logs]
+          metrics:
+            - type: counter
+              field: message
+              name: home_assistant_bluetooth_recovery_warning_total
+              namespace: home_ops
+
+        filter_loki_logs:
+          type: filter
+          inputs: [remap_kubernetes_logs]
+          condition: |
+            !(
+              .label.app == "home-assistant" && (
+                contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not determine the power state of the Bluetooth adapter hci1") ||
+                contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not cycle the Bluetooth adapter hci1") ||
+                contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not reset the power state of the Bluetooth adapter hci1")
+              )
+            )
+
       # Sinks
       sinks:
         loki:
           type: loki
-          inputs: [remap_kubernetes_logs]
+          inputs: [filter_loki_logs]
           endpoint: http://loki-gateway.monitoring.svc.cluster.local
           encoding:
             codec: json
@@ -102,7 +133,7 @@ spec:
 
         prometheus_sink:
           type: prometheus_exporter
-          inputs: [nest_auth_metric, internal_metrics]
+          inputs: [nest_auth_metric, home_assistant_bluetooth_recovery_metric, internal_metrics]
           address: 0.0.0.0:9090
 
     # Persistence for buffering
