@@ -19,7 +19,7 @@ spec:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: minio-store
+        barmanObjectName: n8n-minio-store
         serverName: n8n
 
   monitoring:

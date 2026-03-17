@@ -3,7 +3,7 @@
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
-  name: minio-store
+  name: immich-minio-store
   namespace: home
 spec:
   retentionPolicy: 30d
