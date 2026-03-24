@@ -77,9 +77,9 @@ spec:
           inputs: [remap_kubernetes_logs]
           condition: |
             .label.app == "home-assistant" && (
-              contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not determine the power state of the Bluetooth adapter hci1") ||
-              contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not cycle the Bluetooth adapter hci1") ||
-              contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not reset the power state of the Bluetooth adapter hci1")
+              contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not determine the power state of the Bluetooth adapter hci1")
+              || contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not cycle the Bluetooth adapter hci1")
+              || contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not reset the power state of the Bluetooth adapter hci1")
             )
 
         nest_auth_metric:
@@ -106,9 +106,9 @@ spec:
           condition: |
             !(
               .label.app == "home-assistant" && (
-                contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not determine the power state of the Bluetooth adapter hci1") ||
-                contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not cycle the Bluetooth adapter hci1") ||
-                contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not reset the power state of the Bluetooth adapter hci1")
+                contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not determine the power state of the Bluetooth adapter hci1")
+                || contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not cycle the Bluetooth adapter hci1")
+                || contains(string!(.message), "[bluetooth_auto_recovery.recover] Could not reset the power state of the Bluetooth adapter hci1")
               )
             )
 
