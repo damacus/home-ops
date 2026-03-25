@@ -82,6 +82,20 @@ spec:
               name: home_assistant_nest_auth_failure_total
               namespace: home_ops
 
+        filter_home_assistant_bt:
+          type: filter
+          inputs: [remap_kubernetes_logs]
+          condition: '.label.app == "home-assistant" && is_string(.message) && match(string!(.message), r''\\[bluetooth_auto_recovery\\.recover\\] Could not (determine the power state of|cycle|reset the power state of) the Bluetooth adapter hci1'')'
+
+        home_assistant_bt_metric:
+          type: log_to_metric
+          inputs: [filter_home_assistant_bt]
+          metrics:
+            - type: counter
+              field: message
+              name: home_assistant_bluetooth_recovery_total
+              namespace: home_ops
+
       # Sinks
       sinks:
         loki:
@@ -103,7 +117,7 @@ spec:
 
         prometheus_sink:
           type: prometheus_exporter
-          inputs: [nest_auth_metric, internal_metrics]
+          inputs: [nest_auth_metric, home_assistant_bt_metric, internal_metrics]
           address: 0.0.0.0:9090
 
     # Persistence for buffering
