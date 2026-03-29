@@ -45,6 +45,15 @@ spec:
                   secretKeyRef:
                     name: unifi-release-announcer
                     key: DISCORD_CHANNEL_ID
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              capabilities:
+                drop: ["ALL"]
+              seccompProfile:
+                type: RuntimeDefault
             resources:
               requests:
                 cpu: 10m
