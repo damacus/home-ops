@@ -67,4 +67,4 @@ spec:
         accessMode: ReadWriteOnce
         globalMounts:
           - path: /cache
-        size: 10m
+        size: 1Gi
