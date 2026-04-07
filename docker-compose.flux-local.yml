@@ -1,7 +1,7 @@
 ---
 services:
   flux-local:
-    image: ghcr.io/allenporter/flux-local:v8.1.0
+    image: ghcr.io/allenporter/flux-local:v8.2.0
     volumes:
       - .:/workspace
     working_dir: /workspace
