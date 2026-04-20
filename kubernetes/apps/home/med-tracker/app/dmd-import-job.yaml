@@ -45,7 +45,7 @@ spec:
               mountPath: /work/nhs-dmd
       containers:
         - name: import-dmd-release
-          image: ghcr.io/damacus/med-tracker:0.3.36
+          image: ghcr.io/damacus/med-tracker:0.3.37
           command: ["/bin/sh", "-ec"]
           args:
             - |
