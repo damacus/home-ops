@@ -28,6 +28,10 @@ spec:
         replicas: 1
         annotations:
           reloader.stakater.com/auto: "true"
+        pod:
+          securityContext:
+            fsGroup: 988
+            fsGroupChangePolicy: OnRootMismatch
         containers:
           app:
             image:
@@ -37,24 +41,40 @@ spec:
               TZ: "${TZ}"
               RUSTFS_VOLUMES: /data
               RUSTFS_ADDRESS: :9000
+              RUSTFS_CONSOLE_ENABLE: "true"
               RUSTFS_CONSOLE_ADDRESS: :9001
               RUSTFS_OBS_METRIC_ENDPOINT: http://vmsingle-vm.monitoring.svc.cluster.local:8428/opentelemetry/api/v1/push
             envFrom:
               - secretRef:
                   name: rustfs-credentials
+            args: ["/data"]
             probes:
-              liveness: &probes
+              liveness:
                 enabled: true
                 custom: true
                 spec:
                   httpGet:
-                    path: /minio/health/live
+                    path: /rustfs/health/live
                     port: 9000
                   initialDelaySeconds: 30
                   periodSeconds: 30
                   timeoutSeconds: 10
                   failureThreshold: 6
-              readiness: *probes
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /rustfs/health/ready
+                    port: 9000
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  timeoutSeconds: 10
+                  failureThreshold: 6
+            securityContext:
+              runAsUser: 977
+              runAsGroup: 988
+              runAsNonRoot: true
             resources:
               requests:
                 cpu: 100m
