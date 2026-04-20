@@ -4,7 +4,7 @@ kind: Job
 metadata:
   # Rename this Job for each real release import. Job specs are immutable, and
   # a new name makes each import explicit in Git history.
-  name: med-tracker-import-dmd-release-2026-04-12
+  name: med-tracker-import-dmd-release-2026-04-12-rerun
   namespace: home
 spec:
   backoffLimit: 0
