@@ -54,7 +54,7 @@ spec:
                 custom: true
                 spec:
                   httpGet:
-                    path: /rustfs/health/live
+                    path: /health
                     port: 9000
                   initialDelaySeconds: 30
                   periodSeconds: 30
@@ -65,7 +65,7 @@ spec:
                 custom: true
                 spec:
                   httpGet:
-                    path: /rustfs/health/ready
+                    path: /health
                     port: 9000
                   initialDelaySeconds: 10
                   periodSeconds: 10
