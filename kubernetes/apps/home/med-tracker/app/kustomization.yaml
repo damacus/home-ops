@@ -8,4 +8,5 @@ resources:
   - externalsecret.yaml
   - dmd-import-externalsecret.yaml
   - dmd-import-job.yaml
+  - grafana-dashboard.yaml
   - storage-pvc.yaml

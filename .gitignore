@@ -56,3 +56,7 @@ provisioning/.ruby-lsp/
 
 claude-progress.txt
 message.txt
+
+# Python caches
+__pycache__/
+scripts/__pycache__/

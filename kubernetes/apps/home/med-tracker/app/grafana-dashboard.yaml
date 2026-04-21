@@ -1,0 +1,90 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: med-tracker-logs-dashboard
+  namespace: home
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    grafana_folder: Home
+data:
+  med-tracker-logs.json: |
+    {
+      "id": null,
+      "uid": "med-tracker-logs",
+      "title": "Med Tracker Logs",
+      "tags": ["med-tracker", "logs"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "10s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Parsed Application Logs",
+          "type": "logs",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "h": 14,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "{namespace=\"home\", app=\"med-tracker\"} | json level=\"log.level\", path=\"url.path\", method=\"http.request.method\", status=\"http.response.status_code\" | line_format `{{.message}} {{if .method}}{{.method}} {{end}}{{if .path}}{{.path}}{{end}}{{if .status}}status={{.status}} {{end}}{{if .level}}level={{.level}}{{end}}`",
+              "queryType": "range"
+            }
+          ],
+          "options": {
+            "showTime": true,
+            "showLabels": true,
+            "showCommonLabels": false,
+            "wrapLogMessage": true,
+            "prettifyLogMessage": true,
+            "enableLogDetails": true,
+            "sortOrder": "Descending"
+          }
+        },
+        {
+          "id": 2,
+          "title": "Raw Stream",
+          "type": "logs",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 14
+          },
+          "targets": [
+            {
+              "refId": "B",
+              "expr": "{namespace=\"home\", app=\"med-tracker\"}",
+              "queryType": "range"
+            }
+          ],
+          "options": {
+            "showTime": true,
+            "showLabels": true,
+            "showCommonLabels": false,
+            "wrapLogMessage": true,
+            "prettifyLogMessage": true,
+            "enableLogDetails": true,
+            "sortOrder": "Descending"
+          }
+        }
+      ]
+    }
