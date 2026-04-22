@@ -13,7 +13,7 @@ spec:
       restartPolicy: Never
       initContainers:
         - name: fetch-dmd-release
-          image: amazon/aws-cli:2.34.33
+          image: amazon/aws-cli:2.34.34
           command: ["/bin/sh", "-ec"]
           args:
             - |
