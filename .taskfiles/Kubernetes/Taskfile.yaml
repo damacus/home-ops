@@ -36,6 +36,38 @@ tasks:
           sh: "test -f {{.KUBECONFORM_SCRIPT}}",
         }
 
+  object-storage-migrate:
+    desc: Copy or sync objects between MinIO and RustFS with local rclone
+    summary: |
+      Reads S3 credentials from the live Kubernetes secrets in the storage
+      namespace and uses local rclone to copy or sync objects between the
+      MinIO and RustFS S3 endpoints.
+
+      Examples:
+        task kubernetes:object-storage-migrate
+        task kubernetes:object-storage-migrate source_path=med-tracker destination_path=med-tracker
+        task kubernetes:object-storage-migrate mode=sync dry_run=true
+    vars:
+      SCRIPT: "{{.ROOT_DIR}}/scripts/object_storage_migrate.sh"
+      SOURCE: '{{.source | default "minio"}}'
+      DESTINATION: '{{.destination | default "rustfs"}}'
+      MODE: '{{.mode | default "copy"}}'
+      SOURCE_PATH: '{{.source_path | default ""}}'
+      DESTINATION_PATH: '{{.destination_path | default ""}}'
+      DRY_RUN: '{{.dry_run | default "false"}}'
+    cmd: >-
+      bash {{.SCRIPT}}
+      --source {{.SOURCE}}
+      --destination {{.DESTINATION}}
+      --mode {{.MODE}}
+      {{if .SOURCE_PATH}}--source-path {{.SOURCE_PATH}}{{end}}
+      {{if .DESTINATION_PATH}}--destination-path {{.DESTINATION_PATH}}{{end}}
+      {{if eq .DRY_RUN "true"}}--dry-run{{end}}
+    preconditions:
+      - { msg: "Missing migration script", sh: "test -f {{.SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+      - { msg: "Missing rclone", sh: "command -v rclone >/dev/null" }
+
   edge-smoke:
     desc: Run baseline HTTP and WebSocket smoke checks for the Traefik edge
     summary: |
