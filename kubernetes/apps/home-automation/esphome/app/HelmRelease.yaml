@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: ghcr.io/esphome/esphome
-              tag: 2026.4.0@sha256:78a82d810709c28ea4cd69e8691f520297cb08a4c0e74d1b290afa1a0c2fcfbb
+              tag: 2026.4.2@sha256:a2784bc539dcf7529241bfe4425d645f1076031f9bf9ce07f5d59d1c45e9ff22
 
             securityContext:
               runAsNonRoot: false
