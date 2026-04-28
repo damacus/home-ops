@@ -6,7 +6,7 @@ metadata:
 spec:
   images:
     - major: 16
-      image: ghcr.io/cloudnative-pg/postgresql:16.13@sha256:e05777da3dd583b99537dae500b4b63794c5b4fe01ececb2aaca1148bf555a8f
+      image: ghcr.io/cloudnative-pg/postgresql:16.13@sha256:da09a5927dd7af1572591df6c2c1a192d441054ff73e6df823402fcbf08c5ff0
     - major: 17
       image: ghcr.io/cloudnative-pg/postgresql:17.6
     - major: 18
