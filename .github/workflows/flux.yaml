@@ -4,7 +4,7 @@ name: "Flux & Kubeconform"
 
 on:
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@main
 
       - name: Setup Workflow Tools
         run: brew install fluxcd/tap/flux kubeconform kustomize
@@ -40,7 +40,7 @@ jobs:
 
   flux-test:
     name: Flux Local Test
-    needs: [yaml-lint, kubeconform]
+    needs: [ yaml-lint, kubeconform ]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -67,13 +67,13 @@ jobs:
 
   flux-diff:
     name: Flux Local Diff
-    needs: [yaml-lint, kubeconform]
+    needs: [ yaml-lint, kubeconform ]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     strategy:
       matrix:
-        resource: ["helmrelease", "kustomization"]
+        resource: [ "helmrelease", "kustomization" ]
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -109,10 +109,11 @@ jobs:
 
   flux-diff-success:
     if: ${{ always() }}
-    needs: ["flux-diff", "flux-test"]
+    needs: [ "flux-diff", "flux-test" ]
     name: Flux Local Successful
     runs-on: ubuntu-latest
     steps:
-      - if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+      - if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result,
+          'cancelled') }}
         name: Check matrix status
         run: exit 1
