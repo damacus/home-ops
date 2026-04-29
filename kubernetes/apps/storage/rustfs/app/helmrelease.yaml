@@ -43,7 +43,11 @@ spec:
               RUSTFS_ADDRESS: :9000
               RUSTFS_CONSOLE_ENABLE: "true"
               RUSTFS_CONSOLE_ADDRESS: :9001
+              RUSTFS_OBS_ENDPOINT: http://vmsingle-vm.monitoring.svc.cluster.local:8428
               RUSTFS_OBS_METRIC_ENDPOINT: http://vmsingle-vm.monitoring.svc.cluster.local:8428/opentelemetry/api/v1/push
+              RUSTFS_OBS_USE_STDOUT: "false"
+              RUSTFS_OBS_TRACES_EXPORT_ENABLED: "false"
+              RUSTFS_OBS_LOGS_EXPORT_ENABLED: "false"
             envFrom:
               - secretRef:
                   name: rustfs-credentials
