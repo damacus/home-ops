@@ -30,6 +30,11 @@ spec:
     controllers:
       med-tracker:
         type: deployment
+        strategy: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+
         annotations:
           reloader.stakater.com/auto: "true"
         initContainers:
@@ -37,7 +42,7 @@ spec:
             image:
               repository: ghcr.io/damacus/med-tracker
               tag: 0.3.41
-            command: ["bin/rails", "db:prepare"]
+            command: [ "bin/rails", "db:prepare" ]
             envFrom:
               - secretRef:
                   name: med-tracker-secret
@@ -47,7 +52,7 @@ spec:
           app:
             image:
               repository: ghcr.io/damacus/med-tracker
-              tag: 0.3.41
+              tag: 0.3.42
 
             envFrom:
               - secretRef:
@@ -56,6 +61,10 @@ spec:
               RAILS_ENV: production
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
+              APP_URL: "https://med-tracker.damacus.io"
+              OIDC_ISSUER_URL: "https://zitadel.damacus.io"
+              OIDC_REDIRECT_URI: "https://med-tracker.damacus.io/auth/oidc/callback"
+              OIDC_PROVIDER_NAME: "Zitadel"
 
             probes:
               liveness:
@@ -107,6 +116,26 @@ spec:
             sectionName: websecure
         hostnames:
           - "med-tracker.ironstone.casa"
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: med-tracker
+                namespace: home
+                port: 80
+                weight: 1
+      external:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
+        parentRefs:
+          - name: traefik-internal
+            namespace: network
+            sectionName: websecure
+        hostnames:
+          - "med-tracker.damacus.io"
         rules:
           - matches:
               - path:
