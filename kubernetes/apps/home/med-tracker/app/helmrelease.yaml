@@ -30,11 +30,12 @@ spec:
     controllers:
       med-tracker:
         type: deployment
-        strategy: RollingUpdate
-        replicas: 2
-        rollingUpdate:
-          maxSurge: 1
-          maxUnavailable: 0
+        strategy: Recreate
+        # TODO: Needs a RWX PVC
+        # replicas: 2
+        # rollingUpdate:
+        #   maxSurge: 1
+        #   maxUnavailable: 0
 
         annotations:
           reloader.stakater.com/auto: "true"
