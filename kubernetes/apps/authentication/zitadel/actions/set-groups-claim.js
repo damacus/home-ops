@@ -6,9 +6,6 @@
  *
  * Attach this action to: "Complement token" flow
  *
- * Approved users:
- * - Admin: dan.m.webb@gmail.com
- * - Users: 28lauracummings@gmail.com, webbglor@googlemail.com, gtxthor37@gmail.com
  */
 
 function setGroupsClaim(ctx, api) {
@@ -52,4 +49,8 @@ function setGroupsClaim(ctx, api) {
     if (groups.length > 0) {
         api.v1.claims.setClaim('groups', groups);
     }
+}
+
+function setGroupClaims(ctx, api) {
+    setGroupsClaim(ctx, api);
 }

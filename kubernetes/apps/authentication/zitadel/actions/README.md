@@ -24,7 +24,7 @@ This directory contains Zitadel Actions - JavaScript functions that execute duri
 2. Go to **Actions** in the left sidebar
 3. Click **"New Action"**
 4. Fill in the form:
-   - **Name**: `Set Groups Claim`
+   - **Name**: `setGroupsClaim`
    - **Script**: Copy the contents of `set-groups-claim.js`
    - **Timeout**: 10s (default)
    - **Allowed to fail**: No (unchecked)
@@ -38,13 +38,13 @@ This directory contains Zitadel Actions - JavaScript functions that execute duri
 4. Select:
    - **Flow Type**: `Complement token`
    - **Trigger Type**: `Pre token creation`
-   - **Action**: `Set Groups Claim` (the action you just created)
+   - **Action**: `setGroupsClaim` (the action you just created)
 5. Click **"Save"**
 
 ### Step 3: Verify Action is Active
 
 1. Go back to **Actions**
-2. Find `Set Groups Claim`
+2. Find `setGroupsClaim`
 3. Ensure it shows as **"Active"** and attached to **"Complement token"** flow
 
 ## Testing
@@ -83,7 +83,7 @@ To add or remove users:
 
 1. Edit `set-groups-claim.js`
 2. Update the `adminEmails` or `approvedEmails` arrays
-3. Go to Zitadel Console → Actions → `Set Groups Claim`
+3. Go to Zitadel Console → Actions → `setGroupsClaim`
 4. Update the script
 5. Save
 
