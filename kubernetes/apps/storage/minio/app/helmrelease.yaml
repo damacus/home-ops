@@ -164,6 +164,6 @@ spec:
 
     persistence:
       minio-data:
-        existingClaim: minio-data
+        existingClaim: minio-data-hdd
         globalMounts:
           - path: /data
