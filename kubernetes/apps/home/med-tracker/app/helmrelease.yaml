@@ -42,8 +42,8 @@ spec:
         initContainers:
           migrate:
             image:
-              repository: ghcr.io/damacus/med-tracker
-              tag: sha-b7a6bf0d36f579353543f7cdcb2a699dd6fb3333
+              repository: &repository ghcr.io/damacus/med-tracker
+              tag: &tag 0.3.46
             command: [ "bin/rails", "db:prepare" ]
             envFrom:
               - secretRef:
@@ -53,8 +53,8 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/damacus/med-tracker
-              tag: sha-b7a6bf0d36f579353543f7cdcb2a699dd6fb3333
+              repository: *repository
+              tag: *tag
 
             envFrom:
               - secretRef:
