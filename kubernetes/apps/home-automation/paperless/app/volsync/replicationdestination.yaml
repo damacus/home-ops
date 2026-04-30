@@ -3,16 +3,16 @@
 apiVersion: volsync.backube/v1alpha1
 kind: ReplicationDestination
 metadata:
-  name: paperless-data-ssd
+  name: paperless-data-hdd
   namespace: home-automation
 spec:
   trigger:
     manual: restore-once
   restic:
     repository: paperless-restic-local
-    destinationPVC: paperless-data-ssd
+    destinationPVC: paperless-data-hdd
     copyMethod: Direct
-    storageClassName: nfs-csi-ssd
+    storageClassName: nfs-csi-unas
     accessModes:
       - ReadWriteOnce
     capacity: 100Gi

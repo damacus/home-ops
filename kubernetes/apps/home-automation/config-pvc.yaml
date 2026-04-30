@@ -2,11 +2,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: home-assistant-nfs-csi-ssd
+  name: home-assistant-nfs-csi-hdd
   namespace: home-automation
 spec:
   accessModes: [ReadWriteMany]
   resources:
     requests:
       storage: 50Gi
-  storageClassName: nfs-csi-ssd
+  storageClassName: nfs-csi-unas
