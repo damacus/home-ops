@@ -43,7 +43,6 @@ spec:
               repository: ghcr.io/paperless-ngx/paperless-ngx
               tag: 2.20.15@sha256:6c86cad803970ea782683a8e80e7403444c5bf3cf70de63b4d3c8e87500db92f
             env:
-              # Configure application
               PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
               PAPERLESS_SECRET_KEY:
                 valueFrom:
@@ -55,7 +54,6 @@ spec:
               PAPERLESS_TIME_ZONE: Europe/London
               PAPERLESS_WEBSERVER_WORKERS: "2"
               PAPERLESS_TASK_WORKERS: "2"
-              # Configure Remote User auth
               PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: "false"
               PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS: "false"
               PAPERLESS_SOCIALACCOUNT_PROVIDERS:
@@ -63,28 +61,22 @@ spec:
                   secretKeyRef:
                     name: paperless-zitadel-oidc
                     key: providers
-              # Configure folders
               PAPERLESS_CONSUMPTION_DIR: /data/nas-mount/incoming
               PAPERLESS_DATA_DIR: /data/local/data
+              PAPERLESS_DB_TIMEOUT: "30"
               PAPERLESS_EXPORT_DIR: /data/nas-mount/export
               PAPERLESS_MEDIA_ROOT: /data/nas-mount/media
-              # Configure folder importer
               PAPERLESS_CONSUMER_POLLING: "60"
               PAPERLESS_CONSUMER_RECURSIVE: "true"
               PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "true"
-              # Configure redis integration
               PAPERLESS_REDIS_PREFIX: pngx
               PAPERLESS_REDIS: redis://redis-master.database.svc.cluster.local:6379
-              # Configure Tika
               PAPERLESS_TIKA_ENABLED: 1
               PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://localhost:3000
               PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
-              # Configure user permissions
               USERMAP_GID: "1030"
               USERMAP_UID: "1030"
-              # Configure OCR
-              PAPERLESS_OCR_USER_ARGS: '{"invalidate_digital_signatures": true}'
-              # Configure admin user
+              PAPERLESS_OCR_USER_ARGS: "{\"invalidate_digital_signatures\": true}"
               PAPERLESS_ADMIN_USER:
                 valueFrom:
                   secretKeyRef:
@@ -148,7 +140,7 @@ spec:
 
     route:
       app:
-        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
+        hostnames: [ "{{ .Release.Name }}.ironstone.casa" ]
         parentRefs:
           - name: traefik-internal
             namespace: network
@@ -179,5 +171,5 @@ spec:
                 matchExpressions:
                   - key: app.kubernetes.io/name
                     operator: In
-                    values: ["redis"]
+                    values: [ "redis" ]
               topologyKey: kubernetes.io/hostname
