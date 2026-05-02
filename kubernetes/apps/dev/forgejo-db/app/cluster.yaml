@@ -26,7 +26,7 @@ spec:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: forgejo-minio-store
+        barmanObjectName: forgejo-rustfs-store
         serverName: forgejo
 
   monitoring:

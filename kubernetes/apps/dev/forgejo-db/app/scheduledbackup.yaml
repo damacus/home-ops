@@ -12,6 +12,6 @@ spec:
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
     parameters:
-      objectStore: forgejo-minio-store
+      objectStore: forgejo-rustfs-store
   cluster:
     name: forgejo
