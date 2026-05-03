@@ -4,7 +4,7 @@ logger:
   default: info
 
 mqtt:
-  host: mosquitto.home-automataion.svc.cluster.local
+  host: mosquitto.home-automation.svc.cluster.local
   topic_prefix: frigate
 
 database:
@@ -25,14 +25,15 @@ model:
 
 # https://docs.frigate.video/configuration/hardware_acceleration_video#rockchip-platform
 ffmpeg:
-  path: "7.0"
   hwaccel_args: preset-rkmpp
+  apple_compatibility: true
 
 record:
   enabled: true
-  retain:
+  continuous:
+    days: 0
+  motion:
     days: 7
-    mode: motion
 
 snapshots:
   enabled: true
@@ -44,22 +45,67 @@ objects:
 
 go2rtc:
   streams:
-    birdy: rtsp://192.168.1.180:8554/main
+    birdy:
+      - rtsp://192.168.1.180:8554/main
+      - "ffmpeg:birdy#audio=aac"
+      - "ffmpeg:birdy#audio=opus"
+    birdy_sub:
+      - rtsp://192.168.1.180:8554/sub
 
 cameras:
   birdy:
     ffmpeg:
       inputs:
-        - path: rtsp://192.168.1.180:8554/main
-          input_args: preset-rtsp-generic
+        - path: rtsp://127.0.0.1:8554/birdy
+          input_args: preset-rtsp-restream
           roles:
             - record
             - audio
-        - path: rtsp://192.168.1.180:8554/sub
-          input_args: preset-rtsp-generic
+        - path: rtsp://127.0.0.1:8554/birdy_sub
+          input_args: preset-rtsp-restream
           roles:
             - detect
     detect:
       width: 640
       height: 480
       fps: 5
+    live:
+      streams:
+        Main: birdy
+        Sub: birdy_sub
+    objects:
+      filters:
+        bird: {}
+    notifications:
+      enabled: true
+    zones:
+      Nesting:
+        coordinates: 0.218,0.935,0.249,0.381,0.717,0.383,0.803,0.952
+        loitering_time: 5
+    review:
+      alerts:
+        required_zones: Nesting
+
+detect:
+  enabled: true
+
+version: 0.17-0
+
+semantic_search:
+  enabled: true
+  model_size: small
+
+face_recognition:
+  enabled: false
+  model_size: small
+
+lpr:
+  enabled: false
+
+classification:
+  bird:
+    enabled: true
+
+notifications:
+  enabled: false
+  email: dan.m.webb@gmail.com
