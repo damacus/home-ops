@@ -19,7 +19,7 @@ tasks:
   venv:
     desc: Set up virtual environment
     cmds:
-      - "uv venv {{.VIRTUAL_ENV}}"
+      - "uv venv --allow-existing {{.VIRTUAL_ENV}}"
       - 'VIRTUAL_ENV="{{.VIRTUAL_ENV}}" uv pip sync "{{.PIP_REQUIREMENTS_FILE}}"'
     sources:
       - "{{.PIP_REQUIREMENTS_FILE}}"
