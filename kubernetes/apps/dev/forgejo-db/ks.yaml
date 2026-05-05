@@ -10,6 +10,7 @@ spec:
   prune: true
   dependsOn:
     - name: cloudnative-pg
+    - name: external-secrets-stores
     - name: openebs
     - name: rustfs
   sourceRef:

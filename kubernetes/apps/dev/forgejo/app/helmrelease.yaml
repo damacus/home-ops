@@ -73,6 +73,12 @@ spec:
     gitea:
       admin:
         existingSecret: forgejo-admin
+      oauth:
+        - name: zitadel
+          provider: openidConnect
+          existingSecret: forgejo-zitadel-oidc
+          autoDiscoverUrl: "https://zitadel.damacus.io/.well-known/openid-configuration"
+          scopes: "openid,email,profile,groups"
 
       config:
         APP_NAME: "Forgejo"
@@ -107,9 +113,16 @@ spec:
         security:
           INSTALL_LOCK: "true"
 
+        oauth2_client:
+          ENABLE_AUTO_REGISTRATION: "true"
+          OPENID_CONNECT_SCOPES: "profile email groups"
+          UPDATE_AVATAR: "true"
+
         service:
           DISABLE_REGISTRATION: "false"
+          ALLOW_ONLY_EXTERNAL_REGISTRATION: "true"
           REQUIRE_SIGNIN_VIEW: "false"
+          SHOW_REGISTRATION_BUTTON: "false"
 
         log:
           MODE: console
