@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: zitadel
-      version: 9.34.0
+      version: 9.34.1
       sourceRef:
         kind: HelmRepository
         name: zitadel
@@ -30,7 +30,7 @@ spec:
 
     image:
       repository: ghcr.io/zitadel/zitadel
-      tag: v4.14.0
+      tag: v4.15.0
       pullPolicy: IfNotPresent
 
     annotations:
