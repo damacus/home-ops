@@ -103,8 +103,8 @@ spec:
         type: configMap
         name: frigate-configmap
         globalMounts:
-          - path: /config/config.yaml
-            subPath: config.yaml
+          - path: /config/config.yml
+            subPath: config.yml
             readOnly: true
       media:
         existingClaim: frigate-media
