@@ -34,9 +34,27 @@ spec:
     podAnnotations:
       reloader.stakater.com/auto: "true"
 
+    podSecurityContext:
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+      seccompProfile:
+        type: RuntimeDefault
+
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      privileged: false
+      readOnlyRootFilesystem: true
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+
     persistence:
       enabled: true
-      existingClaim: forgejo
+      create: false
+      claimName: forgejo
 
     service:
       http:
@@ -45,6 +63,9 @@ spec:
       ssh:
         type: LoadBalancer
         port: 22
+        loadBalancerIP: 192.168.1.236
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: ssh.forgejo.ironstone.casa
 
     ingress:
       enabled: false
@@ -61,7 +82,7 @@ spec:
           DOMAIN: forgejo.ironstone.casa
           ROOT_URL: "https://forgejo.ironstone.casa"
           HTTP_PORT: 3000
-          SSH_DOMAIN: forgejo.ironstone.casa
+          SSH_DOMAIN: ssh.forgejo.ironstone.casa
           SSH_PORT: 22
           DISABLE_SSH: "false"
           LFS_START_SERVER: "true"

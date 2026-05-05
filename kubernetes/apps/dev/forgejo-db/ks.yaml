@@ -11,6 +11,7 @@ spec:
   dependsOn:
     - name: cloudnative-pg
     - name: openebs
+    - name: rustfs
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
