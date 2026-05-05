@@ -47,6 +47,8 @@ spec:
     - toFQDNs:
         - matchName: slack.com
         - matchName: api.slack.com
+        - matchName: northops.slack.com
+        - matchName: chefcommunity.slack.com
         - matchName: api.openai.com
         - matchName: api.github.com
       toPorts:
