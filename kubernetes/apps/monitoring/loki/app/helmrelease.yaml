@@ -54,7 +54,7 @@ spec:
           ruler: loki-data
           admin: loki-data
         s3:
-          endpoint: http://minio.storage.svc.cluster.local:9000
+          endpoint: http://rustfs.storage.svc.cluster.local:9000
           region: us-east-1
           s3ForcePathStyle: true
           insecure: true

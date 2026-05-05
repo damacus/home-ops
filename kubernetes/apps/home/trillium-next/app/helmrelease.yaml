@@ -36,6 +36,8 @@ spec:
               TRILIUM_DATA_DIR: &datadir /home/node/trilium-data
               SSO_ENABLED: "true"
               BASE_URL: https://notes.ironstone.casa
+              USER_UID: "1000"
+              USER_GID: "1000"
             envFrom:
               - secretRef:
                   name: trillium-next
@@ -66,11 +68,13 @@ spec:
               allowPrivilegeEscalation: false
               capabilities:
                 drop: ["ALL"]
+                add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
+              runAsGroup: 0
+              runAsNonRoot: false
+              runAsUser: 0
+              seccompProfile: { type: RuntimeDefault }
         pod:
           securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
             fsGroup: 1000
             fsGroupChangePolicy: OnRootMismatch
             seccompProfile: { type: RuntimeDefault }

@@ -32,6 +32,23 @@ spec:
       paperless:
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          fix-run-permissions:
+            image:
+              repository: busybox
+              tag: 1.37.0
+            command: ["/bin/sh", "-c"]
+            args:
+              - chown 1030:1030 /run && chmod 0755 /run
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+                add: ["CHOWN", "FOWNER"]
+              runAsGroup: 0
+              runAsNonRoot: false
+              runAsUser: 0
+              seccompProfile: { type: RuntimeDefault }
         pod:
           securityContext:
             runAsUser: 1030
@@ -178,6 +195,15 @@ spec:
         path: /var/nfs/shared/nfs/paperless
         globalMounts:
           - path: /data/nas-mount
+
+      run:
+        type: emptyDir
+        advancedMounts:
+          paperless:
+            fix-run-permissions:
+              - path: /run
+            app:
+              - path: /run
 
     affinity:
       # Prefer to be scheduled with redis (soft affinity)
