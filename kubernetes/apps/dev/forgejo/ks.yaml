@@ -9,8 +9,10 @@ spec:
   path: ./kubernetes/apps/dev/forgejo/app
   prune: true
   dependsOn:
+    - name: external-secrets-stores
     - name: forgejo-db
     - name: traefik
+    - name: zitadel
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
