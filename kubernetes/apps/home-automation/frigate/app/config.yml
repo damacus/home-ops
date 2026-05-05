@@ -60,11 +60,11 @@ go2rtc:
       - "ffmpeg:birdy#audio=aac"
       - "ffmpeg:birdy#audio=opus"
     birdy_live:
-      - "ffmpeg:birdy#video=h264"
+      - "ffmpeg:birdy#video=h264#audio=aac/16000"
     birdy_sub:
       - rtsp://192.168.1.180:8554/sub
     birdy_sub_live:
-      - "ffmpeg:birdy_sub#video=h264"
+      - "ffmpeg:birdy_sub#video=h264#audio=aac/16000"
 
 cameras:
   birdy:
