@@ -69,7 +69,7 @@ packaging==26.2
     #   ansible-core
     #   ansible-lint
     #   black
-pathspec==1.0.4
+pathspec==1.1.1
     # via
     #   ansible-lint
     #   black
