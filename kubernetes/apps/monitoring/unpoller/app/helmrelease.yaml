@@ -52,19 +52,10 @@ spec:
               UP_LOG_QUIET: "false"
               # Polling Configuration
               UP_POLLER_DEBUG: "false"
-              UP_INTERVAL: "30s"
+              UP_INTERVAL: "5m"
             probes:
               liveness:
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /metrics
-                    port: 9130
-                  initialDelaySeconds: 30
-                  periodSeconds: 30
-                  timeoutSeconds: 10
-                  failureThreshold: 3
+                enabled: false
               readiness:
                 enabled: true
                 custom: true
@@ -72,10 +63,10 @@ spec:
                   httpGet:
                     path: /metrics
                     port: 9130
-                  initialDelaySeconds: 5
-                  periodSeconds: 10
+                  initialDelaySeconds: 60
+                  periodSeconds: 30
                   timeoutSeconds: 5
-                  failureThreshold: 3
+                  failureThreshold: 10
             resources:
               requests:
                 cpu: 50m

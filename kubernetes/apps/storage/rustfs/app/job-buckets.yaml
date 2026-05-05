@@ -1,0 +1,44 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rustfs-buckets-create
+  namespace: storage
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: minio/mc:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: RUSTFS_ENDPOINT
+              value: "http://rustfs.storage.svc.cluster.local:9000"
+            - name: BUCKETS
+              value: "cnpg-backups loki-data loki-chunks"
+          envFrom:
+            - secretRef:
+                name: rustfs-credentials
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              echo "Configuring mc alias and waiting for RustFS at ${RUSTFS_ENDPOINT:?}..."
+              i=1
+              while [ "$i" -le 60 ]; do
+                if mc alias set rustfs "${RUSTFS_ENDPOINT:?}" "${RUSTFS_ACCESS_KEY:?}" "${RUSTFS_SECRET_KEY:?}" >/dev/null 2>&1; then
+                  if mc ls rustfs >/dev/null 2>&1; then
+                    echo "RustFS is reachable"; break
+                  fi
+                fi
+                echo "Attempt $i: RustFS not ready, retrying..."; sleep 5
+                i=$((i + 1))
+              done
+
+              for b in ${BUCKETS}; do
+                echo "Creating bucket: $b"
+                mc mb --ignore-existing "rustfs/${b}"
+              done
