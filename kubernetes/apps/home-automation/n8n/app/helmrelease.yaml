@@ -27,14 +27,15 @@ spec:
   values:
     controllers:
       n8n:
+        type: deployment
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
           app:
             image:
-              repository: n8nio/n8n
-              tag: 2.19.2@sha256:385ea908fee7f77792ccf1a1cfd8f1509f2b55d9b20db7b3b00df5e8f85d8875
-            env:
+              repository: &image n8nio/n8n
+              tag: &tag 2.19.2@sha256:385ea908fee7f77792ccf1a1cfd8f1509f2b55d9b20db7b3b00df5e8f85d8875
+            env: &env
               DB_TYPE: "postgresdb"
               DB_POSTGRESDB_DATABASE:
                 valueFrom:
@@ -85,6 +86,10 @@ spec:
               NODE_ENV: "production"
               QUEUE_BULL_REDIS_HOST: "redis-master.database.svc.cluster.local"
               QUEUE_BULL_REDIS_PORT: 6379
+            securityContext: &securityContext
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
             probes:
               liveness: &probes
                 enabled: true
@@ -105,11 +110,37 @@ spec:
                 cpu: 1000m
                 memory: 2Gi
         pod:
-          securityContext:
+          securityContext: &podSecurityContext
             runAsUser: 1000
             runAsGroup: 1000
+            runAsNonRoot: true
             fsGroup: 1000
             fsGroupChangePolicy: "OnRootMismatch"
+            seccompProfile: { type: RuntimeDefault }
+
+      worker:
+        type: deployment
+        replicas: 1
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: *image
+              tag: *tag
+            command: ["n8n"]
+            args: ["worker", "--concurrency=5"]
+            env: *env
+            securityContext: *securityContext
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                cpu: 1000m
+                memory: 2Gi
+        pod:
+          securityContext: *podSecurityContext
 
     service:
       app:
@@ -159,5 +190,7 @@ spec:
     persistence:
       data:
         existingClaim: n8n
-        globalMounts:
-          - path: /home/node/.n8n
+        advancedMounts:
+          n8n:
+            app:
+              - path: /home/node/.n8n
