@@ -16,4 +16,5 @@ resources:
   - ./namespace.yaml
   - ./paperless/ks.yaml
   - ./piper/ks.yaml
+  - ./wakeword/ks.yaml
   - ./whisper/ks.yaml
