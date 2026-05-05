@@ -27,6 +27,12 @@ model:
 ffmpeg:
   hwaccel_args: preset-rkmpp
   apple_compatibility: true
+  output_args:
+    record: >-
+      -f segment -segment_time 10 -segment_format mp4 -reset_timestamps 1
+      -strftime 1 -vf scale=in_range=pc:out_range=tv,format=yuv420p
+      -c:v h264_rkmpp -profile:v main -level:v 41 -g 30 -r 15
+      -c:a aac
 
 record:
   enabled: true
