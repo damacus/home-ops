@@ -59,7 +59,7 @@ tasks:
   poweroff-workers:
     desc: Shutdown worker nodes
     deps: ["deps"]
-    cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} --limit 'worker' -a '/usr/bin/systemctl poweroff' --become"
+    cmd: "{{.VIRTUAL_ENV}}/bin/ansible kubernetes --inventory {{.ANSIBLE_INVENTORY_FILE}} --limit 'workers' -a '/usr/bin/systemctl poweroff' --become"
     preconditions:
       - {
         msg: "Missing Ansible inventory file",

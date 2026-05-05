@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 4.6.2
+      version: 5.0.0
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -99,10 +99,23 @@ spec:
         existingClaim: frigate-config
         globalMounts:
           - path: /config
+      config-file:
+        type: configMap
+        name: frigate-configmap
+        globalMounts:
+          - path: /config/config.yml
+            subPath: config.yml
+            readOnly: true
       media:
         existingClaim: frigate-media
         globalMounts:
           - path: /media
+      shm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 128Mi
+        globalMounts:
+          - path: /dev/shm
 
       usb:
         type: hostPath

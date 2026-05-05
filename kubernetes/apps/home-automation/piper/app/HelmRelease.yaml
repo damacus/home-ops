@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 4.6.2
+      version: 5.0.0
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -46,6 +46,10 @@ spec:
                 enabled: false
               readiness:
                 enabled: false
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
 
             resources:
               requests:
@@ -54,6 +58,14 @@ spec:
               limits:
                 cpu: 2000m
                 memory: 2Gi
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile: { type: RuntimeDefault }
 
     service:
       app:
