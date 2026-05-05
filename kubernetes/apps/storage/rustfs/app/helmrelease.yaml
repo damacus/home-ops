@@ -78,9 +78,9 @@ spec:
                   failureThreshold: 6
             securityContext:
               allowPrivilegeEscalation: false
-              runAsUser: 0
-              runAsGroup: 0
-              runAsNonRoot: false
+              runAsUser: 977
+              runAsGroup: 988
+              runAsNonRoot: true
               capabilities:
                 drop: ["ALL"]
             resources:
