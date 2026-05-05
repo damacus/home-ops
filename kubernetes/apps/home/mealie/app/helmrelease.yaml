@@ -91,12 +91,24 @@ spec:
                 enabled: false
               startup:
                 enabled: false
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
             resources:
               requests:
                 cpu: 10m
                 memory: 250Mi
               limits:
                 memory: 1Gi
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile: { type: RuntimeDefault }
 
     route:
       app:

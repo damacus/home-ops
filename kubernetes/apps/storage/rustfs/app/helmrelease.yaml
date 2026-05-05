@@ -30,8 +30,10 @@ spec:
           reloader.stakater.com/auto: "true"
         pod:
           securityContext:
+            runAsNonRoot: true
             fsGroup: 988
             fsGroupChangePolicy: OnRootMismatch
+            seccompProfile: { type: RuntimeDefault }
         containers:
           app:
             image:
@@ -76,9 +78,12 @@ spec:
                   timeoutSeconds: 10
                   failureThreshold: 6
             securityContext:
+              allowPrivilegeEscalation: false
               runAsUser: 977
               runAsGroup: 988
               runAsNonRoot: true
+              capabilities:
+                drop: ["ALL"]
             resources:
               requests:
                 cpu: 100m
