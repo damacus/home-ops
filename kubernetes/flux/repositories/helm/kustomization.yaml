@@ -28,4 +28,5 @@ resources:
   - ./vector.yaml
   - ./victoria-metrics.yaml
   - backube.yaml
+  - forgejo.yaml
   - zitadel.yaml
