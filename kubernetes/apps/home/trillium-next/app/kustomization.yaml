@@ -4,6 +4,5 @@ kind: Kustomization
 namespace: home
 resources:
   - ./helmrelease.yaml
-  - ./externalsecret.yaml
   - ./networkpolicy.yaml
   - ./pvc.yaml

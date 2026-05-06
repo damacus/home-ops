@@ -34,14 +34,9 @@ spec:
               tag: develop
             env:
               TRILIUM_DATA_DIR: &datadir /home/node/trilium-data
-              TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHBASEURL: https://notes.ironstone.casa
-              TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERBASEURL: https://zitadel.damacus.io
-              TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERNAME: Zitadel
+              TRILIUM_GENERAL_NOAUTHENTICATION: "true"
               USER_UID: "1000"
               USER_GID: "1000"
-            envFrom:
-              - secretRef:
-                  name: trillium-next
             resources:
               requests:
                 cpu: 10m
@@ -101,6 +96,12 @@ spec:
               - path:
                   type: PathPrefix
                   value: /
+            filters:
+              - type: ExtensionRef
+                extensionRef:
+                  group: traefik.io
+                  kind: Middleware
+                  name: oauth2-proxy-forward-auth
             backendRefs:
               - kind: Service
                 name: trillium-next
