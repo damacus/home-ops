@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: rustfs-buckets-create
+  name: rustfs-buckets-create-v2
   namespace: storage
 spec:
   backoffLimit: 6
@@ -28,15 +28,23 @@ spec:
               set -eu
               echo "Configuring mc alias and waiting for RustFS at ${RUSTFS_ENDPOINT:?}..."
               i=1
+              ready=false
               while [ "$i" -le 60 ]; do
                 if mc alias set rustfs "${RUSTFS_ENDPOINT:?}" "${RUSTFS_ACCESS_KEY:?}" "${RUSTFS_SECRET_KEY:?}" >/dev/null 2>&1; then
                   if mc ls rustfs >/dev/null 2>&1; then
-                    echo "RustFS is reachable"; break
+                    echo "RustFS is reachable"
+                    ready=true
+                    break
                   fi
                 fi
                 echo "Attempt $i: RustFS not ready, retrying..."; sleep 5
                 i=$((i + 1))
               done
+
+              if [ "$ready" != "true" ]; then
+                echo "RustFS did not become reachable in time"
+                exit 1
+              fi
 
               for b in ${BUCKETS}; do
                 echo "Creating bucket: $b"
