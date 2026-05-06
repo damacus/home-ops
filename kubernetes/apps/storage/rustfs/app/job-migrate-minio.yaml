@@ -1,0 +1,65 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rustfs-migrate-minio
+  namespace: storage
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: minio/mc:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MINIO_ENDPOINT
+              value: "http://minio.storage.svc.cluster.local:9000"
+            - name: RUSTFS_ENDPOINT
+              value: "http://rustfs.storage.svc.cluster.local:9000"
+            - name: BUCKETS
+              value: "cnpg-backups loki-data loki-chunks volsync-backups app-data backups cloudnative-pg longhorn"
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-root-user
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-root-user
+                  key: MINIO_ROOT_PASSWORD
+            - name: RUSTFS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rustfs-credentials
+                  key: RUSTFS_ACCESS_KEY
+            - name: RUSTFS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rustfs-credentials
+                  key: RUSTFS_SECRET_KEY
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+
+              echo "Configuring MinIO alias at $${MINIO_ENDPOINT:?}"
+              mc alias set minio "$${MINIO_ENDPOINT:?}" "$${MINIO_ROOT_USER:?}" "$${MINIO_ROOT_PASSWORD:?}"
+
+              echo "Configuring RustFS alias at $${RUSTFS_ENDPOINT:?}"
+              mc alias set rustfs "$${RUSTFS_ENDPOINT:?}" "$${RUSTFS_ACCESS_KEY:?}" "$${RUSTFS_SECRET_KEY:?}"
+
+              for b in $${BUCKETS}; do
+                echo "Ensuring RustFS bucket exists: $${b}"
+                mc mb --ignore-existing "rustfs/$${b}"
+
+                if mc stat "minio/$${b}" >/dev/null 2>&1; then
+                  echo "Mirroring minio/$${b} to rustfs/$${b}"
+                  mc mirror --retry --max-workers 1 --limit-upload 2MiB --summary "minio/$${b}" "rustfs/$${b}"
+                else
+                  echo "Skipping missing MinIO bucket: $${b}"
+                fi
+              done

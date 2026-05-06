@@ -20,7 +20,7 @@ spec:
             - name: RUSTFS_ENDPOINT
               value: "http://rustfs.storage.svc.cluster.local:9000"
             - name: BUCKETS
-              value: "cnpg-backups loki-data loki-chunks"
+              value: "cnpg-backups loki-data loki-chunks volsync-backups app-data backups cloudnative-pg longhorn"
           envFrom:
             - secretRef:
                 name: rustfs-credentials
@@ -28,11 +28,11 @@ spec:
           args:
             - |
               set -eu
-              echo "Configuring mc alias and waiting for RustFS at ${RUSTFS_ENDPOINT:?}..."
+              echo "Configuring mc alias and waiting for RustFS at $${RUSTFS_ENDPOINT:?}..."
               i=1
               ready=false
               while [ "$i" -le 60 ]; do
-                if mc alias set rustfs "${RUSTFS_ENDPOINT:?}" "${RUSTFS_ACCESS_KEY:?}" "${RUSTFS_SECRET_KEY:?}" >/dev/null 2>&1; then
+                if mc alias set rustfs "$${RUSTFS_ENDPOINT:?}" "$${RUSTFS_ACCESS_KEY:?}" "$${RUSTFS_SECRET_KEY:?}" >/dev/null 2>&1; then
                   if mc ls rustfs >/dev/null 2>&1; then
                     echo "RustFS is reachable"
                     ready=true
