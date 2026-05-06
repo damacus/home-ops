@@ -78,7 +78,7 @@ spec:
         controller: frigate
         ports:
           http:
-            port: *api_port
+            port: 8971
           rtsp:
             port: 8554
 
