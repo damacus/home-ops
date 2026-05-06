@@ -6,6 +6,7 @@ resources:
   - client-externalsecret.yaml
   - helmrelease.yaml
   - externalsecret.yaml
+  - networkpolicy.yaml
   - pvc.yaml
   - pvc-ssd.yaml
   - secret.yaml

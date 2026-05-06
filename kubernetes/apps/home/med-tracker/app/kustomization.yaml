@@ -7,4 +7,5 @@ resources:
   - helmrelease.yaml
   - externalsecret.yaml
   - grafana-dashboard.yaml
+  - networkpolicy.yaml
   - storage-pvc.yaml

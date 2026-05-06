@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: n8n
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/controller: n8n
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - port: 5678
+          protocol: TCP
