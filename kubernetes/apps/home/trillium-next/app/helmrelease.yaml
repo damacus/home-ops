@@ -34,8 +34,9 @@ spec:
               tag: develop
             env:
               TRILIUM_DATA_DIR: &datadir /home/node/trilium-data
-              SSO_ENABLED: "true"
-              BASE_URL: https://notes.ironstone.casa
+              TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHBASEURL: https://notes.ironstone.casa
+              TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERBASEURL: https://accounts.google.com
+              TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERNAME: Google
               USER_UID: "1000"
               USER_GID: "1000"
             envFrom:
