@@ -3,7 +3,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: trillium-next
+  name: memos
 spec:
   interval: 30m
   chart:
@@ -26,23 +26,19 @@ spec:
     keepHistory: false
   values:
     controllers:
-      trillium:
+      memos:
+        annotations:
+          reloader.stakater.com/auto: "true"
         containers:
           app:
             image:
-              repository: ghcr.io/triliumnext/notes
-              tag: develop
+              repository: neosmemo/memos
+              tag: stable
             env:
-              TRILIUM_DATA_DIR: &datadir /home/node/trilium-data
-              TRILIUM_GENERAL_NOAUTHENTICATION: "true"
-              USER_UID: "1000"
-              USER_GID: "1000"
-            resources:
-              requests:
-                cpu: 10m
-                memory: 100Mi
-              limits:
-                memory: 500Mi
+              MEMOS_DATA: &datadir /var/opt/memos
+              MEMOS_DRIVER: sqlite
+              MEMOS_INSTANCE_URL: https://notes.ironstone.casa
+              MEMOS_PORT: &port "5230"
             probes:
               liveness:
                 enabled: true
@@ -50,7 +46,7 @@ spec:
                 spec:
                   httpGet:
                     path: /
-                    port: &port 8080
+                    port: *port
               readiness:
                 enabled: true
                 custom: true
@@ -60,24 +56,29 @@ spec:
                     port: *port
               startup:
                 enabled: false
+            resources:
+              requests:
+                cpu: 10m
+                memory: 100Mi
+              limits:
+                memory: 512Mi
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
                 drop: ["ALL"]
-                add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
-              runAsGroup: 0
-              runAsNonRoot: false
-              runAsUser: 0
+              runAsNonRoot: true
+              runAsUser: 10001
+              runAsGroup: 10001
               seccompProfile: { type: RuntimeDefault }
         pod:
           securityContext:
-            fsGroup: 1000
+            fsGroup: 10001
             fsGroupChangePolicy: OnRootMismatch
             seccompProfile: { type: RuntimeDefault }
 
     service:
       app:
-        controller: trillium
+        controller: memos
         ports:
           http:
             port: *port
@@ -96,21 +97,15 @@ spec:
               - path:
                   type: PathPrefix
                   value: /
-            filters:
-              - type: ExtensionRef
-                extensionRef:
-                  group: traefik.io
-                  kind: Middleware
-                  name: oauth2-proxy-forward-auth
             backendRefs:
               - kind: Service
-                name: trillium-next
+                name: memos
                 namespace: home
-                port: 8080
+                port: 5230
                 weight: 1
 
     persistence:
       data:
-        existingClaim: trillium-data
+        existingClaim: memos-data
         globalMounts:
           - path: *datadir
