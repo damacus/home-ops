@@ -100,7 +100,7 @@ spec:
                   value: /
             backendRefs:
               - kind: Service
-                name: trillium
+                name: trillium-next
                 namespace: home
                 port: 8080
                 weight: 1
