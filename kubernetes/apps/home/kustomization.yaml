@@ -6,7 +6,7 @@ resources:
   - ./immich-db/ks.yaml
   - ./mealie-db/ks.yaml
   - ./mealie/ks.yaml
+  - ./memos/ks.yaml
   - ./med-tracker-db/ks.yaml
   - ./med-tracker/ks.yaml
   - ./namespace.yaml
-  - ./trillium-next/ks.yaml

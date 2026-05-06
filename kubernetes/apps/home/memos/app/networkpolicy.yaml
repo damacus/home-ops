@@ -1,15 +1,15 @@
 ---
-# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/networking.k8s.io/networkpolicy_v1.json
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: trillium-next
+  name: memos
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/controller: trillium
-      app.kubernetes.io/instance: trillium-next
-      app.kubernetes.io/name: trillium-next
+      app.kubernetes.io/controller: memos
+      app.kubernetes.io/instance: memos
+      app.kubernetes.io/name: memos
   policyTypes:
     - Ingress
   ingress:
@@ -21,5 +21,5 @@ spec:
             matchLabels:
               app.kubernetes.io/name: traefik
       ports:
-        - port: 8080
-          protocol: TCP
+        - protocol: TCP
+          port: 5230
