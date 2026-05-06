@@ -88,11 +88,13 @@ spec:
 
     route:
       app:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
         parentRefs:
           - name: traefik-internal
             namespace: network
             sectionName: websecure
-        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
+        hostnames: ["notes.ironstone.casa"]
         rules:
           - matches:
               - path:
