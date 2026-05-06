@@ -35,8 +35,8 @@ spec:
             env:
               TRILIUM_DATA_DIR: &datadir /home/node/trilium-data
               TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHBASEURL: https://notes.ironstone.casa
-              TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERBASEURL: https://accounts.google.com
-              TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERNAME: Google
+              TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERBASEURL: https://zitadel.damacus.io
+              TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERNAME: Zitadel
               USER_UID: "1000"
               USER_GID: "1000"
             envFrom:
