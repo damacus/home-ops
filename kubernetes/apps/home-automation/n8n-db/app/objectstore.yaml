@@ -9,7 +9,7 @@ spec:
   retentionPolicy: 30d
   configuration:
     destinationPath: s3://cnpg-backups/n8n
-    endpointURL: http://minio.storage.svc.cluster.local:9000
+    endpointURL: http://rustfs.storage.svc.cluster.local:9000
     s3Credentials:
       accessKeyId:
         name: minio-cnpg-credentials
