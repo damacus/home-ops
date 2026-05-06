@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: med-tracker
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/controller: med-tracker
+      app.kubernetes.io/instance: med-tracker
+      app.kubernetes.io/name: med-tracker
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - port: 80
+          protocol: TCP

@@ -1,0 +1,59 @@
+---
+# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: zitadel
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: start
+      app.kubernetes.io/instance: zitadel
+      app.kubernetes.io/name: zitadel
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: vm
+              app.kubernetes.io/name: vmagent
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: login
+              app.kubernetes.io/instance: zitadel
+              app.kubernetes.io/name: zitadel-login
+      ports:
+        - port: 8080
+          protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: zitadel-login
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: login
+      app.kubernetes.io/instance: zitadel
+      app.kubernetes.io/name: zitadel-login
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+      ports:
+        - port: 3000
+          protocol: TCP
