@@ -50,17 +50,21 @@ objects:
   track: ["bird"]
 
 go2rtc:
+  ffmpeg:
+    h264: >-
+      -vf format=yuv420p -codec:v h264_rkmpp -profile:v main -level:v 41
+      -g:v 15 -r 15 -bf:v 0
   streams:
     birdy:
       - rtsp://192.168.1.180:8554/main
       - "ffmpeg:birdy#audio=aac"
       - "ffmpeg:birdy#audio=opus"
     birdy_live:
-      - "ffmpeg:birdy#video=copy#audio=aac"
+      - "ffmpeg:birdy#video=h264#audio=aac/16000"
     birdy_sub:
       - rtsp://192.168.1.180:8554/sub
     birdy_sub_live:
-      - "ffmpeg:birdy_sub#video=copy#audio=aac"
+      - "ffmpeg:birdy_sub#video=h264#audio=aac/16000"
 
 cameras:
   birdy:
