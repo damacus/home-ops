@@ -38,7 +38,7 @@ spec:
               MEMOS_DATA: &datadir /var/opt/memos
               MEMOS_DRIVER: sqlite
               MEMOS_INSTANCE_URL: https://notes.ironstone.casa
-              MEMOS_PORT: &port "5230"
+              MEMOS_PORT: "5230"
             probes:
               liveness:
                 enabled: true
@@ -46,14 +46,14 @@ spec:
                 spec:
                   httpGet:
                     path: /
-                    port: *port
+                    port: 5230
               readiness:
                 enabled: true
                 custom: true
                 spec:
                   httpGet:
                     path: /
-                    port: *port
+                    port: 5230
               startup:
                 enabled: false
             resources:
@@ -81,7 +81,7 @@ spec:
         controller: memos
         ports:
           http:
-            port: *port
+            port: 5230
 
     route:
       app:
