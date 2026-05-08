@@ -83,7 +83,7 @@ spec:
           ironbuckets:
             image:
               repository: ghcr.io/damacus/ironbuckets
-              tag: 1.4.0
+              tag: 1.4.3
             env:
               MINIO_ENDPOINT: "localhost:9000"
             probes:
