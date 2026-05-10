@@ -10,7 +10,7 @@ spec:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
     name: postgresql
-    major: 16
+    major: 18
   instances: 2
   primaryUpdateStrategy: unsupervised
   storage:
