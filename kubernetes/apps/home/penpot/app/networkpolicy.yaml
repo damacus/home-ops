@@ -1,0 +1,92 @@
+---
+# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
+# Frontend: only Traefik may reach port 80
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: penpot-frontend
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/controller: frontend
+      app.kubernetes.io/instance: penpot
+      app.kubernetes.io/name: penpot
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - port: 80
+          protocol: TCP
+    # Exporter's headless Chromium loads the frontend internally
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: home
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/controller: exporter
+              app.kubernetes.io/instance: penpot
+      ports:
+        - port: 80
+          protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
+# Backend: only penpot frontend (nginx proxy) may reach port 6060
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: penpot-backend
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/controller: backend
+      app.kubernetes.io/instance: penpot
+      app.kubernetes.io/name: penpot
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: home
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/controller: frontend
+              app.kubernetes.io/instance: penpot
+      ports:
+        - port: 6060
+          protocol: TCP
+---
+# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
+# Exporter: only penpot backend may reach port 6061
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: penpot-exporter
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/controller: exporter
+      app.kubernetes.io/instance: penpot
+      app.kubernetes.io/name: penpot
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: home
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/controller: backend
+              app.kubernetes.io/instance: penpot
+      ports:
+        - port: 6061
+          protocol: TCP

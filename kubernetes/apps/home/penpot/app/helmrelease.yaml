@@ -1,0 +1,277 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: penpot
+  namespace: home
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.0.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  maxHistory: 3
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+
+  values:
+    controllers:
+      # ── Frontend ────────────────────────────────────────────────────────────
+      # nginx + S6-overlay: S6 must start as root to configure nginx, then
+      # nginx master runs as root to bind port 80. We keep allowPrivilegeEscalation
+      # off (it gates setuid-bit binaries, not the setuid(2) syscall S6 uses)
+      # and drop every capability bar the minimum nginx/S6 require.
+      frontend:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: penpotapp/frontend
+              tag: 2.4.3
+            env:
+              PENPOT_FLAGS: enable-oidc disable-registration disable-email-verification
+              PENPOT_BACKEND_URI: http://penpot-backend.home.svc.cluster.local:6060
+              PENPOT_EXPORTER_URI: http://penpot-exporter.home.svc.cluster.local:6061
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 80
+                  initialDelaySeconds: 10
+                  periodSeconds: 30
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 80
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 80
+                  failureThreshold: 30
+                  periodSeconds: 5
+            # S6-overlay needs root to configure and launch nginx on port 80.
+            # allowPrivilegeEscalation=false still applies (no setuid-bit binaries).
+            securityContext:
+              runAsUser: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+                add: ["CHOWN", "DAC_OVERRIDE", "SETUID", "SETGID", "NET_BIND_SERVICE"]
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
+        pod:
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+
+      # ── Backend ─────────────────────────────────────────────────────────────
+      backend:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: penpotapp/backend
+              tag: 2.4.3
+            env:
+              PENPOT_FLAGS: enable-oidc disable-registration disable-email-verification
+              PENPOT_PUBLIC_URI: https://penpot.ironstone.casa
+              PENPOT_DATABASE_URI: postgresql://penpot-rw.home.svc.cluster.local/penpot
+              PENPOT_DATABASE_USERNAME: penpot
+              PENPOT_DATABASE_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: penpot-db
+                    key: password
+              PENPOT_REDIS_URI: redis://redis-master.database.svc.cluster.local:6379/3
+              PENPOT_STORAGE_BACKEND: fs
+              PENPOT_STORAGE_FS_DIRECTORY: /opt/data/assets
+              PENPOT_TELEMETRY_ENABLED: "false"
+              PENPOT_SECRET_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: penpot-secret
+                    key: secret-key
+              PENPOT_OIDC_CLIENT_ID:
+                valueFrom:
+                  secretKeyRef:
+                    name: penpot-zitadel-oidc
+                    key: client-id
+              PENPOT_OIDC_CLIENT_SECRET:
+                valueFrom:
+                  secretKeyRef:
+                    name: penpot-zitadel-oidc
+                    key: client-secret
+              PENPOT_OIDC_BASE_URI: https://zitadel.damacus.io
+              PENPOT_OIDC_NAME_ATTR: name
+              PENPOT_OIDC_EMAIL_ATTR: email
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/rpc/command/get-profile
+                    port: 6060
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/rpc/command/get-profile
+                    port: 6060
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/rpc/command/get-profile
+                    port: 6060
+                  failureThreshold: 60
+                  periodSeconds: 5
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              readOnlyRootFilesystem: false
+            resources:
+              requests:
+                cpu: 50m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
+        pod:
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
+            runAsNonRoot: true
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile:
+              type: RuntimeDefault
+
+      # ── Exporter ────────────────────────────────────────────────────────────
+      # Node.js + headless Chromium. Chromium requires --no-sandbox in containers.
+      exporter:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: penpotapp/exporter
+              tag: 2.4.3
+            env:
+              PENPOT_FLAGS: enable-oidc disable-registration disable-email-verification
+              # Exporter loads pages via headless Chromium; use the internal frontend service
+              PENPOT_PUBLIC_URI: http://penpot-frontend.home.svc.cluster.local
+              PENPOT_BROWSER_CONFIG: --no-sandbox --disable-dev-shm-usage
+            probes:
+              liveness:
+                enabled: false
+              readiness:
+                enabled: false
+              startup:
+                enabled: false
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              readOnlyRootFilesystem: false
+            resources:
+              requests:
+                cpu: 10m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+        pod:
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
+            runAsNonRoot: true
+            fsGroup: 1001
+            seccompProfile:
+              type: RuntimeDefault
+
+    service:
+      frontend:
+        controller: frontend
+        ports:
+          http:
+            port: 80
+      backend:
+        controller: backend
+        ports:
+          http:
+            port: 6060
+      exporter:
+        controller: exporter
+        ports:
+          http:
+            port: 6061
+
+    route:
+      app:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
+        parentRefs:
+          - name: traefik-internal
+            namespace: network
+            sectionName: websecure
+        hostnames:
+          - "penpot.ironstone.casa"
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: penpot-frontend
+                namespace: home
+                port: 80
+                weight: 1
+
+    persistence:
+      assets:
+        existingClaim: penpot-assets
+        advancedMounts:
+          backend:
+            app:
+              - path: /opt/data
