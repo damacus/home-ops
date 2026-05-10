@@ -9,3 +9,4 @@ resources:
   - networkpolicy.yaml
   - networkpolicy-egress.yaml
   - pvc.yaml
+  - job-skip-onboarding.yaml

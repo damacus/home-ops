@@ -89,6 +89,41 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
+# Migration job egress: DNS + penpot-db only
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: penpot-skip-onboarding-egress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: penpot-skip-onboarding
+      app.kubernetes.io/instance: penpot
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+          rules:
+            dns:
+              - matchPattern: "*"
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: home
+            k8s:cnpg.io/cluster: penpot
+            k8s:cnpg.io/podRole: instance
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
 # Exporter egress: DNS + frontend (headless Chromium loads pages from frontend)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

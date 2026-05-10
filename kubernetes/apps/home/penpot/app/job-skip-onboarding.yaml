@@ -1,0 +1,85 @@
+---
+# Installs a BEFORE INSERT trigger on public.profile so every new account
+# (including OIDC auto-provisioned ones) skips the onboarding questionnaire
+# automatically. Also backfills any existing profiles that don't have the flag.
+#
+# The Job waits for Penpot's backend to run its schema migrations (so the
+# profile table actually exists) before proceeding — safe to apply at deploy
+# time alongside the HelmRelease.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: penpot-skip-onboarding
+  namespace: home
+  annotations:
+    # Prevent Flux from pruning a completed job on subsequent reconciliations
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  backoffLimit: 20
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: penpot-skip-onboarding
+        app.kubernetes.io/instance: penpot
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: psql
+          image: docker.io/postgres:16-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              echo "Waiting for penpot schema to be initialized..."
+              until psql -c "SELECT 1 FROM public.profile LIMIT 1" >/dev/null 2>&1; do
+                sleep 10
+              done
+              echo "Schema ready. Installing trigger and backfilling profiles..."
+              psql <<'SQL'
+              CREATE OR REPLACE FUNCTION public.skip_onboarding_props()
+              RETURNS trigger LANGUAGE plpgsql AS $$
+              BEGIN
+                NEW.props = COALESCE(NEW.props, '{}'::jsonb)
+                  || '{"onboarding-viewed":true,"onboarding-questions-answered":true}'::jsonb;
+                RETURN NEW;
+              END;
+              $$;
+
+              DROP TRIGGER IF EXISTS skip_onboarding ON public.profile;
+              CREATE TRIGGER skip_onboarding
+                BEFORE INSERT ON public.profile
+                FOR EACH ROW EXECUTE FUNCTION public.skip_onboarding_props();
+
+              UPDATE public.profile
+              SET props = COALESCE(props, '{}'::jsonb)
+                || '{"onboarding-viewed":true,"onboarding-questions-answered":true}'::jsonb
+              WHERE NOT (props @> '{"onboarding-viewed":true}'::jsonb);
+
+              SELECT COUNT(*) AS backfilled FROM public.profile
+              WHERE props @> '{"onboarding-viewed":true}'::jsonb;
+              SQL
+              echo "Done."
+          env:
+            - name: PGHOST
+              value: penpot-rw.home.svc.cluster.local
+            - name: PGDATABASE
+              value: penpot
+            - name: PGUSER
+              value: penpot
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: penpot-db
+                  key: password
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
