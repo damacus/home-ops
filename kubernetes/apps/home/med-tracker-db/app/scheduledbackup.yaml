@@ -13,6 +13,6 @@ spec:
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
     parameters:
-      objectStore: med-tracker-minio-store
+      objectStore: med-tracker-rustfs-store
   cluster:
     name: med-tracker

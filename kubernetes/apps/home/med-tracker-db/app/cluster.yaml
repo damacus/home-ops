@@ -40,7 +40,7 @@ spec:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: med-tracker-minio-store
+        barmanObjectName: med-tracker-rustfs-store
         serverName: med-tracker
 
   resources:
