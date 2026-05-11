@@ -1,0 +1,91 @@
+---
+# Green CNPG cluster for the n8n PG16 -> PG18 blue/green migration.
+#
+# This file is committed for audit and review, but is intentionally NOT
+# referenced from kubernetes/apps/home-automation/n8n-db/app/kustomization.yaml.
+# It is applied imperatively by `task postgres:create-green` (which calls
+# scripts/pg-bluegreen.sh create-green) and torn down again at cleanup time.
+#
+# After the migration completes and blue is decommissioned, the green cluster
+# stays under the name `n8n-green` permanently — the next major-version
+# upgrade will stand up a new colour against this one.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: n8n-green
+  namespace: home-automation
+spec:
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 18
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  enablePDB: true
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: n8n-minio-store
+        # Distinct serverName so green's WAL archives don't collide with
+        # blue's in the shared n8n-minio-store object store.
+        serverName: n8n-green
+
+  monitoring:
+    enablePodMonitor: true
+
+  storage:
+    size: 10Gi
+    storageClass: openebs-hostpath
+
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: cloudnative-pg-secret
+
+  bootstrap:
+    initdb:
+      database: n8n
+      owner: n8n
+      # CNPG auto-generates Secret/n8n-green-app from this owner with the
+      # standard key shape (host, username, password, dbname, port, uri,
+      # jdbc-uri, pgpass). The n8n HelmRelease anchor points at this secret
+      # name at cutover.
+
+  # External reference to the blue cluster, used by Subscription/n8n-green-sub
+  # to open the logical-replication connection back to blue's primary.
+  # CNPG resolves the password from the named secret at subscription apply
+  # time; cloudnative-pg-secret already exists in this namespace.
+  externalClusters:
+    - name: n8n
+      connectionParameters:
+        host: n8n-rw.home-automation.svc.cluster.local
+        user: postgres
+        dbname: n8n
+        port: "5432"
+        sslmode: prefer
+      password:
+        name: cloudnative-pg-secret
+        key: password
+
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: 128MB
+      effective_io_concurrency: "200"
+      maintenance_work_mem: 128MB
+      # Match blue's logical replication tuning so green can serve as a
+      # publication source for the next major-version upgrade in turn.
+      wal_level: logical
+      max_replication_slots: "10"
+      max_wal_senders: "10"
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+      cpu: 1000m

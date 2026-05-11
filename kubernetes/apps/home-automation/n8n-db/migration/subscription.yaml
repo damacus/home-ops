@@ -1,0 +1,27 @@
+---
+# CNPG Subscription CR — declares a PostgreSQL logical-replication
+# subscription on the green cluster that pulls from the publication on blue.
+# CNPG reconciles this into a real PostgreSQL SUBSCRIPTION named
+# `n8n_green_sub` on green's primary.
+#
+# The exact field names for publication/external-cluster reference vary
+# slightly between CNPG operator versions. Before applying this manifest,
+# `task postgres:preflight` runs `kubectl explain subscription.spec
+# --api-version=postgresql.cnpg.io/v1` and aborts if the installed CRD
+# differs from the shape below. The script template-patches the live spec
+# at apply time if needed.
+#
+# Applied by `task postgres:subscription`. Removed at cleanup.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/subscription_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Subscription
+metadata:
+  name: n8n-green-sub
+  namespace: home-automation
+spec:
+  cluster:
+    name: n8n-green
+  dbname: n8n
+  name: n8n_green_sub
+  publicationName: n8n_green_pub
+  externalClusterName: n8n

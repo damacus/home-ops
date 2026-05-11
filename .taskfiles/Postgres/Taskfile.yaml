@@ -1,0 +1,170 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+# Operator-facing SOP for CNPG blue/green major-version PostgreSQL upgrades.
+# All tasks shell out to scripts/pg-bluegreen.sh; each subcommand is
+# idempotent and can be re-run safely.
+#
+# Defaults target the n8n PG16 -> PG18 migration. Overrides flow either from
+# the CLI (task postgres:cutover BLUE_CLUSTER=foo) or from a .env file at
+# the repo root (sourced by the script).
+
+vars:
+  SCRIPT: "{{.ROOT_DIR}}/scripts/pg-bluegreen.sh"
+  NAMESPACE: '{{.NAMESPACE | default "home-automation"}}'
+  APP_DEPLOYMENTS: '{{.APP_DEPLOYMENTS | default "n8n n8n-worker"}}'
+  HELMRELEASE: '{{.HELMRELEASE | default "n8n"}}'
+  BLUE_CLUSTER: '{{.BLUE_CLUSTER | default "n8n"}}'
+  GREEN_CLUSTER: '{{.GREEN_CLUSTER | default "n8n-green"}}'
+  BLUE_DATABASE: '{{.BLUE_DATABASE | default "n8n"}}'
+  GREEN_DATABASE: '{{.GREEN_DATABASE | default "n8n"}}'
+  BLUE_USER: '{{.BLUE_USER | default "n8n"}}'
+  GREEN_USER: '{{.GREEN_USER | default "n8n"}}'
+  BLUE_APP_SECRET: '{{.BLUE_APP_SECRET | default "n8n-app"}}'
+  GREEN_APP_SECRET: '{{.GREEN_APP_SECRET | default "n8n-green-app"}}'
+  PUBLICATION_NAME: '{{.PUBLICATION_NAME | default "n8n-green-pub"}}'
+  SUBSCRIPTION_NAME: '{{.SUBSCRIPTION_NAME | default "n8n-green-sub"}}'
+  STATE_DIR: '{{.STATE_DIR | default ".migration-state/n8n"}}'
+  MIGRATION_MANIFEST_DIR: "{{.ROOT_DIR}}/kubernetes/apps/home-automation/n8n-db/migration"
+  HELMRELEASE_PATH: "{{.ROOT_DIR}}/kubernetes/apps/home-automation/n8n/app/helmrelease.yaml"
+  PROMETHEUS_URL: '{{.PROMETHEUS_URL | default "http://prometheus-operated.observability.svc.cluster.local:9090"}}'
+
+env:
+  NAMESPACE: "{{.NAMESPACE}}"
+  APP_DEPLOYMENTS: "{{.APP_DEPLOYMENTS}}"
+  HELMRELEASE: "{{.HELMRELEASE}}"
+  BLUE_CLUSTER: "{{.BLUE_CLUSTER}}"
+  GREEN_CLUSTER: "{{.GREEN_CLUSTER}}"
+  BLUE_DATABASE: "{{.BLUE_DATABASE}}"
+  GREEN_DATABASE: "{{.GREEN_DATABASE}}"
+  BLUE_USER: "{{.BLUE_USER}}"
+  GREEN_USER: "{{.GREEN_USER}}"
+  BLUE_APP_SECRET: "{{.BLUE_APP_SECRET}}"
+  GREEN_APP_SECRET: "{{.GREEN_APP_SECRET}}"
+  PUBLICATION_NAME: "{{.PUBLICATION_NAME}}"
+  SUBSCRIPTION_NAME: "{{.SUBSCRIPTION_NAME}}"
+  STATE_DIR: "{{.STATE_DIR}}"
+  MIGRATION_MANIFEST_DIR: "{{.MIGRATION_MANIFEST_DIR}}"
+  HELMRELEASE_PATH: "{{.HELMRELEASE_PATH}}"
+  PROMETHEUS_URL: "{{.PROMETHEUS_URL}}"
+  ROOT_DIR: "{{.ROOT_DIR}}"
+
+tasks:
+  default:
+    desc: "Show the blue/green migration SOP"
+    cmds:
+      - task: sop
+
+  sop:
+    desc: "Print the operator runbook"
+    silent: true
+    cmds:
+      - |
+        cat <<'EOF'
+        n8n PG16 -> PG18 blue/green SOP
+          0. Land prereq PR 1 (wal_level=logical on blue), wait for Flux + rolling restart.
+          1. Land prereq PR 2 (HelmRelease secret-name anchor + n8n-app key alignment).
+          2. task postgres:discover
+          3. task postgres:preflight
+          4. task postgres:all-but-cutover
+          5. task postgres:monitor             # repeat until ready
+          6. Freeze n8n edits + deployments
+          7. task postgres:ready
+          8. task postgres:cutover             # prints YAML diff, waits
+          9.   operator: commit + push + flux reconcile helmrelease n8n -n home-automation
+         10.   script resumes, runs postcheck + grafana-postcheck automatically
+         11. Soak (24-48h)
+         12. task postgres:cleanup
+        EOF
+
+  discover:
+    desc: "Snapshot current CNPG/app/db state for n8n"
+    cmds:
+      - "{{.SCRIPT}} discover"
+
+  show-active:
+    desc: "Print which DB secret the n8n HelmRelease currently points at"
+    cmds:
+      - "{{.SCRIPT}} show-active"
+
+  preflight:
+    desc: "Validate prerequisites before standing up green"
+    cmds:
+      - "{{.SCRIPT}} preflight"
+
+  blue-connection:
+    desc: "Print the blue cluster connection URI (reads {{.BLUE_APP_SECRET}})"
+    cmds:
+      - "{{.SCRIPT}} blue-connection"
+
+  green-connection:
+    desc: "Print the green cluster connection URI (reads {{.GREEN_APP_SECRET}})"
+    cmds:
+      - "{{.SCRIPT}} green-connection"
+
+  create-green:
+    desc: "Apply the green CNPG cluster manifest and wait for healthy"
+    cmds:
+      - "{{.SCRIPT}} create-green"
+
+  copy-schema:
+    desc: "Schema-only pg_dump from blue piped into psql on green"
+    cmds:
+      - "{{.SCRIPT}} copy-schema"
+
+  publication:
+    desc: "Apply the CNPG Publication CR against blue"
+    cmds:
+      - "{{.SCRIPT}} publication"
+
+  subscription:
+    desc: "Apply the CNPG Subscription CR against green"
+    cmds:
+      - "{{.SCRIPT}} subscription"
+
+  monitor:
+    desc: "Print pub/sub status + replication lag (one-shot)"
+    cmds:
+      - "{{.SCRIPT}} monitor"
+
+  ready:
+    desc: "Exit 0 only when green is caught up and safe to cut over"
+    cmds:
+      - "{{.SCRIPT}} ready"
+
+  cutover:
+    desc: "Stop blue writes, sync sequences, hand off to operator for the HelmRelease edit"
+    cmds:
+      - "{{.SCRIPT}} cutover"
+
+  postcheck:
+    desc: "Run automated post-cutover validation"
+    cmds:
+      - "{{.SCRIPT}} postcheck"
+
+  grafana-postcheck:
+    desc: "Run Prometheus/Loki/MCP post-cutover checks"
+    cmds:
+      - "{{.SCRIPT}} grafana-postcheck"
+
+  rollback:
+    desc: "Revert to blue (git revert + flux reconcile)"
+    cmds:
+      - "{{.SCRIPT}} rollback"
+
+  cleanup:
+    desc: "After soak: drop pub/sub, delete blue cluster, clear runtime state"
+    cmds:
+      - "{{.SCRIPT}} cleanup"
+
+  all-but-cutover:
+    desc: "discover -> preflight -> create-green -> copy-schema -> publication -> subscription -> monitor"
+    cmds:
+      - task: discover
+      - task: preflight
+      - task: create-green
+      - task: copy-schema
+      - task: publication
+      - task: subscription
+      - task: monitor

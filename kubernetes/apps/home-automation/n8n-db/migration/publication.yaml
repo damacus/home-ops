@@ -1,0 +1,20 @@
+---
+# CNPG Publication CR — declares a PostgreSQL logical-replication publication
+# on the blue cluster that exposes all tables in the n8n database. The CNPG
+# operator reconciles this into a real PostgreSQL PUBLICATION named
+# `n8n_green_pub` on the blue primary.
+#
+# Applied by `task postgres:publication`. Removed at cleanup.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/publication_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Publication
+metadata:
+  name: n8n-green-pub
+  namespace: home-automation
+spec:
+  cluster:
+    name: n8n
+  dbname: n8n
+  name: n8n_green_pub
+  target:
+    allTables: true
