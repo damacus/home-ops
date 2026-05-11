@@ -5,6 +5,5 @@ kind: Kustomization
 namespace: home
 resources:
   - cluster.yaml
-  - externalsecret.yaml
   - objectstore.yaml
   - scheduledbackup.yaml

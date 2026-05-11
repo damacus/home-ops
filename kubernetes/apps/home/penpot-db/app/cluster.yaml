@@ -23,13 +23,9 @@ spec:
   bootstrap:
     initdb:
       database: *name
-      owner: *name
-      secret:
-        name: penpot-db
+      owner: app
 
   enableSuperuserAccess: true
-  superuserSecret:
-    name: penpot-db-superuser
 
   postgresql:
     parameters:

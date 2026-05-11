@@ -73,11 +73,11 @@ spec:
             - name: PGDATABASE
               value: penpot
             - name: PGUSER
-              value: penpot
+              value: app
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: penpot-db
+                  name: penpot-app
                   key: password
           securityContext:
             allowPrivilegeEscalation: false

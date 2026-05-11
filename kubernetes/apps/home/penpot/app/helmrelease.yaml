@@ -109,11 +109,11 @@ spec:
               PENPOT_FLAGS: enable-oidc disable-registration disable-email-verification disable-onboarding disable-onboarding-team
               PENPOT_PUBLIC_URI: https://penpot.ironstone.casa
               PENPOT_DATABASE_URI: postgresql://penpot-rw.home.svc.cluster.local/penpot
-              PENPOT_DATABASE_USERNAME: penpot
+              PENPOT_DATABASE_USERNAME: app
               PENPOT_DATABASE_PASSWORD:
                 valueFrom:
                   secretKeyRef:
-                    name: penpot-db
+                    name: penpot-app
                     key: password
               PENPOT_REDIS_URI: redis://redis-master.database.svc.cluster.local:6379/3
               PENPOT_STORAGE_BACKEND: fs
