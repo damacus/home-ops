@@ -12,6 +12,6 @@ spec:
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
     parameters:
-      objectStore: n8n-minio-store
+      objectStore: n8n-rustfs-store
   cluster:
     name: n8n

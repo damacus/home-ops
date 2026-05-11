@@ -13,6 +13,6 @@ spec:
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
     parameters:
-      objectStore: minio-store
+      objectStore: home-assistant-rustfs-store
   cluster:
     name: home-assistant

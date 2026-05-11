@@ -37,7 +37,7 @@ spec:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: minio-store
+        barmanObjectName: home-assistant-rustfs-store
         serverName: home-assistant
 
   resources:

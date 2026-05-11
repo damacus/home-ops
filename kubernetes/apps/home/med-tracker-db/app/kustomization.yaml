@@ -7,6 +7,5 @@ resources:
   - databases.yaml
   - externalsecret.yaml
   - PrometheusRules.yaml
-  - minio-externalsecret.yaml
   - objectstore.yaml
   - scheduledbackup.yaml

@@ -40,7 +40,7 @@ spec:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: minio-store
+        barmanObjectName: zitadel-rustfs-store
         serverName: zitadel
 
   resources:

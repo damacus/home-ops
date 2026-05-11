@@ -3,7 +3,7 @@
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
-  name: n8n-minio-store
+  name: n8n-rustfs-store
   namespace: home-automation
 spec:
   retentionPolicy: 30d
@@ -12,10 +12,10 @@ spec:
     endpointURL: http://rustfs.storage.svc.cluster.local:9000
     s3Credentials:
       accessKeyId:
-        name: minio-cnpg-credentials
+        name: rustfs-cnpg-credentials
         key: ACCESS_KEY_ID
       secretAccessKey:
-        name: minio-cnpg-credentials
+        name: rustfs-cnpg-credentials
         key: SECRET_ACCESS_KEY
     data:
       compression: bzip2

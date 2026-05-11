@@ -13,6 +13,6 @@ spec:
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
     parameters:
-      objectStore: mealie-minio-store
+      objectStore: mealie-rustfs-store
   cluster:
     name: mealie
