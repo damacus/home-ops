@@ -40,7 +40,7 @@ spec:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: penpot-minio-store
+        barmanObjectName: penpot-rustfs-store
         serverName: penpot
 
   resources:
