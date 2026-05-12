@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: &name penpot
+  namespace: home
+spec:
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 18
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 5Gi
+    storageClass: openebs-hostpath
+
+  monitoring:
+    enablePodMonitor: true
+
+  bootstrap:
+    initdb:
+      database: *name
+      owner: app
+
+  enableSuperuserAccess: true
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: 128MB
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: penpot-rustfs-store
+        serverName: penpot
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 2000m
+      memory: 512Mi
