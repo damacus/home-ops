@@ -44,7 +44,7 @@ spec:
             image:
               repository: &repository ghcr.io/damacus/med-tracker
               tag: &tag 0.3.53
-            command: [ "bin/rails", "db:prepare" ]
+            command: ["bin/rails", "db:prepare"]
             envFrom:
               - secretRef:
                   name: med-tracker-secret
@@ -63,6 +63,7 @@ spec:
               RAILS_ENV: production
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
+              SOLID_QUEUE_IN_PUMA: "true"
               APP_URL: "https://med-tracker.damacus.io"
               OIDC_ISSUER_URL: "https://zitadel.damacus.io"
               OIDC_REDIRECT_URI: "https://med-tracker.damacus.io/auth/oidc/callback"
