@@ -104,7 +104,7 @@ spec:
           app:
             image:
               repository: penpotapp/backend
-              tag: 2.4.3
+              tag: 2.15.0
             env:
               PENPOT_FLAGS: enable-oidc disable-registration disable-email-verification disable-onboarding disable-onboarding-team
               PENPOT_PUBLIC_URI: https://penpot.ironstone.casa
