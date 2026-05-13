@@ -13,6 +13,6 @@ spec:
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
     parameters:
-      objectStore: penpot-minio-store
+      objectStore: penpot-rustfs-store
   cluster:
     name: penpot

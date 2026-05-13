@@ -202,6 +202,11 @@ spec:
               # Exporter loads pages via headless Chromium; use the internal frontend service
               PENPOT_PUBLIC_URI: http://penpot-frontend.home.svc.cluster.local
               PENPOT_BROWSER_CONFIG: --no-sandbox --disable-dev-shm-usage
+              PENPOT_SECRET_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: penpot-secret
+                    key: secret-key
             probes:
               liveness:
                 enabled: false
