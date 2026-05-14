@@ -62,3 +62,12 @@ __pycache__/
 scripts/__pycache__/
 
 .playwright-mcp
+
+# Blue/green PostgreSQL migration runtime artifacts. Directories are kept
+# via .gitkeep so scripts can write into them; transient output (schema
+# dumps, snapshots, sequence SQL, log captures) stays out of git.
+.migration-state/*/*
+!.migration-state/*/.gitkeep
+
+# Local env overrides for the pg-bluegreen Taskfile.
+.env

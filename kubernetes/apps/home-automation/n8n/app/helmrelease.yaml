@@ -37,26 +37,29 @@ spec:
               tag: &tag 2.19.2@sha256:385ea908fee7f77792ccf1a1cfd8f1509f2b55d9b20db7b3b00df5e8f85d8875
             env: &env
               DB_TYPE: "postgresdb"
+              # Blue/green cutover is a single edit: change the anchor target
+              # below from n8n-app (blue) to n8n-green-app (green). All four
+              # DB env vars resolve through it.
               DB_POSTGRESDB_DATABASE:
                 valueFrom:
                   secretKeyRef:
-                    name: n8n-app
+                    name: &dbSecret n8n-app
                     key: dbname
               DB_POSTGRESDB_HOST:
                 valueFrom:
                   secretKeyRef:
-                    name: n8n-app
+                    name: *dbSecret
                     key: host
               DB_POSTGRESDB_PORT: 5432
               DB_POSTGRESDB_USER:
                 valueFrom:
                   secretKeyRef:
-                    name: n8n-app
+                    name: *dbSecret
                     key: user
               DB_POSTGRESDB_PASSWORD:
                 valueFrom:
                   secretKeyRef:
-                    name: n8n-app
+                    name: *dbSecret
                     key: password
               EXECUTIONS_DATA_MAX_AGE: 7
               EXECUTIONS_DATA_PRUNE: "true"

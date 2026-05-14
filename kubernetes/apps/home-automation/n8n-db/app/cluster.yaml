@@ -39,6 +39,10 @@ spec:
       shared_buffers: 128MB
       effective_io_concurrency: "200"
       maintenance_work_mem: 128MB
+      # Logical replication prerequisites for blue/green major version upgrade.
+      wal_level: logical
+      max_replication_slots: "10"
+      max_wal_senders: "10"
 
   resources:
     requests:
