@@ -1,6 +1,6 @@
 ---
 # CNPG Publication CR — declares a PostgreSQL logical-replication publication
-# on the blue cluster that exposes all tables in the n8n database. The CNPG
+# on the blue cluster that exposes all tables in the n8n application database. The CNPG
 # operator reconciles this into a real PostgreSQL PUBLICATION named
 # `n8n_green_pub` on the blue primary.
 #
@@ -14,7 +14,8 @@ metadata:
 spec:
   cluster:
     name: n8n
-  dbname: n8n
+  dbname: app
   name: n8n_green_pub
+  publicationReclaimPolicy: delete
   target:
     allTables: true

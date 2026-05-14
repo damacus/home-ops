@@ -17,10 +17,10 @@ vars:
   HELMRELEASE: '{{.HELMRELEASE | default "n8n"}}'
   BLUE_CLUSTER: '{{.BLUE_CLUSTER | default "n8n"}}'
   GREEN_CLUSTER: '{{.GREEN_CLUSTER | default "n8n-green"}}'
-  BLUE_DATABASE: '{{.BLUE_DATABASE | default "n8n"}}'
-  GREEN_DATABASE: '{{.GREEN_DATABASE | default "n8n"}}'
-  BLUE_USER: '{{.BLUE_USER | default "n8n"}}'
-  GREEN_USER: '{{.GREEN_USER | default "n8n"}}'
+  BLUE_DATABASE: '{{.BLUE_DATABASE | default "app"}}'
+  GREEN_DATABASE: '{{.GREEN_DATABASE | default "app"}}'
+  BLUE_USER: '{{.BLUE_USER | default "app"}}'
+  GREEN_USER: '{{.GREEN_USER | default "app"}}'
   BLUE_APP_SECRET: '{{.BLUE_APP_SECRET | default "n8n-app"}}'
   GREEN_APP_SECRET: '{{.GREEN_APP_SECRET | default "n8n-green-app"}}'
   PUBLICATION_NAME: '{{.PUBLICATION_NAME | default "n8n-green-pub"}}'
@@ -64,7 +64,7 @@ tasks:
         cat <<'EOF'
         n8n PG16 -> PG18 blue/green SOP
           0. Land prereq PR 1 (wal_level=logical on blue), wait for Flux + rolling restart.
-          1. Land prereq PR 2 (HelmRelease secret-name anchor + n8n-app key alignment).
+          1. Land prereq PR 2 (HelmRelease secret-name anchor).
           2. task postgres:discover
           3. task postgres:preflight
           4. task postgres:all-but-cutover

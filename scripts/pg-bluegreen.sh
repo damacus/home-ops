@@ -30,10 +30,10 @@ fi
 : "${HELMRELEASE:=n8n}"
 : "${BLUE_CLUSTER:=n8n}"
 : "${GREEN_CLUSTER:=n8n-green}"
-: "${BLUE_DATABASE:=n8n}"
-: "${GREEN_DATABASE:=n8n}"
-: "${BLUE_USER:=n8n}"
-: "${GREEN_USER:=n8n}"
+: "${BLUE_DATABASE:=app}"
+: "${GREEN_DATABASE:=app}"
+: "${BLUE_USER:=app}"
+: "${GREEN_USER:=app}"
 : "${BLUE_APP_SECRET:=n8n-app}"
 : "${GREEN_APP_SECRET:=n8n-green-app}"
 : "${PUBLICATION_NAME:=n8n-green-pub}"
@@ -51,6 +51,7 @@ fi
 : "${GRAFANA_MCP_ENABLED:=false}"
 
 STATE_DIR_ABS="${REPO_ROOT}/${STATE_DIR}"
+CUTOVER_STATE_FILE="${STATE_DIR_ABS}/cutover.json"
 mkdir -p "${STATE_DIR_ABS}"
 
 # ----------------------------------------------------------------------------
@@ -58,10 +59,10 @@ mkdir -p "${STATE_DIR_ABS}"
 # ----------------------------------------------------------------------------
 
 if [[ -t 1 ]]; then
-  BOLD=$'\033[1m'; DIM=$'\033[2m'; RED=$'\033[31m'; GREEN_C=$'\033[32m'
+  BOLD=$'\033[1m'; RED=$'\033[31m'; GREEN_C=$'\033[32m'
   YELLOW=$'\033[33m'; BLUE_C=$'\033[34m'; RESET=$'\033[0m'
 else
-  BOLD=""; DIM=""; RED=""; GREEN_C=""; YELLOW=""; BLUE_C=""; RESET=""
+  BOLD=""; RED=""; GREEN_C=""; YELLOW=""; BLUE_C=""; RESET=""
 fi
 
 log()  { printf '%s[pg-bg]%s %s\n' "${BLUE_C}" "${RESET}" "$*" >&2; }
@@ -70,6 +71,8 @@ err()  { printf '%s[pg-bg]%s %s%s%s\n' "${BLUE_C}" "${RESET}" "${RED}" "$*" "${R
 ok()   { printf '%s[pg-bg]%s %s%s%s\n' "${BLUE_C}" "${RESET}" "${GREEN_C}" "$*" "${RESET}" >&2; }
 
 die()  { err "$*"; exit 1; }
+
+indent_stderr() { sed 's/^/    /' >&2; }
 
 on_err() {
   local line=$1 cmd=$2
@@ -120,6 +123,54 @@ psql_as_super_stdin() {
   local pod
   pod=$(primary_pod "${cluster}")
   kctl exec -i -c postgres "${pod}" -- bash -lc "psql -X -v ON_ERROR_STOP=1 -d '${dbname}'"
+}
+
+validate_identifier() {
+  local name=$1 value=$2
+  [[ "${value}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] \
+    || die "${name} must be a simple PostgreSQL identifier, got '${value}'"
+}
+
+helmrelease_anchor() {
+  grep -E '&dbSecret[[:space:]]+' "${HELMRELEASE_PATH}" \
+    | head -n1 | sed -E 's/.*&dbSecret[[:space:]]+([^[:space:]]+).*/\1/'
+}
+
+save_cutover_stage() {
+  local state_file=$1 stage=$2
+  local tmp="${state_file}.tmp"
+  jq --arg stage "${stage}" '.stage = $stage' "${state_file}" >"${tmp}"
+  mv "${tmp}" "${state_file}"
+}
+
+restore_app_replicas() {
+  local state_file=$1
+  for deploy in ${APP_DEPLOYMENTS}; do
+    local r
+    r=$(jq -r ".replicas.\"${deploy}\"" "${state_file}")
+    [[ "${r}" == "0" || "${r}" == "null" ]] && r=1
+    kctl scale deploy "${deploy}" --replicas="${r}"
+  done
+  for deploy in ${APP_DEPLOYMENTS}; do
+    kctl rollout status deploy "${deploy}" --timeout=300s
+  done
+}
+
+resume_cutover_after_handoff() {
+  local state_file=$1
+  local anchor
+  anchor=$(helmrelease_anchor)
+  [[ "${anchor}" == "${GREEN_APP_SECRET}" ]] \
+    || die "anchor in ${HELMRELEASE_PATH} is '${anchor}', expected '${GREEN_APP_SECRET}'. App may still be scaled to 0; complete the cutover edit or rollback."
+
+  log "restoring app replica counts"
+  restore_app_replicas "${state_file}"
+
+  cmd_postcheck
+  cmd_grafana_postcheck || warn "grafana-postcheck reported issues; review manually"
+  save_cutover_stage "${state_file}" "complete"
+  rm -f "${STATE_DIR_ABS}/proceed"
+  ok "cutover sequence complete"
 }
 
 # ----------------------------------------------------------------------------
@@ -211,12 +262,12 @@ cmd_show_active() {
   require_tools
   # Live (rendered) Helm values first, then the in-repo anchor for reference.
   local rendered
-  rendered=$(helm -n "${NAMESPACE}" get values "${HELMRELEASE}" 2>/dev/null \
-    | yq -r '.database.secretName // ""' 2>/dev/null || true)
+  rendered=$(kctl get helmrelease "${HELMRELEASE}" -o yaml 2>/dev/null \
+    | yq -r '.spec.values.controllers.n8n.containers.app.env.DB_POSTGRESDB_DATABASE.valueFrom.secretKeyRef.name // ""' \
+    2>/dev/null || true)
 
   local anchor
-  anchor=$(grep -E '&dbSecret[[:space:]]+' "${HELMRELEASE_PATH}" \
-    | head -n1 | sed -E 's/.*&dbSecret[[:space:]]+([^[:space:]]+).*/\1/')
+  anchor=$(helmrelease_anchor)
 
   echo "in-cluster (helm get values): ${rendered:-<none>}"
   echo "in-repo  (helmrelease anchor): ${anchor:-<none>}"
@@ -295,9 +346,19 @@ cmd_preflight() {
       AND NOT EXISTS (SELECT 1 FROM pg_index i WHERE i.indrelid = c.oid AND i.indisprimary);")
     if [[ -n "${missing_pk}" ]]; then
       err "tables without primary keys (logical replication needs PKs or REPLICA IDENTITY FULL):"
-      echo "${missing_pk}" | sed 's/^/    /' >&2
+      printf '%s\n' "${missing_pk}" | indent_stderr
       fail=1
     fi
+  fi
+
+  log "blue replication slot synchronization"
+  local slot_sync
+  slot_sync=$(kctl get cluster "${BLUE_CLUSTER}" \
+    -o jsonpath='{.spec.replicationSlots.synchronizeReplicas.enabled}' 2>/dev/null || echo "")
+  if [[ "${slot_sync}" != "true" ]]; then
+    err "blue cluster does not have replicationSlots.synchronizeReplicas.enabled=true"
+    err "logical replication cutover would be unsafe across blue failover; enable slot synchronization or avoid failover during migration"
+    fail=1
   fi
 
   log "blue app secret shape check"
@@ -308,7 +369,7 @@ cmd_preflight() {
     err "secret ${BLUE_APP_SECRET} not found"
     fail=1
   else
-    for required in host username password dbname; do
+    for required in host user password dbname; do
       if ! [[ ",${present_keys}," == *",${required},"* ]]; then
         err "secret ${BLUE_APP_SECRET} missing key '${required}' (have: ${present_keys})"
         fail=1
@@ -318,8 +379,7 @@ cmd_preflight() {
 
   log "helmrelease anchor points at blue"
   local anchor
-  anchor=$(grep -E '&dbSecret[[:space:]]+' "${HELMRELEASE_PATH}" \
-    | head -n1 | sed -E 's/.*&dbSecret[[:space:]]+([^[:space:]]+).*/\1/')
+  anchor=$(helmrelease_anchor)
   if [[ "${anchor}" != "${BLUE_APP_SECRET}" ]]; then
     err "helmrelease anchor = '${anchor}', expected '${BLUE_APP_SECRET}'"
     fail=1
@@ -393,7 +453,7 @@ cmd_create_green() {
   keys=$(kctl get secret "${GREEN_APP_SECRET}" -o jsonpath='{.data}' 2>/dev/null \
     | jq -r 'keys | join(",")' || echo "")
   [[ -n "${keys}" ]] || die "secret ${GREEN_APP_SECRET} was not generated by CNPG"
-  for required in host username password dbname; do
+  for required in host user password dbname; do
     [[ ",${keys}," == *",${required},"* ]] \
       || die "${GREEN_APP_SECRET} missing required key '${required}' (have: ${keys})"
   done
@@ -406,6 +466,7 @@ cmd_create_green() {
 
 cmd_copy_schema() {
   require_tools
+  validate_identifier GREEN_USER "${GREEN_USER}"
   cluster_exists "${GREEN_CLUSTER}" || die "green cluster ${GREEN_CLUSTER} not present"
 
   local schema_file="${STATE_DIR_ABS}/schema.sql"
@@ -427,9 +488,37 @@ cmd_copy_schema() {
   log "schema written to ${schema_file} ($(wc -l <"${schema_file}") lines)"
 
   log "restoring schema into green (${green_pod})"
-  kctl exec -i -c postgres "${green_pod}" -- \
-    psql -X -v ON_ERROR_STOP=1 -d "${GREEN_DATABASE}" <"${schema_file}"
-  ok "schema copied to green"
+  {
+    printf 'SET ROLE %s;\n' "${GREEN_USER}"
+    cat "${schema_file}"
+  } | kctl exec -i -c postgres "${green_pod}" -- \
+    psql -X -v ON_ERROR_STOP=1 -d "${GREEN_DATABASE}"
+
+  log "verifying restored object ownership"
+  local wrong_owner
+  wrong_owner=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" "WITH objects AS (
+    SELECT n.nspname AS schema_name, c.relname AS object_name, pg_get_userbyid(c.relowner) AS owner
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relkind IN ('r','p','S','v','m','f')
+      AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+    UNION ALL
+    SELECT n.nspname, p.proname, pg_get_userbyid(p.proowner)
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
+  )
+  SELECT schema_name || '.' || object_name || ' owned by ' || owner
+  FROM objects
+  WHERE owner <> '${GREEN_USER}'
+  ORDER BY 1
+  LIMIT 20;")
+  if [[ -n "${wrong_owner}" ]]; then
+    err "green schema has objects not owned by ${GREEN_USER}:"
+    printf '%s\n' "${wrong_owner}" | indent_stderr
+    die "schema ownership check failed"
+  fi
+  ok "schema copied to green and owned by ${GREEN_USER}"
 }
 
 # ----------------------------------------------------------------------------
@@ -517,6 +606,23 @@ cmd_monitor() {
   log "lag: blue=${blue_lsn}, green=${green_lsn}, delta=${lag_bytes} bytes"
 }
 
+table_counts() {
+  local cluster=$1 dbname=$2
+  local count_sql
+  count_sql=$(psql_as_super "${cluster}" "${dbname}" "SELECT COALESCE(string_agg(
+    format('SELECT %L AS rel, count(*)::bigint AS rows FROM %I.%I',
+      n.nspname || '.' || c.relname, n.nspname, c.relname),
+    ' UNION ALL ' ORDER BY n.nspname || '.' || c.relname), '')
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE c.relkind IN ('r','p')
+    AND n.nspname NOT IN ('pg_catalog', 'information_schema');")
+  if [[ -z "${count_sql}" ]]; then
+    return 0
+  fi
+  psql_as_super "${cluster}" "${dbname}" "${count_sql} ORDER BY rel;"
+}
+
 # ----------------------------------------------------------------------------
 # Subcommand: ready
 # ----------------------------------------------------------------------------
@@ -526,8 +632,7 @@ cmd_ready() {
   local fail=0
 
   local anchor
-  anchor=$(grep -E '&dbSecret[[:space:]]+' "${HELMRELEASE_PATH}" \
-    | head -n1 | sed -E 's/.*&dbSecret[[:space:]]+([^[:space:]]+).*/\1/')
+  anchor=$(helmrelease_anchor)
   [[ "${anchor}" == "${BLUE_APP_SECRET}" ]] \
     || { err "helmrelease anchor moved to ${anchor}, expected blue (${BLUE_APP_SECRET})"; fail=1; }
 
@@ -574,9 +679,19 @@ cmd_ready() {
 
 cmd_cutover() {
   require_tools
+  if [[ -f "${CUTOVER_STATE_FILE}" ]]; then
+    local stage
+    stage=$(jq -r '.stage // ""' "${CUTOVER_STATE_FILE}")
+    if [[ "${stage}" == "awaiting-handoff" ]]; then
+      log "resuming cutover after GitOps handoff"
+      resume_cutover_after_handoff "${CUTOVER_STATE_FILE}"
+      return 0
+    fi
+  fi
+
   cmd_ready
 
-  local state_file="${STATE_DIR_ABS}/cutover.json"
+  local state_file="${CUTOVER_STATE_FILE}"
   log "saving current deployment replica counts"
   local replicas_json="{"
   for deploy in ${APP_DEPLOYMENTS}; do
@@ -585,11 +700,12 @@ cmd_cutover() {
     replicas_json+="\"${deploy}\":${r:-0},"
   done
   replicas_json="${replicas_json%,}}"
-  jq -n --argjson r "${replicas_json}" '{replicas:$r}' >"${state_file}"
+  jq -n --argjson r "${replicas_json}" '{stage:"started", replicas:$r}' >"${state_file}"
   log "saved: ${state_file}"
 
   log "triggering on-demand backup of blue"
-  local backup_name="n8n-pre-cutover-$(date -u +%Y%m%dT%H%M%SZ)"
+  local backup_name
+  backup_name="n8n-pre-cutover-$(date -u +%Y%m%dT%H%M%SZ)"
   cat <<EOF | kctl apply -f -
 apiVersion: postgresql.cnpg.io/v1
 kind: Backup
@@ -680,13 +796,9 @@ EOF
 
   log "row count parity check"
   local diff_rows
-  diff_rows=$(psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" \
-    "SELECT schemaname || '.' || relname || ':' || n_live_tup FROM pg_stat_user_tables ORDER BY 1;" \
-    | sort)
+  diff_rows=$(table_counts "${BLUE_CLUSTER}" "${BLUE_DATABASE}" | sort)
   local green_rows
-  green_rows=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
-    "SELECT schemaname || '.' || relname || ':' || n_live_tup FROM pg_stat_user_tables ORDER BY 1;" \
-    | sort)
+  green_rows=$(table_counts "${GREEN_CLUSTER}" "${GREEN_DATABASE}" | sort)
   if ! diff <(echo "${diff_rows}") <(echo "${green_rows}") >"${STATE_DIR_ABS}/rowcount.diff"; then
     err "row counts differ between blue and green. See ${STATE_DIR_ABS}/rowcount.diff"
     err "Aborting cutover. Investigate, fix, retry."
@@ -702,6 +814,7 @@ EOF
     die "row-count mismatch"
   fi
   ok "row counts match"
+  save_cutover_stage "${state_file}" "awaiting-handoff"
 
   cat <<EOF
 
@@ -722,9 +835,9 @@ Then:
   git push
   flux reconcile helmrelease ${HELMRELEASE} -n ${NAMESPACE}
 
-Once the new pods are rolling, re-run:
+Once the cutover edit is reconciled, re-run:
 
-  task postgres:cutover   # resumes here, runs postcheck + grafana-postcheck
+  task postgres:cutover   # resumes from ${state_file}, restores replicas, runs postcheck + grafana-postcheck
 
 To wake this script without re-running the full task, create the file:
 
@@ -750,25 +863,11 @@ EOF
 
   log "verifying HelmRelease now points at ${GREEN_APP_SECRET}"
   local anchor
-  anchor=$(grep -E '&dbSecret[[:space:]]+' "${HELMRELEASE_PATH}" \
-    | head -n1 | sed -E 's/.*&dbSecret[[:space:]]+([^[:space:]]+).*/\1/')
+  anchor=$(helmrelease_anchor)
   [[ "${anchor}" == "${GREEN_APP_SECRET}" ]] \
-    || die "anchor in ${HELMRELEASE_PATH} is '${anchor}', expected '${GREEN_APP_SECRET}'. Aborting."
+    || die "anchor in ${HELMRELEASE_PATH} is '${anchor}', expected '${GREEN_APP_SECRET}'. App is still scaled to 0; complete the cutover edit or rollback."
 
-  log "restoring app replica counts"
-  for deploy in ${APP_DEPLOYMENTS}; do
-    local r
-    r=$(jq -r ".replicas.\"${deploy}\"" "${state_file}")
-    [[ "${r}" == "0" || "${r}" == "null" ]] && r=1
-    kctl scale deploy "${deploy}" --replicas="${r}"
-  done
-  for deploy in ${APP_DEPLOYMENTS}; do
-    kctl rollout status deploy "${deploy}" --timeout=300s
-  done
-
-  cmd_postcheck
-  cmd_grafana_postcheck || warn "grafana-postcheck reported issues; review manually"
-  ok "cutover sequence complete"
+  resume_cutover_after_handoff "${state_file}"
 }
 
 # ----------------------------------------------------------------------------
@@ -824,7 +923,7 @@ cmd_postcheck() {
     WHERE NOT ix.indisvalid;")
   if [[ -n "${invalid}" ]]; then
     err "invalid indexes on green:"
-    echo "${invalid}" | sed 's/^/    /' >&2
+    printf '%s\n' "${invalid}" | indent_stderr
     fail=1
   fi
 
@@ -917,15 +1016,19 @@ cmd_grafana_postcheck() {
 cmd_rollback() {
   require_tools
   local anchor
-  anchor=$(grep -E '&dbSecret[[:space:]]+' "${HELMRELEASE_PATH}" \
-    | head -n1 | sed -E 's/.*&dbSecret[[:space:]]+([^[:space:]]+).*/\1/')
+  anchor=$(helmrelease_anchor)
 
   if [[ "${anchor}" == "${BLUE_APP_SECRET}" ]]; then
     log "pre-cutover rollback: app still on blue"
     log "  -- removing migration objects"
+    psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
+      "DROP SUBSCRIPTION IF EXISTS n8n_green_sub;" 2>/dev/null || true
+    psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" \
+      "DROP PUBLICATION IF EXISTS n8n_green_pub;" 2>/dev/null || true
     kctl delete --ignore-not-found -f "${MIGRATION_MANIFEST_DIR}/subscription.yaml"
     kctl delete --ignore-not-found -f "${MIGRATION_MANIFEST_DIR}/publication.yaml"
     kctl delete --ignore-not-found -f "${MIGRATION_MANIFEST_DIR}/cluster-green.yaml"
+    rm -f "${CUTOVER_STATE_FILE}"
     ok "pre-cutover rollback complete"
     return 0
   fi
@@ -962,12 +1065,15 @@ EOF
 cmd_cleanup() {
   require_tools
   local anchor
-  anchor=$(grep -E '&dbSecret[[:space:]]+' "${HELMRELEASE_PATH}" \
-    | head -n1 | sed -E 's/.*&dbSecret[[:space:]]+([^[:space:]]+).*/\1/')
+  anchor=$(helmrelease_anchor)
   [[ "${anchor}" == "${GREEN_APP_SECRET}" ]] \
     || die "helmrelease anchor is '${anchor}', expected '${GREEN_APP_SECRET}'. Refusing cleanup."
 
   log "removing CNPG Subscription and Publication"
+  psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
+    "DROP SUBSCRIPTION IF EXISTS n8n_green_sub;" || true
+  psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" \
+    "DROP PUBLICATION IF EXISTS n8n_green_pub;" || true
   kctl delete --ignore-not-found subscription "${SUBSCRIPTION_NAME}"
   kctl delete --ignore-not-found publication "${PUBLICATION_NAME}"
 

@@ -39,9 +39,7 @@ spec:
               DB_TYPE: "postgresdb"
               # Blue/green cutover is a single edit: change the anchor target
               # below from n8n-app (blue) to n8n-green-app (green). All four
-              # DB env vars resolve through it. Secret key names follow CNPG's
-              # auto-generated <cluster>-app convention so the same wiring
-              # works against either cluster.
+              # DB env vars resolve through it.
               DB_POSTGRESDB_DATABASE:
                 valueFrom:
                   secretKeyRef:
@@ -57,7 +55,7 @@ spec:
                 valueFrom:
                   secretKeyRef:
                     name: *dbSecret
-                    key: username
+                    key: user
               DB_POSTGRESDB_PASSWORD:
                 valueFrom:
                   secretKeyRef:

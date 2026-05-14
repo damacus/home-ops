@@ -47,8 +47,8 @@ spec:
 
   bootstrap:
     initdb:
-      database: n8n
-      owner: n8n
+      database: app
+      owner: app
       # CNPG auto-generates Secret/n8n-green-app from this owner with the
       # standard key shape (host, username, password, dbname, port, uri,
       # jdbc-uri, pgpass). The n8n HelmRelease anchor points at this secret
@@ -63,7 +63,7 @@ spec:
       connectionParameters:
         host: n8n-rw.home-automation.svc.cluster.local
         user: postgres
-        dbname: n8n
+        dbname: app
         port: "5432"
         sslmode: prefer
       password:
