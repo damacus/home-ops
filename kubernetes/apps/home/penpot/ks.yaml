@@ -1,17 +1,20 @@
 ---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app system-upgrade-k3s
+  name: &app penpot
   namespace: flux-system
 spec:
-  targetNamespace: system-upgrade
+  targetNamespace: home
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: system-upgrade-controller
-  path: ./kubernetes/apps/system-upgrade/k3s/app
+    - name: penpot-db
+    - name: redis
+    - name: traefik
+  path: ./kubernetes/apps/home/penpot/app
   prune: true
   sourceRef:
     kind: GitRepository
@@ -20,7 +23,3 @@ spec:
   interval: 30m
   retryInterval: 1m
   timeout: 5m
-  postBuild:
-    substitute:
-      # renovate: depName=k3s-io/k3s datasource=github-releases versioning=semver-coerced
-      KUBE_VERSION: v1.36.0+k3s1

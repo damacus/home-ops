@@ -10,4 +10,5 @@ resources:
   - ./metrics-server/ks.yaml
   - ./node-feature-discovery/ks.yaml
   - ./reloader/ks.yaml
-  # - ./reflector/ks.yaml
+  - ./reflector/namespace.yaml
+  - ./reflector/ks.yaml

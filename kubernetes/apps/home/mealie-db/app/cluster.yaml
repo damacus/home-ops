@@ -40,7 +40,7 @@ spec:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: mealie-minio-store
+        barmanObjectName: mealie-rustfs-store
         serverName: mealie
 
   resources:

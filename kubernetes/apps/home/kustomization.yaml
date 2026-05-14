@@ -10,3 +10,5 @@ resources:
   - ./med-tracker-db/ks.yaml
   - ./med-tracker/ks.yaml
   - ./namespace.yaml
+  - ./penpot-db/ks.yaml
+  - ./penpot/ks.yaml

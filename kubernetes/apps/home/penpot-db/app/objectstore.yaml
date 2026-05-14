@@ -3,20 +3,20 @@
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
-  name: immich-rustfs-store
+  name: penpot-rustfs-store
   namespace: home
 spec:
   retentionPolicy: 30d
   configuration:
-    destinationPath: s3://cnpg-backups/immich
+    destinationPath: s3://cnpg-backups/penpot
     endpointURL: http://rustfs.storage.svc.cluster.local:9000
     s3Credentials:
       accessKeyId:
-        name: rustfs-cnpg-credentials
-        key: ACCESS_KEY_ID
+        name: minio-cnpg
+        key: aws-access-key-id
       secretAccessKey:
-        name: rustfs-cnpg-credentials
-        key: SECRET_ACCESS_KEY
+        name: minio-cnpg
+        key: aws-secret-access-key
     data:
       compression: bzip2
     wal:

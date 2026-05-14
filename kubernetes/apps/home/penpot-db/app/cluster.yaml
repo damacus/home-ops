@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: &name med-tracker
+  name: &name penpot
   namespace: home
 spec:
   imageCatalogRef:
@@ -23,13 +23,9 @@ spec:
   bootstrap:
     initdb:
       database: *name
-      owner: *name
-      secret:
-        name: med-tracker-db
+      owner: app
 
   enableSuperuserAccess: true
-  superuserSecret:
-    name: med-tracker-db-superuser
 
   postgresql:
     parameters:
@@ -40,8 +36,8 @@ spec:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: med-tracker-rustfs-store
-        serverName: med-tracker
+        barmanObjectName: penpot-rustfs-store
+        serverName: penpot
 
   resources:
     requests:

@@ -29,9 +29,9 @@ spec:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: n8n-minio-store
+        barmanObjectName: n8n-rustfs-store
         # Distinct serverName so green's WAL archives don't collide with
-        # blue's in the shared n8n-minio-store object store.
+        # blue's in the shared n8n-rustfs-store object store.
         serverName: n8n-green
 
   monitoring:

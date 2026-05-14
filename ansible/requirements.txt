@@ -41,7 +41,7 @@ durationpy==0.10
     # via kubernetes
 filelock==3.29.0
     # via ansible-lint
-idna==3.13
+idna==3.15
     # via requests
 jinja2==3.1.6
     # via ansible-core
@@ -96,7 +96,7 @@ referencing==0.37.0
     #   ansible-lint
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.1
+requests==2.34.1
     # via
     #   kubernetes
     #   requests-oauthlib
