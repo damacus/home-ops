@@ -96,7 +96,7 @@ referencing==0.37.0
     #   ansible-lint
     #   jsonschema
     #   jsonschema-specifications
-requests==2.34.1
+requests==2.34.2
     # via
     #   kubernetes
     #   requests-oauthlib
