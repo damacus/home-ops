@@ -13,6 +13,18 @@
   ],
   packageRules: [
     {
+      description: "Group and auto-merge non-major Penpot container updates",
+      groupName: "penpot containers",
+      matchDatasources: ["docker"],
+      matchPackageNames: [
+        "penpotapp/backend",
+        "penpotapp/exporter",
+        "penpotapp/frontend",
+      ],
+      matchUpdateTypes: ["digest", "minor", "patch", "pin", "pinDigest"],
+      automerge: true,
+    },
+    {
       description: "Auto-merge non-major updates for selected home-ops assets",
       matchPackageNames: [
         "ghcr.io/coder/code-server",
