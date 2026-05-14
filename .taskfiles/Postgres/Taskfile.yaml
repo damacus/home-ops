@@ -93,6 +93,11 @@ tasks:
     cmds:
       - "{{.SCRIPT}} preflight"
 
+  test:
+    desc: "Run pg-bluegreen unit checks"
+    cmds:
+      - bash "{{.ROOT_DIR}}/scripts/pg-bluegreen_test.sh"
+
   blue-connection:
     desc: "Print the blue cluster connection URI (reads {{.BLUE_APP_SECRET}})"
     cmds:
