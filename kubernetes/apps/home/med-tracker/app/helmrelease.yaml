@@ -50,6 +50,7 @@ spec:
                   name: med-tracker-secret
             env:
               RAILS_ENV: production
+              TZ: Europe/London
         containers:
           app:
             image:
@@ -61,6 +62,7 @@ spec:
                   name: med-tracker-secret
             env:
               RAILS_ENV: production
+              TZ: Europe/London
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
               SOLID_QUEUE_IN_PUMA: "true"
