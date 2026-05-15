@@ -50,7 +50,7 @@ spec:
                   name: med-tracker-secret
             env:
               RAILS_ENV: production
-              TZ: Europe/London
+              TZ: "Europe/London"
         containers:
           app:
             image:
@@ -62,10 +62,10 @@ spec:
                   name: med-tracker-secret
             env:
               RAILS_ENV: production
-              TZ: Europe/London
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
               SOLID_QUEUE_IN_PUMA: "true"
+              TZ: "Europe/London"
               APP_URL: "https://med-tracker.damacus.io"
               OIDC_ISSUER_URL: "https://zitadel.damacus.io"
               OIDC_REDIRECT_URI: "https://med-tracker.damacus.io/auth/oidc/callback"
