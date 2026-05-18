@@ -30,16 +30,13 @@ spec:
       enabled: false
     postgresql:
       enabled: false
-
     podAnnotations:
       reloader.stakater.com/auto: "true"
-
     podSecurityContext:
       fsGroup: 1000
       fsGroupChangePolicy: OnRootMismatch
       seccompProfile:
         type: RuntimeDefault
-
     containerSecurityContext:
       allowPrivilegeEscalation: false
       capabilities:
@@ -50,12 +47,10 @@ spec:
       runAsGroup: 1000
       runAsNonRoot: true
       runAsUser: 1000
-
     persistence:
       enabled: true
       create: false
       claimName: forgejo
-
     service:
       http:
         type: ClusterIP
@@ -66,10 +61,8 @@ spec:
         loadBalancerIP: 192.168.1.236
         annotations:
           external-dns.alpha.kubernetes.io/hostname: ssh.forgejo.ironstone.casa
-
     ingress:
       enabled: false
-
     gitea:
       admin:
         existingSecret: forgejo-admin
@@ -79,11 +72,9 @@ spec:
           existingSecret: forgejo-zitadel-oidc
           autoDiscoverUrl: "https://zitadel.damacus.io/.well-known/openid-configuration"
           scopes: "openid,email,profile,groups"
-
       config:
         APP_NAME: "Forgejo"
         RUN_MODE: prod
-
         server:
           DOMAIN: forgejo.ironstone.casa
           ROOT_URL: "https://forgejo.ironstone.casa"
@@ -92,42 +83,33 @@ spec:
           SSH_PORT: 22
           DISABLE_SSH: "false"
           LFS_START_SERVER: "true"
-
         database:
           DB_TYPE: postgres
-          HOST: forgejo-rw.dev.svc.cluster.local:5432
+          HOST: forgejo-green-rw.dev.svc.cluster.local:5432
           NAME: forgejo
           USER: forgejo
           PASSWD: ""
           SSL_MODE: disable
-
         cache:
           ADAPTER: memory
-
         session:
           PROVIDER: db
-
         queue:
           TYPE: level
-
         security:
           INSTALL_LOCK: "true"
-
         oauth2_client:
           ENABLE_AUTO_REGISTRATION: "true"
           OPENID_CONNECT_SCOPES: "profile email groups"
           UPDATE_AVATAR: "true"
-
         service:
           DISABLE_REGISTRATION: "false"
           ALLOW_ONLY_EXTERNAL_REGISTRATION: "true"
           REQUIRE_SIGNIN_VIEW: "false"
           SHOW_REGISTRATION_BUTTON: "false"
-
         log:
           MODE: console
           LEVEL: info
-
       additionalConfigFromEnvs:
         - name: FORGEJO__DATABASE__PASSWD
           valueFrom:

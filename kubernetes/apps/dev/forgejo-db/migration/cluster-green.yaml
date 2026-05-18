@@ -1,28 +1,35 @@
 ---
+# Green CNPG cluster for the forgejo PG16 -> PG18 blue/green migration.
+# Applied imperatively during migration; not included in the Flux app kustomization.
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: n8n
-  namespace: home-automation
-  annotations:
-    cnpg.io/hibernation: "on"
+  name: forgejo-green
+  namespace: dev
 spec:
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
     name: postgresql
-    major: 16
+    major: 18
   instances: 2
   primaryUpdateStrategy: unsupervised
   enablePDB: true
+
+  bootstrap:
+    initdb:
+      database: forgejo
+      owner: forgejo
+      secret:
+        name: forgejo-db
 
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
-        barmanObjectName: n8n-rustfs-store
-        serverName: n8n
+        barmanObjectName: forgejo-rustfs-store
+        serverName: forgejo-green
 
   monitoring:
     enablePodMonitor: true
@@ -33,7 +40,19 @@ spec:
 
   enableSuperuserAccess: true
   superuserSecret:
-    name: n8n-superuser
+    name: cloudnative-pg
+
+  externalClusters:
+    - name: forgejo
+      connectionParameters:
+        host: forgejo-rw.dev.svc.cluster.local
+        user: postgres
+        dbname: forgejo
+        port: "5432"
+        sslmode: prefer
+      password:
+        name: cloudnative-pg
+        key: password
 
   postgresql:
     parameters:
@@ -41,7 +60,6 @@ spec:
       shared_buffers: 128MB
       effective_io_concurrency: "200"
       maintenance_work_mem: 128MB
-      # Logical replication prerequisites for blue/green major version upgrade.
       wal_level: logical
       max_replication_slots: "10"
       max_wal_senders: "10"

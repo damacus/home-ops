@@ -6,12 +6,13 @@ version: "3"
 # All tasks shell out to scripts/pg-bluegreen.sh; each subcommand is
 # idempotent and can be re-run safely.
 #
-# Defaults target the n8n PG16 -> PG18 migration. Overrides flow either from
-# the CLI (task postgres:cutover BLUE_CLUSTER=foo) or from a .env file at
-# the repo root (sourced by the script).
+# Prefer PG_PROFILE=<app> for service-specific migrations. Profiles live in
+# .taskfiles/Postgres/profiles/*.env and define app deployments, DB names,
+# Helm cutover paths, manifest directories, and health checks.
 
 vars:
   SCRIPT: "{{.ROOT_DIR}}/scripts/pg-bluegreen.sh"
+  PG_PROFILE: '{{.PG_PROFILE | default ""}}'
   NAMESPACE: '{{.NAMESPACE | default "home-automation"}}'
   APP_DEPLOYMENTS: '{{.APP_DEPLOYMENTS | default "n8n n8n-worker"}}'
   HELMRELEASE: '{{.HELMRELEASE | default "n8n"}}'
@@ -26,11 +27,13 @@ vars:
   PUBLICATION_NAME: '{{.PUBLICATION_NAME | default "n8n-green-pub"}}'
   SUBSCRIPTION_NAME: '{{.SUBSCRIPTION_NAME | default "n8n-green-sub"}}'
   STATE_DIR: '{{.STATE_DIR | default ".migration-state/n8n"}}'
-  MIGRATION_MANIFEST_DIR: "{{.ROOT_DIR}}/kubernetes/apps/home-automation/n8n-db/migration"
-  HELMRELEASE_PATH: "{{.ROOT_DIR}}/kubernetes/apps/home-automation/n8n/app/helmrelease.yaml"
+  MIGRATION_MANIFEST_DIR: '{{.MIGRATION_MANIFEST_DIR | default ""}}'
+  HELMRELEASE_PATH: '{{.HELMRELEASE_PATH | default ""}}'
   PROMETHEUS_URL: '{{.PROMETHEUS_URL | default "http://prometheus-operated.observability.svc.cluster.local:9090"}}'
+  CONFIRM_CONTEXT: '{{.CONFIRM_CONTEXT | default "false"}}'
 
 env:
+  PG_PROFILE: "{{.PG_PROFILE}}"
   NAMESPACE: "{{.NAMESPACE}}"
   APP_DEPLOYMENTS: "{{.APP_DEPLOYMENTS}}"
   HELMRELEASE: "{{.HELMRELEASE}}"
@@ -48,6 +51,7 @@ env:
   MIGRATION_MANIFEST_DIR: "{{.MIGRATION_MANIFEST_DIR}}"
   HELMRELEASE_PATH: "{{.HELMRELEASE_PATH}}"
   PROMETHEUS_URL: "{{.PROMETHEUS_URL}}"
+  CONFIRM_CONTEXT: "{{.CONFIRM_CONTEXT}}"
   ROOT_DIR: "{{.ROOT_DIR}}"
 
 tasks:
@@ -62,29 +66,30 @@ tasks:
     cmds:
       - |
         cat <<'EOF'
-        n8n PG16 -> PG18 blue/green SOP
-          0. Land prereq PR 1 (wal_level=logical on blue), wait for Flux + rolling restart.
-          1. Land prereq PR 2 (HelmRelease secret-name anchor).
-          2. task postgres:discover
-          3. task postgres:preflight
-          4. task postgres:all-but-cutover
-          5. task postgres:monitor             # repeat until ready
-          6. Freeze n8n edits + deployments
-          7. task postgres:ready
-          8. task postgres:cutover             # prints YAML diff, waits
-          9.   operator: commit + push + flux reconcile helmrelease n8n -n home-automation
-         10.   script resumes, runs postcheck + grafana-postcheck automatically
-         11. Soak (24-48h)
-         12. task postgres:cleanup
+        CNPG PG16 -> PG18 blue/green SOP
+          0. Pick an explicit profile: PG_PROFILE=<app>
+          1. Land prerequisite manifests/settings for logical replication.
+          2. task postgres:discover PG_PROFILE=<app>
+          3. task postgres:prepare-blue PG_PROFILE=<app>         # no-op unless the profile declares DB prerequisites
+          4. task postgres:preflight PG_PROFILE=<app>
+          5. task postgres:all-but-cutover PG_PROFILE=<app>
+          6. task postgres:monitor PG_PROFILE=<app>             # repeat until ready
+          7. Freeze app writes/deployments
+          8. task postgres:ready PG_PROFILE=<app>
+          9. task postgres:cutover PG_PROFILE=<app>             # stops writes, validates, waits
+         10.   operator: commit + push the HelmRelease cutover edit and reconcile Flux
+         11.   script resumes, restores replicas, runs postcheck + grafana-postcheck
+         12. Soak (24-48h)
+         13. task postgres:cleanup PG_PROFILE=<app>
         EOF
 
   discover:
-    desc: "Snapshot current CNPG/app/db state for n8n"
+    desc: "Snapshot current CNPG/app/db state"
     cmds:
       - "{{.SCRIPT}} discover"
 
   show-active:
-    desc: "Print which DB secret the n8n HelmRelease currently points at"
+    desc: "Print which DB target the HelmRelease currently points at"
     cmds:
       - "{{.SCRIPT}} show-active"
 
@@ -102,6 +107,11 @@ tasks:
     desc: "Print the green cluster connection URI (reads {{.GREEN_APP_SECRET}})"
     cmds:
       - "{{.SCRIPT}} green-connection"
+
+  prepare-blue:
+    desc: "Apply profile-declared blue DB prerequisites"
+    cmds:
+      - "{{.SCRIPT}} prepare-blue"
 
   create-green:
     desc: "Apply the green CNPG cluster manifest and wait for healthy"
@@ -159,9 +169,10 @@ tasks:
       - "{{.SCRIPT}} cleanup"
 
   all-but-cutover:
-    desc: "discover -> preflight -> create-green -> copy-schema -> publication -> subscription -> monitor"
+    desc: "discover -> prepare-blue -> preflight -> create-green -> copy-schema -> publication -> subscription -> monitor"
     cmds:
       - task: discover
+      - task: prepare-blue
       - task: preflight
       - task: create-green
       - task: copy-schema

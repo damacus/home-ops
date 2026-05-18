@@ -1,18 +1,18 @@
 ---
+# Green CNPG cluster for the immich PG16 -> PG18 blue/green migration.
+# Applied imperatively during migration; not included in the Flux app kustomization.
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: &name immich
+  name: immich-green
   namespace: home
-  annotations:
-    cnpg.io/hibernation: "on"
 spec:
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
     name: postgresql
-    major: 16
+    major: 18
   instances: 2
   primaryUpdateStrategy: unsupervised
   enablePDB: true
@@ -23,8 +23,8 @@ spec:
 
   bootstrap:
     initdb:
-      database: *name
-      owner: *name
+      database: immich
+      owner: immich
       secret:
         name: immich-db
 
@@ -32,17 +32,32 @@ spec:
   superuserSecret:
     name: immich-db-superuser
 
+  externalClusters:
+    - name: immich
+      connectionParameters:
+        host: immich-rw.home.svc.cluster.local
+        user: postgres
+        dbname: immich
+        port: "5432"
+        sslmode: prefer
+      password:
+        name: immich-db-superuser
+        key: password
+
   postgresql:
     parameters:
       max_connections: "100"
       shared_buffers: 256MB
+      wal_level: logical
+      max_replication_slots: "10"
+      max_wal_senders: "10"
 
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
         barmanObjectName: immich-rustfs-store
-        serverName: immich
+        serverName: immich-green
 
   resources:
     requests:
