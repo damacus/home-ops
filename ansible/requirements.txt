@@ -15,7 +15,7 @@ attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
-black==26.5.0
+black==26.5.1
     # via ansible-lint
 bracex==2.6
     # via wcmatch
