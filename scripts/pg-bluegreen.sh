@@ -426,7 +426,8 @@ cmd_create_green() {
     major=$(kctl get cluster "${GREEN_CLUSTER}" -o jsonpath='{.spec.imageCatalogRef.major}')
     phase=$(kctl get cluster "${GREEN_CLUSTER}" -o jsonpath='{.status.phase}')
     if [[ "${major}" == "18" && "${phase}" == "Cluster in healthy state" ]]; then
-      ok "green cluster ${GREEN_CLUSTER} already healthy at PG18, skipping apply"
+      log "green cluster ${GREEN_CLUSTER} already healthy at PG18; re-applying manifest to pick up spec drift"
+      kctl apply -f "${MIGRATION_MANIFEST_DIR}/cluster-green.yaml"
     else
       warn "green cluster exists but major=${major}, phase=${phase}; re-applying"
       kctl apply -f "${MIGRATION_MANIFEST_DIR}/cluster-green.yaml"
@@ -497,13 +498,15 @@ cmd_copy_schema() {
   log "verifying restored object ownership"
   local wrong_owner
   wrong_owner=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" "WITH objects AS (
-    SELECT n.nspname AS schema_name, c.relname AS object_name, pg_get_userbyid(c.relowner) AS owner
+    SELECT c.oid AS object_oid, 0 AS object_subid, 'pg_class'::regclass AS catalog_oid,
+           n.nspname AS schema_name, c.relname AS object_name, pg_get_userbyid(c.relowner) AS owner
     FROM pg_class c
     JOIN pg_namespace n ON n.oid = c.relnamespace
     WHERE c.relkind IN ('r','p','S','v','m','f')
       AND n.nspname NOT IN ('pg_catalog', 'information_schema')
     UNION ALL
-    SELECT n.nspname, p.proname, pg_get_userbyid(p.proowner)
+    SELECT p.oid, 0, 'pg_proc'::regclass,
+           n.nspname, p.proname, pg_get_userbyid(p.proowner)
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
@@ -511,6 +514,14 @@ cmd_copy_schema() {
   SELECT schema_name || '.' || object_name || ' owned by ' || owner
   FROM objects
   WHERE owner <> '${GREEN_USER}'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM pg_depend d
+      WHERE d.classid = objects.catalog_oid
+        AND d.objid = objects.object_oid
+        AND d.objsubid = objects.object_subid
+        AND d.refclassid = 'pg_extension'::regclass
+    )
   ORDER BY 1
   LIMIT 20;")
   if [[ -n "${wrong_owner}" ]]; then
