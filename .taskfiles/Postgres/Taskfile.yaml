@@ -133,6 +133,11 @@ tasks:
     cmds:
       - "{{.SCRIPT}} subscription"
 
+  subscription-reset:
+    desc: "Delete/recreate the CNPG Subscription CR against green"
+    cmds:
+      - "{{.SCRIPT}} subscription-reset"
+
   monitor:
     desc: "Print pub/sub status + replication lag (one-shot)"
     cmds:
