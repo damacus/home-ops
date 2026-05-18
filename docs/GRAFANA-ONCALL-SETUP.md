@@ -10,8 +10,8 @@ The local Grafana instance is managed through GitOps. Do not treat manual Grafan
 
 The `grafana-cloud-oncall` item must expose these fields through External Secrets:
 
-- `credential`: Grafana OnCall plugin token, rendered into `GF_PLUGIN_GRAFANA_ONCALL_APP_ONCALL_TOKEN`.
-- `GRAFANA_ONCALL_ALERTMANAGER_URL`: Alertmanager integration webhook URL copied from Grafana Cloud OnCall. Keep the trailing slash.
+- `credential`: Grafana OnCall plugin token. Explicitly mapped to `GRAFANA_ONCALL_TOKEN`, then rendered into `GF_PLUGIN_GRAFANA_ONCALL_APP_ONCALL_TOKEN`.
+- `GRAFANA_ONCALL_ALERTMANAGER_URL`: Alertmanager integration webhook URL copied from Grafana Cloud OnCall. Explicitly mapped into the Alertmanager template. Treat this as sensitive.
 
 The Grafana OnCall plugin API URL is declared in `kubernetes/apps/monitoring/grafana/app/externalsecret-oncall.yaml`:
 
