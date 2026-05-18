@@ -6,6 +6,5 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./job-buckets.yaml
-  - ./job-migrate-minio.yaml
   - ./pvc.yaml
   - ./pvc-ssd.yaml
