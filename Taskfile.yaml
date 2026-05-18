@@ -46,6 +46,7 @@ includes:
   postgres:
     aliases: ["pg"]
     taskfile: .taskfiles/Postgres/Taskfile.yaml
+  unifi: .taskfiles/Unifi/Taskfile.yaml
 
 tasks:
   default: task -l

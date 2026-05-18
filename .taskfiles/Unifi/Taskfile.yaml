@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  UNIFI_READ_STATUS_SCRIPT: "{{.ROOT_DIR}}/scripts/unifi/read-status.py"
+
+tasks:
+  mesh-status:
+    desc: Read UniFi mesh/backhaul state for the garage camera path
+    summary: |
+      Read-only UniFi diagnostic for the U6-LR <-> U6-Mesh backhaul and the
+      downstream USW-Lite/Garage camera path. The script reads the UniFi API
+      key from the existing Kubernetes secret and prints device state, AP radio
+      settings, active wireless uplinks, mesh peer observations, switch ports,
+      client matches, and ICMP reachability.
+
+      Examples:
+        task unifi:mesh-status
+        task unifi:mesh-status json=true
+        task unifi:mesh-status no_ping=true
+        task unifi:mesh-status devices=U6-LR,U6-Mesh,U6\\ Pro
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NO_PING: '{{.no_ping | default "false"}}'
+      DEVICES: '{{.devices | default "U6-LR,U6-Mesh,U6 Pro,USW-Lite-8-PoE"}}'
+      WATCH_IPS: '{{.watch_ips | default "U6-LR=192.168.1.155,U6-Mesh=192.168.1.109,USW-Lite-8-PoE=192.168.1.38,Garage=192.168.1.168"}}'
+      CLIENT_MACS: '{{.client_macs | default "70:a7:41:5f:13:d9"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.UNIFI_READ_STATUS_SCRIPT}}
+      --devices "{{.DEVICES}}"
+      --watch-ips "{{.WATCH_IPS}}"
+      --client-macs "{{.CLIENT_MACS}}"
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NO_PING "true"}}--no-ping{{end}}
+    preconditions:
+      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
+      - { msg: "Missing UniFi read status script", sh: "test -f {{.UNIFI_READ_STATUS_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
