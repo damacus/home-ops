@@ -721,19 +721,11 @@ cmd_cutover() {
   log "triggering on-demand backup of blue"
   local backup_name
   backup_name="n8n-pre-cutover-$(date -u +%Y%m%d%H%M%S)"
-  cat <<EOF | kctl apply -f -
-apiVersion: postgresql.cnpg.io/v1
-kind: Backup
-metadata:
-  name: ${backup_name}
-  namespace: ${NAMESPACE}
-spec:
-  cluster:
-    name: ${BLUE_CLUSTER}
-  method: plugin
-  pluginConfiguration:
-    name: barman-cloud.cloudnative-pg.io
-EOF
+  kubectl cnpg backup "${BLUE_CLUSTER}" \
+    --namespace "${NAMESPACE}" \
+    --backup-name "${backup_name}" \
+    --method plugin \
+    --plugin-name barman-cloud.cloudnative-pg.io
   log "waiting for backup ${backup_name} to complete (timeout 600s)"
   local end=$(( SECONDS + 600 ))
   local phase=""
