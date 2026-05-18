@@ -2,7 +2,7 @@
 
 ## Overview
 
-Grafana Cloud OnCall is the primary destination for actionable Alertmanager alerts. Pushover remains in the same Alertmanager receivers during rollout so alerts still produce the existing mobile signal while OnCall paging is verified.
+Grafana Cloud OnCall is configured as a second destination for actionable Alertmanager alerts. The existing Pushover receivers stay in place, and each receiver now fans out to both Grafana OnCall and Pushover.
 
 The local Grafana instance is managed through GitOps. Do not treat manual Grafana UI changes as authoritative; update the manifests and 1Password items instead.
 
@@ -53,7 +53,7 @@ In Grafana, verify:
 
 In Alertmanager, verify:
 
-- Receivers `pushover` and `pushover-critical` include an OnCall webhook.
+- Receivers `pushover` and `pushover-critical` include both an OnCall webhook and a Pushover config.
 - `Watchdog` still routes to Gatus heartbeat.
 - `InfoInhibitor` still routes to `null`.
 - Warning/info alerts still respect the DND mute intervals.
