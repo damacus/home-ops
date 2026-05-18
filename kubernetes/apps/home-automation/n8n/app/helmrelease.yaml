@@ -43,7 +43,7 @@ spec:
               DB_POSTGRESDB_DATABASE:
                 valueFrom:
                   secretKeyRef:
-                    name: &dbSecret n8n-app
+                    name: &dbSecret n8n-green-app
                     key: dbname
               DB_POSTGRESDB_HOST:
                 valueFrom:
