@@ -51,3 +51,7 @@ When working in this repository:
 - Update the relevant task list by setting `"passes": true` only after verifying functionality with tests.
 - Reference `GEMINI.md` for specific maintenance commands and troubleshooting.
 - Maintain consistency with existing architecture and naming conventions.
+
+## Physical Infrastructure Constraints
+
+- Do not propose adding physical cabling or fibre between the house and garage. Garden constraints make a new physical house-to-garage run unavailable; garage connectivity planning must assume wireless backhaul or reuse of existing infrastructure only.

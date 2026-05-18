@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home Network Switch Roadmap</title>
+  <style>
+    :root {
+      --bg: #0f1110;
+      --panel: #171a18;
+      --panel-2: #20241f;
+      --ink: #eef2ea;
+      --muted: #aeb7ab;
+      --line: #394038;
+      --green: #9bd67c;
+      --amber: #f3bd5b;
+      --red: #f07167;
+      --cyan: #7fc7d9;
+      --blue: #8ea9ff;
+      --shadow: rgba(0, 0, 0, 0.38);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 44px 44px,
+        linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px) 0 0 / 44px 44px,
+        var(--bg);
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", Verdana, sans-serif;
+      line-height: 1.55;
+    }
+
+    header {
+      padding: 56px clamp(20px, 5vw, 72px) 30px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(155,214,124,.12), rgba(127,199,217,.05) 44%, transparent);
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 30px clamp(16px, 4vw, 36px) 70px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.08;
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2.2rem, 6vw, 5.7rem);
+      max-width: 980px;
+    }
+
+    h2 {
+      font-size: clamp(1.45rem, 2.4vw, 2.1rem);
+      margin-bottom: 18px;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      color: var(--green);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    p { margin: 0 0 14px; }
+
+    a { color: var(--cyan); }
+
+    .kicker {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
+      color: var(--green);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: .78rem;
+      letter-spacing: .12em;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 22px rgba(155,214,124,.8);
+    }
+
+    .subtitle {
+      max-width: 840px;
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.5vw, 1.25rem);
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    section {
+      margin-top: 28px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      background: rgba(23, 26, 24, .88);
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      padding: 18px;
+      min-height: 100%;
+    }
+
+    .decision {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 22px;
+      align-items: stretch;
+      margin-top: 28px;
+    }
+
+    .verdict {
+      border: 1px solid rgba(155,214,124,.45);
+      background: linear-gradient(135deg, rgba(155,214,124,.16), rgba(155,214,124,.04));
+      padding: 24px;
+    }
+
+    .verdict strong {
+      color: var(--green);
+      font-size: 1.15rem;
+    }
+
+    .price {
+      font-size: 2.2rem;
+      font-weight: 900;
+      margin-top: 8px;
+    }
+
+    .metric {
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: #111411;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .metric b {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.35rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      font-size: .94rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      background: rgba(255,255,255,.03);
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      background: #101310;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tag.good { color: var(--green); border-color: rgba(155,214,124,.45); }
+    .tag.warn { color: var(--amber); border-color: rgba(243,189,91,.55); }
+    .tag.bad { color: var(--red); border-color: rgba(240,113,103,.55); }
+
+    .path {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .node {
+      border: 1px solid var(--line);
+      background: #111411;
+      padding: 14px;
+      position: relative;
+      min-height: 106px;
+    }
+
+    .node:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -11px;
+      width: 11px;
+      height: 1px;
+      background: var(--green);
+    }
+
+    .node b { display: block; }
+    .node small { color: var(--muted); }
+
+    .callout {
+      border-left: 5px solid var(--amber);
+      background: rgba(243,189,91,.09);
+      padding: 16px 18px;
+    }
+
+    .callout.red {
+      border-left-color: var(--red);
+      background: rgba(240,113,103,.09);
+    }
+
+    .callout.green {
+      border-left-color: var(--green);
+      background: rgba(155,214,124,.09);
+    }
+
+    .rank {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--green);
+      color: var(--green);
+      font-weight: 900;
+      margin-right: 8px;
+    }
+
+    .source-list {
+      columns: 2;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .source-list li { break-inside: avoid; margin-bottom: 8px; }
+
+    @media (max-width: 880px) {
+      .two, .three, .four, .decision, .path { grid-template-columns: 1fr; }
+      .node:not(:last-child)::after { display: none; }
+      .source-list { columns: 1; }
+    }
+
+    @media print {
+      body { background: white; color: #111; }
+      header, section, .card, .metric, .node { box-shadow: none; background: white; }
+      a { color: #0645ad; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="kicker"><span class="status-dot"></span> Home Ops network decision record</div>
+    <h1>Switch roadmap for a low-power 10G core</h1>
+    <p class="subtitle">
+      A multi-year migration plan that keeps the UDM Pro as the router, keeps the office Flex,
+      replaces the US16 access layer deliberately, and moves storage traffic off the UDM switch path.
+    </p>
+  </header>
+
+  <main>
+    <div class="decision">
+      <div class="verdict">
+        <h2>Recommendation</h2>
+        <p><strong>Buy a <a href="https://uk.store.ui.com/uk/en/category/all-switching/products/usw-aggregation">USW-Aggregation</a> as the core first, then replace the US16 with <a href="https://uk.store.ui.com/uk/en/products/usw-pro-max-16-poe">USW-Pro-Max-16-PoE</a> if four 2.5GbE ports are enough.</strong></p>
+        <p>
+          Do not solve this by making the UDM Pro the centre of east-west traffic. Do not buy a
+          24-port switch just because it looks like the grown-up member of the family. Your actual
+          current port count is below 16; the issue is 2.5G scarcity, not total port scarcity.
+        </p>
+      </div>
+      <div class="grid two">
+        <div class="metric"><span>Budget ceiling</span><b>£1000</b></div>
+        <div class="metric"><span>Recommended spend</span><b>~£590-£650</b></div>
+        <div class="metric"><span>Primary win</span><b>2.5G office backups</b></div>
+        <div class="metric"><span>Power posture</span><b>controlled, not perfect</b></div>
+      </div>
+    </div>
+
+    <section>
+      <h2>The confrontation</h2>
+      <div class="grid two">
+        <div class="callout red">
+          <h3>Your hardest conflict</h3>
+          <p>
+            You want US16-style power resilience, a non-UDM backbone, multigig access, low power,
+            rack-coherent hardware, sub-£1000 cost, and fewer than 16 used ports. You cannot optimize
+            all of those at once. The painful tradeoff is 2.5G port count: the 16-port replacement
+            only gives you four 2.5GbE ports.
+          </p>
+        </div>
+        <div class="callout">
+          <h3>The decision you should make explicitly</h3>
+          <p>
+            If the US16 is being removed, stop pretending its RPS behavior survives. The
+            <a href="https://uk.store.ui.com/uk/en/products/usw-pro-max-16-poe">Pro Max 16 PoE</a>
+            uses an external power adapter and does not give you the same USP-RPS-backed story.
+            The 24-port Pro Max models have USP RPS DC input; the 16-port Pro Max models do not.
+          </p>
+        </div>
+        <div class="callout">
+          <h3>The UDM Pro point is correct, with a catch</h3>
+          <p>
+            Storage traffic should stay on the switching core. If your Mac and UNAS are in different
+            routed VLANs, the UDM Pro becomes the critical path again. Put high-throughput storage
+            clients and UNAS on a design where their large flows switch at L2 unless you have a real
+            L3 core ready.
+          </p>
+        </div>
+        <div class="callout green">
+          <h3>The US16 is not bad, but it is redundant</h3>
+          <p>
+            Once a Pro Max PoE access switch is installed, keeping the US16 means paying idle watts
+            for nostalgia and backup convenience. Retire or sell it after the new access switch is
+            stable, unless the RPS behavior is worth the extra power draw to you.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>RPS and rack reality</h2>
+      <div class="grid three">
+        <div class="card">
+          <h3>Pro Max 16 PoE</h3>
+          <p><strong>No USP-RPS input.</strong> It uses an external AC/DC adapter. Treat it as UPS-backed only, not RPS-backed.</p>
+          <p><span class="tag good">25W base</span> <span class="tag warn">External PSU</span> <span class="tag bad">No RPS</span></p>
+        </div>
+        <div class="card">
+          <h3>Rack mounting</h3>
+          <p>The switch body is 325.1 x 160 x 43.7 mm, so it is not a normal full-width 19&quot; chassis. Use the <a href="https://uk.store.ui.com/uk/en/category/accessories-rack-mount/products/uacc-pro-max-16-rm">UACC-Pro-Max-16-RM</a> rack-mount accessory when available, or a proper shelf/adapter.</p>
+          <p><span class="tag warn">Accessory needed</span> <span class="tag warn">Check 12&quot; rack fit</span></p>
+        </div>
+        <div class="card">
+          <h3>RPS decision</h3>
+          <p>Phase out RPS for access switching if the priority is lower idle power and fewer boxes. Keep RPS only for the UDM Pro and any future full-width core device where router/core uptime justifies the hardware.</p>
+          <p><span class="tag good">Simpler</span> <span class="tag warn">Less maintenance resilience</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Target topology</h2>
+      <div class="path">
+        <div class="node"><b><a href="https://techspecs.ui.com/unifi/cloud-gateways/udm-pro?s=us">UDM Pro</a></b><small>Router/firewall only. 10G uplink to core.</small></div>
+        <div class="node"><b><a href="https://uk.store.ui.com/uk/en/category/all-switching/products/usw-aggregation">USW-Aggregation</a></b><small>10G switching core. UNAS, Flex, UDM, access switches land here.</small></div>
+        <div class="node"><b><a href="https://uk.store.ui.com/uk/en/products/unas-pro">UNAS Pro</a></b><small>10Gb/s storage. No longer stranded behind 1G paths.</small></div>
+        <div class="node"><b>Office Flex</b><small>10G Cat6 uplink. MacBook stays at 2.5G.</small></div>
+        <div class="node"><b><a href="https://uk.store.ui.com/uk/en/products/usw-pro-max-16-poe">Pro Max 16 PoE</a></b><small>US16 replacement. 4 multigig PoE++ ports, 12 1G PoE+ ports.</small></div>
+      </div>
+      <p style="margin-top:18px">
+        The core rule: high-throughput devices connect to the aggregation switch directly or through
+        a rack-class multigig access switch with a 10G uplink. The US16 is retired once the replacement is stable.
+      </p>
+    </section>
+
+    <section>
+      <h2>Buy order</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Phase</th>
+            <th>Buy</th>
+            <th>Why</th>
+            <th>Approx. cost</th>
+            <th>Power impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="rank">1</span>Now</td>
+            <td><a href="https://uk.store.ui.com/uk/en/category/all-switching/products/usw-aggregation">USW-Aggregation</a> + one <a href="https://uk.store.ui.com/uk/en/products/uacc-cm-rj45-mg?variant=UACC-CM-RJ45-MG">UACC-CM-RJ45-MG</a> + <a href="https://uk.store.ui.com/uk/en/category/accessories-modules-fiber/collections/accessories-pro-direct-attach-cables/products/10gbps-direct-attach-cable">DACs</a></td>
+            <td>Creates a real 10G core and gives the office Flex a 10G Cat6 path without using the UDM as the backbone.</td>
+            <td>~£275-£325</td>
+            <td><a href="https://techspecs.ui.com/unifi/switching/usw-aggregation?s=us">USW-Aggregation</a> max 36W including SFP modules; RJ45 module max 1.9W.</td>
+          </tr>
+          <tr>
+            <td><span class="rank">2</span>Next</td>
+            <td><a href="https://uk.store.ui.com/uk/en/products/usw-pro-max-16-poe">USW-Pro-Max-16-PoE</a></td>
+            <td>Sixteen-port rack/desktop replacement for the US16: 4 x 2.5GbE PoE++, 12 x 1GbE PoE+, and 2 x 10G SFP+. This matches the actual port count and keeps PoE in one box.</td>
+            <td>£315</td>
+            <td>25W excluding PoE output; 210W max including PoE. Lower base draw than the 24-port options.</td>
+          </tr>
+          <tr>
+            <td><span class="rank">3</span>Later</td>
+            <td>Retire or sell the US16-150W</td>
+            <td>Do this after the Pro Max 16 PoE has proven stable and the PoE load is confirmed. Keeping both switches defeats the power goal.</td>
+            <td>Potential resale</td>
+            <td>Reduces idle draw, but gives up the US16/RPS maintenance trick.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Product shortlist</h2>
+      <div class="grid three">
+        <div class="card">
+          <h3>Recommended core</h3>
+          <p><strong><a href="https://uk.store.ui.com/uk/en/category/all-switching/products/usw-aggregation">USW-Aggregation</a></strong></p>
+          <p>8 x 10G/1G SFP+, Layer 2, 1U rack mount, 442 x 120 x 43.7 mm.</p>
+          <p class="price">£215</p>
+          <p><span class="tag good">Buy first</span> <span class="tag warn">No RPS</span></p>
+        </div>
+        <div class="card">
+          <h3>Recommended access</h3>
+          <p><strong><a href="https://uk.store.ui.com/uk/en/category/all-switching/products/usw-pro-max-16-poe">USW-Pro-Max-16-PoE</a></strong></p>
+          <p>4 x 2.5GbE PoE++, 12 x 1GbE PoE+, 2 x 10G SFP+, compact rack/desktop mounting. This is the coherent US16 replacement if four multigig ports are enough.</p>
+          <p class="price">£315</p>
+          <p><span class="tag good">Replaces US16</span> <span class="tag good">PoE retained</span> <span class="tag warn">4 multigig ports</span> <span class="tag bad">No RPS</span></p>
+        </div>
+        <div class="card">
+          <h3>Useful module</h3>
+          <p><strong><a href="https://uk.store.ui.com/uk/en/products/uacc-cm-rj45-mg?variant=UACC-CM-RJ45-MG">UACC-CM-RJ45-MG</a></strong></p>
+          <p>SFP+ to RJ45, 1/2.5/5/10GbE. Use this for the office Cat6 run from aggregation to the Flex.</p>
+          <p class="price">£50</p>
+          <p><span class="tag good">1.9W max</span> <span class="tag warn">Test Cat6</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Rejected or conditional options</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Why it is tempting</th>
+            <th>Why I would not lead with it</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Same-family Pro Max 8</td>
+            <td>It would be the tidy answer: rack-coherent, fewer ports, and enough uplink capacity.</td>
+            <td>There is no current 8-port Pro Max rack switch in the UK lineup. The 8-port UniFi options are different families, compact desktop/wall devices, or higher-power XG hardware.</td>
+          </tr>
+          <tr>
+            <td><a href="https://uk.store.ui.com/uk/en/products/switch-enterprise-8-poe">USW-Enterprise-8-PoE</a></td>
+            <td>Eight 2.5GbE PoE+ ports and two 10G SFP+ ports looked neat on paper.</td>
+            <td>It is now labelled Vintage in the UK store and is a tiny desktop switch. It does not fit the rack-hardware direction and should not be the multi-year access plan.</td>
+          </tr>
+          <tr>
+            <td><a href="https://uk.store.ui.com/uk/en/category/switching-utility/products/usw-pro-xg-8-poe">USW-Pro-XG-8-PoE</a></td>
+            <td>8 x 10GbE RJ45 PoE++ and 2 x SFP+ in a compact body. It would brute-force the problem.</td>
+            <td>61W before PoE output is the wrong direction when baseline power is already a major concern. You do not need 10G copper to every Radxa node.</td>
+          </tr>
+          <tr>
+            <td><a href="https://uk.store.ui.com/uk/en/products/usw-pro-max-16">USW-Pro-Max-16</a></td>
+            <td>Same 16-port Pro Max family, lower price, 4 x 2.5GbE, 12 x 1GbE, and 2 x 10G SFP+.</td>
+            <td>It has no PoE. If the US16 is definitely leaving, this does not actually replace it unless you add injectors or a second PoE access switch.</td>
+          </tr>
+          <tr>
+            <td><a href="https://uk.store.ui.com/uk/en/products/usw-pro-max-24">USW-Pro-Max-24</a></td>
+            <td>8 x 2.5GbE gives breathing room for Radxa nodes plus U7-class APs, and it has DC power backup.</td>
+            <td>Conditional only. It has no PoE, so retiring the US16 means adding injectors or another PoE switch. It also buys eight extra 1G ports you already said you are not using.</td>
+          </tr>
+          <tr>
+            <td><a href="https://uk.store.ui.com/uk/en/products/usw-pro-max-24-poe">USW-Pro-Max-24-PoE</a></td>
+            <td>Same 8 x 2.5G layout as the non-PoE model, but with PoE++ and a 400W PoE budget.</td>
+            <td>At £806.40 inc VAT it is too expensive for the actual need. You are not using 16 ports today, so paying for 24 powered ports is the wrong default.</td>
+          </tr>
+          <tr>
+            <td><a href="https://uk.store.ui.com/uk/en/products/usw-pro-aggregation">USW-Pro-Aggregation</a></td>
+            <td>RPS input, lots of 10G/25G capacity, more serious core.</td>
+            <td>£715 before access switching, sold out at the UK store at collection time, and up to 100W. It violates the low-power spirit unless redundancy is the top priority.</td>
+          </tr>
+          <tr>
+            <td>Use the <a href="https://techspecs.ui.com/unifi/cloud-gateways/udm-pro?s=us">UDM Pro</a> as the core</td>
+            <td>It is already there and has SFP+ ports.</td>
+            <td>This contradicts your own correct constraint. The router should not be the internal switching backbone for storage and node traffic.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Implementation plan</h2>
+      <div class="grid two">
+        <div class="card">
+          <h3>Phase 1: 10G core</h3>
+          <p>Install <a href="https://uk.store.ui.com/uk/en/category/all-switching/products/usw-aggregation">USW-Aggregation</a> in the rack.</p>
+          <p>Connect <a href="https://techspecs.ui.com/unifi/cloud-gateways/udm-pro?s=us">UDM Pro</a> SFP+ LAN to aggregation at 10G.</p>
+          <p>Move <a href="https://uk.store.ui.com/uk/en/products/unas-pro">UNAS Pro</a> 10G to aggregation.</p>
+          <p>Move office Flex uplink to aggregation using <a href="https://uk.store.ui.com/uk/en/products/uacc-cm-rj45-mg?variant=UACC-CM-RJ45-MG">UACC-CM-RJ45-MG</a> over Cat6.</p>
+          <p>Connect US16 to aggregation at 1G for PoE/legacy access.</p>
+        </div>
+        <div class="card">
+          <h3>Phase 2: 2.5G access</h3>
+          <p>Replace the US16 with <a href="https://uk.store.ui.com/uk/en/category/all-switching/products/usw-pro-max-16-poe">USW-Pro-Max-16-PoE</a>.</p>
+          <p>Connect the three Radxa nodes at 2.5G.</p>
+          <p>Use the fourth 2.5G PoE++ port deliberately: pick either <a href="https://techspecs.ui.com/unifi/wifi/u7-pro?s=sg">U7 Pro</a> or <a href="https://uk.store.ui.com/uk/en/products/u7-iw">U7 In-Wall</a>. The 16-port switch does not have enough multigig ports for three Radxa nodes plus both U7-class APs.</p>
+          <p>Put <a href="https://techspecs.ui.com/unifi/wifi/u6-lr?s=us">U6 LR</a>, U6 Mesh, and low-throughput PoE devices on 1G PoE+ ports.</p>
+        </div>
+        <div class="card">
+          <h3>Phase 3: cleanup</h3>
+          <p>Keep <a href="https://techspecs.ui.com/unifi/wifi/u6-mesh?s=us">U6-Mesh</a>, but stop treating anything behind its mesh backhaul as performance infrastructure.</p>
+          <p>Sell the spare <a href="https://techspecs.ui.com/unifi/wifi/u6-lite?s=us">U6 Lite</a> if coverage is already solved; it adds management and power overhead without moving the bottleneck.</p>
+          <p>Bring the <a href="https://uk.store.ui.com/uk/en/products/u7-iw">U7 In-Wall</a> online only if it replaces a worse AP/client location or provides useful 2.5G wired edge access.</p>
+        </div>
+        <div class="card">
+          <h3>Validation</h3>
+          <p>After each phase, verify negotiated links in UniFi.</p>
+          <p>Run a MacBook Pro to UNAS test before and after: Time Machine is not a pure link-speed benchmark, so also test with `iperf3` or a large sequential file copy.</p>
+          <p>Watch switch temperature and total rack watts for a week before buying the next phase.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Garage backhaul</h2>
+      <div class="grid two">
+        <div class="callout red">
+          <h3>Permanent physical constraint</h3>
+          <p>
+            Do not plan new Ethernet or fibre between house and garage. Garden constraints make
+            physical house-to-garage cabling unavailable, so the garage path must be solved with
+            wireless backhaul or existing infrastructure.
+          </p>
+        </div>
+        <div class="callout">
+          <h3>Why U7 Pro Outdoor is the serious AP option</h3>
+          <p>
+            The garage link is a directional path problem, not a normal room coverage problem.
+            The <a href="https://uk.store.ui.com/uk/en/category/all-wifi/products/u7-pro-outdoor">U7 Pro Outdoor</a>
+            has outdoor housing, a 2.5GbE uplink, WiFi 7, 6 GHz support, and stronger directional
+            antennas than the indoor U7 Pro. That makes it a better house-side bridge candidate
+            than another ceiling disc.
+          </p>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Backhaul value</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://techspecs.ui.com/unifi/wifi/u6-lr?s=br">U6 LR</a></td>
+            <td>Strong existing WiFi 6 indoor AP with 4 x 4 5 GHz, but only a 1GbE uplink and an indoor ceiling-style radiation pattern.</td>
+            <td>Keep unless the garage link is poor. It is not the weakest part just because it is older.</td>
+          </tr>
+          <tr>
+            <td><a href="https://techspecs.ui.com/unifi/wifi/u7-lr?s=uk">U7 LR</a></td>
+            <td>2.5GbE and WiFi 7, but still an indoor long-range AP. It improves client AP capability more than it solves a directional outbuilding path.</td>
+            <td>Not my first choice for the garage backhaul.</td>
+          </tr>
+          <tr>
+            <td><a href="https://uk.store.ui.com/uk/en/products/u7-pro">U7 Pro</a></td>
+            <td>Excellent indoor WiFi 7 AP with 6 GHz, but only 2 x 2 on 5 GHz and no outdoor/directional advantage.</td>
+            <td>Wrong optimization for the garage path.</td>
+          </tr>
+          <tr>
+            <td><a href="https://uk.store.ui.com/uk/en/category/wifi-outdoor/products/u7-outdoor">U7 Outdoor</a></td>
+            <td>Outdoor-rated, 2.5GbE, directional internal 5 GHz antenna, lower cost than Pro Outdoor.</td>
+            <td>Best value if 5 GHz directional backhaul is the main need.</td>
+          </tr>
+          <tr>
+            <td><a href="https://uk.store.ui.com/uk/en/category/all-wifi/products/u7-pro-outdoor">U7 Pro Outdoor</a></td>
+            <td>Outdoor-rated, 2.5GbE, 6 GHz, and stronger directional antenna options. More capable, but only worth it if placement and line-of-sight justify it.</td>
+            <td>Best UniFi AP-style choice for a serious wireless garage backhaul.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Expected outcome</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Flow</th>
+            <th>Today</th>
+            <th>After phase 1</th>
+            <th>After phase 2</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>MacBook Pro to UNAS Time Machine</td>
+            <td>Effectively 1Gb/s path-capped</td>
+            <td>2.5Gb/s client-capped, assuming Cat6 holds 10G to office Flex</td>
+            <td>Same unless MacBook link changes</td>
+          </tr>
+          <tr>
+            <td>Radxa node to UNAS</td>
+            <td>1Gb/s on US16</td>
+            <td>Still 1Gb/s unless moved</td>
+            <td>2.5Gb/s per node</td>
+          </tr>
+          <tr>
+            <td>UNAS utilization</td>
+            <td>10G link underused</td>
+            <td>Can serve office and core flows without 1G choke</td>
+            <td>Can serve nodes and office concurrently with much less contention</td>
+          </tr>
+          <tr>
+            <td><a href="https://techspecs.ui.com/unifi/cloud-gateways/udm-pro?s=us">UDM Pro</a> load</td>
+            <td>At risk of becoming transit for storage paths</td>
+            <td>Router only for routed flows</td>
+            <td>Same, provided VLAN design does not force storage through routing</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Power notes</h2>
+      <p>
+        Every continuous 10W is 87.6kWh per year. At a rough UK electricity range of
+        £0.25-£0.30/kWh, that is about £22-£26 per year per 10W. This is why I am pushing
+        against the <a href="https://uk.store.ui.com/uk/en/category/switching-utility/products/usw-pro-xg-8-poe">Pro XG</a> as the first move: its 61W excluding PoE output is technically lovely
+        and operationally expensive.
+      </p>
+      <p>
+        The recommended path adds capability where it matters first. It does not pretend that
+        keeping the US16 gives the new core redundant power. If switch-core uptime during UPS
+        maintenance is non-negotiable, the budget or power target has to move.
+      </p>
+      <p>
+        The access recommendation now replaces the US16 instead of adding another large switch beside it.
+        The <a href="https://uk.store.ui.com/uk/en/category/all-switching/products/usw-pro-max-16-poe">Pro Max 16 PoE</a>
+        keeps PoE in one box and avoids the £806.40 Pro Max 24 PoE, but the cost is real:
+        only four ports are multigig.
+      </p>
+      <p>
+        The RPS should not drive the access-switch decision anymore. It made sense when the US16 was
+        already there and doing useful PoE work. Once the replacement is a Pro Max 16 PoE, preserving
+        RPS means jumping to larger, more expensive, higher-power hardware to solve a maintenance
+        edge case. Keep the router/core on UPS and RPS where supported; let access be UPS-backed.
+      </p>
+    </section>
+
+    <section>
+      <h2>Source links</h2>
+      <ul class="source-list">
+        <li><a href="https://uk.store.ui.com/uk/en/category/all-switching/products/usw-aggregation">Ubiquiti UK Store: USW-Aggregation, £215</a></li>
+        <li><a href="https://techspecs.ui.com/unifi/switching/usw-aggregation?s=us">Ubiquiti Tech Specs: USW-Aggregation ports, dimensions, 36W max</a></li>
+        <li><a href="https://uk.store.ui.com/uk/en/products/usw-pro-max-16">Ubiquiti UK Store: Pro Max 16, £220</a></li>
+        <li><a href="https://uk.store.ui.com/uk/en/category/all-switching/products/usw-pro-max-16-poe">Ubiquiti UK Store: Pro Max 16 PoE, £315</a></li>
+        <li><a href="https://techspecs.ui.com/unifi/switching/usw-pro-max-16-poe?s=eu">Ubiquiti Tech Specs: Pro Max 16 PoE ports and power</a></li>
+        <li><a href="https://uk.store.ui.com/uk/en/category/accessories-rack-mount/products/uacc-pro-max-16-rm">Ubiquiti UK Store: Pro Max 16 rack-mount accessory, £39, sold out at review time</a></li>
+        <li><a href="https://uk.store.ui.com/uk/en/products/usw-pro-max-24">Ubiquiti UK Store: Pro Max 24, £355</a></li>
+        <li><a href="https://techspecs.ui.com/unifi/switching/usw-pro-max-24?subcategory=all-switching">Ubiquiti Tech Specs: Pro Max 24 dimensions, 8 x 2.5GbE, DC power backup, 50W max</a></li>
+        <li><a href="https://uk.store.ui.com/uk/en/products/usw-pro-max-24-poe">Ubiquiti UK Store: Pro Max 24 PoE, £806.40 inc VAT at review time</a></li>
+        <li><a href="https://techspecs.ui.com/unifi/switching/usw-pro-max-24-poe?s=eu">Ubiquiti Tech Specs: Pro Max 24 PoE dimensions, ports, DC power backup, 50W base max</a></li>
+        <li><a href="https://uk.store.ui.com/uk/en/category/switching-utility/products/usw-pro-xg-8-poe">Ubiquiti UK Store: Pro XG 8 PoE, £395</a></li>
+        <li><a href="https://techspecs.ui.com/unifi/switching/usw-pro-xg-8-poe?subcategory=all-switching">Ubiquiti Tech Specs: Pro XG 8 PoE, 61W excluding PoE</a></li>
+        <li><a href="https://uk.store.ui.com/uk/en/products/uacc-cm-rj45-mg?variant=UACC-CM-RJ45-MG">Ubiquiti UK Store: UACC-CM-RJ45-MG, £50, 1.9W max</a></li>
+        <li><a href="https://techspecs.ui.com/unifi/wifi/u6-lr?s=br">Ubiquiti Tech Specs: U6 LR</a></li>
+        <li><a href="https://techspecs.ui.com/unifi/wifi/u7-pro?s=sg">Ubiquiti Tech Specs: U7 Pro 2.5GbE, PoE+, 21W max</a></li>
+        <li><a href="https://techspecs.ui.com/unifi/wifi/u7-lr?s=uk">Ubiquiti Tech Specs: U7 LR</a></li>
+        <li><a href="https://techspecs.ui.com/unifi/wifi/u7-outdoor?s=in">Ubiquiti Tech Specs: U7 Outdoor</a></li>
+        <li><a href="https://techspecs.ui.com/unifi/wifi/u7-pro-outdoor-us?s=me">Ubiquiti Tech Specs: U7 Pro Outdoor</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
