@@ -32,7 +32,7 @@ function setGroupsClaim(ctx, api) {
     // Check if user is admin
     if (adminEmails.includes(userEmail)) {
         groups.push('admin');
-        groups.push('consoleAdmin'); // MinIO console admin
+        groups.push('consoleAdmin'); // Object storage console admin
         groups.push('user'); // Admins are also users
     }
     // Check if user is approved regular user
