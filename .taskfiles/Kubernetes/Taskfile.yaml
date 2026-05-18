@@ -4,6 +4,7 @@ version: "3"
 
 vars:
   KUBECONFORM_SCRIPT: "{{.SCRIPTS_DIR}}/kubeconform.sh"
+  CLUSTER_HEALTH_SCRIPT: "{{.SCRIPTS_DIR}}/cluster-health.py"
 
 tasks:
   resources:
@@ -26,6 +27,102 @@ tasks:
   check-kube-vip:
     desc: Check all kube-vip pods
     cmd: kubectl get pods -n kube-system -l app.kubernetes.io/name=kube-vip -o wide
+
+  health:
+    desc: Run read-only cluster health checks
+    summary: |
+      Checks nodes, kube-vip, Cilium, active pod readiness, deployment
+      availability, CNPG cluster state, and firing Grafana/Prometheus alerts.
+
+      Examples:
+        task kubernetes:health
+        task kubernetes:health json=true
+        task kubernetes:health notify=true
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} health
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+    preconditions:
+      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+
+  cnpg-health:
+    desc: Check all CNPG clusters for healthy ready state
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} cnpg-health
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+    preconditions:
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+
+  cnpg-backups:
+    desc: Check CNPG backup resources and WAL archiving status
+    summary: |
+      Summarizes latest Backup resources, latest successful backups, and
+      kubectl cnpg status WAL archiving health for every CNPG cluster.
+
+      Examples:
+        task kubernetes:cnpg-backups
+        task kubernetes:cnpg-backups notify=true
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} cnpg-backups
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+    preconditions:
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+
+  grafana-alerts:
+    desc: Check firing Grafana/Prometheus and Alertmanager alerts
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} grafana-alerts
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+    preconditions:
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+
+  morning-check:
+    desc: Run the recurring morning cluster health bundle
+    summary: |
+      Runs the regular operator checks: cluster core health, CNPG clusters,
+      CNPG backups/WAL archiving, firing alerts, and edge smoke. Log-noise can
+      be included with log_noise=true.
+
+      Examples:
+        task kubernetes:morning-check
+        task kubernetes:morning-check notify=true
+        task kubernetes:morning-check log_noise=true period=6h top=10
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+      LOG_NOISE: '{{.log_noise | default "false"}}'
+      PERIOD: '{{.period | default "1h"}}'
+      TOP: '{{.top | default "20"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} morning-check
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+      {{if eq .LOG_NOISE "true"}}--log-noise{{end}}
+      --period {{.PERIOD}}
+      --top {{.TOP}}
+    preconditions:
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
 
   kubeconform:
     desc: Validate Kubernetes manifests with kubeconform
