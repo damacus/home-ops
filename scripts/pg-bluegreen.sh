@@ -60,10 +60,14 @@ fi
 : "${STATE_DIR:=.migration-state/n8n}"
 : "${MIGRATION_MANIFEST_DIR:=${REPO_ROOT}/kubernetes/apps/home-automation/n8n-db/migration}"
 : "${HELMRELEASE_PATH:=${REPO_ROOT}/kubernetes/apps/home-automation/n8n/app/helmrelease.yaml}"
-: "${CUTOVER_TARGET_TYPE:=secret-anchor}" # secret-anchor | helm-value | none
+: "${CUTOVER_TARGET_TYPE:=secret-anchor}" # secret-anchor | helm-value | secret-key | none
 : "${HELM_VALUE_PATH:=}"
 : "${BLUE_HELM_VALUE:=}"
 : "${GREEN_HELM_VALUE:=}"
+: "${CUTOVER_FILE_PATH:=}"
+: "${YAML_VALUE_PATH:=}"
+: "${CUTOVER_SECRET_NAME:=}"
+: "${CUTOVER_SECRET_KEY:=}"
 : "${REQUIRED_APP_SECRET_KEYS:=host user password dbname}"
 : "${REPLICA_IDENTITY_FULL_TABLES:=}"
 if [[ ! ${POSTCHECK_ENV_VAR+x} ]]; then POSTCHECK_ENV_VAR=DB_POSTGRESDB_HOST; fi
@@ -76,6 +80,7 @@ if [[ ! ${REQUIRE_APP_CONNECTIONS+x} ]]; then REQUIRE_APP_CONNECTIONS=true; fi
 : "${HEALTH_URL:=https://n8n.ironstone.casa/healthz}"
 : "${CONFIRM_CONTEXT:=false}"
 : "${FORCE_SCHEMA:=false}"
+: "${SCHEMA_REWRITE_UNLOGGED_TABLES:=false}"
 : "${ACCEPT_DATA_LOSS:=false}"
 : "${GRAFANA_MCP_ENABLED:=false}"
 
@@ -182,6 +187,10 @@ helmrelease_anchor() {
     | head -n1 | sed -E 's/.*&dbSecret[[:space:]]+([^[:space:]]+).*/\1/'
 }
 
+first_yaml_value() {
+  sed '/^[[:space:]]*$/d' | head -n1
+}
+
 repo_cutover_target() {
   case "${CUTOVER_TARGET_TYPE}" in
     secret-anchor)
@@ -189,7 +198,12 @@ repo_cutover_target() {
       ;;
     helm-value)
       [[ -n "${HELM_VALUE_PATH}" ]] || die "HELM_VALUE_PATH is required for CUTOVER_TARGET_TYPE=helm-value"
-      yq -r "${HELM_VALUE_PATH} // \"\"" "${HELMRELEASE_PATH}"
+      yq -rN "${HELM_VALUE_PATH}" "${HELMRELEASE_PATH}" | first_yaml_value
+      ;;
+    secret-key)
+      [[ -n "${CUTOVER_FILE_PATH}" ]] || die "CUTOVER_FILE_PATH is required for CUTOVER_TARGET_TYPE=secret-key"
+      [[ -n "${YAML_VALUE_PATH}" ]] || die "YAML_VALUE_PATH is required for CUTOVER_TARGET_TYPE=secret-key"
+      yq -rN "${YAML_VALUE_PATH}" "${CUTOVER_FILE_PATH}" | first_yaml_value
       ;;
     none)
       echo ""
@@ -209,7 +223,13 @@ live_cutover_target() {
     helm-value)
       [[ -n "${HELM_VALUE_PATH}" ]] || die "HELM_VALUE_PATH is required for CUTOVER_TARGET_TYPE=helm-value"
       kctl get helmrelease "${HELMRELEASE}" -o yaml 2>/dev/null \
-        | yq -r "${HELM_VALUE_PATH} // \"\""
+        | yq -rN "${HELM_VALUE_PATH}" - | first_yaml_value
+      ;;
+    secret-key)
+      [[ -n "${CUTOVER_SECRET_NAME}" ]] || die "CUTOVER_SECRET_NAME is required for CUTOVER_TARGET_TYPE=secret-key"
+      [[ -n "${CUTOVER_SECRET_KEY}" ]] || die "CUTOVER_SECRET_KEY is required for CUTOVER_TARGET_TYPE=secret-key"
+      kctl get secret "${CUTOVER_SECRET_NAME}" -o jsonpath="{.data.${CUTOVER_SECRET_KEY}}" 2>/dev/null \
+        | base64 -d
       ;;
     none)
       echo ""
@@ -224,6 +244,7 @@ blue_cutover_target() {
   case "${CUTOVER_TARGET_TYPE}" in
     secret-anchor) echo "${BLUE_APP_SECRET}" ;;
     helm-value)   echo "${BLUE_HELM_VALUE}" ;;
+    secret-key)   echo "${BLUE_HELM_VALUE}" ;;
     none)         echo "" ;;
   esac
 }
@@ -232,6 +253,7 @@ green_cutover_target() {
   case "${CUTOVER_TARGET_TYPE}" in
     secret-anchor) echo "${GREEN_APP_SECRET}" ;;
     helm-value)   echo "${GREEN_HELM_VALUE}" ;;
+    secret-key)   echo "${GREEN_HELM_VALUE}" ;;
     none)         echo "" ;;
   esac
 }
@@ -245,6 +267,11 @@ set_repo_cutover_target() {
     helm-value)
       [[ -n "${HELM_VALUE_PATH}" ]] || die "HELM_VALUE_PATH is required for CUTOVER_TARGET_TYPE=helm-value"
       yq -i "${HELM_VALUE_PATH} = \"${target}\"" "${HELMRELEASE_PATH}"
+      ;;
+    secret-key)
+      [[ -n "${CUTOVER_FILE_PATH}" ]] || die "CUTOVER_FILE_PATH is required for CUTOVER_TARGET_TYPE=secret-key"
+      [[ -n "${YAML_VALUE_PATH}" ]] || die "YAML_VALUE_PATH is required for CUTOVER_TARGET_TYPE=secret-key"
+      yq -i "${YAML_VALUE_PATH} = \"${target}\"" "${CUTOVER_FILE_PATH}"
       ;;
     none)
       ;;
@@ -637,6 +664,10 @@ cmd_copy_schema() {
   log "dumping schema from blue (${blue_pod})"
   kctl exec -c postgres "${blue_pod}" -- \
     pg_dump --schema-only --no-owner --no-acl --dbname "${BLUE_DATABASE}" >"${schema_file}"
+  if [[ "${SCHEMA_REWRITE_UNLOGGED_TABLES}" == "true" ]]; then
+    log "rewriting CREATE UNLOGGED TABLE to CREATE TABLE for PG18 schema compatibility"
+    sed -i.bak 's/^CREATE UNLOGGED TABLE /CREATE TABLE /' "${schema_file}"
+  fi
   log "schema written to ${schema_file} ($(wc -l <"${schema_file}") lines)"
 
   log "restoring schema into green (${green_pod})"
@@ -721,6 +752,12 @@ cmd_subscription() {
   else
     ok "subscription streaming. received_lsn=${lsn}"
   fi
+}
+
+cmd_subscription_reset() {
+  require_tools
+  kctl delete --ignore-not-found subscription "${SUBSCRIPTION_NAME}"
+  cmd_subscription
 }
 
 # ----------------------------------------------------------------------------
@@ -1312,6 +1349,7 @@ usage: pg-bluegreen.sh <subcommand>
   copy-schema                pg_dump --schema-only from blue -> green
   publication                apply CNPG Publication CR
   subscription               apply CNPG Subscription CR
+  subscription-reset         delete/recreate CNPG Subscription CR
   monitor                    print pub/sub + replication status
   ready                      exit 0 if green is caught up
   cutover                    perform write-stop window + hand off to operator
@@ -1336,6 +1374,7 @@ main() {
     copy-schema)       cmd_copy_schema "$@" ;;
     publication)       cmd_publication "$@" ;;
     subscription)      cmd_subscription "$@" ;;
+    subscription-reset) cmd_subscription_reset "$@" ;;
     monitor)           cmd_monitor "$@" ;;
     ready)             cmd_ready "$@" ;;
     cutover)           cmd_cutover "$@" ;;

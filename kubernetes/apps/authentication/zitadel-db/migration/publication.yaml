@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/publication_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Publication
+metadata:
+  name: zitadel-green-pub
+  namespace: authentication
+spec:
+  cluster:
+    name: zitadel
+  dbname: zitadel
+  name: zitadel_green_pub
+  publicationReclaimPolicy: delete
+  target:
+    allTables: true
