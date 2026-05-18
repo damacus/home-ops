@@ -37,7 +37,7 @@ spec:
       isWALArchiver: true
       parameters:
         barmanObjectName: penpot-rustfs-store
-        serverName: penpot
+        serverName: penpot-pg18
 
   resources:
     requests:
