@@ -184,7 +184,13 @@ spec:
           - matches:
               - path:
                   type: PathPrefix
-                  value: /
+                  value: /webhook
+              - path:
+                  type: PathPrefix
+                  value: /webhook-test
+              - path:
+                  type: PathPrefix
+                  value: /webhook-waiting
             backendRefs:
               - kind: Service
                 name: n8n
