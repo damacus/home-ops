@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/subscription_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Subscription
+metadata:
+  name: immich-green-sub
+  namespace: home
+spec:
+  cluster:
+    name: immich-green
+  dbname: immich
+  name: immich_green_sub
+  publicationName: immich_green_pub
+  externalClusterName: immich
+  subscriptionReclaimPolicy: delete
