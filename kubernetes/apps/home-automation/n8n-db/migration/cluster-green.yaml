@@ -43,7 +43,7 @@ spec:
 
   enableSuperuserAccess: true
   superuserSecret:
-    name: cloudnative-pg-secret
+    name: n8n-superuser
 
   bootstrap:
     initdb:
@@ -57,7 +57,7 @@ spec:
   # External reference to the blue cluster, used by Subscription/n8n-green-sub
   # to open the logical-replication connection back to blue's primary.
   # CNPG resolves the password from the named secret at subscription apply
-  # time; cloudnative-pg-secret already exists in this namespace.
+  # time; n8n-superuser is managed by the n8n-db ExternalSecret.
   externalClusters:
     - name: n8n
       connectionParameters:
@@ -67,7 +67,7 @@ spec:
         port: "5432"
         sslmode: prefer
       password:
-        name: cloudnative-pg-secret
+        name: n8n-superuser
         key: password
 
   postgresql:
