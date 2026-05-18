@@ -703,20 +703,24 @@ cmd_cutover() {
   cmd_ready
 
   local state_file="${CUTOVER_STATE_FILE}"
-  log "saving current deployment replica counts"
-  local replicas_json="{"
-  for deploy in ${APP_DEPLOYMENTS}; do
-    local r
-    r=$(kctl get deploy "${deploy}" -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
-    replicas_json+="\"${deploy}\":${r:-0},"
-  done
-  replicas_json="${replicas_json%,}}"
-  jq -n --argjson r "${replicas_json}" '{stage:"started", replicas:$r}' >"${state_file}"
-  log "saved: ${state_file}"
+  if [[ -f "${state_file}" ]] && [[ "$(jq -r '.stage // ""' "${state_file}")" == "started" ]]; then
+    log "using existing replica counts from ${state_file}"
+  else
+    log "saving current deployment replica counts"
+    local replicas_json="{"
+    for deploy in ${APP_DEPLOYMENTS}; do
+      local r
+      r=$(kctl get deploy "${deploy}" -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+      replicas_json+="\"${deploy}\":${r:-0},"
+    done
+    replicas_json="${replicas_json%,}}"
+    jq -n --argjson r "${replicas_json}" '{stage:"started", replicas:$r}' >"${state_file}"
+    log "saved: ${state_file}"
+  fi
 
   log "triggering on-demand backup of blue"
   local backup_name
-  backup_name="n8n-pre-cutover-$(date -u +%Y%m%dT%H%M%SZ)"
+  backup_name="n8n-pre-cutover-$(date -u +%Y%m%d%H%M%S)"
   cat <<EOF | kctl apply -f -
 apiVersion: postgresql.cnpg.io/v1
 kind: Backup
@@ -734,7 +738,7 @@ EOF
   local end=$(( SECONDS + 600 ))
   local phase=""
   while (( SECONDS < end )); do
-    phase=$(kctl get backup "${backup_name}" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
+    phase=$(kctl get backup.postgresql.cnpg.io "${backup_name}" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
     [[ "${phase}" == "completed" ]] && break
     [[ "${phase}" == "failed" ]] && die "backup ${backup_name} FAILED"
     sleep 5
@@ -789,9 +793,9 @@ EOF
     JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = d.refobjsubid
     WHERE s.relkind = 'S'
   )
-  SELECT format('SELECT setval(''%I.%I'', GREATEST(%s, COALESCE((SELECT MAX(%I) FROM %I.%I),0)), true);',
+  SELECT format('SELECT setval(''%I.%I'', GREATEST(1, %s, COALESCE((SELECT MAX(%I) FROM %I.%I),0)), true);',
     sschema, sname,
-    (SELECT last_value FROM pg_sequences WHERE schemaname=sschema AND sequencename=sname),
+    COALESCE((SELECT last_value FROM pg_sequences WHERE schemaname=sschema AND sequencename=sname), 0),
     col, tschema, tname)
   FROM seqs;")
   if [[ -n "${seq_sql}" ]]; then
@@ -905,7 +909,7 @@ cmd_postcheck() {
       || echo "")
     [[ -n "${pod}" ]] || { warn "no pod found for ${deploy}, skipping env check"; continue; }
     host=$(kctl exec "${pod}" -- env 2>/dev/null | awk -F= '/^DB_POSTGRESDB_HOST=/{print $2}' || echo "")
-    if [[ "${host}" != "${GREEN_CLUSTER}-rw."* ]]; then
+    if [[ "${host}" != "${GREEN_CLUSTER}-rw" && "${host}" != "${GREEN_CLUSTER}-rw."* ]]; then
       err "${deploy} pod ${pod} DB_POSTGRESDB_HOST='${host}' does not point at green"
       fail=1
     fi
