@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: n8n
+  name: n8n-green
   namespace: home-automation
 spec:
   schedule: "0 0 0 * * *"
@@ -14,4 +14,4 @@ spec:
     parameters:
       objectStore: n8n-rustfs-store
   cluster:
-    name: n8n
+    name: n8n-green

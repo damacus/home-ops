@@ -3,46 +3,43 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: &name mealie
+  name: &name mealie-green
   namespace: home
 spec:
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
     name: postgresql
-    major: 16
+    major: 18
   instances: 2
   primaryUpdateStrategy: unsupervised
   storage:
     size: 5Gi
     storageClass: openebs-hostpath
-
   monitoring:
     enablePodMonitor: true
-
   bootstrap:
     initdb:
-      database: *name
-      owner: *name
+      database: mealie
+      owner: mealie
       secret:
         name: mealie-db
-
   enableSuperuserAccess: true
   superuserSecret:
     name: mealie-db-superuser
-
   postgresql:
     parameters:
       max_connections: "100"
       shared_buffers: 128MB
-
+      wal_level: logical
+      max_replication_slots: "10"
+      max_wal_senders: "10"
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
         barmanObjectName: mealie-rustfs-store
-        serverName: mealie
-
+        serverName: mealie-green
   resources:
     requests:
       cpu: 100m

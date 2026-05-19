@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: zitadel-db
+  name: zitadel-green
   namespace: authentication
 spec:
   schedule: "0 4 * * *"
@@ -15,4 +15,4 @@ spec:
     parameters:
       objectStore: zitadel-rustfs-store
   cluster:
-    name: zitadel
+    name: zitadel-green
