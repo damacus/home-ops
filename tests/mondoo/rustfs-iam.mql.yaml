@@ -120,6 +120,23 @@ policies:
       - title: RustFS Bootstrap IAM
         filters: asset.platform != ""
         checks:
+          - uid: rustfs-keeps-current-shared-cnpg-secret
+            title: RustFS keeps the current shared CNPG credential during phase 1
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("reflector.v1.k8s.emberstack.com/reflection-auto-enabled")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("ACCESS_KEY_ID")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("SECRET_ACCESS_KEY")
+          - uid: rustfs-stages-app-bootstrap-credentials
+            title: RustFS stages the per-app bootstrap credential bundle
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("name: rustfs-app-credentials")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_CNPG_ZITADEL_ACCESS_KEY")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_LONGHORN_ACCESS_KEY")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_PAPERLESS_ACCESS_KEY")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_LOKI_ACCESS_KEY")
           - uid: rustfs-bootstrap-creates-app-buckets
             title: RustFS bootstrap job creates all per-app buckets
             impact: 100
