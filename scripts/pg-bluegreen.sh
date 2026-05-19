@@ -76,6 +76,7 @@ if [[ ! ${APP_POD_SELECTOR+x} ]]; then APP_POD_SELECTOR=; fi
 if [[ ! ${PROM_POD_REGEX+x} ]]; then PROM_POD_REGEX="${HELMRELEASE}.*"; fi
 if [[ ! ${REQUIRE_APP_CONNECTIONS+x} ]]; then REQUIRE_APP_CONNECTIONS=true; fi
 : "${READY_LAG_BYTES:=1048576}"   # 1 MiB
+: "${BACKUP_WAIT_TIMEOUT:=600}"
 : "${CUTOVER_WAIT_TIMEOUT:=600}"
 : "${PROMETHEUS_URL:=http://prometheus-operated.observability.svc.cluster.local:9090}"
 : "${HEALTH_URL:=https://n8n.ironstone.casa/healthz}"
@@ -948,8 +949,8 @@ cmd_cutover() {
     --backup-name "${backup_name}" \
     --method plugin \
     --plugin-name barman-cloud.cloudnative-pg.io
-  log "waiting for backup ${backup_name} to complete (timeout 600s)"
-  local end=$(( SECONDS + 600 ))
+  log "waiting for backup ${backup_name} to complete (timeout ${BACKUP_WAIT_TIMEOUT}s)"
+  local end=$(( SECONDS + BACKUP_WAIT_TIMEOUT ))
   local phase=""
   while (( SECONDS < end )); do
     phase=$(kctl get backup.postgresql.cnpg.io "${backup_name}" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
