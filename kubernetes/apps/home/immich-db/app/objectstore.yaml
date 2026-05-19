@@ -8,14 +8,14 @@ metadata:
 spec:
   retentionPolicy: 30d
   configuration:
-    destinationPath: s3://cnpg-immich/
+    destinationPath: s3://cnpg-backups/immich
     endpointURL: http://rustfs.storage.svc.cluster.local:9000
     s3Credentials:
       accessKeyId:
-        name: rustfs-cnpg-immich
+        name: rustfs-cnpg-credentials
         key: ACCESS_KEY_ID
       secretAccessKey:
-        name: rustfs-cnpg-immich
+        name: rustfs-cnpg-credentials
         key: SECRET_ACCESS_KEY
     data:
       compression: bzip2

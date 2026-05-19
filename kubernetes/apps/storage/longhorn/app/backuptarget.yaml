@@ -6,5 +6,5 @@ metadata:
   namespace: storage
 spec:
   backupTargetURL: s3://longhorn@us-east-1/
-  credentialSecret: rustfs-longhorn
+  credentialSecret: longhorn-rustfs
   pollInterval: 5m0s
