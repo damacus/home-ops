@@ -23,3 +23,10 @@ spec:
       ports:
         - port: 8080
           protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: keda
+      ports:
+        - port: 8080
+          protocol: TCP

@@ -34,9 +34,15 @@ spec:
             image:
               repository: ghcr.io/coder/code-server
               tag: 4.118.0@sha256:4aff9947c113487113201da811564fade1af5f23038b4d683998d024eebbac92
+            env:
+              PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: codeserver-auth
+                    key: PASSWORD
             args:
               - --auth
-              - "none"
+              - "password"
               - --user-data-dir
               - "/config/.vscode"
               - --extensions-dir
@@ -66,14 +72,6 @@ spec:
         ports:
           http:
             port: 8080
-
-    route:
-      app:
-        hostnames: ["{{ .Release.Name }}.ironstone.casa"]
-        parentRefs:
-          - name: traefik-internal
-            namespace: network
-            sectionName: websecure
 
     persistence:
       config:

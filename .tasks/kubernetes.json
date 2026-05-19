@@ -575,6 +575,6 @@
 			"Test authentication",
 			"Confirm extension installation"
 		],
-		"passes": true
+		"passes": false
 	}
 ]

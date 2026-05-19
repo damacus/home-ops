@@ -1,0 +1,116 @@
+---
+policies:
+  - uid: home-ops-codeserver-security-scaling
+    name: CodeServer Security and Scaling
+    version: 1.0.0
+    scoring_system: highest impact
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: local
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    docs:
+      desc: |
+        Validates that CodeServer is protected with oauth2-proxy and password
+        auth, routes through the KEDA HTTP add-on, and scales according to the
+        expected office-hours and HTTP wake-up policy.
+    groups:
+      - title: CodeServer GitOps manifests
+        filters:
+          - mql: asset.family.contains("unix")
+        checks:
+          - uid: codeserver-auth-disabled-removed
+          - uid: codeserver-password-secret
+          - uid: codeserver-oidc-forward-auth-route
+          - uid: codeserver-keda-http-routing
+          - uid: codeserver-keda-schedule
+    require:
+      - provider: os
+
+queries:
+  - uid: codeserver-auth-disabled-removed
+    title: CodeServer must not disable authentication
+    mql: |
+      helmrelease = file("kubernetes/apps/home-automation/codeserver/app/HelmRelease.yaml")
+      helmrelease.exists
+      helmrelease.content.contains("--auth")
+      helmrelease.content.contains("password")
+      helmrelease.content.contains("none") == false
+      helmrelease.content.contains("--auth=none") == false
+    docs:
+      desc: CodeServer must not run with `--auth none`.
+
+  - uid: codeserver-password-secret
+    title: CodeServer password must come from ExternalSecret
+    mql: |
+      helmrelease = file("kubernetes/apps/home-automation/codeserver/app/HelmRelease.yaml")
+      externalsecret = file("kubernetes/apps/home-automation/codeserver/app/externalsecret.yaml")
+      helmrelease.exists
+      externalsecret.exists
+      helmrelease.content.contains("PASSWORD:")
+      helmrelease.content.contains("name: codeserver-auth")
+      helmrelease.content.contains("key: PASSWORD")
+      externalsecret.content.contains("name: codeserver-auth")
+      externalsecret.content.contains("secretKey: PASSWORD")
+      externalsecret.content.contains("key: codeserver-auth")
+      externalsecret.content.contains("property: PASSWORD")
+    docs:
+      desc: CodeServer password auth must be backed by a 1Password-sourced Kubernetes Secret.
+
+  - uid: codeserver-oidc-forward-auth-route
+    title: CodeServer route must require oauth2-proxy
+    mql: |
+      httproute = file("kubernetes/apps/home-automation/codeserver/app/httproute.yaml")
+      httproute.exists
+      httproute.content.contains("code.ironstone.casa")
+      httproute.content.contains("type: ExtensionRef")
+      httproute.content.contains("group: traefik.io")
+      httproute.content.contains("kind: Middleware")
+      httproute.content.contains("name: oauth2-proxy-forward-auth")
+      httproute.content.contains("name: keda-add-ons-http-interceptor-proxy")
+      httproute.content.contains("namespace: keda")
+      httproute.content.contains("port: 8080")
+    docs:
+      desc: Traefik forward-auth must run before CodeServer receives traffic.
+
+  - uid: codeserver-keda-http-routing
+    title: CodeServer must route through KEDA HTTP add-on
+    mql: |
+      interceptorroute = file("kubernetes/apps/home-automation/codeserver/app/interceptorroute.yaml")
+      referencegrant = file("kubernetes/apps/keda/http-add-on/app/codeserver-referencegrant.yaml")
+      interceptorroute.exists
+      referencegrant.exists
+      interceptorroute.content.contains("apiVersion: http.keda.sh/v1beta1")
+      interceptorroute.content.contains("kind: InterceptorRoute")
+      interceptorroute.content.contains("service: code")
+      interceptorroute.content.contains("port: 8080")
+      interceptorroute.content.contains("code.ironstone.casa")
+      referencegrant.content.contains("kind: ReferenceGrant")
+      referencegrant.content.contains("namespace: keda")
+      referencegrant.content.contains("kind: HTTPRoute")
+      referencegrant.content.contains("namespace: home-automation")
+      referencegrant.content.contains("name: keda-add-ons-http-interceptor-proxy")
+    docs:
+      desc: The Gateway route must be allowed to reference the KEDA HTTP interceptor.
+
+  - uid: codeserver-keda-schedule
+    title: CodeServer must scale during office hours and to zero when idle
+    mql: |
+      scaledobject = file("kubernetes/apps/home-automation/codeserver/app/scaledobject.yaml")
+      scaledobject.exists
+      scaledobject.content.contains("kind: ScaledObject")
+      scaledobject.content.contains("name: code")
+      scaledobject.content.contains("minReplicaCount: 0")
+      scaledobject.content.contains("maxReplicaCount: 1")
+      scaledobject.content.contains("cooldownPeriod: 1800")
+      scaledobject.content.contains("type: external-push")
+      scaledobject.content.contains("scalerAddress: keda-add-ons-http-external-scaler.keda:9090")
+      scaledobject.content.contains("interceptorRoute: code")
+      scaledobject.content.contains("type: cron")
+      scaledobject.content.contains("timezone: Europe/London")
+      scaledobject.content.contains("0 9 * * 1-4")
+      scaledobject.content.contains("0 17 * * 1-4")
+      scaledobject.content.contains("desiredReplicas")
+    docs:
+      desc: KEDA must combine HTTP request wake-up with Mon-Thu office-hours scaling.
