@@ -21,6 +21,7 @@ PROMETHEUS_QUERY_URL: Final[str] = (
 ALERTMANAGER_URL: Final[str] = "http://localhost:9093/api/v2/alerts"
 EXEC_POD: Final[list[str]] = ["kubectl", "exec", "-n", "monitoring", "vmalertmanager-vm-0", "--"]
 STALE_BACKUP_SECONDS: Final[int] = 30 * 60
+HIBERNATION_ANNOTATION: Final[str] = "cnpg.io/hibernation"
 
 
 @dataclass
@@ -181,6 +182,9 @@ def cnpg_backups() -> CheckResult:
         namespace = cluster["metadata"]["namespace"]
         name = cluster["metadata"]["name"]
         key = f"{namespace}/{name}"
+        if cnpg_cluster_hibernated(cluster):
+            details.append(f"{key}: hibernated, backup/WAL check skipped")
+            continue
         cluster_backups = sorted(
             by_cluster.get(key, []),
             key=lambda item: item.get("status", {}).get("startedAt") or item["metadata"]["creationTimestamp"],
@@ -216,6 +220,18 @@ def cnpg_backups() -> CheckResult:
         "pass" if not bad else "fail",
         "all CNPG backups and WAL archiving healthy" if not bad else f"{len(bad)} CNPG backup/WAL issues",
         bad or details,
+    )
+
+
+def cnpg_cluster_hibernated(cluster: dict[str, Any]) -> bool:
+    annotations = cluster.get("metadata", {}).get("annotations", {})
+    if annotations.get(HIBERNATION_ANNOTATION) == "on":
+        return True
+
+    conditions = cluster.get("status", {}).get("conditions", [])
+    return any(
+        condition.get("type") == HIBERNATION_ANNOTATION and condition.get("status") == "True"
+        for condition in conditions
     )
 
 
