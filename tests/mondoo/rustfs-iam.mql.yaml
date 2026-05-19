@@ -14,9 +14,9 @@ policies:
         email: security@ironstone.casa
     docs:
       desc: |
-        Validate the phase 1 RustFS IAM rollout. Existing backup consumers must
-        keep using the old shared/root-backed resources while new per-app
-        buckets, secrets, users, and bucket-scoped policies are staged.
+        Validate the RustFS IAM canary rollout. Penpot CNPG is cut over to its
+        per-app bucket and credential while every other backup consumer keeps
+        using the old shared/root-backed resources for rollback.
     groups:
       - title: CNPG Consumers Stay On Existing RustFS Resources
         filters: asset.platform != ""
@@ -77,12 +77,13 @@ policies:
               file("kubernetes/apps/home/med-tracker-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
               file("kubernetes/apps/home/med-tracker-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-med-tracker")
               file("kubernetes/apps/home/med-tracker-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-med-tracker")
-          - uid: phase1-penpot-cnpg-keeps-current-consumer
-            title: Penpot CNPG keeps current bucket and stages per-app secret
+          - uid: phase2-penpot-cnpg-uses-canary-consumer
+            title: Penpot CNPG uses the per-app bucket and credential canary
             impact: 100
             mql: |
-              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/penpot")
-              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-penpot/")
+              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-penpot")
+              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
               file("kubernetes/apps/home/penpot-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-penpot")
               file("kubernetes/apps/home/penpot-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-penpot")
 
