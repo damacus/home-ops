@@ -70,6 +70,7 @@ fi
 : "${CUTOVER_SECRET_KEY:=}"
 : "${REQUIRED_APP_SECRET_KEYS:=host user password dbname}"
 : "${REPLICA_IDENTITY_FULL_TABLES:=}"
+: "${ROWCOUNT_EXCLUDE_TABLES:=}"
 if [[ ! ${POSTCHECK_ENV_VAR+x} ]]; then POSTCHECK_ENV_VAR=DB_POSTGRESDB_HOST; fi
 if [[ ! ${APP_POD_SELECTOR+x} ]]; then APP_POD_SELECTOR=; fi
 if [[ ! ${PROM_POD_REGEX+x} ]]; then PROM_POD_REGEX="${HELMRELEASE}.*"; fi
@@ -825,7 +826,17 @@ cmd_monitor() {
 
 table_counts() {
   local cluster=$1 dbname=$2
-  local count_sql
+  local count_sql exclude_filter table schema rel
+  exclude_filter=""
+  for table in ${ROWCOUNT_EXCLUDE_TABLES}; do
+    [[ "${table}" == *.* ]] || die "row-count exclude table '${table}' must be schema-qualified"
+    schema=${table%%.*}
+    rel=${table#*.}
+    validate_identifier schema "${schema}"
+    validate_identifier table "${rel}"
+    exclude_filter+=" AND NOT (n.nspname = '${schema}' AND c.relname = '${rel}')"
+  done
+
   count_sql=$(psql_as_super "${cluster}" "${dbname}" "SELECT COALESCE(string_agg(
     format('SELECT %L AS rel, count(*)::bigint AS rows FROM %I.%I',
       n.nspname || '.' || c.relname, n.nspname, c.relname),
@@ -833,7 +844,8 @@ table_counts() {
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE c.relkind IN ('r','p')
-    AND n.nspname NOT IN ('pg_catalog', 'information_schema');")
+    AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+    ${exclude_filter};")
   if [[ -z "${count_sql}" ]]; then
     return 0
   fi
