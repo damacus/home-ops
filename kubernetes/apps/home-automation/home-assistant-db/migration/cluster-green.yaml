@@ -27,7 +27,7 @@ spec:
       isWALArchiver: true
       parameters:
         barmanObjectName: home-assistant-rustfs-store
-        serverName: home-assistant-green
+        serverName: home-assistant-green-20260519b
 
   monitoring:
     enablePodMonitor: true

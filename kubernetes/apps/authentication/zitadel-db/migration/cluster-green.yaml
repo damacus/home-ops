@@ -29,7 +29,7 @@ spec:
       isWALArchiver: true
       parameters:
         barmanObjectName: zitadel-rustfs-store
-        serverName: zitadel-green
+        serverName: zitadel-green-20260519b
 
   monitoring:
     enablePodMonitor: true
