@@ -14,9 +14,9 @@ policies:
         email: security@ironstone.casa
     docs:
       desc: |
-        Validate the RustFS IAM canary rollout. Penpot CNPG is cut over to its
-        per-app bucket and credential while every other backup consumer keeps
-        using the old shared/root-backed resources for rollback.
+        Validate the RustFS IAM canary rollout. Penpot and Mealie CNPG are cut
+        over to their per-app buckets and credentials while every other backup
+        consumer keeps using the old shared/root-backed resources for rollback.
     groups:
       - title: CNPG Consumers Stay On Existing RustFS Resources
         filters: asset.platform != ""
@@ -61,12 +61,13 @@ policies:
               file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
               file("kubernetes/apps/home/immich-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-immich")
               file("kubernetes/apps/home/immich-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-immich")
-          - uid: phase1-mealie-cnpg-keeps-current-consumer
-            title: Mealie CNPG keeps current bucket and stages per-app secret
+          - uid: phase2-mealie-cnpg-uses-canary-consumer
+            title: Mealie CNPG uses the per-app bucket and credential canary
             impact: 100
             mql: |
-              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/mealie")
-              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-mealie/")
+              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-mealie")
+              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
               file("kubernetes/apps/home/mealie-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-mealie")
               file("kubernetes/apps/home/mealie-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-mealie")
           - uid: phase1-med-tracker-cnpg-keeps-current-consumer
