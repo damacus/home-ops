@@ -1,9 +1,0 @@
----
-name: codeserver-security-scaling-tests
-title: CodeServer Security and Scaling Tests
-maintainer: Dan Webb
-copyright: Dan Webb
-copyright_email: dan.webb@damacus.io
-license: Apache-2.0
-summary: Tests for CodeServer OIDC protection and KEDA scale-to-zero behavior
-version: 1.0.0
