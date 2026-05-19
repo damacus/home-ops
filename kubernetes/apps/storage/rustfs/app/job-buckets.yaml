@@ -12,10 +12,20 @@ spec:
   template:
     spec:
       restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: mc
-          image: minio/mc:latest
-          imagePullPolicy: IfNotPresent
+          image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           env:
             - name: RUSTFS_ENDPOINT
               value: "http://rustfs.storage.svc.cluster.local:9000"
