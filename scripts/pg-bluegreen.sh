@@ -285,12 +285,12 @@ set_repo_cutover_target() {
       ;;
     helm-value)
       [[ -n "${HELM_VALUE_PATH}" ]] || die "HELM_VALUE_PATH is required for CUTOVER_TARGET_TYPE=helm-value"
-      yq -i "${HELM_VALUE_PATH} = \"${target}\"" "${HELMRELEASE_PATH}"
+      yq -i "(${HELM_VALUE_PATH}) = \"${target}\"" "${HELMRELEASE_PATH}"
       ;;
     secret-key)
       [[ -n "${CUTOVER_FILE_PATH}" ]] || die "CUTOVER_FILE_PATH is required for CUTOVER_TARGET_TYPE=secret-key"
       [[ -n "${YAML_VALUE_PATH}" ]] || die "YAML_VALUE_PATH is required for CUTOVER_TARGET_TYPE=secret-key"
-      yq -i "${YAML_VALUE_PATH} = \"${target}\"" "${CUTOVER_FILE_PATH}"
+      yq -i "(${YAML_VALUE_PATH}) = \"${target}\"" "${CUTOVER_FILE_PATH}"
       ;;
     none)
       ;;
