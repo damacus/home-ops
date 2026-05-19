@@ -1232,9 +1232,14 @@ cmd_postcheck() {
 prom_query() {
   local q=$1
   if command -v curl >/dev/null 2>&1; then
-    curl -fsS --max-time 5 -G "${PROMETHEUS_URL}/api/v1/query" \
+    local response
+    if ! response=$(curl -fsS --max-time 5 -G "${PROMETHEUS_URL}/api/v1/query" \
       --data-urlencode "query=${q}" 2>/dev/null \
-      | jq -r '.data.result // []'
+    ); then
+      echo "[]"
+      return 0
+    fi
+    echo "${response}" | jq -r '.data.result // []'
   else
     echo "[]"
   fi
