@@ -79,9 +79,30 @@ jobs:
           path: mondoo-reports
           if-no-files-found: ignore
 
+  rustfs-iam-policy:
+    name: RustFS IAM Policy
+    needs: yaml-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup Homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+
+      - name: Setup Workflow Tools
+        run: |
+          bash -c "$(curl -sSL https://install.mondoo.com/sh)"
+          brew tap go-task/tap
+          brew install go-task/tap/go-task
+          cnspec providers install os
+
+      - name: Run RustFS IAM policy
+        run: task k8s:rustfs-iam-policy
+
   flux-test:
     name: Flux Local Test
-    needs: [ yaml-lint, kubeconform ]
+    needs: [ yaml-lint, kubeconform, rustfs-iam-policy ]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -108,7 +129,7 @@ jobs:
 
   flux-diff:
     name: Flux Local Diff
-    needs: [ yaml-lint, kubeconform ]
+    needs: [ yaml-lint, kubeconform, rustfs-iam-policy ]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

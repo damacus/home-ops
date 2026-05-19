@@ -1,0 +1,192 @@
+---
+policies:
+  - uid: home-ops-rustfs-iam
+    name: Home Ops RustFS IAM
+    version: 1.0.0
+    scoring_system: highest impact
+    tags:
+      mondoo.com/platform: os
+      mondoo.com/category: security
+    require:
+      - provider: os
+    authors:
+      - name: Home Ops
+        email: security@ironstone.casa
+    docs:
+      desc: |
+        Validate the phase 1 RustFS IAM rollout. Existing backup consumers must
+        keep using the old shared/root-backed resources while new per-app
+        buckets, secrets, users, and bucket-scoped policies are staged.
+    groups:
+      - title: CNPG Consumers Stay On Existing RustFS Resources
+        filters: asset.platform != ""
+        checks:
+          - uid: phase1-zitadel-cnpg-keeps-current-consumer
+            title: Zitadel CNPG keeps current bucket and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/zitadel")
+              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/authentication/zitadel-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-zitadel")
+              file("kubernetes/apps/authentication/zitadel-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-zitadel")
+          - uid: phase1-forgejo-cnpg-keeps-current-consumer
+            title: Forgejo CNPG keeps current bucket and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/dev/forgejo-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/forgejo")
+              file("kubernetes/apps/dev/forgejo-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/dev/forgejo-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-forgejo")
+              file("kubernetes/apps/dev/forgejo-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-forgejo")
+          - uid: phase1-home-assistant-cnpg-keeps-current-consumer
+            title: Home Assistant CNPG keeps current bucket and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/home-assistant")
+              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home-automation/home-assistant-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-home-assistant")
+              file("kubernetes/apps/home-automation/home-assistant-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-home-assistant")
+          - uid: phase1-n8n-cnpg-keeps-current-consumer
+            title: n8n CNPG keeps current bucket and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/n8n")
+              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home-automation/n8n-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-n8n")
+              file("kubernetes/apps/home-automation/n8n-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-n8n")
+          - uid: phase1-immich-cnpg-keeps-current-consumer
+            title: Immich CNPG keeps current bucket and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/immich")
+              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home/immich-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-immich")
+              file("kubernetes/apps/home/immich-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-immich")
+          - uid: phase1-mealie-cnpg-keeps-current-consumer
+            title: Mealie CNPG keeps current bucket and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/mealie")
+              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home/mealie-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-mealie")
+              file("kubernetes/apps/home/mealie-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-mealie")
+          - uid: phase1-med-tracker-cnpg-keeps-current-consumer
+            title: Med Tracker CNPG keeps current bucket and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home/med-tracker-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/med-tracker")
+              file("kubernetes/apps/home/med-tracker-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home/med-tracker-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-med-tracker")
+              file("kubernetes/apps/home/med-tracker-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-med-tracker")
+          - uid: phase1-penpot-cnpg-keeps-current-consumer
+            title: Penpot CNPG keeps current bucket and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/penpot")
+              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home/penpot-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-penpot")
+              file("kubernetes/apps/home/penpot-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-penpot")
+
+      - title: Non-CNPG Consumers Stay On Existing RustFS Resources
+        filters: asset.platform != ""
+        checks:
+          - uid: phase1-longhorn-keeps-current-consumer
+            title: Longhorn keeps current secret and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/longhorn/app/backuptarget.yaml").content.contains("credentialSecret: longhorn-rustfs")
+              file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("name: longhorn-rustfs")
+              file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("key: rustfs\n")
+              file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("name: rustfs-longhorn")
+              file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("key: rustfs-longhorn")
+          - uid: phase1-paperless-keeps-current-consumer
+            title: Paperless keeps current Restic secret and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("volsync-backups/paperless")
+              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("key: rustfs\n")
+              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("name: rustfs-paperless")
+              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("key: rustfs-paperless")
+              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("volsync-paperless")
+          - uid: phase1-loki-keeps-current-consumer
+            title: Loki keeps current secret and stages per-app secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/monitoring/loki/app/helmrelease.yaml").content.contains("name: loki-s3")
+              file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("name: &name loki-s3")
+              file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("key: rustfs")
+              file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("name: &name rustfs-loki")
+              file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("key: rustfs-loki")
+
+      - title: RustFS Bootstrap IAM
+        filters: asset.platform != ""
+        checks:
+          - uid: rustfs-keeps-current-shared-cnpg-secret
+            title: RustFS keeps the current shared CNPG credential during phase 1
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("reflector.v1.k8s.emberstack.com/reflection-auto-enabled")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("ACCESS_KEY_ID")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("SECRET_ACCESS_KEY")
+          - uid: rustfs-stages-app-bootstrap-credentials
+            title: RustFS stages the per-app bootstrap credential bundle
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("name: rustfs-app-credentials")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_CNPG_ZITADEL_ACCESS_KEY")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_LONGHORN_ACCESS_KEY")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_PAPERLESS_ACCESS_KEY")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_LOKI_ACCESS_KEY")
+          - uid: rustfs-bootstrap-creates-app-buckets
+            title: RustFS bootstrap job creates all per-app buckets
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-zitadel")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-forgejo")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-home-assistant")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-n8n")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-immich")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-mealie")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-med-tracker")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-penpot")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("volsync-paperless")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("longhorn")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("loki-chunks")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("loki-data")
+          - uid: rustfs-bootstrap-preserves-old-prefix-mirroring
+            title: RustFS bootstrap keeps old-prefix mirror jobs for safe migration
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/zitadel")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/forgejo")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/home-assistant")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/n8n")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/immich")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/mealie")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/med-tracker")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/penpot")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("volsync-backups/paperless")
+          - uid: rustfs-bootstrap-creates-app-identities
+            title: RustFS bootstrap job creates all app IAM identities
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-zitadel")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-forgejo")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-home-assistant")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-n8n")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-immich")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-mealie")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-med-tracker")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-penpot")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-longhorn")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-paperless")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-loki")
+          - uid: rustfs-bootstrap-attaches-bucket-scoped-policies
+            title: RustFS bootstrap job attaches bucket-scoped IAM policies
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("arn:aws:s3:::")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc admin policy")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc admin user")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc admin policy attach")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mc admin") == false

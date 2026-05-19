@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: rustfs-buckets-create-v3
+  name: rustfs-iam-bootstrap-v4
   namespace: storage
   annotations:
     kustomize.toolkit.fluxcd.io/substitute: disabled
@@ -32,13 +32,13 @@ spec:
           env:
             - name: RUSTFS_ENDPOINT
               value: "http://rustfs.storage.svc.cluster.local:9000"
-            - name: BUCKETS
-              value: "cnpg-backups loki-data loki-chunks volsync-backups app-data backups cloudnative-pg longhorn"
             - name: HOME
               value: /tmp
           envFrom:
             - secretRef:
                 name: rustfs-credentials
+            - secretRef:
+                name: rustfs-app-credentials
           volumeMounts:
             - name: tmp
               mountPath: /tmp
@@ -46,18 +46,20 @@ spec:
           args:
             - |
               set -eu
-              echo "Configuring rc alias and waiting for RustFS at $${RUSTFS_ENDPOINT:?}..."
+
+              echo "Configuring rc alias and waiting for RustFS at ${RUSTFS_ENDPOINT:?}..."
               i=1
               ready=false
               while [ "$i" -le 60 ]; do
-                if rc alias set rustfs "$${RUSTFS_ENDPOINT:?}" "$${RUSTFS_ACCESS_KEY:?}" "$${RUSTFS_SECRET_KEY:?}" >/dev/null 2>&1; then
+                if rc alias set rustfs "${RUSTFS_ENDPOINT:?}" "${RUSTFS_ACCESS_KEY:?}" "${RUSTFS_SECRET_KEY:?}" --region us-east-1 >/dev/null 2>&1; then
                   if rc bucket list rustfs/ >/dev/null 2>&1; then
                     echo "RustFS is reachable"
                     ready=true
                     break
                   fi
                 fi
-                echo "Attempt $i: RustFS not ready, retrying..."; sleep 5
+                echo "Attempt $i: RustFS not ready, retrying..."
+                sleep 5
                 i=$((i + 1))
               done
 
@@ -66,10 +68,178 @@ spec:
                 exit 1
               fi
 
-              for b in ${BUCKETS}; do
-                echo "Creating bucket: $b"
-                rc bucket create --ignore-existing "rustfs/${b}"
-              done
+              create_bucket() {
+                bucket="$1"
+                echo "Ensuring bucket: $bucket"
+                rc bucket create --ignore-existing "rustfs/$bucket"
+              }
+
+              write_single_bucket_policy() {
+                policy_name="$1"
+                bucket="$2"
+                policy_file="/tmp/$policy_name.json"
+
+                cat > "$policy_file" <<EOF
+              {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "s3:GetBucketLocation",
+                      "s3:ListBucket",
+                      "s3:ListBucketMultipartUploads"
+                    ],
+                    "Resource": [
+                      "arn:aws:s3:::$bucket"
+                    ]
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "s3:AbortMultipartUpload",
+                      "s3:DeleteObject",
+                      "s3:GetObject",
+                      "s3:ListMultipartUploadParts",
+                      "s3:PutObject"
+                    ],
+                    "Resource": [
+                      "arn:aws:s3:::$bucket/*"
+                    ]
+                  }
+                ]
+              }
+              EOF
+              }
+
+              write_loki_policy() {
+                policy_file="/tmp/rustfs-loki.json"
+
+                cat > "$policy_file" <<EOF
+              {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "s3:GetBucketLocation",
+                      "s3:ListBucket",
+                      "s3:ListBucketMultipartUploads"
+                    ],
+                    "Resource": [
+                      "arn:aws:s3:::loki-chunks",
+                      "arn:aws:s3:::loki-data"
+                    ]
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "s3:AbortMultipartUpload",
+                      "s3:DeleteObject",
+                      "s3:GetObject",
+                      "s3:ListMultipartUploadParts",
+                      "s3:PutObject"
+                    ],
+                    "Resource": [
+                      "arn:aws:s3:::loki-chunks/*",
+                      "arn:aws:s3:::loki-data/*"
+                    ]
+                  }
+                ]
+              }
+              EOF
+              }
+
+              create_or_update_policy() {
+                policy_name="$1"
+                policy_file="/tmp/$policy_name.json"
+
+                echo "Creating or updating policy: $policy_name"
+                rc admin policy create rustfs "$policy_name" "$policy_file" || true
+              }
+
+              mirror_prefix_if_present() {
+                source_path="$1"
+                destination_bucket="$2"
+
+                if rc object list "rustfs/$source_path" >/dev/null 2>&1; then
+                  echo "Mirroring existing data from $source_path to $destination_bucket"
+                  rc mirror --overwrite "rustfs/$source_path" "rustfs/$destination_bucket"
+                else
+                  echo "No existing data found at $source_path; skipping mirror"
+                fi
+              }
+
+              ensure_user() {
+                identity="$1"
+                access_key="$2"
+                secret_key="$3"
+
+                if [ -z "$access_key" ] || [ -z "$secret_key" ]; then
+                  echo "Missing credentials for $identity"
+                  exit 1
+                fi
+
+                if rc admin user info rustfs "$access_key" >/dev/null 2>&1; then
+                  echo "User already exists: $identity"
+                  rc admin user enable rustfs "$access_key" >/dev/null 2>&1 || true
+                else
+                  echo "Creating user: $identity"
+                  rc admin user add rustfs "$access_key" "$secret_key"
+                fi
+              }
+
+              attach_policy() {
+                policy_name="$1"
+                access_key="$2"
+
+                echo "Attaching policy $policy_name"
+                rc admin policy attach rustfs "$policy_name" --user "$access_key"
+              }
+
+              provision_single_bucket_identity() {
+                identity="$1"
+                access_key="$2"
+                secret_key="$3"
+                bucket="$4"
+
+                create_bucket "$bucket"
+                write_single_bucket_policy "$identity" "$bucket"
+                create_or_update_policy "$identity"
+                ensure_user "$identity" "$access_key" "$secret_key"
+                attach_policy "$identity" "$access_key"
+              }
+
+              provision_loki_identity() {
+                create_bucket "loki-chunks"
+                create_bucket "loki-data"
+                write_loki_policy
+                create_or_update_policy "rustfs-loki"
+                ensure_user "rustfs-loki" "$RUSTFS_LOKI_ACCESS_KEY" "$RUSTFS_LOKI_SECRET_KEY"
+                attach_policy "rustfs-loki" "$RUSTFS_LOKI_ACCESS_KEY"
+              }
+
+              provision_single_bucket_identity "rustfs-cnpg-zitadel" "$RUSTFS_CNPG_ZITADEL_ACCESS_KEY" "$RUSTFS_CNPG_ZITADEL_SECRET_KEY" "cnpg-zitadel"
+              provision_single_bucket_identity "rustfs-cnpg-forgejo" "$RUSTFS_CNPG_FORGEJO_ACCESS_KEY" "$RUSTFS_CNPG_FORGEJO_SECRET_KEY" "cnpg-forgejo"
+              provision_single_bucket_identity "rustfs-cnpg-home-assistant" "$RUSTFS_CNPG_HOME_ASSISTANT_ACCESS_KEY" "$RUSTFS_CNPG_HOME_ASSISTANT_SECRET_KEY" "cnpg-home-assistant"
+              provision_single_bucket_identity "rustfs-cnpg-n8n" "$RUSTFS_CNPG_N8N_ACCESS_KEY" "$RUSTFS_CNPG_N8N_SECRET_KEY" "cnpg-n8n"
+              provision_single_bucket_identity "rustfs-cnpg-immich" "$RUSTFS_CNPG_IMMICH_ACCESS_KEY" "$RUSTFS_CNPG_IMMICH_SECRET_KEY" "cnpg-immich"
+              provision_single_bucket_identity "rustfs-cnpg-mealie" "$RUSTFS_CNPG_MEALIE_ACCESS_KEY" "$RUSTFS_CNPG_MEALIE_SECRET_KEY" "cnpg-mealie"
+              provision_single_bucket_identity "rustfs-cnpg-med-tracker" "$RUSTFS_CNPG_MED_TRACKER_ACCESS_KEY" "$RUSTFS_CNPG_MED_TRACKER_SECRET_KEY" "cnpg-med-tracker"
+              provision_single_bucket_identity "rustfs-cnpg-penpot" "$RUSTFS_CNPG_PENPOT_ACCESS_KEY" "$RUSTFS_CNPG_PENPOT_SECRET_KEY" "cnpg-penpot"
+              provision_single_bucket_identity "rustfs-longhorn" "$RUSTFS_LONGHORN_ACCESS_KEY" "$RUSTFS_LONGHORN_SECRET_KEY" "longhorn"
+              provision_single_bucket_identity "rustfs-paperless" "$RUSTFS_PAPERLESS_ACCESS_KEY" "$RUSTFS_PAPERLESS_SECRET_KEY" "volsync-paperless"
+              provision_loki_identity
+
+              mirror_prefix_if_present "cnpg-backups/zitadel" "cnpg-zitadel"
+              mirror_prefix_if_present "cnpg-backups/forgejo" "cnpg-forgejo"
+              mirror_prefix_if_present "cnpg-backups/home-assistant" "cnpg-home-assistant"
+              mirror_prefix_if_present "cnpg-backups/n8n" "cnpg-n8n"
+              mirror_prefix_if_present "cnpg-backups/immich" "cnpg-immich"
+              mirror_prefix_if_present "cnpg-backups/mealie" "cnpg-mealie"
+              mirror_prefix_if_present "cnpg-backups/med-tracker" "cnpg-med-tracker"
+              mirror_prefix_if_present "cnpg-backups/penpot" "cnpg-penpot"
+              mirror_prefix_if_present "volsync-backups/paperless" "volsync-paperless"
       volumes:
         - name: tmp
           emptyDir: {}
