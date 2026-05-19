@@ -1,0 +1,27 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mondoo-operator
+  namespace: mondoo-operator
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: mondoo-operator
+      version: 13.1.1
+      sourceRef:
+        kind: HelmRepository
+        name: mondoo
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    timeout: 10m
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    operator:
+      createConfig: true

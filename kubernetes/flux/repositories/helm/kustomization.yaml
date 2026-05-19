@@ -21,6 +21,7 @@ resources:
   - kured.yaml
   - longhorn.yaml
   - metrics-server.yaml
+  - mondoo.yaml
   - onepassword-connect.yaml
   - openebs.yaml
   - prometheus-community.yaml

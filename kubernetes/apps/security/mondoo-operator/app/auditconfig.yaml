@@ -1,0 +1,27 @@
+---
+apiVersion: k8s.mondoo.com/v1alpha2
+kind: MondooAuditConfig
+metadata:
+  name: mondoo-client
+  namespace: mondoo-operator
+spec:
+  mondooCredsSecretRef:
+    name: mondoo-client
+  kubernetesResources:
+    enable: true
+    schedule: "17 3 * * *"
+  nodes:
+    enable: true
+    style: cronjob
+    schedule: "47 3 * * *"
+  containers:
+    enable: false
+  filtering:
+    namespaces:
+      exclude:
+        - mondoo-operator
+        - kube-system
+        - flux-system
+        - external-secrets
+        - cert-manager
+        - system-upgrade
