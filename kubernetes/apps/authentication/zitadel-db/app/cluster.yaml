@@ -3,46 +3,43 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: &name zitadel
+  name: &name zitadel-green
   namespace: authentication
 spec:
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
     name: postgresql
-    major: 16
+    major: 18
   instances: 2
   primaryUpdateStrategy: unsupervised
   storage:
     size: 10Gi
     storageClass: openebs-hostpath
-
   monitoring:
     enablePodMonitor: true
-
   bootstrap:
     initdb:
-      database: *name
-      owner: *name
+      database: zitadel
+      owner: zitadel
       secret:
         name: zitadel-db
-
   enableSuperuserAccess: true
   superuserSecret:
     name: zitadel-db-superuser
-
   postgresql:
     parameters:
       max_connections: "100"
       shared_buffers: 256MB
-
+      wal_level: logical
+      max_replication_slots: "10"
+      max_wal_senders: "10"
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
         barmanObjectName: zitadel-rustfs-store
-        serverName: zitadel
-
+        serverName: zitadel-green-20260519b
   resources:
     requests:
       cpu: 100m

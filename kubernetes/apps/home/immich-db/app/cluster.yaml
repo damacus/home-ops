@@ -3,47 +3,42 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: &name immich
+  name: &name immich-green
   namespace: home
-  annotations:
-    cnpg.io/hibernation: "on"
 spec:
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
     name: postgresql
-    major: 16
+    major: 18
   instances: 2
   primaryUpdateStrategy: unsupervised
   enablePDB: true
-
   storage:
     size: 10Gi
     storageClass: openebs-hostpath
-
   bootstrap:
     initdb:
-      database: *name
-      owner: *name
+      database: immich
+      owner: immich
       secret:
         name: immich-db
-
   enableSuperuserAccess: true
   superuserSecret:
     name: immich-db-superuser
-
   postgresql:
     parameters:
       max_connections: "100"
       shared_buffers: 256MB
-
+      wal_level: logical
+      max_replication_slots: "10"
+      max_wal_senders: "10"
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
         barmanObjectName: immich-rustfs-store
-        serverName: immich
-
+        serverName: immich-green
   resources:
     requests:
       cpu: 100m
