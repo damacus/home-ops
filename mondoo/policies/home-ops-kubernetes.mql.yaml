@@ -1,0 +1,292 @@
+---
+policies:
+  - uid: home-ops-kubernetes-manifests
+    name: Home Ops Kubernetes Manifest Baseline
+    version: "1.0.0"
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: k8s
+    scoring_system: highest impact
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    docs:
+      desc: |
+        Repository-local Kubernetes checks for rendered Flux manifests.
+    groups:
+      - title: Workload posture
+        filters: asset.platform == "k8s-manifest"
+        checks:
+          - uid: home-ops-k8s-workload-resources
+            title: Workload containers define resource requests and limits
+            impact: 0
+            mql: |
+              k8s.deployments.all(containers.all(resources["requests"] != empty && resources["limits"] != empty))
+          - uid: home-ops-k8s-workload-no-privilege-escalation
+            title: Workload containers disable privilege escalation
+            impact: 0
+            mql: |
+              k8s.deployments.all(containers.all(securityContext["allowPrivilegeEscalation"] != true))
+          - uid: home-ops-k8s-workload-not-privileged
+            title: Workload containers are not privileged
+            impact: 0
+            mql: |
+              k8s.deployments.all(containers.all(securityContext["privileged"] != true))
+          - uid: home-ops-k8s-network-policies-present
+            title: NetworkPolicy resources are present for isolated application namespaces
+            impact: 0
+            mql: |
+              k8s.networkPolicies.length > 0
+          - uid: home-ops-k8s-external-secrets-use-cluster-store
+            title: ExternalSecret resources use the 1Password ClusterSecretStore
+            impact: 0
+            mql: |
+              k8s.customresources.where(kind == "ExternalSecret").all(manifest["spec"]["secretStoreRef"]["kind"] == "ClusterSecretStore")
+          - uid: home-ops-k8s-http-routes-present
+            title: Gateway HTTPRoute resources are present for routed applications
+            impact: 0
+            mql: |
+              k8s.customresources.where(kind == "HTTPRoute").length > 0
+
+  - uid: home-ops-app-zitadel
+    name: Home Ops Zitadel Application Checks
+    version: "1.0.0"
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: k8s
+    scoring_system: highest impact
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    groups:
+      - title: Endpoint checks
+        filters: asset.platform == "k8s-cluster"
+        checks:
+          - uid: ZITADEL-HTTPS-001
+            title: Zitadel HTTPS endpoint is accessible
+            impact: 100
+            mql: |
+              [200, 301, 302].contains(http.get("https://zitadel.damacus.io/").statusCode)
+          - uid: ZITADEL-HTTPS-002
+            title: Zitadel TLS certificate is valid for at least 14 days
+            impact: 100
+            mql: command("echo | openssl s_client -connect zitadel.damacus.io:443 -servername zitadel.damacus.io 2>/dev/null | openssl x509 -noout -checkend 1209600").exitcode == 0
+          - uid: ZITADEL-HEALTH-001
+            title: Zitadel healthz endpoint returns healthy
+            impact: 100
+            mql: |
+              http.get("https://zitadel.damacus.io/healthz").statusCode == 200
+          - uid: ZITADEL-HEALTH-002
+            title: Zitadel ready endpoint returns ready
+            impact: 100
+            mql: |
+              http.get("https://zitadel.damacus.io/debug/ready").statusCode == 200
+          - uid: ZITADEL-HEALTH-003
+            title: Zitadel debug endpoint is available or intentionally hidden
+            impact: 70
+            mql: |
+              [200, 404].contains(http.get("https://zitadel.damacus.io/debug/healthz").statusCode)
+          - uid: ZITADEL-UI-001
+            title: Zitadel login UI is accessible
+            impact: 100
+            mql: |
+              [200, 301, 302].contains(http.get("https://zitadel.damacus.io/ui/login").statusCode)
+          - uid: ZITADEL-UI-002
+            title: Zitadel console UI is accessible
+            impact: 100
+            mql: |
+              [200, 302].contains(http.get("https://zitadel.damacus.io/ui/console").statusCode)
+          - uid: ZITADEL-UI-003
+            title: Zitadel login page contains expected content
+            impact: 70
+            mql: |
+              http.get("https://zitadel.damacus.io/ui/login").body.contains(/zitadel|login|sign.?in/i)
+          - uid: ZITADEL-OIDC-001
+            title: OIDC discovery endpoint is accessible
+            impact: 100
+            mql: |
+              http.get("https://zitadel.damacus.io/.well-known/openid-configuration") {
+                statusCode == 200
+                header.contentType.type == "application/json"
+              }
+          - uid: ZITADEL-OIDC-002
+            title: OIDC discovery returns valid configuration
+            impact: 100
+            mql: |
+              http.get("https://zitadel.damacus.io/.well-known/openid-configuration").body.contains('"issuer":"https://zitadel.damacus.io"')
+              http.get("https://zitadel.damacus.io/.well-known/openid-configuration").body.contains("https://zitadel.damacus.io/oauth/v2/authorize")
+              http.get("https://zitadel.damacus.io/.well-known/openid-configuration").body.contains("https://zitadel.damacus.io/oauth/v2/token")
+              http.get("https://zitadel.damacus.io/.well-known/openid-configuration").body.contains("https://zitadel.damacus.io/oidc/v1/userinfo")
+              http.get("https://zitadel.damacus.io/.well-known/openid-configuration").body.contains("https://zitadel.damacus.io/oauth/v2/keys")
+          - uid: ZITADEL-OIDC-003
+            title: OIDC JWKS endpoint is accessible and returns keys
+            impact: 100
+            mql: |
+              http.get("https://zitadel.damacus.io/oauth/v2/keys") {
+                statusCode == 200
+                header.contentType.type == "application/json"
+                body.contains('"keys"')
+              }
+          - uid: ZITADEL-LOGIN-002
+            title: Login page renders without API errors
+            impact: 100
+            mql: |
+              http.get("https://zitadel.damacus.io/ui/login/login") {
+                statusCode == 200 || statusCode == 302
+                body.contains(/"code":\s*5/) == false
+                body.contains(/"message":\s*"Not Found"/) == false
+              }
+          - uid: ZITADEL-LOGIN-003
+            title: V2 login UI is available
+            impact: 100
+            mql: |
+              http.get("https://zitadel.damacus.io/ui/v2/login/login") {
+                statusCode != 404
+                body.contains(/\{"code":5,\s*"message":"Not Found"\}/) == false
+              }
+          - uid: ZITADEL-API-001
+            title: gRPC-Web endpoint responds
+            impact: 70
+            mql: |
+              [200, 400, 404, 405, 415].contains(http.get("https://zitadel.damacus.io/zitadel.admin.v1.AdminService/Healthz").statusCode)
+          - uid: ZITADEL-API-002
+            title: Management API base path responds
+            impact: 70
+            mql: |
+              [200, 401, 403].contains(http.get("https://zitadel.damacus.io/management/v1/healthz").statusCode)
+          - uid: ZITADEL-SEC-001
+            title: Security headers check is exercised
+            impact: 50
+            mql: |
+              [200, 301, 302].contains(http.get("https://zitadel.damacus.io/").statusCode)
+      - title: Kubernetes posture
+        filters: asset.platform == "k8s-cluster"
+        checks:
+          - uid: home-ops-zitadel-externalsecrets
+            title: Zitadel ExternalSecrets exist
+            impact: 0
+            mql: k8s.customresources.where(kind == "ExternalSecret" && namespace == "authentication").map(name).containsAll(["zitadel-admin-sa", "zitadel-config", "zitadel-masterkey"])
+          - uid: home-ops-zitadel-route
+            title: Zitadel HTTPRoute exists
+            impact: 0
+            mql: k8s.customresources.where(kind == "HTTPRoute" && namespace == "authentication").map(name).contains("zitadel")
+          - uid: home-ops-zitadel-networkpolicy
+            title: Zitadel NetworkPolicy resources exist
+            impact: 0
+            mql: k8s.networkPolicies.where(namespace == "authentication").length > 0
+
+  - uid: home-ops-app-grafana
+    name: Home Ops Grafana OIDC Checks
+    version: "1.0.0"
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: k8s
+    scoring_system: highest impact
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    groups:
+      - title: grafana-oidc-config
+        filters: asset.platform == "k8s-cluster"
+        checks:
+          - uid: grafana-oidc-config
+            title: Grafana login endpoint exposes Zitadel sign-in
+            impact: 100
+            mql: |
+              http.get("https://grafana.ironstone.casa/login") {
+                statusCode == 200 || statusCode == 302
+                body.contains(/Zitadel|Sign in with Zitadel/i)
+              }
+          - uid: grafana-oidc-secret
+            title: Grafana OIDC secret exists with required keys
+            impact: 100
+            mql: |
+              k8s.secrets.where(namespace == "authentication" && name == "zitadel-grafana-oidc").all(manifest["data"]["client-id"] != empty && manifest["data"]["client-secret"] != empty)
+          - uid: grafana-oidc-endpoints
+            title: Zitadel OIDC discovery endpoint is accessible to Grafana
+            impact: 100
+            mql: |
+              http.get("https://zitadel.damacus.io/.well-known/openid-configuration").body.contains("authorization_endpoint")
+          - uid: home-ops-grafana-route
+            title: Grafana HTTPRoute exists
+            impact: 0
+            mql: k8s.customresources.where(kind == "HTTPRoute" && namespace == "monitoring").map(name).contains("grafana")
+
+  - uid: home-ops-app-paperless
+    name: Home Ops Paperless OIDC Checks
+    version: "1.0.0"
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: k8s
+    scoring_system: highest impact
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    groups:
+      - title: paperless-oidc-config
+        filters: asset.platform == "k8s-cluster"
+        checks:
+          - uid: paperless-oidc-config
+            title: Paperless login endpoint exposes Zitadel sign-in
+            impact: 100
+            mql: |
+              http.get("https://paperless.ironstone.casa/accounts/login/") {
+                statusCode == 200 || statusCode == 302
+                body.contains(/Zitadel|Sign in with Zitadel/i)
+              }
+          - uid: paperless-oidc-secret
+            title: Paperless OIDC secret exists with required keys
+            impact: 100
+            mql: |
+              k8s.secrets.where(namespace == "home-automation" && name == "paperless-zitadel-oidc").all(manifest["data"]["client-id"] != empty && manifest["data"]["client-secret"] != empty && manifest["data"]["providers"] != empty)
+          - uid: paperless-oidc-endpoints
+            title: Zitadel OIDC discovery endpoint is accessible to Paperless
+            impact: 100
+            mql: |
+              http.get("https://zitadel.damacus.io/.well-known/openid-configuration").body.contains("token_endpoint")
+          - uid: home-ops-paperless-networkpolicy
+            title: Paperless NetworkPolicy exists
+            impact: 0
+            mql: k8s.networkPolicies.where(namespace == "home-automation").map(name).contains("paperless")
+
+  - uid: home-ops-app-mealie
+    name: Home Ops Mealie OIDC Checks
+    version: "1.0.0"
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: k8s
+    scoring_system: highest impact
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    groups:
+      - title: mealie-oidc-config
+        filters: asset.platform == "k8s-cluster"
+        checks:
+          - uid: mealie-oidc-config
+            title: Mealie login endpoint exposes Zitadel sign-in
+            impact: 100
+            mql: |
+              http.get("https://mealie.damacus.io/login") {
+                statusCode == 200 || statusCode == 302
+                body.contains(/Zitadel|Sign in with Zitadel/i)
+              }
+          - uid: mealie-oidc-secret
+            title: Mealie OIDC secret exists with required keys
+            impact: 100
+            mql: |
+              k8s.secrets.where(namespace == "home" && name == "mealie-zitadel-oidc").all(manifest["data"]["client-id"] != empty)
+          - uid: mealie-oidc-endpoints
+            title: Zitadel OIDC discovery endpoint is accessible to Mealie
+            impact: 100
+            mql: |
+              http.get("https://zitadel.damacus.io/.well-known/openid-configuration").body.contains("token_endpoint")
+          - uid: mealie-oidc-api-endpoint
+            title: Mealie OIDC callback endpoint responds
+            impact: 100
+            mql: |
+              [200, 302, 400, 405].contains(http.get("https://mealie.damacus.io/api/auth/oauth/callback").statusCode)
+          - uid: home-ops-mealie-networkpolicy
+            title: Mealie NetworkPolicy exists
+            impact: 0
+            mql: k8s.networkPolicies.where(namespace == "home").map(name).contains("mealie")

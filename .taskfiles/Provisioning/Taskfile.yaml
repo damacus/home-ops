@@ -6,6 +6,7 @@ silent: true
 vars:
   PROVISIONING_DIR: "provisioning"
   ARMBIAN_DIR: "{{.PROVISIONING_DIR}}/armbian-build"
+  MONDOO_SCAN_SCRIPT: "{{.SCRIPTS_DIR}}/mondoo_scan.py"
 
 tasks:
   build:
@@ -57,37 +58,32 @@ tasks:
         echo "Done."
 
   audit:
-    desc: Run InSpec tests against a running node
+    desc: Run Mondoo checks against a running node
     requires:
       vars: [host]
-    vars:
-      AUDITOR:
-        sh: command -v cinc-auditor || command -v inspec
     preconditions:
-      - sh: command -v cinc-auditor || command -v inspec
-        msg: "Neither cinc-auditor nor inspec found. Install with: brew install cinc-auditor"
+      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
+      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
+      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
     cmds:
-      - |
-        echo "Running node tests against {{.host}}..."
-        {{.AUDITOR}} exec {{.PROVISIONING_DIR}}/tests/inspec-node \
-          -t ssh://pi@{{.host}} \
-          -i ~/.ssh/id_ed25519 \
-          --reporter cli
+      - >-
+        {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
+        {{if .output}}--output {{.output}}{{end}}
+        {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
+        node --host {{.host}}
 
   audit-image:
-    desc: Run InSpec tests against a mounted image
+    desc: Run Mondoo checks against a mounted image
     requires:
       vars: [mount]
-    vars:
-      AUDITOR:
-        sh: command -v cinc-auditor || command -v inspec
     preconditions:
-      - sh: command -v cinc-auditor || command -v inspec
-        msg: "Neither cinc-auditor nor inspec found. Install with: brew install cinc-auditor"
+      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
+      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
+      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
+      - { msg: "Mounted image root does not exist: {{.mount}}", sh: "test -d {{.mount}}" }
     cmds:
-      - |
-        echo "Running image tests against {{.mount}}..."
-        {{.AUDITOR}} exec {{.PROVISIONING_DIR}}/tests/inspec-image \
-          -t local:// \
-          --basedir "{{.mount}}" \
-          --reporter cli
+      - >-
+        {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
+        {{if .output}}--output {{.output}}{{end}}
+        {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
+        image --mount {{.mount}}

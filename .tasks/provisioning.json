@@ -188,14 +188,14 @@
         "passes": false
     },
     {
-        "category": "inspec",
-        "description": "InSpec compliance profile for nodes",
+        "category": "mondoo",
+        "description": "Mondoo compliance policy for nodes",
         "steps": [
-            "Verify InSpec profile exists",
-            "Check control definitions are valid",
-            "Validate SSH transport configuration",
-            "Test profile against running node",
-            "Confirm all controls pass",
+            "Verify Mondoo node policy exists",
+            "Check policy definitions are valid",
+            "Validate SSH scan configuration",
+            "Test policy against running node",
+            "Confirm all checks pass",
             "Check for security baseline compliance",
             "Validate kernel hardening controls",
             "Test network security controls",
@@ -207,7 +207,7 @@
         "passes": false
     },
     {
-        "category": "inspec",
+        "category": "mondoo",
         "description": "CIS benchmark compliance checks",
         "steps": [
             "Verify CIS profile is configured",
@@ -219,7 +219,7 @@
         "passes": false
     },
     {
-        "category": "inspec",
+        "category": "mondoo",
         "description": "k3s specific compliance controls",
         "steps": [
             "Verify k3s service configuration",
