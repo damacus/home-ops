@@ -214,6 +214,23 @@ repo_cutover_target() {
   esac
 }
 
+repo_cutover_file() {
+  case "${CUTOVER_TARGET_TYPE}" in
+    secret-anchor|helm-value)
+      echo "${HELMRELEASE_PATH}"
+      ;;
+    secret-key)
+      echo "${CUTOVER_FILE_PATH}"
+      ;;
+    none)
+      echo ""
+      ;;
+    *)
+      die "unknown CUTOVER_TARGET_TYPE='${CUTOVER_TARGET_TYPE}'"
+      ;;
+  esac
+}
+
 live_cutover_target() {
   case "${CUTOVER_TARGET_TYPE}" in
     secret-anchor)
@@ -304,11 +321,12 @@ restore_app_replicas() {
 
 resume_cutover_after_handoff() {
   local state_file=$1
-  local target expected
+  local target expected cutover_file
   target=$(repo_cutover_target)
   expected=$(green_cutover_target)
+  cutover_file=$(repo_cutover_file)
   [[ "${target}" == "${expected}" ]] \
-    || die "cutover target in ${HELMRELEASE_PATH} is '${target}', expected '${expected}'. App may still be scaled to 0; complete the cutover edit or rollback."
+    || die "cutover target in ${cutover_file:-repo} is '${target}', expected '${expected}'. App may still be scaled to 0; complete the cutover edit or rollback."
 
   log "restoring app replica counts"
   restore_app_replicas "${state_file}"
@@ -1021,28 +1039,31 @@ cmd_cutover() {
   ok "row counts match"
   save_cutover_stage "${state_file}" "awaiting-handoff"
 
-  if [[ "${CUTOVER_TARGET_TYPE}" == "helm-value" ]]; then
-    log "updating repo cutover target in ${HELMRELEASE_PATH}"
+  if [[ "${CUTOVER_TARGET_TYPE}" == "helm-value" || "${CUTOVER_TARGET_TYPE}" == "secret-key" ]]; then
+    log "updating repo cutover target in $(repo_cutover_file)"
     set_repo_cutover_target "$(green_cutover_target)"
   fi
+
+  local cutover_file
+  cutover_file=$(repo_cutover_file)
 
   cat <<EOF
 
 ${BOLD}===================================================================${RESET}
-${BOLD}MANUAL STEP REQUIRED — commit the HelmRelease cutover edit${RESET}
+${BOLD}MANUAL STEP REQUIRED — commit the cutover edit${RESET}
 ${BOLD}===================================================================${RESET}
 
-In ${HELMRELEASE_PATH}, verify the configured cutover target:
+In ${cutover_file}, verify the configured cutover target:
 
   - ${CUTOVER_TARGET_TYPE}: $(blue_cutover_target)
   + ${CUTOVER_TARGET_TYPE}: $(green_cutover_target)
 
 Then:
 
-  git add ${HELMRELEASE_PATH}
+  git add ${cutover_file}
   git commit -m "feat(${HELMRELEASE}): cut over to ${GREEN_CLUSTER} (PG18)"
   git push
-  flux reconcile helmrelease ${HELMRELEASE} -n ${NAMESPACE}
+  flux reconcile kustomization ${HELMRELEASE} -n flux-system
 
 Once the cutover edit is reconciled, re-run:
 
@@ -1075,7 +1096,7 @@ EOF
   target=$(repo_cutover_target)
   expected_green=$(green_cutover_target)
   [[ "${target}" == "${expected_green}" ]] \
-    || die "cutover target in ${HELMRELEASE_PATH} is '${target}', expected '${expected_green}'. App is still scaled to 0; complete the cutover edit or rollback."
+    || die "cutover target in ${cutover_file:-repo} is '${target}', expected '${expected_green}'. App is still scaled to 0; complete the cutover edit or rollback."
 
   resume_cutover_after_handoff "${state_file}"
 }
