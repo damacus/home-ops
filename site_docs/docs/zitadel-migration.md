@@ -80,19 +80,19 @@ kubectl get externalsecret -n home mealie-zitadel-oidc
 kubectl get secret -n home mealie-zitadel-oidc
 ```
 
-### 5. Run InSpec Tests
+### 5. Run Mondoo Tests
 
 Test OIDC authentication for each application:
 
 ```bash
 # Test Grafana OIDC
-inspec exec kubernetes/apps/monitoring/grafana/tests
+task kubernetes:test-app app=monitoring/grafana
 
 # Test Paperless OIDC
-inspec exec kubernetes/apps/home-automation/paperless/tests
+task kubernetes:test-app app=home-automation/paperless
 
 # Test Mealie OIDC
-inspec exec kubernetes/apps/home/mealie/tests
+task kubernetes:test-app app=home/mealie
 ```
 
 ### 6. Test Login Flows

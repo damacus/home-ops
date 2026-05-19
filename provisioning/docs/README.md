@@ -88,10 +88,7 @@ provisioning/
 │               ├── user-data            # Cloud-init config
 │               └── meta-data            # Instance metadata
 ├── config.env               # Build configuration
-├── docs/                    # This documentation
-└── tests/
-    ├── inspec-image/        # Gold image validation
-    └── inspec-node/         # Running node validation
+└── docs/                    # This documentation
 ```
 
 ## Configuration
@@ -115,8 +112,11 @@ K3S_VERSION="v1.33.2+k3s1"        # K3s version to install
 | `task provisioning:build`                    | Build Armbian image       |
 | `task provisioning:copy`                     | Copy image to ~/Downloads |
 | `task provisioning:clean`                    | Remove build artifacts    |
-| `task provisioning:audit host=<ip>`          | Test running node         |
-| `task provisioning:audit-image mount=<path>` | Test mounted image        |
+| `task provisioning:audit host=<ip>`          | Test running node with Mondoo |
+| `task provisioning:audit-image mount=<path>` | Test mounted image with Mondoo |
+
+Provisioning validation policies live in `mondoo/policies/home-ops-node.mql.yaml`
+and `mondoo/policies/home-ops-image.mql.yaml`.
 
 ## Testing
 

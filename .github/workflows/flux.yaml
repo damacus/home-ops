@@ -38,6 +38,47 @@ jobs:
         shell: bash
         run: bash ./scripts/kubeconform.sh ./kubernetes
 
+  mondoo:
+    name: Mondoo
+    needs: [ yaml-lint, kubeconform, flux-test ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup Homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+
+      - name: Setup Workflow Tools
+        run: |
+          brew install kustomize yq
+          bash -c "$(curl -sSL https://install.mondoo.com/sh)"
+          cnspec version
+
+      - name: Run wrapper unit tests
+        run: python3 -m unittest tests/test_mondoo_scan.py
+
+      - name: Validate migrated policy parity
+        run: python3 scripts/mondoo_scan.py validate-parity
+
+      - name: Lint Mondoo policies
+        run: cnspec policy lint mondoo/policies/*.mql.yaml
+
+      - name: Run rendered manifest scans
+        run: >-
+          python3 scripts/mondoo_scan.py
+          --output junit
+          --report-dir mondoo-reports
+          k8s-manifests --path ./kubernetes --include-posture
+
+      - name: Upload Mondoo reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mondoo-reports
+          path: mondoo-reports
+          if-no-files-found: ignore
+
   flux-test:
     name: Flux Local Test
     needs: [ yaml-lint, kubeconform ]
@@ -109,7 +150,7 @@ jobs:
 
   flux-diff-success:
     if: ${{ always() }}
-    needs: [ "flux-diff", "flux-test" ]
+    needs: [ "flux-diff", "flux-test", "mondoo" ]
     name: Flux Local Successful
     runs-on: ubuntu-latest
     steps:

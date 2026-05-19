@@ -5,6 +5,7 @@ version: "3"
 vars:
   KUBECONFORM_SCRIPT: "{{.SCRIPTS_DIR}}/kubeconform.sh"
   CLUSTER_HEALTH_SCRIPT: "{{.SCRIPTS_DIR}}/cluster-health.py"
+  MONDOO_SCAN_SCRIPT: "{{.SCRIPTS_DIR}}/mondoo_scan.py"
 
 tasks:
   resources:
@@ -235,34 +236,71 @@ tasks:
         | awk 'BEGIN {printf "%-40s %s\n", "APP", "LOG_COUNT"; printf "%-40s %s\n", "---", "---------"} {printf "%-40s %s\n", $1, $2}'
 
   test-app:
-    desc: Run cnspec or InSpec tests for a Kubernetes application
+    desc: Run Mondoo checks for a Kubernetes application
     summary: |
-      Runs cnspec policy bundles or InSpec tests located in the application's
-      tests/ directory. cnspec is used when tests/policy.mql.yaml exists;
-      otherwise the task falls back to InSpec.
+      Runs the migrated application checks with cnspec and local Mondoo
+      policy bundles.
 
       Examples:
         task kubernetes:test-app app=authentication/zitadel
-        task kubernetes:test-app app=home-automation/home-assistant
-    vars:
-      APP_PATH: "{{.KUBERNETES_DIR}}/apps/{{.app}}/tests"
-      CNSPEC_POLICY: "{{.APP_PATH}}/policy.mql.yaml"
-    cmd: |
-      if test -f "{{.CNSPEC_POLICY}}"; then
-        cnspec policy lint "{{.CNSPEC_POLICY}}"
-        cnspec scan local --incognito --policy-bundle "{{.CNSPEC_POLICY}}"
-      else
-        inspec exec "{{.APP_PATH}}" --reporter cli
-      fi
+        task kubernetes:test-app app=monitoring/grafana
+        task kubernetes:test-app app=home-automation/paperless
+        task kubernetes:test-app app=home/mealie
+    cmd: >-
+      {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
+      {{if .output}}--output {{.output}}{{end}}
+      {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
+      app --app {{.app}}
     preconditions:
       - msg: "Missing app parameter. Usage: task kubernetes:test-app app=<namespace>/<app>"
         sh: test -n "{{.app}}"
-      - msg: "No tests found at {{.APP_PATH}}"
-        sh: test -d "{{.APP_PATH}}"
-      - msg: "Missing cnspec"
-        sh: test ! -f "{{.CNSPEC_POLICY}}" || command -v cnspec >/dev/null
-      - msg: "Missing inspec"
-        sh: test -f "{{.CNSPEC_POLICY}}" || command -v inspec >/dev/null
+      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
+      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
+      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
+
+  mondoo-manifests:
+    desc: Run Mondoo checks against rendered Flux Kubernetes manifests
+    summary: |
+      Renders Flux output through the local Flux path, runs the repository
+      custom Kubernetes policy as a failing gate, and optionally collects
+      built-in Mondoo posture output as report-only.
+
+      Examples:
+        task kubernetes:mondoo-manifests
+        task kubernetes:mondoo-manifests path=./kubernetes output=junit report_dir=mondoo-reports
+    vars:
+      PATH_ARG: '{{.path | default "./kubernetes"}}'
+      INCLUDE_POSTURE: '{{.include_posture | default "true"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
+      {{if .output}}--output {{.output}}{{end}}
+      {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
+      k8s-manifests --path {{.PATH_ARG}}
+      {{if eq .INCLUDE_POSTURE "true"}}--include-posture{{end}}
+    preconditions:
+      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
+      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
+      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
+      - { msg: "Missing Flux local render script", sh: "test -f {{.SCRIPTS_DIR}}/flux-local-build.sh" }
+
+  mondoo-live:
+    desc: Run report-only Mondoo posture scan against the current Kubernetes cluster
+    summary: |
+      Uses the current kubeconfig and cnspec's built-in Kubernetes posture
+      policies. This is intentionally report-only during the migration.
+
+      Examples:
+        task kubernetes:mondoo-live
+        task kubernetes:mondoo-live output=junit report_dir=mondoo-reports
+    cmd: >-
+      {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
+      {{if .output}}--output {{.output}}{{end}}
+      {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
+      k8s-live
+    preconditions:
+      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
+      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
+      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
 
   log-noise-by-namespace:
     desc: Identify top log-producing namespaces by volume (requires Loki)

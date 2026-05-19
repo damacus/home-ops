@@ -12,7 +12,7 @@ This repository, `home-ops`, is a production-grade home infrastructure managemen
 - **Taskfile (go-task)**: The primary automation harness and entry point for all operations.
 - **Cilium**: CNI with Gateway API implementation for ingress/egress.
 - **Cloud-init**: Initial node bootstrapping.
-- **InSpec**: Compliance and validation testing.
+- **Mondoo/cnspec**: Compliance and validation testing.
 
 ## Directory Structure
 
