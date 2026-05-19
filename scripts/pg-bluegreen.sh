@@ -1148,6 +1148,10 @@ cmd_postcheck() {
         || echo "")
       [[ -n "${pod}" ]] || { warn "no pod found for ${deploy}, skipping env check"; continue; }
       host=$(kctl exec "${pod}" -- env 2>/dev/null | awk -F= -v key="${POSTCHECK_ENV_VAR}" '$1 == key {print $2}' || echo "")
+      if [[ -z "${host}" ]]; then
+        warn "${deploy} pod ${pod} did not expose ${POSTCHECK_ENV_VAR}; relying on live cutover target check"
+        continue
+      fi
       if [[ "${host}" != "${GREEN_CLUSTER}-rw" && "${host}" != "${GREEN_CLUSTER}-rw."* && "${host}" != "$(green_cutover_target)" ]]; then
         err "${deploy} pod ${pod} ${POSTCHECK_ENV_VAR}='${host}' does not point at green"
         fail=1
