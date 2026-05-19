@@ -22,6 +22,7 @@ policies:
         mql: '"/"'
     groups:
       - title: Cloud-init configuration
+        filters: asset.platform != empty
         checks:
           - uid: IMAGE-CLOUD-001
             title: Cloud-init package is present in the mounted image
@@ -51,6 +52,7 @@ policies:
             mql: |
               file(props.rootfs + "/var/lib/cloud/instance").exists == false && file(props.rootfs + "/var/lib/cloud/instances").exists == false
       - title: Gold image state
+        filters: asset.platform != empty
         checks:
           - uid: IMAGE-STATE-001
             title: Machine ID is cleared
@@ -68,6 +70,7 @@ policies:
               file(props.rootfs + "/etc/ssh/ssh_host_ecdsa_key").exists == false &&
               file(props.rootfs + "/etc/ssh/ssh_host_ed25519_key").exists == false
       - title: K3s installation
+        filters: asset.platform != empty
         checks:
           - uid: IMAGE-K3S-001
             title: K3s binary is present and executable
@@ -121,6 +124,7 @@ policies:
                 content.contains("NFS_SHARE=")
               }
       - title: System configuration
+        filters: asset.platform != empty
         checks:
           - uid: IMAGE-SYS-001
             title: Kernel modules are configured

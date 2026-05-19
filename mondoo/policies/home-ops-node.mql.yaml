@@ -17,6 +17,7 @@ policies:
         Replacement for the legacy running-node validation profile.
     groups:
       - title: User configuration
+        filters: asset.platform == "linux"
         checks:
           - uid: NODE-USER-001
             title: Pi user exists with expected shell and groups
@@ -39,6 +40,7 @@ policies:
             mql: |
               command("sudo getent shadow root | cut -d: -f2 | grep -Eq '^[!*]'").exitcode == 0
       - title: SSH security
+        filters: asset.platform == "linux"
         checks:
           - uid: NODE-SSH-001
             title: SSH password authentication is disabled
@@ -53,6 +55,7 @@ policies:
             impact: 100
             mql: command("test -f /etc/ssh/ssh_host_rsa_key -a -f /etc/ssh/ssh_host_ecdsa_key -a -f /etc/ssh/ssh_host_ed25519_key").exitcode == 0
       - title: System configuration
+        filters: asset.platform == "linux"
         checks:
           - uid: NODE-SYS-001
             title: Hostname is generated from MAC address
@@ -75,6 +78,7 @@ policies:
             impact: 100
             mql: os.machineid != empty
       - title: Kernel configuration
+        filters: asset.platform == "linux"
         checks:
           - uid: NODE-KERNEL-001
             title: Overlay kernel module is loaded
@@ -97,6 +101,7 @@ policies:
                 stdout.contains("net.bridge.bridge-nf-call-ip6tables = 1")
               }
       - title: Storage services
+        filters: asset.platform == "linux"
         checks:
           - uid: NODE-STORAGE-001
             title: iSCSI package and service are installed and running
@@ -107,6 +112,7 @@ policies:
             impact: 70
             mql: package("multipath-tools").installed && services.any(name == "multipathd" && enabled == true && running == true)
       - title: Boot and K3s
+        filters: asset.platform == "linux"
         checks:
           - uid: NODE-BOOT-001
             title: Cloud-init completed successfully
@@ -152,6 +158,7 @@ policies:
             impact: 100
             mql: command("journalctl -u k3s --no-pager -n 500").stdout.contains(/etcdserver|Connecting to.*6443|Starting k3s/)
       - title: Cluster status
+        filters: asset.platform == "linux"
         checks:
           - uid: NODE-CLUSTER-001
             title: Node is Ready
@@ -166,6 +173,7 @@ policies:
             impact: 100
             mql: command("sudo kubectl get endpoints -n kube-system etcd -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null").exitcode == 0
       - title: Required packages
+        filters: asset.platform == "linux"
         checks:
           - uid: NODE-PKG-001
             title: Required Kubernetes node packages are installed

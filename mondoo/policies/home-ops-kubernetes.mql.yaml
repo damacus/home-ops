@@ -6,6 +6,8 @@ policies:
     tags:
       mondoo.com/category: security
       mondoo.com/platform: k8s
+    require:
+      - provider: k8s
     scoring_system: highest impact
     authors:
       - name: Dan Webb
@@ -54,6 +56,8 @@ policies:
     tags:
       mondoo.com/category: security
       mondoo.com/platform: k8s
+    require:
+      - provider: k8s
     scoring_system: highest impact
     authors:
       - name: Dan Webb
@@ -181,6 +185,8 @@ policies:
     tags:
       mondoo.com/category: security
       mondoo.com/platform: k8s
+    require:
+      - provider: k8s
     scoring_system: highest impact
     authors:
       - name: Dan Webb
@@ -218,6 +224,8 @@ policies:
     tags:
       mondoo.com/category: security
       mondoo.com/platform: k8s
+    require:
+      - provider: k8s
     scoring_system: highest impact
     authors:
       - name: Dan Webb
@@ -255,6 +263,8 @@ policies:
     tags:
       mondoo.com/category: security
       mondoo.com/platform: k8s
+    require:
+      - provider: k8s
     scoring_system: highest impact
     authors:
       - name: Dan Webb

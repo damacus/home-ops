@@ -51,8 +51,9 @@ jobs:
 
       - name: Setup Workflow Tools
         run: |
-          brew tap mondoohq/mondoo
-          brew install cnspec kustomize yq
+          brew install kustomize yq
+          bash -c "$(curl -sSL https://install.mondoo.com/sh)"
+          cnspec version
 
       - name: Run wrapper unit tests
         run: python3 -m unittest tests/test_mondoo_scan.py
