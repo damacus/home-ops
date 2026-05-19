@@ -6,6 +6,7 @@ vars:
   KUBECONFORM_SCRIPT: "{{.SCRIPTS_DIR}}/kubeconform.sh"
   CLUSTER_HEALTH_SCRIPT: "{{.SCRIPTS_DIR}}/cluster-health.py"
   MONDOO_SCAN_SCRIPT: "{{.SCRIPTS_DIR}}/mondoo_scan.py"
+  RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
 
 tasks:
   resources:
@@ -129,10 +130,16 @@ tasks:
     desc: Validate Kubernetes manifests with kubeconform
     cmd: bash {{.KUBECONFORM_SCRIPT}} {{.KUBERNETES_DIR}}
     preconditions:
-      - {
-          msg: "Missing kubeconform script",
-          sh: "test -f {{.KUBECONFORM_SCRIPT}}",
-        }
+      - { msg: "Missing kubeconform script", sh: "test -f {{.KUBECONFORM_SCRIPT}}" }
+
+  rustfs-iam-policy:
+    desc: Validate RustFS per-app IAM policy with Mondoo cnspec
+    cmds:
+      - cnspec --auto-update=false policy lint {{.RUSTFS_IAM_POLICY}}
+      - cnspec --auto-update=false scan local --policy-bundle {{.RUSTFS_IAM_POLICY}} --incognito
+    preconditions:
+      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
+      - { msg: "Missing RustFS IAM policy", sh: "test -f {{.RUSTFS_IAM_POLICY}}" }
 
   object-storage-migrate:
     desc: Copy or sync objects between MinIO and RustFS with local rclone

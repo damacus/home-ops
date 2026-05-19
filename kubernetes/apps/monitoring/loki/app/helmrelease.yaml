@@ -177,5 +177,5 @@ spec:
 
   valuesFrom:
     - kind: Secret
-      name: loki-s3
+      name: rustfs-loki
       valuesKey: values.yaml

@@ -1,0 +1,153 @@
+---
+policies:
+  - uid: home-ops-rustfs-iam
+    name: Home Ops RustFS IAM
+    version: 1.0.0
+    scoring_system: highest impact
+    tags:
+      mondoo.com/platform: os
+      mondoo.com/category: security
+    require:
+      - provider: os
+    authors:
+      - name: Home Ops
+        email: security@ironstone.casa
+    docs:
+      desc: |
+        Validate that RustFS backup and object-storage consumers use
+        app-specific credentials, app-specific buckets, and bucket-scoped
+        bootstrap IAM policies instead of root credentials.
+    groups:
+      - title: CNPG RustFS ObjectStores
+        filters: asset.platform != ""
+        checks:
+          - uid: rustfs-cnpg-zitadel-per-app-credentials
+            title: Zitadel CNPG backup uses a per-app RustFS bucket and secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("rustfs-cnpg-credentials") == false
+              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("s3://cnpg-backups") == false
+              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-zitadel/")
+              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-zitadel")
+          - uid: rustfs-cnpg-forgejo-per-app-credentials
+            title: Forgejo CNPG backup uses a per-app RustFS bucket and secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/dev/forgejo-db/app/objectstore.yaml").content.contains("rustfs-cnpg-credentials") == false
+              file("kubernetes/apps/dev/forgejo-db/app/objectstore.yaml").content.contains("s3://cnpg-backups") == false
+              file("kubernetes/apps/dev/forgejo-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-forgejo/")
+              file("kubernetes/apps/dev/forgejo-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-forgejo")
+          - uid: rustfs-cnpg-home-assistant-per-app-credentials
+            title: Home Assistant CNPG backup uses a per-app RustFS bucket and secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("rustfs-cnpg-credentials") == false
+              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("s3://cnpg-backups") == false
+              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-home-assistant/")
+              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-home-assistant")
+          - uid: rustfs-cnpg-n8n-per-app-credentials
+            title: n8n CNPG backup uses a per-app RustFS bucket and secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("rustfs-cnpg-credentials") == false
+              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("s3://cnpg-backups") == false
+              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-n8n/")
+              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-n8n")
+          - uid: rustfs-cnpg-immich-per-app-credentials
+            title: Immich CNPG backup uses a per-app RustFS bucket and secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("rustfs-cnpg-credentials") == false
+              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("s3://cnpg-backups") == false
+              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-immich/")
+              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-immich")
+          - uid: rustfs-cnpg-mealie-per-app-credentials
+            title: Mealie CNPG backup uses a per-app RustFS bucket and secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("rustfs-cnpg-credentials") == false
+              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("s3://cnpg-backups") == false
+              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-mealie/")
+              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-mealie")
+          - uid: rustfs-cnpg-med-tracker-per-app-credentials
+            title: Med Tracker CNPG backup uses a per-app RustFS bucket and secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home/med-tracker-db/app/objectstore.yaml").content.contains("rustfs-cnpg-credentials") == false
+              file("kubernetes/apps/home/med-tracker-db/app/objectstore.yaml").content.contains("s3://cnpg-backups") == false
+              file("kubernetes/apps/home/med-tracker-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-med-tracker/")
+              file("kubernetes/apps/home/med-tracker-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-med-tracker")
+          - uid: rustfs-cnpg-penpot-per-app-credentials
+            title: Penpot CNPG backup uses a per-app RustFS bucket and secret
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("rustfs-cnpg-credentials") == false
+              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("s3://cnpg-backups") == false
+              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-penpot/")
+              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-penpot")
+
+      - title: Non-CNPG RustFS Consumers
+        filters: asset.platform != ""
+        checks:
+          - uid: rustfs-longhorn-non-root-credentials
+            title: Longhorn uses a per-app RustFS 1Password item
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("key: rustfs\n") == false
+              file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("key: rustfs-longhorn")
+          - uid: rustfs-paperless-non-root-credentials
+            title: Paperless VolSync uses a per-app RustFS 1Password item
+            impact: 100
+            mql: |
+              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("key: rustfs\n") == false
+              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("key: rustfs-paperless")
+              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("volsync-paperless")
+          - uid: rustfs-loki-non-root-credentials
+            title: Loki uses a per-app RustFS 1Password item
+            impact: 100
+            mql: |
+              file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("key: rustfs\n") == false
+              file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("key: rustfs-loki")
+
+      - title: RustFS Bootstrap IAM
+        filters: asset.platform != ""
+        checks:
+          - uid: rustfs-bootstrap-creates-app-buckets
+            title: RustFS bootstrap job creates all per-app buckets
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-zitadel")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-forgejo")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-home-assistant")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-n8n")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-immich")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-mealie")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-med-tracker")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-penpot")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("volsync-paperless")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("longhorn")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("loki-chunks")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("loki-data")
+          - uid: rustfs-bootstrap-creates-app-identities
+            title: RustFS bootstrap job creates all app IAM identities
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-zitadel")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-forgejo")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-home-assistant")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-n8n")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-immich")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-mealie")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-med-tracker")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-penpot")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-longhorn")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-paperless")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-loki")
+          - uid: rustfs-bootstrap-attaches-bucket-scoped-policies
+            title: RustFS bootstrap job attaches bucket-scoped IAM policies
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("arn:aws:s3:::")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mc admin policy")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mc admin user")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mc admin policy attach")
