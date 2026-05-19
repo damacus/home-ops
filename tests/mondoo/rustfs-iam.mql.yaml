@@ -148,6 +148,7 @@ policies:
             impact: 100
             mql: |
               file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("arn:aws:s3:::")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mc admin policy")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mc admin user")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mc admin policy attach")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc admin policy")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc admin user")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc admin policy attach")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mc admin") == false

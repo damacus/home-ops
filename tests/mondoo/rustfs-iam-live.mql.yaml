@@ -1,0 +1,77 @@
+---
+policies:
+  - uid: home-ops-rustfs-iam-live
+    name: Home Ops Live RustFS IAM
+    version: 1.0.0
+    scoring_system: highest impact
+    tags:
+      mondoo.com/platform: os
+      mondoo.com/category: security
+    require:
+      - provider: os
+    authors:
+      - name: Home Ops
+        email: security@ironstone.casa
+    docs:
+      desc: |
+        Validate live RustFS IAM users and policies through the RustFS rc CLI.
+        This policy requires a configured rc alias named "rustfs".
+    groups:
+      - title: Live RustFS IAM Profiles
+        filters: asset.platform != ""
+        checks:
+          - uid: live-rustfs-cnpg-zitadel
+            title: Zitadel RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-cnpg-zitadel cnpgzitadel cnpg-zitadel").exitcode == 0
+          - uid: live-rustfs-cnpg-forgejo
+            title: Forgejo RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-cnpg-forgejo cnpgforgejo cnpg-forgejo").exitcode == 0
+          - uid: live-rustfs-cnpg-home-assistant
+            title: Home Assistant RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-cnpg-home-assistant cnpgha cnpg-home-assistant").exitcode == 0
+          - uid: live-rustfs-cnpg-n8n
+            title: n8n RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-cnpg-n8n cnpgn8n cnpg-n8n").exitcode == 0
+          - uid: live-rustfs-cnpg-immich
+            title: Immich RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-cnpg-immich cnpgimmich cnpg-immich").exitcode == 0
+          - uid: live-rustfs-cnpg-mealie
+            title: Mealie RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-cnpg-mealie cnpgmealie cnpg-mealie").exitcode == 0
+          - uid: live-rustfs-cnpg-med-tracker
+            title: Med Tracker RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-cnpg-med-tracker cnpgmedtracker cnpg-med-tracker").exitcode == 0
+          - uid: live-rustfs-cnpg-penpot
+            title: Penpot RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-cnpg-penpot cnpgpenpot cnpg-penpot").exitcode == 0
+          - uid: live-rustfs-longhorn
+            title: Longhorn RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-longhorn longhorn longhorn").exitcode == 0
+          - uid: live-rustfs-paperless
+            title: Paperless RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-paperless paperless volsync-paperless").exitcode == 0
+          - uid: live-rustfs-loki
+            title: Loki RustFS IAM policy is scoped to Loki buckets
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-loki loki loki-chunks loki-data").exitcode == 0
