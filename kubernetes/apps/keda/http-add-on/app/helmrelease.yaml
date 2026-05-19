@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: keda-http-add-on
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: keda-add-ons-http
+      version: 0.14.0
+      sourceRef:
+        kind: HelmRepository
+        name: kedacore
+        namespace: flux-system
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  uninstall:
+    keepHistory: false
+  values:
+    interceptor:
+      replicas:
+        min: 1
+        max: 2
+      requestTimeout: 60s
+      responseHeaderTimeout: 30s
+      readinessTimeout: 60s

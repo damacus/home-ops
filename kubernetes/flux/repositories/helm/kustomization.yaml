@@ -15,6 +15,7 @@ resources:
   - descheduler.yaml
   - external-dns.yaml
   - external-secrets.yaml
+  - kedacore.yaml
   - kube-vip.yaml
   - kubereboot.yaml
   - kured.yaml

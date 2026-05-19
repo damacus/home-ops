@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/keda.sh/scaledobject_v1alpha1.json
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: code
+spec:
+  scaleTargetRef:
+    name: code
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  cooldownPeriod: 1800
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+        interceptorRoute: code
+    - type: cron
+      metadata:
+        timezone: Europe/London
+        start: "0 9 * * 1-4"
+        end: "0 17 * * 1-4"
+        desiredReplicas: "1"

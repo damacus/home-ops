@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kedacore/http-add-on/main/config/crd/bases/http.keda.sh_interceptorroutes.yaml
+apiVersion: http.keda.sh/v1beta1
+kind: InterceptorRoute
+metadata:
+  name: code
+spec:
+  target:
+    service: code
+    port: 8080
+  rules:
+    - hosts:
+        - code.ironstone.casa
+  scalingMetric:
+    concurrency:
+      targetValue: 10
