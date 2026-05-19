@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 5.0.0
+      version: 5.0.1
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -43,13 +43,14 @@ spec:
           migrate:
             image:
               repository: &repository ghcr.io/damacus/med-tracker
-              tag: &tag 0.3.59
+              tag: &tag 0.3.60
             command: ["bin/rails", "db:prepare"]
             envFrom:
               - secretRef:
                   name: med-tracker-secret
             env:
               RAILS_ENV: production
+              TZ: "Europe/London"
         containers:
           app:
             image:
@@ -64,6 +65,7 @@ spec:
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
               SOLID_QUEUE_IN_PUMA: "true"
+              TZ: "Europe/London"
               APP_URL: "https://med-tracker.damacus.io"
               OIDC_ISSUER_URL: "https://zitadel.damacus.io"
               OIDC_REDIRECT_URI: "https://med-tracker.damacus.io/auth/oidc/callback"

@@ -1,0 +1,10 @@
+---
+apiVersion: longhorn.io/v1beta2
+kind: BackupTarget
+metadata:
+  name: default
+  namespace: storage
+spec:
+  backupTargetURL: s3://longhorn@us-east-1/
+  credentialSecret: longhorn-rustfs
+  pollInterval: 5m0s

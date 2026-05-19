@@ -3,36 +3,31 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: n8n
+  name: n8n-green
   namespace: home-automation
 spec:
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
     name: postgresql
-    major: 16
+    major: 18
   instances: 2
   primaryUpdateStrategy: unsupervised
   enablePDB: true
-
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
         barmanObjectName: n8n-rustfs-store
-        serverName: n8n
-
+        serverName: n8n-green
   monitoring:
     enablePodMonitor: true
-
   storage:
     size: 10Gi
     storageClass: openebs-hostpath
-
   enableSuperuserAccess: true
   superuserSecret:
-    name: cloudnative-pg-secret
-
+    name: n8n-superuser
   postgresql:
     parameters:
       max_connections: "200"
@@ -43,7 +38,6 @@ spec:
       wal_level: logical
       max_replication_slots: "10"
       max_wal_senders: "10"
-
   resources:
     requests:
       cpu: 50m
@@ -51,3 +45,7 @@ spec:
     limits:
       memory: 1Gi
       cpu: 1000m
+  bootstrap:
+    initdb:
+      database: app
+      owner: app

@@ -28,6 +28,10 @@ spec:
             k8s:io.kubernetes.pod.namespace: home-automation
             k8s:cnpg.io/cluster: n8n
             k8s:cnpg.io/podRole: instance
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: home-automation
+            k8s:cnpg.io/cluster: n8n-green
+            k8s:cnpg.io/podRole: instance
       toPorts:
         - ports:
             - port: "5432"

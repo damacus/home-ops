@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: mealie-db
+  name: mealie-green
   namespace: home
 spec:
   schedule: "0 4 * * *"
@@ -15,4 +15,4 @@ spec:
     parameters:
       objectStore: mealie-rustfs-store
   cluster:
-    name: mealie
+    name: mealie-green

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pg-bluegreen.sh — orchestrator for the n8n PG16 -> PG18 blue/green migration.
+# pg-bluegreen.sh — orchestrator for CNPG PG16 -> PG18 blue/green migrations.
 #
 # Invoked by .taskfiles/Postgres/Taskfile.yaml. Each subcommand is idempotent.
 # Required tools on PATH: kubectl, flux, helm, yq, jq, base64, awk, sed.
@@ -24,9 +24,26 @@ if [[ -f "${REPO_ROOT}/.env" ]]; then
   set +a
 fi
 
-# Required env, with defaults that target the n8n migration.
+# Optional app profile. Use this for service-specific wiring such as Helm value
+# paths, deployment names, and secret key shapes.
+: "${PG_PROFILE:=}"
+if [[ -n "${PG_PROFILE}" ]]; then
+  profile_file="${REPO_ROOT}/.taskfiles/Postgres/profiles/${PG_PROFILE}.env"
+  [[ -f "${profile_file}" ]] || {
+    printf '[pg-bg] profile not found: %s\n' "${profile_file}" >&2
+    exit 1
+  }
+  set -a
+  # shellcheck disable=SC1090
+  . "${profile_file}"
+  set +a
+fi
+
+# Required env, with conservative defaults that target the historical n8n
+# migration. Prefer PG_PROFILE or explicit task vars for any new migration.
 : "${NAMESPACE:=home-automation}"
 : "${APP_DEPLOYMENTS:=n8n n8n-worker}"
+: "${APP_WORKLOADS:=}"
 : "${HELMRELEASE:=n8n}"
 : "${BLUE_CLUSTER:=n8n}"
 : "${GREEN_CLUSTER:=n8n-green}"
@@ -38,15 +55,34 @@ fi
 : "${GREEN_APP_SECRET:=n8n-green-app}"
 : "${PUBLICATION_NAME:=n8n-green-pub}"
 : "${SUBSCRIPTION_NAME:=n8n-green-sub}"
+: "${PUBLICATION_PG_NAME:=${PUBLICATION_NAME//-/_}}"
+: "${SUBSCRIPTION_PG_NAME:=${SUBSCRIPTION_NAME//-/_}}"
 : "${STATE_DIR:=.migration-state/n8n}"
 : "${MIGRATION_MANIFEST_DIR:=${REPO_ROOT}/kubernetes/apps/home-automation/n8n-db/migration}"
 : "${HELMRELEASE_PATH:=${REPO_ROOT}/kubernetes/apps/home-automation/n8n/app/helmrelease.yaml}"
+: "${CUTOVER_TARGET_TYPE:=secret-anchor}" # secret-anchor | helm-value | secret-key | none
+: "${HELM_VALUE_PATH:=}"
+: "${BLUE_HELM_VALUE:=}"
+: "${GREEN_HELM_VALUE:=}"
+: "${CUTOVER_FILE_PATH:=}"
+: "${YAML_VALUE_PATH:=}"
+: "${CUTOVER_SECRET_NAME:=}"
+: "${CUTOVER_SECRET_KEY:=}"
+: "${REQUIRED_APP_SECRET_KEYS:=host user password dbname}"
+: "${REPLICA_IDENTITY_FULL_TABLES:=}"
+: "${ROWCOUNT_EXCLUDE_TABLES:=}"
+if [[ ! ${POSTCHECK_ENV_VAR+x} ]]; then POSTCHECK_ENV_VAR=DB_POSTGRESDB_HOST; fi
+if [[ ! ${APP_POD_SELECTOR+x} ]]; then APP_POD_SELECTOR=; fi
+if [[ ! ${PROM_POD_REGEX+x} ]]; then PROM_POD_REGEX="${HELMRELEASE}.*"; fi
+if [[ ! ${REQUIRE_APP_CONNECTIONS+x} ]]; then REQUIRE_APP_CONNECTIONS=true; fi
 : "${READY_LAG_BYTES:=1048576}"   # 1 MiB
+: "${BACKUP_WAIT_TIMEOUT:=600}"
 : "${CUTOVER_WAIT_TIMEOUT:=600}"
 : "${PROMETHEUS_URL:=http://prometheus-operated.observability.svc.cluster.local:9090}"
 : "${HEALTH_URL:=https://n8n.ironstone.casa/healthz}"
 : "${CONFIRM_CONTEXT:=false}"
 : "${FORCE_SCHEMA:=false}"
+: "${SCHEMA_REWRITE_UNLOGGED_TABLES:=false}"
 : "${ACCEPT_DATA_LOSS:=false}"
 : "${GRAFANA_MCP_ENABLED:=false}"
 
@@ -96,6 +132,23 @@ require_tools() {
 
 kctl() { kubectl -n "${NAMESPACE}" "$@"; }
 
+app_workloads() {
+  if [[ -n "${APP_WORKLOADS}" ]]; then
+    printf '%s\n' ${APP_WORKLOADS}
+    return 0
+  fi
+
+  local deploy
+  for deploy in ${APP_DEPLOYMENTS}; do
+    printf 'deployment/%s\n' "${deploy}"
+  done
+}
+
+workload_state_key() {
+  local workload=$1
+  printf '%s' "${workload//\//_}"
+}
+
 primary_pod() {
   local cluster=$1
   kctl get pod -l "cnpg.io/cluster=${cluster},cnpg.io/instanceRole=primary" \
@@ -136,6 +189,114 @@ helmrelease_anchor() {
     | head -n1 | sed -E 's/.*&dbSecret[[:space:]]+([^[:space:]]+).*/\1/'
 }
 
+first_yaml_value() {
+  sed '/^[[:space:]]*$/d' | head -n1
+}
+
+repo_cutover_target() {
+  case "${CUTOVER_TARGET_TYPE}" in
+    secret-anchor)
+      helmrelease_anchor
+      ;;
+    helm-value)
+      [[ -n "${HELM_VALUE_PATH}" ]] || die "HELM_VALUE_PATH is required for CUTOVER_TARGET_TYPE=helm-value"
+      yq -rN "${HELM_VALUE_PATH}" "${HELMRELEASE_PATH}" | first_yaml_value
+      ;;
+    secret-key)
+      [[ -n "${CUTOVER_FILE_PATH}" ]] || die "CUTOVER_FILE_PATH is required for CUTOVER_TARGET_TYPE=secret-key"
+      [[ -n "${YAML_VALUE_PATH}" ]] || die "YAML_VALUE_PATH is required for CUTOVER_TARGET_TYPE=secret-key"
+      yq -rN "${YAML_VALUE_PATH}" "${CUTOVER_FILE_PATH}" | first_yaml_value
+      ;;
+    none)
+      echo ""
+      ;;
+    *)
+      die "unknown CUTOVER_TARGET_TYPE='${CUTOVER_TARGET_TYPE}'"
+      ;;
+  esac
+}
+
+repo_cutover_file() {
+  case "${CUTOVER_TARGET_TYPE}" in
+    secret-anchor|helm-value)
+      echo "${HELMRELEASE_PATH}"
+      ;;
+    secret-key)
+      echo "${CUTOVER_FILE_PATH}"
+      ;;
+    none)
+      echo ""
+      ;;
+    *)
+      die "unknown CUTOVER_TARGET_TYPE='${CUTOVER_TARGET_TYPE}'"
+      ;;
+  esac
+}
+
+live_cutover_target() {
+  case "${CUTOVER_TARGET_TYPE}" in
+    secret-anchor)
+      kctl get helmrelease "${HELMRELEASE}" -o yaml 2>/dev/null \
+        | yq -r '.spec.values.controllers.n8n.containers.app.env.DB_POSTGRESDB_DATABASE.valueFrom.secretKeyRef.name // ""'
+      ;;
+    helm-value)
+      [[ -n "${HELM_VALUE_PATH}" ]] || die "HELM_VALUE_PATH is required for CUTOVER_TARGET_TYPE=helm-value"
+      kctl get helmrelease "${HELMRELEASE}" -o yaml 2>/dev/null \
+        | yq -rN "${HELM_VALUE_PATH}" - | first_yaml_value
+      ;;
+    secret-key)
+      [[ -n "${CUTOVER_SECRET_NAME}" ]] || die "CUTOVER_SECRET_NAME is required for CUTOVER_TARGET_TYPE=secret-key"
+      [[ -n "${CUTOVER_SECRET_KEY}" ]] || die "CUTOVER_SECRET_KEY is required for CUTOVER_TARGET_TYPE=secret-key"
+      kctl get secret "${CUTOVER_SECRET_NAME}" -o jsonpath="{.data.${CUTOVER_SECRET_KEY}}" 2>/dev/null \
+        | base64 -d
+      ;;
+    none)
+      echo ""
+      ;;
+    *)
+      die "unknown CUTOVER_TARGET_TYPE='${CUTOVER_TARGET_TYPE}'"
+      ;;
+  esac
+}
+
+blue_cutover_target() {
+  case "${CUTOVER_TARGET_TYPE}" in
+    secret-anchor) echo "${BLUE_APP_SECRET}" ;;
+    helm-value)   echo "${BLUE_HELM_VALUE}" ;;
+    secret-key)   echo "${BLUE_HELM_VALUE}" ;;
+    none)         echo "" ;;
+  esac
+}
+
+green_cutover_target() {
+  case "${CUTOVER_TARGET_TYPE}" in
+    secret-anchor) echo "${GREEN_APP_SECRET}" ;;
+    helm-value)   echo "${GREEN_HELM_VALUE}" ;;
+    secret-key)   echo "${GREEN_HELM_VALUE}" ;;
+    none)         echo "" ;;
+  esac
+}
+
+set_repo_cutover_target() {
+  local target=$1
+  case "${CUTOVER_TARGET_TYPE}" in
+    secret-anchor)
+      die "secret-anchor cutover still requires a manual YAML anchor edit"
+      ;;
+    helm-value)
+      [[ -n "${HELM_VALUE_PATH}" ]] || die "HELM_VALUE_PATH is required for CUTOVER_TARGET_TYPE=helm-value"
+      yq -i "(${HELM_VALUE_PATH}) = \"${target}\"" "${HELMRELEASE_PATH}"
+      ;;
+    secret-key)
+      [[ -n "${CUTOVER_FILE_PATH}" ]] || die "CUTOVER_FILE_PATH is required for CUTOVER_TARGET_TYPE=secret-key"
+      [[ -n "${YAML_VALUE_PATH}" ]] || die "YAML_VALUE_PATH is required for CUTOVER_TARGET_TYPE=secret-key"
+      yq -i "(${YAML_VALUE_PATH}) = \"${target}\"" "${CUTOVER_FILE_PATH}"
+      ;;
+    none)
+      ;;
+  esac
+}
+
 save_cutover_stage() {
   local state_file=$1 stage=$2
   local tmp="${state_file}.tmp"
@@ -145,23 +306,29 @@ save_cutover_stage() {
 
 restore_app_replicas() {
   local state_file=$1
-  for deploy in ${APP_DEPLOYMENTS}; do
+  local workload key
+  while read -r workload; do
+    [[ -n "${workload}" ]] || continue
+    key=$(workload_state_key "${workload}")
     local r
-    r=$(jq -r ".replicas.\"${deploy}\"" "${state_file}")
+    r=$(jq -r ".replicas.\"${key}\"" "${state_file}")
     [[ "${r}" == "0" || "${r}" == "null" ]] && r=1
-    kctl scale deploy "${deploy}" --replicas="${r}"
-  done
-  for deploy in ${APP_DEPLOYMENTS}; do
-    kctl rollout status deploy "${deploy}" --timeout=300s
-  done
+    kctl scale "${workload}" --replicas="${r}"
+  done < <(app_workloads)
+  while read -r workload; do
+    [[ -n "${workload}" ]] || continue
+    kctl rollout status "${workload}" --timeout=300s
+  done < <(app_workloads)
 }
 
 resume_cutover_after_handoff() {
   local state_file=$1
-  local anchor
-  anchor=$(helmrelease_anchor)
-  [[ "${anchor}" == "${GREEN_APP_SECRET}" ]] \
-    || die "anchor in ${HELMRELEASE_PATH} is '${anchor}', expected '${GREEN_APP_SECRET}'. App may still be scaled to 0; complete the cutover edit or rollback."
+  local target expected cutover_file
+  target=$(repo_cutover_target)
+  expected=$(green_cutover_target)
+  cutover_file=$(repo_cutover_file)
+  [[ "${target}" == "${expected}" ]] \
+    || die "cutover target in ${cutover_file:-repo} is '${target}', expected '${expected}'. App may still be scaled to 0; complete the cutover edit or rollback."
 
   log "restoring app replica counts"
   restore_app_replicas "${state_file}"
@@ -208,10 +375,9 @@ cmd_discover() {
     kctl get cluster,publication,subscription,deploy,svc 2>/dev/null || true
     echo
 
-    echo "=== HelmRelease ${HELMRELEASE} active database secret ==="
-    helm -n "${NAMESPACE}" get values "${HELMRELEASE}" 2>/dev/null \
-      | yq '.database // "<no database block>"' || true
-    grep -E 'name:.*&dbSecret' "${HELMRELEASE_PATH}" 2>/dev/null || true
+    echo "=== HelmRelease ${HELMRELEASE} active cutover target ==="
+    echo "live: $(live_cutover_target 2>/dev/null || true)"
+    echo "repo: $(repo_cutover_target 2>/dev/null || true)"
     echo
 
     if cluster_exists "${BLUE_CLUSTER}"; then
@@ -260,17 +426,13 @@ cmd_discover() {
 
 cmd_show_active() {
   require_tools
-  # Live (rendered) Helm values first, then the in-repo anchor for reference.
-  local rendered
-  rendered=$(kctl get helmrelease "${HELMRELEASE}" -o yaml 2>/dev/null \
-    | yq -r '.spec.values.controllers.n8n.containers.app.env.DB_POSTGRESDB_DATABASE.valueFrom.secretKeyRef.name // ""' \
-    2>/dev/null || true)
-
-  local anchor
-  anchor=$(helmrelease_anchor)
-
-  echo "in-cluster (helm get values): ${rendered:-<none>}"
-  echo "in-repo  (helmrelease anchor): ${anchor:-<none>}"
+  local live repo
+  live=$(live_cutover_target 2>/dev/null || true)
+  repo=$(repo_cutover_target 2>/dev/null || true)
+  echo "profile: ${PG_PROFILE:-<none>}"
+  echo "type: ${CUTOVER_TARGET_TYPE}"
+  echo "in-cluster: ${live:-<none>}"
+  echo "in-repo: ${repo:-<none>}"
 }
 
 # ----------------------------------------------------------------------------
@@ -343,6 +505,7 @@ cmd_preflight() {
     JOIN pg_namespace n ON n.oid = c.relnamespace
     WHERE c.relkind = 'r'
       AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+      AND c.relreplident <> 'f'
       AND NOT EXISTS (SELECT 1 FROM pg_index i WHERE i.indrelid = c.oid AND i.indisprimary);")
     if [[ -n "${missing_pk}" ]]; then
       err "tables without primary keys (logical replication needs PKs or REPLICA IDENTITY FULL):"
@@ -369,7 +532,7 @@ cmd_preflight() {
     err "secret ${BLUE_APP_SECRET} not found"
     fail=1
   else
-    for required in host user password dbname; do
+    for required in ${REQUIRED_APP_SECRET_KEYS}; do
       if ! [[ ",${present_keys}," == *",${required},"* ]]; then
         err "secret ${BLUE_APP_SECRET} missing key '${required}' (have: ${present_keys})"
         fail=1
@@ -377,11 +540,12 @@ cmd_preflight() {
     done
   fi
 
-  log "helmrelease anchor points at blue"
-  local anchor
-  anchor=$(helmrelease_anchor)
-  if [[ "${anchor}" != "${BLUE_APP_SECRET}" ]]; then
-    err "helmrelease anchor = '${anchor}', expected '${BLUE_APP_SECRET}'"
+  log "cutover target points at blue"
+  local target expected_blue
+  target=$(repo_cutover_target)
+  expected_blue=$(blue_cutover_target)
+  if [[ "${target}" != "${expected_blue}" ]]; then
+    err "cutover target = '${target}', expected '${expected_blue}'"
     fail=1
   fi
 
@@ -416,6 +580,40 @@ cmd_preflight() {
 }
 
 # ----------------------------------------------------------------------------
+# Subcommand: prepare-blue
+# ----------------------------------------------------------------------------
+
+cmd_prepare_blue() {
+  require_tools
+  local current_context
+  current_context=$(kubectl config current-context)
+  [[ "${CONFIRM_CONTEXT}" == "true" ]] \
+    || die "kubectl context = ${current_context}. Set CONFIRM_CONTEXT=true once verified."
+  ok "context confirmed: ${current_context}"
+
+  if [[ -z "${REPLICA_IDENTITY_FULL_TABLES}" ]]; then
+    warn "REPLICA_IDENTITY_FULL_TABLES empty; nothing to prepare"
+    return 0
+  fi
+
+  cluster_exists "${BLUE_CLUSTER}" || die "blue cluster ${BLUE_CLUSTER} not found in ${NAMESPACE}"
+
+  log "setting REPLICA IDENTITY FULL on configured blue tables"
+  local table schema rel
+  for table in ${REPLICA_IDENTITY_FULL_TABLES}; do
+    [[ "${table}" == *.* ]] || die "table '${table}' must be schema-qualified"
+    schema=${table%%.*}
+    rel=${table#*.}
+    validate_identifier schema "${schema}"
+    validate_identifier table "${rel}"
+    psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" \
+      "ALTER TABLE ${schema}.${rel} REPLICA IDENTITY FULL;"
+  done
+
+  ok "blue replica identity prerequisites applied"
+}
+
+# ----------------------------------------------------------------------------
 # Subcommand: create-green
 # ----------------------------------------------------------------------------
 
@@ -426,7 +624,8 @@ cmd_create_green() {
     major=$(kctl get cluster "${GREEN_CLUSTER}" -o jsonpath='{.spec.imageCatalogRef.major}')
     phase=$(kctl get cluster "${GREEN_CLUSTER}" -o jsonpath='{.status.phase}')
     if [[ "${major}" == "18" && "${phase}" == "Cluster in healthy state" ]]; then
-      ok "green cluster ${GREEN_CLUSTER} already healthy at PG18, skipping apply"
+      log "green cluster ${GREEN_CLUSTER} already healthy at PG18; re-applying manifest to pick up spec drift"
+      kctl apply -f "${MIGRATION_MANIFEST_DIR}/cluster-green.yaml"
     else
       warn "green cluster exists but major=${major}, phase=${phase}; re-applying"
       kctl apply -f "${MIGRATION_MANIFEST_DIR}/cluster-green.yaml"
@@ -453,7 +652,7 @@ cmd_create_green() {
   keys=$(kctl get secret "${GREEN_APP_SECRET}" -o jsonpath='{.data}' 2>/dev/null \
     | jq -r 'keys | join(",")' || echo "")
   [[ -n "${keys}" ]] || die "secret ${GREEN_APP_SECRET} was not generated by CNPG"
-  for required in host user password dbname; do
+  for required in ${REQUIRED_APP_SECRET_KEYS}; do
     [[ ",${keys}," == *",${required},"* ]] \
       || die "${GREEN_APP_SECRET} missing required key '${required}' (have: ${keys})"
   done
@@ -485,6 +684,10 @@ cmd_copy_schema() {
   log "dumping schema from blue (${blue_pod})"
   kctl exec -c postgres "${blue_pod}" -- \
     pg_dump --schema-only --no-owner --no-acl --dbname "${BLUE_DATABASE}" >"${schema_file}"
+  if [[ "${SCHEMA_REWRITE_UNLOGGED_TABLES}" == "true" ]]; then
+    log "rewriting CREATE UNLOGGED TABLE to CREATE TABLE for PG18 schema compatibility"
+    sed -i.bak 's/^CREATE UNLOGGED TABLE /CREATE TABLE /' "${schema_file}"
+  fi
   log "schema written to ${schema_file} ($(wc -l <"${schema_file}") lines)"
 
   log "restoring schema into green (${green_pod})"
@@ -497,13 +700,15 @@ cmd_copy_schema() {
   log "verifying restored object ownership"
   local wrong_owner
   wrong_owner=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" "WITH objects AS (
-    SELECT n.nspname AS schema_name, c.relname AS object_name, pg_get_userbyid(c.relowner) AS owner
+    SELECT c.oid AS object_oid, 0 AS object_subid, 'pg_class'::regclass AS catalog_oid,
+           n.nspname AS schema_name, c.relname AS object_name, pg_get_userbyid(c.relowner) AS owner
     FROM pg_class c
     JOIN pg_namespace n ON n.oid = c.relnamespace
     WHERE c.relkind IN ('r','p','S','v','m','f')
       AND n.nspname NOT IN ('pg_catalog', 'information_schema')
     UNION ALL
-    SELECT n.nspname, p.proname, pg_get_userbyid(p.proowner)
+    SELECT p.oid, 0, 'pg_proc'::regclass,
+           n.nspname, p.proname, pg_get_userbyid(p.proowner)
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
@@ -511,6 +716,14 @@ cmd_copy_schema() {
   SELECT schema_name || '.' || object_name || ' owned by ' || owner
   FROM objects
   WHERE owner <> '${GREEN_USER}'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM pg_depend d
+      WHERE d.classid = objects.catalog_oid
+        AND d.objid = objects.object_oid
+        AND d.objsubid = objects.object_subid
+        AND d.refclassid = 'pg_extension'::regclass
+    )
   ORDER BY 1
   LIMIT 20;")
   if [[ -n "${wrong_owner}" ]]; then
@@ -532,9 +745,9 @@ cmd_publication() {
   sleep 3
   local exists
   exists=$(psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" \
-    "SELECT 1 FROM pg_publication WHERE pubname = 'n8n_green_pub';" | tr -d '[:space:]')
-  [[ "${exists}" == "1" ]] || die "PostgreSQL publication n8n_green_pub did not materialise"
-  ok "publication n8n_green_pub present on blue"
+    "SELECT 1 FROM pg_publication WHERE pubname = '${PUBLICATION_PG_NAME}';" | tr -d '[:space:]')
+  [[ "${exists}" == "1" ]] || die "PostgreSQL publication ${PUBLICATION_PG_NAME} did not materialise"
+  ok "publication ${PUBLICATION_PG_NAME} present on blue"
 }
 
 # ----------------------------------------------------------------------------
@@ -549,7 +762,7 @@ cmd_subscription() {
   local lsn=""
   while (( SECONDS < end )); do
     lsn=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
-      "SELECT received_lsn FROM pg_stat_subscription WHERE subname = 'n8n_green_sub';" \
+      "SELECT received_lsn FROM pg_stat_subscription WHERE subname = '${SUBSCRIPTION_PG_NAME}';" \
       2>/dev/null | tr -d '[:space:]' || echo "")
     [[ -n "${lsn}" && "${lsn}" != "0/0" ]] && break
     sleep 3
@@ -559,6 +772,12 @@ cmd_subscription() {
   else
     ok "subscription streaming. received_lsn=${lsn}"
   fi
+}
+
+cmd_subscription_reset() {
+  require_tools
+  kctl delete --ignore-not-found subscription "${SUBSCRIPTION_NAME}"
+  cmd_subscription
 }
 
 # ----------------------------------------------------------------------------
@@ -598,7 +817,7 @@ cmd_monitor() {
   local blue_lsn green_lsn
   blue_lsn=$(psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" "SELECT pg_current_wal_lsn();" | tr -d '[:space:]')
   green_lsn=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
-    "SELECT COALESCE(latest_end_lsn::text, '0/0') FROM pg_stat_subscription WHERE subname='n8n_green_sub' LIMIT 1;" \
+    "SELECT COALESCE(latest_end_lsn::text, '0/0') FROM pg_stat_subscription WHERE subname='${SUBSCRIPTION_PG_NAME}' LIMIT 1;" \
     | tr -d '[:space:]' || echo "0/0")
   local lag_bytes
   lag_bytes=$(psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" \
@@ -608,7 +827,17 @@ cmd_monitor() {
 
 table_counts() {
   local cluster=$1 dbname=$2
-  local count_sql
+  local count_sql exclude_filter table schema rel
+  exclude_filter=""
+  for table in ${ROWCOUNT_EXCLUDE_TABLES}; do
+    [[ "${table}" == *.* ]] || die "row-count exclude table '${table}' must be schema-qualified"
+    schema=${table%%.*}
+    rel=${table#*.}
+    validate_identifier schema "${schema}"
+    validate_identifier table "${rel}"
+    exclude_filter+=" AND NOT (n.nspname = '${schema}' AND c.relname = '${rel}')"
+  done
+
   count_sql=$(psql_as_super "${cluster}" "${dbname}" "SELECT COALESCE(string_agg(
     format('SELECT %L AS rel, count(*)::bigint AS rows FROM %I.%I',
       n.nspname || '.' || c.relname, n.nspname, c.relname),
@@ -616,7 +845,8 @@ table_counts() {
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE c.relkind IN ('r','p')
-    AND n.nspname NOT IN ('pg_catalog', 'information_schema');")
+    AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+    ${exclude_filter};")
   if [[ -z "${count_sql}" ]]; then
     return 0
   fi
@@ -631,10 +861,11 @@ cmd_ready() {
   require_tools
   local fail=0
 
-  local anchor
-  anchor=$(helmrelease_anchor)
-  [[ "${anchor}" == "${BLUE_APP_SECRET}" ]] \
-    || { err "helmrelease anchor moved to ${anchor}, expected blue (${BLUE_APP_SECRET})"; fail=1; }
+  local target expected_blue
+  target=$(repo_cutover_target)
+  expected_blue=$(blue_cutover_target)
+  [[ "${target}" == "${expected_blue}" ]] \
+    || { err "cutover target moved to ${target}, expected blue (${expected_blue})"; fail=1; }
 
   local server_version_num
   server_version_num=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
@@ -651,7 +882,7 @@ cmd_ready() {
   local blue_lsn green_lsn lag_bytes
   blue_lsn=$(psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" "SELECT pg_current_wal_lsn();" | tr -d '[:space:]')
   green_lsn=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
-    "SELECT COALESCE(latest_end_lsn::text, '0/0') FROM pg_stat_subscription WHERE subname='n8n_green_sub' LIMIT 1;" \
+    "SELECT COALESCE(latest_end_lsn::text, '0/0') FROM pg_stat_subscription WHERE subname='${SUBSCRIPTION_PG_NAME}' LIMIT 1;" \
     | tr -d '[:space:]' || echo "0/0")
   lag_bytes=$(psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" \
     "SELECT pg_wal_lsn_diff('${blue_lsn}'::pg_lsn, '${green_lsn}'::pg_lsn);" | tr -d '[:space:]')
@@ -692,38 +923,37 @@ cmd_cutover() {
   cmd_ready
 
   local state_file="${CUTOVER_STATE_FILE}"
-  log "saving current deployment replica counts"
-  local replicas_json="{"
-  for deploy in ${APP_DEPLOYMENTS}; do
-    local r
-    r=$(kctl get deploy "${deploy}" -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
-    replicas_json+="\"${deploy}\":${r:-0},"
-  done
-  replicas_json="${replicas_json%,}}"
-  jq -n --argjson r "${replicas_json}" '{stage:"started", replicas:$r}' >"${state_file}"
-  log "saved: ${state_file}"
+  if [[ -f "${state_file}" ]] && [[ "$(jq -r '.stage // ""' "${state_file}")" == "started" ]]; then
+    log "using existing replica counts from ${state_file}"
+  else
+    log "saving current deployment replica counts"
+    local replicas_json="{"
+    local workload key
+    while read -r workload; do
+      [[ -n "${workload}" ]] || continue
+      key=$(workload_state_key "${workload}")
+      local r
+      r=$(kctl get "${workload}" -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+      replicas_json+="\"${key}\":${r:-0},"
+    done < <(app_workloads)
+    replicas_json="${replicas_json%,}}"
+    jq -n --argjson r "${replicas_json}" '{stage:"started", replicas:$r}' >"${state_file}"
+    log "saved: ${state_file}"
+  fi
 
   log "triggering on-demand backup of blue"
   local backup_name
-  backup_name="n8n-pre-cutover-$(date -u +%Y%m%dT%H%M%SZ)"
-  cat <<EOF | kctl apply -f -
-apiVersion: postgresql.cnpg.io/v1
-kind: Backup
-metadata:
-  name: ${backup_name}
-  namespace: ${NAMESPACE}
-spec:
-  cluster:
-    name: ${BLUE_CLUSTER}
-  method: plugin
-  pluginConfiguration:
-    name: barman-cloud.cloudnative-pg.io
-EOF
-  log "waiting for backup ${backup_name} to complete (timeout 600s)"
-  local end=$(( SECONDS + 600 ))
+  backup_name="${BLUE_CLUSTER}-pre-cutover-$(date -u +%Y%m%d%H%M%S)"
+  kubectl cnpg backup "${BLUE_CLUSTER}" \
+    --namespace "${NAMESPACE}" \
+    --backup-name "${backup_name}" \
+    --method plugin \
+    --plugin-name barman-cloud.cloudnative-pg.io
+  log "waiting for backup ${backup_name} to complete (timeout ${BACKUP_WAIT_TIMEOUT}s)"
+  local end=$(( SECONDS + BACKUP_WAIT_TIMEOUT ))
   local phase=""
   while (( SECONDS < end )); do
-    phase=$(kctl get backup "${backup_name}" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
+    phase=$(kctl get backup.postgresql.cnpg.io "${backup_name}" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
     [[ "${phase}" == "completed" ]] && break
     [[ "${phase}" == "failed" ]] && die "backup ${backup_name} FAILED"
     sleep 5
@@ -732,12 +962,14 @@ EOF
   ok "backup completed: ${backup_name}"
 
   log "scaling app to 0"
-  for deploy in ${APP_DEPLOYMENTS}; do
-    kctl scale deploy "${deploy}" --replicas=0
-  done
-  for deploy in ${APP_DEPLOYMENTS}; do
-    kctl rollout status deploy "${deploy}" --timeout=120s
-  done
+  while read -r workload; do
+    [[ -n "${workload}" ]] || continue
+    kctl scale "${workload}" --replicas=0
+  done < <(app_workloads)
+  while read -r workload; do
+    [[ -n "${workload}" ]] || continue
+    kctl rollout status "${workload}" --timeout=120s
+  done < <(app_workloads)
 
   log "capturing blue WAL LSN"
   local target_lsn
@@ -750,7 +982,7 @@ EOF
   while (( SECONDS < end )); do
     diff=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" "SELECT
       pg_wal_lsn_diff('${target_lsn}'::pg_lsn,
-        COALESCE((SELECT latest_end_lsn FROM pg_stat_subscription WHERE subname='n8n_green_sub' LIMIT 1), '0/0'::pg_lsn));" \
+        COALESCE((SELECT latest_end_lsn FROM pg_stat_subscription WHERE subname='${SUBSCRIPTION_PG_NAME}' LIMIT 1), '0/0'::pg_lsn));" \
       | tr -d '[:space:]')
     diff=${diff:-999999999}
     if [[ "${diff}" -le 0 ]]; then
@@ -763,7 +995,7 @@ EOF
 
   log "disabling subscription on green (keeping the slot for rollback)"
   psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
-    "ALTER SUBSCRIPTION n8n_green_sub DISABLE;" || warn "ALTER SUBSCRIPTION DISABLE failed (might already be disabled)"
+    "ALTER SUBSCRIPTION ${SUBSCRIPTION_PG_NAME} DISABLE;" || warn "ALTER SUBSCRIPTION DISABLE failed (might already be disabled)"
 
   log "synchronising sequences"
   local seq_sql
@@ -778,9 +1010,9 @@ EOF
     JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = d.refobjsubid
     WHERE s.relkind = 'S'
   )
-  SELECT format('SELECT setval(''%I.%I'', GREATEST(%s, COALESCE((SELECT MAX(%I) FROM %I.%I),0)), true);',
+  SELECT format('SELECT setval(''%I.%I'', GREATEST(1, %s, COALESCE((SELECT MAX(%I) FROM %I.%I),0)), true);',
     sschema, sname,
-    (SELECT last_value FROM pg_sequences WHERE schemaname=sschema AND sequencename=sname),
+    COALESCE((SELECT last_value FROM pg_sequences WHERE schemaname=sschema AND sequencename=sname), 0),
     col, tschema, tname)
   FROM seqs;")
   if [[ -n "${seq_sql}" ]]; then
@@ -804,40 +1036,51 @@ EOF
     err "Aborting cutover. Investigate, fix, retry."
     # Re-enable subscription so it can keep replicating while we sort this out.
     psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
-      "ALTER SUBSCRIPTION n8n_green_sub ENABLE;" || true
+      "ALTER SUBSCRIPTION ${SUBSCRIPTION_PG_NAME} ENABLE;" || true
     # Restore replicas
-    for deploy in ${APP_DEPLOYMENTS}; do
+    local workload key
+    while read -r workload; do
+      [[ -n "${workload}" ]] || continue
+      key=$(workload_state_key "${workload}")
       local r
-      r=$(jq -r ".replicas.\"${deploy}\"" "${state_file}")
-      kctl scale deploy "${deploy}" --replicas="${r}"
-    done
+      r=$(jq -r ".replicas.\"${key}\"" "${state_file}")
+      [[ "${r}" == "0" || "${r}" == "null" ]] && r=1
+      kctl scale "${workload}" --replicas="${r}"
+    done < <(app_workloads)
     die "row-count mismatch"
   fi
   ok "row counts match"
   save_cutover_stage "${state_file}" "awaiting-handoff"
 
+  if [[ "${CUTOVER_TARGET_TYPE}" == "helm-value" || "${CUTOVER_TARGET_TYPE}" == "secret-key" ]]; then
+    log "updating repo cutover target in $(repo_cutover_file)"
+    set_repo_cutover_target "$(green_cutover_target)"
+  fi
+
+  local cutover_file
+  cutover_file=$(repo_cutover_file)
+
   cat <<EOF
 
 ${BOLD}===================================================================${RESET}
-${BOLD}MANUAL STEP REQUIRED — commit the HelmRelease cutover edit${RESET}
+${BOLD}MANUAL STEP REQUIRED — commit the cutover edit${RESET}
 ${BOLD}===================================================================${RESET}
 
-In ${HELMRELEASE_PATH}, change the YAML anchor target on the
-DB_POSTGRESDB_DATABASE line:
+In ${cutover_file}, verify the configured cutover target:
 
-  -                    name: &dbSecret ${BLUE_APP_SECRET}
-  +                    name: &dbSecret ${GREEN_APP_SECRET}
+  - ${CUTOVER_TARGET_TYPE}: $(blue_cutover_target)
+  + ${CUTOVER_TARGET_TYPE}: $(green_cutover_target)
 
 Then:
 
-  git add ${HELMRELEASE_PATH}
-  git commit -m "feat(n8n): cut over to ${GREEN_CLUSTER} (PG18)"
+  git add ${cutover_file}
+  git commit -m "feat(${HELMRELEASE}): cut over to ${GREEN_CLUSTER} (PG18)"
   git push
-  flux reconcile helmrelease ${HELMRELEASE} -n ${NAMESPACE}
+  flux reconcile kustomization ${HELMRELEASE} -n flux-system
 
 Once the cutover edit is reconciled, re-run:
 
-  task postgres:cutover   # resumes from ${state_file}, restores replicas, runs postcheck + grafana-postcheck
+  task postgres:cutover PG_PROFILE=${PG_PROFILE:-<profile>} CONFIRM_CONTEXT=true   # resumes from ${state_file}, restores replicas, runs postcheck + grafana-postcheck
 
 To wake this script without re-running the full task, create the file:
 
@@ -861,11 +1104,12 @@ EOF
   fi
   rm -f "${STATE_DIR_ABS}/proceed"
 
-  log "verifying HelmRelease now points at ${GREEN_APP_SECRET}"
-  local anchor
-  anchor=$(helmrelease_anchor)
-  [[ "${anchor}" == "${GREEN_APP_SECRET}" ]] \
-    || die "anchor in ${HELMRELEASE_PATH} is '${anchor}', expected '${GREEN_APP_SECRET}'. App is still scaled to 0; complete the cutover edit or rollback."
+  log "verifying HelmRelease now points at $(green_cutover_target)"
+  local target expected_green
+  target=$(repo_cutover_target)
+  expected_green=$(green_cutover_target)
+  [[ "${target}" == "${expected_green}" ]] \
+    || die "cutover target in ${cutover_file:-repo} is '${target}', expected '${expected_green}'. App is still scaled to 0; complete the cutover edit or rollback."
 
   resume_cutover_after_handoff "${state_file}"
 }
@@ -878,40 +1122,60 @@ cmd_postcheck() {
   require_tools
   local fail=0
 
-  log "deployments are Available"
-  for deploy in ${APP_DEPLOYMENTS}; do
-    local cond
-    cond=$(kctl get deploy "${deploy}" -o jsonpath='{.status.conditions[?(@.type=="Available")].status}' || echo "")
-    [[ "${cond}" == "True" ]] \
-      || { err "deploy ${deploy} Available=${cond}"; fail=1; }
-  done
+  log "app workloads rolled out"
+  local workload
+  while read -r workload; do
+    [[ -n "${workload}" ]] || continue
+    kctl rollout status "${workload}" --timeout=300s \
+      || { err "${workload} did not roll out"; fail=1; }
+  done < <(app_workloads)
 
-  log "app env points at green"
-  for deploy in ${APP_DEPLOYMENTS}; do
-    local pod host
-    pod=$(kctl get pod -l "app.kubernetes.io/name=${deploy}" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null \
-      || kctl get pod -l "app.kubernetes.io/component=${deploy}" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null \
-      || echo "")
-    [[ -n "${pod}" ]] || { warn "no pod found for ${deploy}, skipping env check"; continue; }
-    host=$(kctl exec "${pod}" -- env 2>/dev/null | awk -F= '/^DB_POSTGRESDB_HOST=/{print $2}' || echo "")
-    if [[ "${host}" != "${GREEN_CLUSTER}-rw."* ]]; then
-      err "${deploy} pod ${pod} DB_POSTGRESDB_HOST='${host}' does not point at green"
-      fail=1
-    fi
-  done
+  log "cutover target points at green"
+  local target expected_green
+  target=$(live_cutover_target)
+  expected_green=$(green_cutover_target)
+  if [[ "${target}" != "${expected_green}" ]]; then
+    err "live cutover target='${target}', expected '${expected_green}'"
+    fail=1
+  fi
+
+  if [[ -n "${POSTCHECK_ENV_VAR}" ]]; then
+    log "app env ${POSTCHECK_ENV_VAR} points at green"
+    for deploy in ${APP_DEPLOYMENTS}; do
+      local pod host selector
+      selector="${APP_POD_SELECTOR:-app.kubernetes.io/name=${deploy}}"
+      pod=$(kctl get pod -l "${selector}" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null \
+        || kctl get pod -l "app.kubernetes.io/component=${deploy}" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null \
+        || echo "")
+      [[ -n "${pod}" ]] || { warn "no pod found for ${deploy}, skipping env check"; continue; }
+      host=$(kctl exec "${pod}" -- env 2>/dev/null | awk -F= -v key="${POSTCHECK_ENV_VAR}" '$1 == key {print $2}' || echo "")
+      if [[ -z "${host}" ]]; then
+        warn "${deploy} pod ${pod} did not expose ${POSTCHECK_ENV_VAR}; relying on live cutover target check"
+        continue
+      fi
+      if [[ "${host}" != "${GREEN_CLUSTER}-rw" && "${host}" != "${GREEN_CLUSTER}-rw."* && "${host}" != "$(green_cutover_target)" ]]; then
+        err "${deploy} pod ${pod} ${POSTCHECK_ENV_VAR}='${host}' does not point at green"
+        fail=1
+      fi
+    done
+  fi
 
   log "green DB identity"
   psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
     "SELECT version(), current_database(), current_user, inet_server_addr();" || fail=1
 
-  log "active app connections on green > 0"
-  local conn
-  conn=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
-    "SELECT count(*) FROM pg_stat_activity WHERE datname='${GREEN_DATABASE}' AND usename='${GREEN_USER}';" \
-    | tr -d '[:space:]')
-  if (( conn < 1 )); then
-    err "no app connections on green"
-    fail=1
+  if [[ "${REQUIRE_APP_CONNECTIONS}" == "true" ]]; then
+    log "active app connections on green > 0"
+    local conn
+    conn=$(psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
+      "SELECT count(*) FROM pg_stat_activity WHERE datname='${GREEN_DATABASE}' AND usename='${GREEN_USER}';" \
+      | tr -d '[:space:]')
+    if (( conn < 1 )); then
+      err "no app connections on green"
+      fail=1
+    fi
+  else
+    warn "REQUIRE_APP_CONNECTIONS=false, skipping active app connection check"
   fi
 
   log "no invalid indexes"
@@ -927,28 +1191,33 @@ cmd_postcheck() {
     fail=1
   fi
 
-  log "HTTP smoke: ${HEALTH_URL}"
-  if command -v curl >/dev/null 2>&1; then
+  if [[ -n "${HEALTH_URL}" ]] && command -v curl >/dev/null 2>&1; then
+    log "HTTP smoke: ${HEALTH_URL}"
     if curl -fsS --max-time 10 "${HEALTH_URL}" >/dev/null; then
       ok "health endpoint responded 2xx"
     else
       warn "health endpoint smoke failed (network from caller may be limited; verify manually)"
     fi
-  else
+  elif [[ -n "${HEALTH_URL}" ]]; then
     warn "curl not available, skipping HTTP smoke"
+  else
+    warn "HEALTH_URL empty, skipping HTTP smoke"
   fi
 
   log "recent logs free of common DB failure strings"
-  for deploy in ${APP_DEPLOYMENTS}; do
-    if kctl logs deploy/"${deploy}" --since=5m 2>/dev/null \
+  while read -r workload; do
+    [[ -n "${workload}" ]] || continue
+    local log_key
+    log_key=$(workload_state_key "${workload}")
+    if kctl logs "${workload}" --since=5m 2>/dev/null \
        | grep -Ei 'ECONNREFUSED|password authentication failed|database .* does not exist|relation .* does not exist|duplicate key' \
-       >"${STATE_DIR_ABS}/log-issues-${deploy}.txt"; then
-      err "${deploy} log issues — see ${STATE_DIR_ABS}/log-issues-${deploy}.txt"
+       >"${STATE_DIR_ABS}/log-issues-${log_key}.txt"; then
+      err "${workload} log issues — see ${STATE_DIR_ABS}/log-issues-${log_key}.txt"
       fail=1
     else
-      rm -f "${STATE_DIR_ABS}/log-issues-${deploy}.txt"
+      rm -f "${STATE_DIR_ABS}/log-issues-${log_key}.txt"
     fi
-  done
+  done < <(app_workloads)
 
   if (( fail > 0 )); then
     die "postcheck FAILED (${fail} issue(s))"
@@ -963,9 +1232,14 @@ cmd_postcheck() {
 prom_query() {
   local q=$1
   if command -v curl >/dev/null 2>&1; then
-    curl -fsS --max-time 5 -G "${PROMETHEUS_URL}/api/v1/query" \
+    local response
+    if ! response=$(curl -fsS --max-time 5 -G "${PROMETHEUS_URL}/api/v1/query" \
       --data-urlencode "query=${q}" 2>/dev/null \
-      | jq -r '.data.result // []'
+    ); then
+      echo "[]"
+      return 0
+    fi
+    echo "${response}" | jq -r '.data.result // []'
   else
     echo "[]"
   fi
@@ -1000,7 +1274,7 @@ cmd_grafana_postcheck() {
 
   log "container restarts in last 15m"
   local restarts
-  restarts=$(prom_query "sum(increase(kube_pod_container_status_restarts_total{namespace=\"${NAMESPACE}\",pod=~\"n8n.*\"}[15m]))")
+  restarts=$(prom_query "sum(increase(kube_pod_container_status_restarts_total{namespace=\"${NAMESPACE}\",pod=~\"${PROM_POD_REGEX}\"}[15m]))")
   echo "${restarts}" | jq -r '.[] | "  total=\(.value[1])"' || true
 
   if (( fail > 0 )); then
@@ -1015,16 +1289,16 @@ cmd_grafana_postcheck() {
 
 cmd_rollback() {
   require_tools
-  local anchor
-  anchor=$(helmrelease_anchor)
+  local target
+  target=$(repo_cutover_target)
 
-  if [[ "${anchor}" == "${BLUE_APP_SECRET}" ]]; then
+  if [[ "${target}" == "$(blue_cutover_target)" ]]; then
     log "pre-cutover rollback: app still on blue"
     log "  -- removing migration objects"
     psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
-      "DROP SUBSCRIPTION IF EXISTS n8n_green_sub;" 2>/dev/null || true
+      "DROP SUBSCRIPTION IF EXISTS ${SUBSCRIPTION_PG_NAME};" 2>/dev/null || true
     psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" \
-      "DROP PUBLICATION IF EXISTS n8n_green_pub;" 2>/dev/null || true
+      "DROP PUBLICATION IF EXISTS ${PUBLICATION_PG_NAME};" 2>/dev/null || true
     kctl delete --ignore-not-found -f "${MIGRATION_MANIFEST_DIR}/subscription.yaml"
     kctl delete --ignore-not-found -f "${MIGRATION_MANIFEST_DIR}/publication.yaml"
     kctl delete --ignore-not-found -f "${MIGRATION_MANIFEST_DIR}/cluster-green.yaml"
@@ -1033,7 +1307,7 @@ cmd_rollback() {
     return 0
   fi
 
-  log "post-cutover rollback: app currently on green (${anchor})"
+  log "post-cutover rollback: app currently on green (${target})"
   cat <<EOF
 
 ${BOLD}===================================================================${RESET}
@@ -1064,22 +1338,22 @@ EOF
 
 cmd_cleanup() {
   require_tools
-  local anchor
-  anchor=$(helmrelease_anchor)
-  [[ "${anchor}" == "${GREEN_APP_SECRET}" ]] \
-    || die "helmrelease anchor is '${anchor}', expected '${GREEN_APP_SECRET}'. Refusing cleanup."
+  local target
+  target=$(repo_cutover_target)
+  [[ "${target}" == "$(green_cutover_target)" ]] \
+    || die "cutover target is '${target}', expected '$(green_cutover_target)'. Refusing cleanup."
 
   log "removing CNPG Subscription and Publication"
   psql_as_super "${GREEN_CLUSTER}" "${GREEN_DATABASE}" \
-    "DROP SUBSCRIPTION IF EXISTS n8n_green_sub;" || true
+    "DROP SUBSCRIPTION IF EXISTS ${SUBSCRIPTION_PG_NAME};" || true
   psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" \
-    "DROP PUBLICATION IF EXISTS n8n_green_pub;" || true
+    "DROP PUBLICATION IF EXISTS ${PUBLICATION_PG_NAME};" || true
   kctl delete --ignore-not-found subscription "${SUBSCRIPTION_NAME}"
   kctl delete --ignore-not-found publication "${PUBLICATION_NAME}"
 
   log "dropping any leftover replication slot on blue"
   psql_as_super "${BLUE_CLUSTER}" "${BLUE_DATABASE}" \
-    "SELECT pg_drop_replication_slot(slot_name) FROM pg_replication_slots WHERE slot_name LIKE 'n8n_green_%';" \
+    "SELECT pg_drop_replication_slot(slot_name) FROM pg_replication_slots WHERE slot_name = '${SUBSCRIPTION_PG_NAME}';" \
     || true
 
   cat <<EOF
@@ -1113,10 +1387,12 @@ usage: pg-bluegreen.sh <subcommand>
   preflight                  validate prerequisites
   blue-connection            print blue cluster URI (for ad-hoc psql)
   green-connection           print green cluster URI
+  prepare-blue               apply profile-declared blue DB prerequisites
   create-green               apply green CNPG cluster and wait
   copy-schema                pg_dump --schema-only from blue -> green
   publication                apply CNPG Publication CR
   subscription               apply CNPG Subscription CR
+  subscription-reset         delete/recreate CNPG Subscription CR
   monitor                    print pub/sub + replication status
   ready                      exit 0 if green is caught up
   cutover                    perform write-stop window + hand off to operator
@@ -1136,10 +1412,12 @@ main() {
     preflight)         cmd_preflight "$@" ;;
     blue-connection)   cmd_connection "${BLUE_APP_SECRET}" ;;
     green-connection)  cmd_connection "${GREEN_APP_SECRET}" ;;
+    prepare-blue)      cmd_prepare_blue "$@" ;;
     create-green)      cmd_create_green "$@" ;;
     copy-schema)       cmd_copy_schema "$@" ;;
     publication)       cmd_publication "$@" ;;
     subscription)      cmd_subscription "$@" ;;
+    subscription-reset) cmd_subscription_reset "$@" ;;
     monitor)           cmd_monitor "$@" ;;
     ready)             cmd_ready "$@" ;;
     cutover)           cmd_cutover "$@" ;;

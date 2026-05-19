@@ -11,29 +11,47 @@ spec:
   ttlSecondsAfterFinished: 3600
   template:
     spec:
+      automountServiceAccountToken: false
       restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-        - name: mc
-          image: minio/mc:latest
+        - name: rc
+          image: rustfs/rc:v0.1.16
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
           env:
             - name: RUSTFS_ENDPOINT
               value: "http://rustfs.storage.svc.cluster.local:9000"
             - name: BUCKETS
               value: "cnpg-backups loki-data loki-chunks volsync-backups app-data backups cloudnative-pg longhorn"
+            - name: HOME
+              value: /tmp
           envFrom:
             - secretRef:
                 name: rustfs-credentials
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           command: ["/bin/sh", "-c"]
           args:
             - |
               set -eu
-              echo "Configuring mc alias and waiting for RustFS at $${RUSTFS_ENDPOINT:?}..."
+              echo "Configuring rc alias and waiting for RustFS at $${RUSTFS_ENDPOINT:?}..."
               i=1
               ready=false
               while [ "$i" -le 60 ]; do
-                if mc alias set rustfs "$${RUSTFS_ENDPOINT:?}" "$${RUSTFS_ACCESS_KEY:?}" "$${RUSTFS_SECRET_KEY:?}" >/dev/null 2>&1; then
-                  if mc ls rustfs >/dev/null 2>&1; then
+                if rc alias set rustfs "$${RUSTFS_ENDPOINT:?}" "$${RUSTFS_ACCESS_KEY:?}" "$${RUSTFS_SECRET_KEY:?}" >/dev/null 2>&1; then
+                  if rc bucket list rustfs/ >/dev/null 2>&1; then
                     echo "RustFS is reachable"
                     ready=true
                     break
@@ -50,5 +68,8 @@ spec:
 
               for b in ${BUCKETS}; do
                 echo "Creating bucket: $b"
-                mc mb --ignore-existing "rustfs/${b}"
+                rc bucket create --ignore-existing "rustfs/${b}"
               done
+      volumes:
+        - name: tmp
+          emptyDir: {}

@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: immich-db
+  name: immich-green
   namespace: home
 spec:
   schedule: "0 3 * * *"
@@ -15,4 +15,4 @@ spec:
     parameters:
       objectStore: immich-rustfs-store
   cluster:
-    name: immich
+    name: immich-green

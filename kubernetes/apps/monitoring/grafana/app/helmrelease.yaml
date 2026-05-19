@@ -24,6 +24,7 @@ spec:
       GF_DATE_FORMATS_USE_BROWSER_LOCALE: true
       GF_EXPLORE_ENABLED: true
       GF_FEATURE_TOGGLES_ENABLE: publicDashboards
+      GF_PLUGINS_PREINSTALL_SYNC: grafana-oncall-app
       GF_SECURITY_COOKIE_SAMESITE: grafana
       GF_SERVER_ROOT_URL: https://grafana.ironstone.casa
     envFromSecrets:
@@ -89,6 +90,355 @@ spec:
                 type: prometheus-alertmanager
                 settings:
                   url: http://vmalertmanager-vm.monitoring.svc.cluster.local:9093
+      policies.yaml:
+        apiVersion: 1
+        policies:
+          - orgId: 1
+            receiver: Alertmanager
+            group_by:
+              - grafana_folder
+              - alertname
+            group_wait: 1m
+            group_interval: 10m
+            repeat_interval: 12h
+      rules.yaml:
+        apiVersion: 1
+        groups:
+          - orgId: 1
+            name: recurring-health
+            folder: Kubernetes
+            interval: 1m
+            rules:
+              - uid: cnpg-last-successful-backup-stale
+                title: CNPG last successful backup is stale
+                condition: C
+                data:
+                  - refId: A
+                    datasourceUid: prometheus
+                    relativeTimeRange:
+                      from: 600
+                      to: 0
+                    model:
+                      datasource:
+                        type: prometheus
+                        uid: prometheus
+                      editorMode: code
+                      expr: min by (namespace, job) (time() - cnpg_collector_last_available_backup_timestamp) > 90000
+                      instant: true
+                      intervalMs: 1000
+                      maxDataPoints: 43200
+                      refId: A
+                  - refId: B
+                    datasourceUid: __expr__
+                    relativeTimeRange:
+                      from: 0
+                      to: 0
+                    model:
+                      datasource:
+                        type: __expr__
+                        uid: __expr__
+                      expression: A
+                      reducer: max
+                      refId: B
+                      type: reduce
+                  - refId: C
+                    datasourceUid: __expr__
+                    relativeTimeRange:
+                      from: 0
+                      to: 0
+                    model:
+                      conditions:
+                        - evaluator:
+                            params:
+                              - 0
+                            type: gt
+                          operator:
+                            type: and
+                          query:
+                            params:
+                              - C
+                          reducer:
+                            params: []
+                            type: last
+                          type: query
+                      datasource:
+                        type: __expr__
+                        uid: __expr__
+                      expression: B
+                      refId: C
+                      type: threshold
+                noDataState: NoData
+                execErrState: Alerting
+                for: 15m
+                annotations:
+                  summary: CNPG backup age exceeds 25 hours
+                  description: At least one CNPG cluster has no recent successful backup.
+                labels:
+                  severity: critical
+              - uid: cnpg-recent-backup-failed
+                title: CNPG backup failed recently
+                condition: C
+                data:
+                  - refId: A
+                    datasourceUid: prometheus
+                    relativeTimeRange:
+                      from: 600
+                      to: 0
+                    model:
+                      datasource:
+                        type: prometheus
+                        uid: prometheus
+                      editorMode: code
+                      expr: max by (namespace, job) (time() - cnpg_collector_last_failed_backup_timestamp) < 3600
+                      instant: true
+                      intervalMs: 1000
+                      maxDataPoints: 43200
+                      refId: A
+                  - refId: B
+                    datasourceUid: __expr__
+                    relativeTimeRange:
+                      from: 0
+                      to: 0
+                    model:
+                      datasource:
+                        type: __expr__
+                        uid: __expr__
+                      expression: A
+                      reducer: max
+                      refId: B
+                      type: reduce
+                  - refId: C
+                    datasourceUid: __expr__
+                    relativeTimeRange:
+                      from: 0
+                      to: 0
+                    model:
+                      conditions:
+                        - evaluator:
+                            params:
+                              - 0
+                            type: gt
+                          operator:
+                            type: and
+                          query:
+                            params:
+                              - C
+                          reducer:
+                            params: []
+                            type: last
+                          type: query
+                      datasource:
+                        type: __expr__
+                        uid: __expr__
+                      expression: B
+                      refId: C
+                      type: threshold
+                noDataState: OK
+                execErrState: Alerting
+                for: 5m
+                annotations:
+                  summary: CNPG backup failed in the last hour
+                  description: A CNPG backup plugin run failed recently.
+                labels:
+                  severity: critical
+              - uid: cnpg-wal-archiving-failing
+                title: CNPG WAL archiving is failing
+                condition: C
+                data:
+                  - refId: A
+                    datasourceUid: prometheus
+                    relativeTimeRange:
+                      from: 600
+                      to: 0
+                    model:
+                      datasource:
+                        type: prometheus
+                        uid: prometheus
+                      editorMode: code
+                      expr: max by (namespace, job) ((cnpg_pg_stat_archiver_last_failed_time - cnpg_pg_stat_archiver_last_archived_time) > 1)
+                      instant: true
+                      intervalMs: 1000
+                      maxDataPoints: 43200
+                      refId: A
+                  - refId: B
+                    datasourceUid: __expr__
+                    relativeTimeRange:
+                      from: 0
+                      to: 0
+                    model:
+                      datasource:
+                        type: __expr__
+                        uid: __expr__
+                      expression: A
+                      reducer: max
+                      refId: B
+                      type: reduce
+                  - refId: C
+                    datasourceUid: __expr__
+                    relativeTimeRange:
+                      from: 0
+                      to: 0
+                    model:
+                      conditions:
+                        - evaluator:
+                            params:
+                              - 0
+                            type: gt
+                          operator:
+                            type: and
+                          query:
+                            params:
+                              - C
+                          reducer:
+                            params: []
+                            type: last
+                          type: query
+                      datasource:
+                        type: __expr__
+                        uid: __expr__
+                      expression: B
+                      refId: C
+                      type: threshold
+                noDataState: OK
+                execErrState: Alerting
+                for: 10m
+                annotations:
+                  summary: CNPG WAL archiving is failing
+                  description: A CNPG instance has a failed WAL newer than the last archived WAL.
+                labels:
+                  severity: critical
+              - uid: kube-crashlooping-pods
+                title: Kubernetes pods are crashlooping
+                condition: C
+                data:
+                  - refId: A
+                    datasourceUid: prometheus
+                    relativeTimeRange:
+                      from: 600
+                      to: 0
+                    model:
+                      datasource:
+                        type: prometheus
+                        uid: prometheus
+                      editorMode: code
+                      expr: sum by (namespace, pod, container, reason) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) > 0
+                      instant: true
+                      intervalMs: 1000
+                      maxDataPoints: 43200
+                      refId: A
+                  - refId: B
+                    datasourceUid: __expr__
+                    relativeTimeRange:
+                      from: 0
+                      to: 0
+                    model:
+                      datasource:
+                        type: __expr__
+                        uid: __expr__
+                      expression: A
+                      reducer: max
+                      refId: B
+                      type: reduce
+                  - refId: C
+                    datasourceUid: __expr__
+                    relativeTimeRange:
+                      from: 0
+                      to: 0
+                    model:
+                      conditions:
+                        - evaluator:
+                            params:
+                              - 0
+                            type: gt
+                          operator:
+                            type: and
+                          query:
+                            params:
+                              - C
+                          reducer:
+                            params: []
+                            type: last
+                          type: query
+                      datasource:
+                        type: __expr__
+                        uid: __expr__
+                      expression: B
+                      refId: C
+                      type: threshold
+                noDataState: OK
+                execErrState: Alerting
+                for: 10m
+                annotations:
+                  summary: Kubernetes pod is crashlooping
+                  description: One or more containers are waiting in CrashLoopBackOff.
+                labels:
+                  severity: warning
+              - uid: kube-deployment-replicas-mismatch
+                title: Kubernetes deployment replicas mismatch
+                condition: C
+                data:
+                  - refId: A
+                    datasourceUid: prometheus
+                    relativeTimeRange:
+                      from: 600
+                      to: 0
+                    model:
+                      datasource:
+                        type: prometheus
+                        uid: prometheus
+                      editorMode: code
+                      expr: kube_deployment_spec_replicas != kube_deployment_status_replicas_available
+                      instant: true
+                      intervalMs: 1000
+                      maxDataPoints: 43200
+                      refId: A
+                  - refId: B
+                    datasourceUid: __expr__
+                    relativeTimeRange:
+                      from: 0
+                      to: 0
+                    model:
+                      datasource:
+                        type: __expr__
+                        uid: __expr__
+                      expression: A
+                      reducer: max
+                      refId: B
+                      type: reduce
+                  - refId: C
+                    datasourceUid: __expr__
+                    relativeTimeRange:
+                      from: 0
+                      to: 0
+                    model:
+                      conditions:
+                        - evaluator:
+                            params:
+                              - 0
+                            type: gt
+                          operator:
+                            type: and
+                          query:
+                            params:
+                              - C
+                          reducer:
+                            params: []
+                            type: last
+                          type: query
+                      datasource:
+                        type: __expr__
+                        uid: __expr__
+                      expression: B
+                      refId: C
+                      type: threshold
+                noDataState: OK
+                execErrState: Alerting
+                for: 15m
+                annotations:
+                  summary: Kubernetes deployment replicas mismatch
+                  description: A deployment has fewer available replicas than desired.
+                labels:
+                  severity: warning
 
     dashboardProviders:
       dashboardproviders.yaml:
@@ -230,11 +580,13 @@ spec:
         apps:
           - type: grafana-oncall-app
             org_id: 1
-            enabled: true
+            disabled: false
             jsonData:
               stackId: 1
               orgId: 1
-              onCallApiUrl: $__env{GF_PLUGIN_GRAFANA_ONCALL_APP_ONCALL_API_URL}
+              onCallApiUrl: $GF_PLUGIN_GRAFANA_ONCALL_APP_ONCALL_API_URL
+            secureJsonData:
+              grafanaToken: $GF_PLUGIN_GRAFANA_ONCALL_APP_ONCALL_TOKEN
 
     serviceMonitor:
       enabled: true

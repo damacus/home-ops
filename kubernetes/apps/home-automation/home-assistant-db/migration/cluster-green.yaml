@@ -1,0 +1,69 @@
+---
+# Green CNPG cluster for the home-assistant PG16 -> PG18 blue/green migration.
+# Applied imperatively during migration; not included in the Flux app kustomization.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: home-assistant-green
+  namespace: home-automation
+spec:
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 18
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  enablePDB: true
+
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: home-assistant-rustfs-store
+        serverName: home-assistant-green-20260519b
+
+  monitoring:
+    enablePodMonitor: true
+
+  storage:
+    size: 20Gi
+    storageClass: openebs-hostpath
+
+  enableSuperuserAccess: true
+
+  externalClusters:
+    - name: home-assistant
+      connectionParameters:
+        host: home-assistant-rw.home-automation.svc.cluster.local
+        user: postgres
+        dbname: app
+        port: "5432"
+        sslmode: prefer
+      password:
+        name: cloudnative-pg
+        key: password
+
+  postgresql:
+    parameters:
+      max_connections: "400"
+      shared_buffers: 256MB
+      effective_io_concurrency: "200"
+      maintenance_work_mem: 256MB
+      wal_level: logical
+      max_replication_slots: "10"
+      max_wal_senders: "10"
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 400Mi
+    limits:
+      memory: 2Gi
+      cpu: 3000m

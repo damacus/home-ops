@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: home-assistant-db
+  name: home-assistant-green
   namespace: home-automation
 spec:
   schedule: "0 0 0 * * *"
@@ -15,4 +15,4 @@ spec:
     parameters:
       objectStore: home-assistant-rustfs-store
   cluster:
-    name: home-assistant
+    name: home-assistant-green

@@ -3,7 +3,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: forgejo
+  name: forgejo-green
   namespace: dev
 spec:
   schedule: "0 0 0 * * *"
@@ -14,4 +14,4 @@ spec:
     parameters:
       objectStore: forgejo-rustfs-store
   cluster:
-    name: forgejo
+    name: forgejo-green

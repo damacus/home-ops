@@ -11,10 +11,11 @@ This document describes the implementation of Do-Not-Disturb (DND) aware escalat
 The home-ops cluster uses:
 
 - **Alertmanager** (via VictoriaMetrics stack) for alert routing
-- **Pushover** for notifications (not Grafana Cloud OnCall)
+- **Grafana Cloud OnCall** as the primary destination for actionable alerts
+- **Pushover** as a rollout fallback notification path
 - **ExternalSecret** to manage Alertmanager config from 1Password
 
-**Important**: The epic `home-ops-cil` describes deploying a self-hosted Grafana OnCall, but the current setup uses Grafana Cloud OnCall (external SaaS). Escalation policies must be configured in Alertmanager, not in OnCall itself.
+**Important**: The epic `home-ops-cil` describes deploying a self-hosted Grafana OnCall, but the current setup uses Grafana Cloud OnCall / IRM. Routing and DND policy stay in Alertmanager; OnCall handles paging and escalation after Alertmanager sends the webhook.
 
 ### 2. DND Implementation Strategy
 
@@ -159,7 +160,7 @@ This project uses:
 
 - **home-ops-qyh**: Configure escalation policies and notification channels (COMPLETED)
 - **home-ops-cil**: Grafana On-Call: Core Setup & Configuration (PARENT EPIC)
-- **home-ops-uw0**: Integrate Alertmanager with On-Call (BLOCKED)
+- **home-ops-uw0**: Integrate Alertmanager with On-Call
 
 ## References
 

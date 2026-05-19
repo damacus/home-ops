@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: redis-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: master
+      app.kubernetes.io/instance: redis
+      app.kubernetes.io/name: redis
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: home-automation
+            k8s:app.kubernetes.io/instance: n8n
+            k8s:app.kubernetes.io/name: n8n
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: home-automation
+            k8s:app.kubernetes.io/controller: paperless
+            k8s:app.kubernetes.io/instance: paperless
+            k8s:app.kubernetes.io/name: paperless
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: home
+            k8s:app.kubernetes.io/controller: backend
+            k8s:app.kubernetes.io/instance: penpot
+            k8s:app.kubernetes.io/name: penpot
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP

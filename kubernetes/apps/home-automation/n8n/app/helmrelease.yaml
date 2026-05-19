@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 5.0.0
+      version: 5.0.1
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -34,7 +34,7 @@ spec:
           app:
             image:
               repository: &image n8nio/n8n
-              tag: &tag 2.19.2@sha256:385ea908fee7f77792ccf1a1cfd8f1509f2b55d9b20db7b3b00df5e8f85d8875
+              tag: &tag 2.21.3@sha256:23005738b8539e34c13986f8d2c76c2ac540a89a318cbc5481aae89265a28c93
             env: &env
               DB_TYPE: "postgresdb"
               # Blue/green cutover is a single edit: change the anchor target
@@ -43,7 +43,7 @@ spec:
               DB_POSTGRESDB_DATABASE:
                 valueFrom:
                   secretKeyRef:
-                    name: &dbSecret n8n-app
+                    name: &dbSecret n8n-green-app
                     key: dbname
               DB_POSTGRESDB_HOST:
                 valueFrom:
@@ -184,7 +184,13 @@ spec:
           - matches:
               - path:
                   type: PathPrefix
-                  value: /
+                  value: /webhook
+              - path:
+                  type: PathPrefix
+                  value: /webhook-test
+              - path:
+                  type: PathPrefix
+                  value: /webhook-waiting
             backendRefs:
               - kind: Service
                 name: n8n

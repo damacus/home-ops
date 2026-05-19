@@ -4,7 +4,7 @@ ansible==13.6.0
     # via -r ansible/requirements.in
 ansible-compat==26.3.0
     # via ansible-lint
-ansible-core==2.20.5
+ansible-core==2.21.0
     # via
     #   ansible
     #   ansible-compat
@@ -15,7 +15,7 @@ attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
-black==26.3.1
+black==26.5.1
     # via ansible-lint
 bracex==2.6
     # via wcmatch
@@ -29,7 +29,7 @@ cffi==2.0.0
     #   cryptography
 charset-normalizer==3.4.7
     # via requests
-click==8.3.3
+click==8.4.0
     # via black
 cryptography==48.0.0
     # via
@@ -96,7 +96,7 @@ referencing==0.37.0
     #   ansible-lint
     #   jsonschema
     #   jsonschema-specifications
-requests==2.34.1
+requests==2.34.2
     # via
     #   kubernetes
     #   requests-oauthlib

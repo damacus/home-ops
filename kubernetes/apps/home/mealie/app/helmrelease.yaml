@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 5.0.0
+      version: 5.0.1
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -37,7 +37,6 @@ spec:
             image:
               repository: ghcr.io/mealie-recipes/mealie
               tag: v3.17.0@sha256:d570139f1891346131d02f8e4d1853100ae4846474958ca6c68cfe1648058467
-
             env:
               ALLOW_SIGNUP: "false"
               BASE_URL: "https://{{ .Release.Name }}.damacus.io"
@@ -78,12 +77,11 @@ spec:
                   secretKeyRef:
                     name: mealie-secret
                     key: POSTGRES_PASSWORD
-              POSTGRES_SERVER: "{{ .Release.Name }}-rw"
+              POSTGRES_SERVER: "mealie-green-rw"
               POSTGRES_USER: "{{ .Release.Name }}"
               PUID: 1000
               TZ: "Europe/London"
               WEB_CONCURRENCY: 1
-
             probes:
               liveness:
                 enabled: false
@@ -108,8 +106,7 @@ spec:
             runAsNonRoot: true
             fsGroup: 1000
             fsGroupChangePolicy: OnRootMismatch
-            seccompProfile: { type: RuntimeDefault }
-
+            seccompProfile: {type: RuntimeDefault}
     route:
       app:
         annotations:
@@ -131,14 +128,12 @@ spec:
                 namespace: home
                 port: 9000
                 weight: 1
-
     service:
       app:
         controller: mealie
         ports:
           http:
             port: 9000
-
     persistence:
       data:
         existingClaim: mealie-data

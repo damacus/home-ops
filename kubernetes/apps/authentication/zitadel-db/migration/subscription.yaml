@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/subscription_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Subscription
+metadata:
+  name: zitadel-green-sub
+  namespace: authentication
+spec:
+  cluster:
+    name: zitadel-green
+  dbname: zitadel
+  name: zitadel_green_sub
+  publicationName: zitadel_green_pub
+  externalClusterName: zitadel
+  subscriptionReclaimPolicy: delete

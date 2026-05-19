@@ -1,0 +1,71 @@
+---
+# Green CNPG cluster for the mealie PG16 -> PG18 blue/green migration.
+# Applied imperatively during migration; not included in the Flux app kustomization.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: mealie-green
+  namespace: home
+spec:
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 18
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  enablePDB: true
+
+  bootstrap:
+    initdb:
+      database: mealie
+      owner: mealie
+      secret:
+        name: mealie-db
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: mealie-rustfs-store
+        serverName: mealie-green
+
+  monitoring:
+    enablePodMonitor: true
+
+  storage:
+    size: 5Gi
+    storageClass: openebs-hostpath
+
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: mealie-db-superuser
+
+  externalClusters:
+    - name: mealie
+      connectionParameters:
+        host: mealie-rw.home.svc.cluster.local
+        user: postgres
+        dbname: mealie
+        port: "5432"
+        sslmode: prefer
+      password:
+        name: mealie-db-superuser
+        key: password
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: 128MB
+      wal_level: logical
+      max_replication_slots: "10"
+      max_wal_senders: "10"
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 2000m
+      memory: 512Mi
