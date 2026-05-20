@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cert-manager.io/certificate_v1.json
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: zitadel-login-service-key
+  namespace: authentication
+spec:
+  secretName: zitadel-login-service-key
+  commonName: zitadel-login-client
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    encoding: PKCS8
+    rotationPolicy: Always
+  usages:
+    - digital signature
+    - client auth
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
