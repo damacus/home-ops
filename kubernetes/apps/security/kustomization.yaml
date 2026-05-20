@@ -5,3 +5,4 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./mondoo-operator/ks.yaml
+  - ./mondoo-operator/config-ks.yaml
