@@ -164,12 +164,13 @@ tasks:
     cmds:
       - yq -e '.resources | contains(["mondoo.yaml"])' {{.KUBERNETES_DIR}}/flux/repositories/helm/kustomization.yaml
       - yq -e '.metadata.name == "mondoo" and .spec.url == "https://mondoohq.github.io/mondoo-operator"' {{.KUBERNETES_DIR}}/flux/repositories/helm/mondoo.yaml
-      - yq -e '.resources | contains(["./namespace.yaml", "./mondoo-operator/ks.yaml"])' {{.KUBERNETES_DIR}}/apps/security/kustomization.yaml
+      - yq -e '.resources | contains(["./namespace.yaml", "./mondoo-operator/ks.yaml", "./mondoo-operator/config-ks.yaml"])' {{.KUBERNETES_DIR}}/apps/security/kustomization.yaml
       - yq -e '.metadata.name == "mondoo-operator" and .metadata.namespace == "flux-system" and .spec.targetNamespace == "mondoo-operator" and .spec.path == "./kubernetes/apps/security/mondoo-operator/app"' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/ks.yaml
+      - yq -e '[(.metadata.name == "mondoo-operator-config"), (.metadata.namespace == "flux-system"), (.spec.targetNamespace == "mondoo-operator"), (.spec.path == "./kubernetes/apps/security/mondoo-operator/config"), ([.spec.dependsOn[].name] | contains(["external-secrets-stores", "mondoo-operator"]))] | all' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/config-ks.yaml
       - yq -e '.spec.chart.spec.chart == "mondoo-operator" and .spec.chart.spec.version == "13.1.1" and .spec.chart.spec.sourceRef.name == "mondoo"' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/app/helmrelease.yaml
-      - yq -e '.spec.secretStoreRef.name == "onepassword-connect" and .spec.target.name == "mondoo-client" and (.spec.target.template.data.config | contains("MONDOO_CONFIG_JSON")) and .spec.dataFrom[0].extract.key == "mondoo"' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/app/externalsecret.yaml
-      - yq -e '[(.spec.mondooCredsSecretRef.name == "mondoo-client"), (.spec.kubernetesResources.enable == true), (.spec.nodes.enable == true), (.spec.nodes.style == "cronjob"), (.spec.containers.enable == false), ((.spec.kubernetesResources.resourceWatcher | type) == "!!null")] | all' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/app/auditconfig.yaml
-      - yq -e '.spec.filtering.namespaces.exclude | contains(["mondoo-operator", "kube-system", "flux-system"])' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/app/auditconfig.yaml
+      - yq -e '.spec.secretStoreRef.name == "onepassword-connect" and .spec.target.name == "mondoo-client" and (.spec.target.template.data.config | contains("MONDOO_CONFIG_JSON")) and .spec.dataFrom[0].extract.key == "mondoo"' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/config/externalsecret.yaml
+      - yq -e '[(.spec.mondooCredsSecretRef.name == "mondoo-client"), (.spec.kubernetesResources.enable == true), (.spec.nodes.enable == true), (.spec.nodes.style == "cronjob"), (.spec.containers.enable == false), ((.spec.kubernetesResources.resourceWatcher | type) == "!!null")] | all' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/config/auditconfig.yaml
+      - yq -e '.spec.filtering.namespaces.exclude | contains(["mondoo-operator", "kube-system", "flux-system"])' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/config/auditconfig.yaml
     preconditions:
       - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
 
