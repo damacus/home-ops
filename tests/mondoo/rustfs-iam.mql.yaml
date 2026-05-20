@@ -111,6 +111,8 @@ policies:
             title: Paperless uses the per-app Restic secret and keeps rollback secret
             impact: 100
             mql: |
+              file("kubernetes/apps/home-automation/paperless/app/volsync/kustomization.yaml").content.contains("replicationsource.yaml")
+              file("kubernetes/apps/home-automation/paperless/app/volsync/kustomization.yaml").content.contains("replicationdestination.yaml")
               file("kubernetes/apps/home-automation/paperless/app/volsync/replicationsource.yaml").content.contains("repository: rustfs-paperless")
               file("kubernetes/apps/home-automation/paperless/app/volsync/replicationdestination.yaml").content.contains("repository: rustfs-paperless")
               file("kubernetes/apps/home-automation/paperless/app/volsync/replicationsource.yaml").content.contains("repository: paperless-restic-local") == false
