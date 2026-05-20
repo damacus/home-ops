@@ -9,7 +9,7 @@ spec:
   trigger:
     manual: restore-once
   restic:
-    repository: paperless-restic-local
+    repository: rustfs-paperless
     destinationPVC: paperless-data-hdd
     copyMethod: Direct
     storageClassName: nfs-csi-unas

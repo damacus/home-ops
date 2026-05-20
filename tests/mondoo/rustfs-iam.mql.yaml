@@ -14,11 +14,11 @@ policies:
         email: security@ironstone.casa
     docs:
       desc: |
-        Validate the RustFS IAM CNPG rollout. Every CNPG backup consumer is cut
-        over to its per-app bucket and credential while non-CNPG backup
-        consumers keep using the old shared/root-backed resources for rollback.
+        Validate the RustFS IAM rollout. Every backup consumer is cut over to
+        its per-app bucket and credential while old shared/root-backed
+        resources remain present for rollback and audit.
     groups:
-      - title: CNPG Consumers Stay On Existing RustFS Resources
+      - title: CNPG Consumers Use Per-App RustFS Resources
         filters: asset.platform != ""
         checks:
           - uid: phase2-zitadel-cnpg-uses-per-app-consumer
@@ -94,32 +94,38 @@ policies:
               file("kubernetes/apps/home/penpot-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-penpot")
               file("kubernetes/apps/home/penpot-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-penpot")
 
-      - title: Non-CNPG Consumers Stay On Existing RustFS Resources
+      - title: Non-CNPG Consumers Use Per-App RustFS Resources
         filters: asset.platform != ""
         checks:
-          - uid: phase1-longhorn-keeps-current-consumer
-            title: Longhorn keeps current secret and stages per-app secret
+          - uid: phase2-longhorn-uses-per-app-consumer
+            title: Longhorn uses the per-app credential and keeps rollback secret
             impact: 100
             mql: |
-              file("kubernetes/apps/storage/longhorn/app/backuptarget.yaml").content.contains("credentialSecret: longhorn-rustfs")
+              file("kubernetes/apps/storage/longhorn/app/backuptarget.yaml").content.contains("credentialSecret: rustfs-longhorn")
+              file("kubernetes/apps/storage/longhorn/app/backuptarget.yaml").content.contains("credentialSecret: longhorn-rustfs") == false
               file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("name: longhorn-rustfs")
               file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("key: rustfs\n")
               file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("name: rustfs-longhorn")
               file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("key: rustfs-longhorn")
-          - uid: phase1-paperless-keeps-current-consumer
-            title: Paperless keeps current Restic secret and stages per-app secret
+          - uid: phase2-paperless-uses-per-app-consumer
+            title: Paperless uses the per-app Restic secret and keeps rollback secret
             impact: 100
             mql: |
+              file("kubernetes/apps/home-automation/paperless/app/volsync/replicationsource.yaml").content.contains("repository: rustfs-paperless")
+              file("kubernetes/apps/home-automation/paperless/app/volsync/replicationdestination.yaml").content.contains("repository: rustfs-paperless")
+              file("kubernetes/apps/home-automation/paperless/app/volsync/replicationsource.yaml").content.contains("repository: paperless-restic-local") == false
+              file("kubernetes/apps/home-automation/paperless/app/volsync/replicationdestination.yaml").content.contains("repository: paperless-restic-local") == false
               file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("volsync-backups/paperless")
               file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("key: rustfs\n")
               file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("name: rustfs-paperless")
               file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("key: rustfs-paperless")
               file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("volsync-paperless")
-          - uid: phase1-loki-keeps-current-consumer
-            title: Loki keeps current secret and stages per-app secret
+          - uid: phase2-loki-uses-per-app-consumer
+            title: Loki uses the per-app credential and keeps rollback secret
             impact: 100
             mql: |
-              file("kubernetes/apps/monitoring/loki/app/helmrelease.yaml").content.contains("name: loki-s3")
+              file("kubernetes/apps/monitoring/loki/app/helmrelease.yaml").content.contains("name: rustfs-loki")
+              file("kubernetes/apps/monitoring/loki/app/helmrelease.yaml").content.contains("name: loki-s3") == false
               file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("name: &name loki-s3")
               file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("key: rustfs")
               file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("name: &name rustfs-loki")
