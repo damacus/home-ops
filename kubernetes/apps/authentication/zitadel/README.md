@@ -65,6 +65,17 @@ Configure the Google IDP in Zitadel console after deployment.
 Passkeys are enabled by default via the `PasswordlessType: 1` setting.
 Users can enroll passkeys from their account settings.
 
+## Certificates
+
+The public HTTPS certificate for `zitadel.damacus.io` is managed separately by
+the Gateway/Traefik path. Zitadel chart v10 also requires a Login UI service
+credential, but that keypair is not browser-facing TLS.
+
+The `zitadel-login-service-key` cert-manager `Certificate` creates a dedicated
+RSA `kubernetes.io/tls` Secret for the v10 Login UI JWT client assertion flow.
+The chart consumes it through `login.loginServiceKeySecretName`, mounting
+`tls.crt` into Zitadel and `tls.key` into `zitadel-login`.
+
 ## Access
 
 - Console: `https://zitadel.damacus.io`
