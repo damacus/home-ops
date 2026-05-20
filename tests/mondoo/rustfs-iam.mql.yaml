@@ -14,20 +14,20 @@ policies:
         email: security@ironstone.casa
     docs:
       desc: |
-        Validate the RustFS IAM canary rollout. Penpot, Mealie, Forgejo, and Med
-        Tracker CNPG are cut over to their per-app buckets and credentials while
-        every other backup consumer keeps using the old shared/root-backed
-        resources for rollback.
+        Validate the RustFS IAM CNPG rollout. Every CNPG backup consumer is cut
+        over to its per-app bucket and credential while non-CNPG backup
+        consumers keep using the old shared/root-backed resources for rollback.
     groups:
       - title: CNPG Consumers Stay On Existing RustFS Resources
         filters: asset.platform != ""
         checks:
-          - uid: phase1-zitadel-cnpg-keeps-current-consumer
-            title: Zitadel CNPG keeps current bucket and stages per-app secret
+          - uid: phase2-zitadel-cnpg-uses-per-app-consumer
+            title: Zitadel CNPG uses the per-app bucket and credential
             impact: 100
             mql: |
-              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/zitadel")
-              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-zitadel/")
+              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-zitadel")
+              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
               file("kubernetes/apps/authentication/zitadel-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-zitadel")
               file("kubernetes/apps/authentication/zitadel-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-zitadel")
           - uid: phase2-forgejo-cnpg-uses-canary-consumer
@@ -39,28 +39,31 @@ policies:
               file("kubernetes/apps/dev/forgejo-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
               file("kubernetes/apps/dev/forgejo-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-forgejo")
               file("kubernetes/apps/dev/forgejo-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-forgejo")
-          - uid: phase1-home-assistant-cnpg-keeps-current-consumer
-            title: Home Assistant CNPG keeps current bucket and stages per-app secret
+          - uid: phase2-home-assistant-cnpg-uses-per-app-consumer
+            title: Home Assistant CNPG uses the per-app bucket and credential
             impact: 100
             mql: |
-              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/home-assistant")
-              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-home-assistant/")
+              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-home-assistant")
+              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
               file("kubernetes/apps/home-automation/home-assistant-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-home-assistant")
               file("kubernetes/apps/home-automation/home-assistant-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-home-assistant")
-          - uid: phase1-n8n-cnpg-keeps-current-consumer
-            title: n8n CNPG keeps current bucket and stages per-app secret
+          - uid: phase2-n8n-cnpg-uses-per-app-consumer
+            title: n8n CNPG uses the per-app bucket and credential
             impact: 100
             mql: |
-              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/n8n")
-              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-n8n/")
+              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-n8n")
+              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
               file("kubernetes/apps/home-automation/n8n-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-n8n")
               file("kubernetes/apps/home-automation/n8n-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-n8n")
-          - uid: phase1-immich-cnpg-keeps-current-consumer
-            title: Immich CNPG keeps current bucket and stages per-app secret
+          - uid: phase2-immich-cnpg-uses-per-app-consumer
+            title: Immich CNPG uses the per-app bucket and credential
             impact: 100
             mql: |
-              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-backups/immich")
-              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials")
+              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-immich/")
+              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-immich")
+              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
               file("kubernetes/apps/home/immich-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-immich")
               file("kubernetes/apps/home/immich-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-immich")
           - uid: phase2-mealie-cnpg-uses-canary-consumer
