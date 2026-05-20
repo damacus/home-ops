@@ -912,6 +912,8 @@ spec:
       labels:
         app: barman-cloud
     spec:
+      imagePullSecrets:
+      - name: ghcr-credentials
       containers:
       - args:
         - operator

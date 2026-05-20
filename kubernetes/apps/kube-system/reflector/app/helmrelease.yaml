@@ -29,3 +29,6 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+  values:
+    imagePullSecrets:
+      - name: dockerhub-credentials

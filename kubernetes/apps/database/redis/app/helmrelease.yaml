@@ -19,6 +19,10 @@ spec:
     remediation:
       retries: 3
   values:
+    global:
+      imagePullSecrets:
+        - dockerhub-credentials
+
     architecture: standalone
     resources:
       limits:

@@ -6,6 +6,8 @@ metadata:
   name: n8n-green
   namespace: home-automation
 spec:
+  imagePullSecrets:
+    - name: ghcr-credentials
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog

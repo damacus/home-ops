@@ -23,6 +23,8 @@ spec:
         app.kubernetes.io/name: penpot-skip-onboarding
         app.kubernetes.io/instance: penpot
     spec:
+      imagePullSecrets:
+        - name: dockerhub-credentials
       restartPolicy: OnFailure
       securityContext:
         runAsUser: 1001

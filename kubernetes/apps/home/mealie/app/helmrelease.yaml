@@ -27,6 +27,10 @@ spec:
   uninstall:
     keepHistory: false
   values:
+    defaultPodOptions:
+      imagePullSecrets:
+        - name: ghcr-credentials
+
     controllers:
       mealie:
         type: statefulset

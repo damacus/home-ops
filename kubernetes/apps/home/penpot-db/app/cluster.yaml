@@ -6,6 +6,8 @@ metadata:
   name: &name penpot
   namespace: home
 spec:
+  imagePullSecrets:
+    - name: ghcr-credentials
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog

@@ -8,6 +8,7 @@ spec:
   distribution:
     version: "2.x"
     registry: "ghcr.io/fluxcd"
+    imagePullSecret: ghcr-credentials
   components:
     - source-controller
     - kustomize-controller

@@ -28,6 +28,10 @@ spec:
     keepHistory: false
 
   values:
+    defaultPodOptions:
+      imagePullSecrets:
+        - name: ghcr-credentials
+
     controllers:
       paperless:
         annotations:

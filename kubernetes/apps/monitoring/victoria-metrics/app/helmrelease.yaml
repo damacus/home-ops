@@ -97,6 +97,8 @@ spec:
     alertmanager:
       enabled: true
       spec:
+        imagePullSecrets:
+          - name: dockerhub-credentials
         resources:
           requests:
             cpu: 25m

@@ -17,6 +17,13 @@ spec:
     remediation:
       retries: 3
   values:
+    global:
+      imagePullSecrets:
+        - dockerhub-credentials
+    image:
+      pullSecrets:
+        - dockerhub-credentials
+
     replicas: 1
     podAnnotations:
       reloader.stakater.com/auto: "true"

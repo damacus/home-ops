@@ -26,6 +26,13 @@ spec:
     keepHistory: false
 
   values:
+    defaultPodOptions:
+      imagePullSecrets:
+        - name: ghcr-credentials
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+
     controllers:
       frigate:
         annotations:
@@ -69,10 +76,6 @@ spec:
               limits:
                 cpu: "2"
                 memory: 4Gi
-    defaultPodOptions:
-      securityContext:
-        fsGroup: 568
-        fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         controller: frigate

@@ -31,6 +31,10 @@ spec:
     remediation:
       retries: 3
   values:
+    defaultPodOptions:
+      imagePullSecrets:
+        - name: ghcr-credentials
+
     controllers:
       dragonfly-operator:
         replicas: 1

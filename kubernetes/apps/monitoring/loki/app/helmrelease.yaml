@@ -32,6 +32,9 @@ spec:
     remediation:
       retries: 3
   values:
+    imagePullSecrets:
+      - name: dockerhub-credentials
+
     # Deploy in Single Binary mode
     deploymentMode: SingleBinary
 
