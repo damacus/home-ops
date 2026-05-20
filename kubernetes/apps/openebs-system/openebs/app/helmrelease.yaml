@@ -21,6 +21,13 @@ spec:
     remediation:
       retries: 3
   values:
+    imagePullSecrets:
+      - name: dockerhub-credentials
+
+    preUpgradeHook:
+      imagePullSecrets:
+        - name: dockerhub-credentials
+
     engines:
       local:
         lvm:
@@ -34,9 +41,24 @@ spec:
           enabled: false
 
     localpv-provisioner:
+      imagePullSecrets:
+        - name: dockerhub-credentials
       enabled: true
       hostpathClass:
         enabled: true
         name: openebs-hostpath
         isDefaultClass: false
         basePath: /var/openebs/local
+
+    loki:
+      imagePullSecrets:
+        - name: dockerhub-credentials
+      serviceAccount:
+        imagePullSecrets:
+          - name: dockerhub-credentials
+
+    alloy:
+      global:
+        image:
+          pullSecrets:
+            - name: dockerhub-credentials

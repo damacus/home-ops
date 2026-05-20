@@ -17,6 +17,8 @@ spec:
         app.kubernetes.io/name: kube-vip
         app.kubernetes.io/version: v1.0.4
     spec:
+      imagePullSecrets:
+        - name: ghcr-credentials
       containers:
         - name: kube-vip
           image: ghcr.io/kube-vip/kube-vip:v1.1.2

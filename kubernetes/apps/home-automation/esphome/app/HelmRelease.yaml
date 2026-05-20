@@ -25,6 +25,10 @@ spec:
   uninstall:
     keepHistory: false
   values:
+    defaultPodOptions:
+      imagePullSecrets:
+        - name: ghcr-credentials
+
     controllers:
       esphome:
         annotations:

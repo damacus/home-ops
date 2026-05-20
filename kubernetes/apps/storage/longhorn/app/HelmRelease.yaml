@@ -26,6 +26,10 @@ spec:
     keepHistory: false
 
   values:
+    global:
+      imagePullSecrets:
+        - dockerhub-credentials
+
     monitoring:
       enabled: true
       createPrometheusRules: true

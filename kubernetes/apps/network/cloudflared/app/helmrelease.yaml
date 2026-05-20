@@ -24,6 +24,10 @@ spec:
   uninstall:
     keepHistory: true
   values:
+    defaultPodOptions:
+      imagePullSecrets:
+        - name: dockerhub-credentials
+
     controllers:
       cloudflared:
         replicas: 2

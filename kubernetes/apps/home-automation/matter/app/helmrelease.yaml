@@ -81,6 +81,8 @@ spec:
     # thus we need the controller to be on the host network.
     # https://github.com/home-assistant-libs/python-matter-server?tab=readme-ov-file#requirements-to-communicate-with-thread-devices-through-thread-border-routers
     defaultPodOptions:
+      imagePullSecrets:
+        - name: ghcr-credentials
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
 

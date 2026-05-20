@@ -5,6 +5,8 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./clustersecretstore.yaml
+  - ./dockerhub-externalsecret.yaml
+  - ./ghcr-externalsecret.yaml
   - ./httproute.yaml
 
 configMapGenerator:

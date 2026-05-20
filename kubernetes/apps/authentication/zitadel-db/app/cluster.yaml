@@ -6,6 +6,8 @@ metadata:
   name: &name zitadel-green
   namespace: authentication
 spec:
+  imagePullSecrets:
+    - name: ghcr-credentials
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog

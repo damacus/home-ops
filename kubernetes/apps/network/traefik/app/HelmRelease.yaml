@@ -21,6 +21,8 @@ spec:
       retries: 3
   values:
     deployment:
+      imagePullSecrets:
+        - name: dockerhub-credentials
       replicas: 2
 
     # Enable Gateway API provider

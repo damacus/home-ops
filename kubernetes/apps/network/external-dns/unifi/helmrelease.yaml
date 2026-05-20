@@ -24,6 +24,8 @@ spec:
       retries: 3
   values:
     fullnameOverride: *app
+    imagePullSecrets:
+      - name: ghcr-credentials
     logLevel: info
     provider:
       name: webhook
