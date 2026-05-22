@@ -8,7 +8,7 @@ spec:
   interval: 1h
   url: oci://ghcr.io/emberstack/helm-charts/reflector
   ref:
-    tag: 10.0.44
+    tag: 10.0.45
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
