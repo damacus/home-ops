@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
-# Frontend egress: DNS resolution + backend API proxy
+# Frontend egress: DNS resolution + backend API proxy + MCP proxy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -32,6 +32,17 @@ spec:
       toPorts:
         - ports:
             - port: "6060"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: home
+            k8s:app.kubernetes.io/controller: mcp
+            k8s:app.kubernetes.io/instance: penpot
+      toPorts:
+        - ports:
+            - port: "4401"
+              protocol: TCP
+            - port: "4402"
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
@@ -124,7 +135,7 @@ spec:
               protocol: TCP
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
-# Exporter egress: DNS + frontend (headless Chromium loads pages from frontend)
+# Exporter egress: DNS + frontend (headless Chromium loads pages from frontend) + Redis
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -156,4 +167,14 @@ spec:
       toPorts:
         - ports:
             - port: "80"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: database
+            k8s:app.kubernetes.io/component: master
+            k8s:app.kubernetes.io/instance: redis
+            k8s:app.kubernetes.io/name: redis
+      toPorts:
+        - ports:
+            - port: "6379"
               protocol: TCP

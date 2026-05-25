@@ -30,6 +30,9 @@ spec:
       imagePullSecrets:
         - dockerhub-credentials
 
+    privateRegistry:
+      registrySecret: dockerhub-credentials
+
     monitoring:
       enabled: true
       createPrometheusRules: true
