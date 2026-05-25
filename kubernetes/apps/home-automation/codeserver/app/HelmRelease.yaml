@@ -38,15 +38,9 @@ spec:
             image:
               repository: ghcr.io/coder/code-server
               tag: 4.121.0@sha256:ea5f42d99998e2ba44297eca9b8a38a101e718ef54caaa41d649f6c6f1c8c71e
-            env:
-              PASSWORD:
-                valueFrom:
-                  secretKeyRef:
-                    name: codeserver-auth
-                    key: PASSWORD
             args:
               - --auth
-              - "password"
+              - "none"
               - --user-data-dir
               - "/config/.vscode"
               - --extensions-dir

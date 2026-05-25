@@ -12,16 +12,15 @@ policies:
         email: dan.webb@damacus.io
     docs:
       desc: |
-        Validates that CodeServer is protected with oauth2-proxy and password
-        auth, routes through the KEDA HTTP add-on, and scales according to the
+        Validates that CodeServer delegates auth to oauth2-proxy,
+        routes through the KEDA HTTP add-on, and scales according to the
         expected office-hours and HTTP wake-up policy.
     groups:
       - title: CodeServer GitOps manifests
         filters:
           - mql: asset.family.contains("unix")
         checks:
-          - uid: codeserver-auth-disabled-removed
-          - uid: codeserver-password-secret
+          - uid: codeserver-internal-auth-disabled
           - uid: codeserver-oidc-forward-auth-route
           - uid: codeserver-keda-http-routing
           - uid: codeserver-keda-schedule
@@ -29,34 +28,20 @@ policies:
       - provider: os
 
 queries:
-  - uid: codeserver-auth-disabled-removed
-    title: CodeServer must not disable authentication
+  - uid: codeserver-internal-auth-disabled
+    title: CodeServer must delegate authentication to oauth2-proxy
     mql: |
       helmrelease = file("kubernetes/apps/home-automation/codeserver/app/HelmRelease.yaml")
+      kustomization = file("kubernetes/apps/home-automation/codeserver/app/kustomization.yaml")
       helmrelease.exists
+      kustomization.exists
       helmrelease.content.contains("--auth")
-      helmrelease.content.contains("password")
-      helmrelease.content.contains("none") == false
-      helmrelease.content.contains("--auth=none") == false
+      helmrelease.content.contains("none")
+      helmrelease.content.contains("PASSWORD:") == false
+      helmrelease.content.contains("codeserver-auth") == false
+      kustomization.content.contains("externalsecret.yaml") == false
     docs:
-      desc: CodeServer must not run with `--auth none`.
-
-  - uid: codeserver-password-secret
-    title: CodeServer password must come from ExternalSecret
-    mql: |
-      helmrelease = file("kubernetes/apps/home-automation/codeserver/app/HelmRelease.yaml")
-      externalsecret = file("kubernetes/apps/home-automation/codeserver/app/externalsecret.yaml")
-      helmrelease.exists
-      externalsecret.exists
-      helmrelease.content.contains("PASSWORD:")
-      helmrelease.content.contains("name: codeserver-auth")
-      helmrelease.content.contains("key: PASSWORD")
-      externalsecret.content.contains("name: codeserver-auth")
-      externalsecret.content.contains("secretKey: PASSWORD")
-      externalsecret.content.contains("key: codeserver-auth")
-      externalsecret.content.contains("property: PASSWORD")
-    docs:
-      desc: CodeServer password auth must be backed by a 1Password-sourced Kubernetes Secret.
+      desc: CodeServer internal password auth is disabled because the route is protected by oauth2-proxy forward-auth.
 
   - uid: codeserver-oidc-forward-auth-route
     title: CodeServer route must require oauth2-proxy
