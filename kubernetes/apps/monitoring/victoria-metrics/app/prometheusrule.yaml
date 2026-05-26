@@ -6,15 +6,35 @@ metadata:
   name: miscellaneous-rules
 spec:
   groups:
-    - name: dockerhub
+    - name: image-pulls
       rules:
-        - alert: BootstrapRateLimitRisk
+        - alert: ImagePullErrors
           annotations:
-            summary: Kubernetes cluster at risk of being rate limited by dockerhub on bootstrap
-          expr: count(time() - container_last_seen{image=~"(docker.io).*",container!=""} < 30) > 100
-          for: 15m
+            summary: Kubernetes image pulls are failing
+            description: "Kubelet reported {{ $value | printf \"%.0f\" }} image pull errors in the last 15 minutes. Check pod events for ImagePullBackOff, ErrImagePull, registry authentication, or upstream registry rate limits."
+          expr: |
+            sum(increase(kubelet_runtime_operations_errors_total{job="kubelet", operation_type="pull_image"}[15m])) > 0
+          for: 5m
           labels:
             severity: critical
+        - alert: HighImagePullVolume
+          annotations:
+            summary: Kubernetes image pull volume is elevated
+            description: "Kubelet reported {{ $value | printf \"%.0f\" }} image pull operations in the last 15 minutes. This usually means node bootstrap, a broad rollout, or repeated pod churn is pulling images aggressively."
+          expr: |
+            sum(increase(kubelet_runtime_operations_total{job="kubelet", operation_type="pull_image"}[15m])) > 30
+          for: 5m
+          labels:
+            severity: warning
+        - alert: DockerHubContainerStartBurst
+          annotations:
+            summary: Docker Hub backed containers are starting frequently
+            description: "{{ $value | printf \"%.0f\" }} Docker Hub backed container start-time changes were observed in the last 15 minutes. This is a registry-specific churn proxy, not a direct pull counter; pair it with HighImagePullVolume or ImagePullErrors before treating it as rate-limit pressure."
+          expr: |
+            sum(changes(container_start_time_seconds{image=~"docker.io.*",container!="",pod!=""}[15m])) > 25
+          for: 5m
+          labels:
+            severity: warning
     - name: home-assistant
       rules:
         - alert: HomeAssistantNestAuthFailure
