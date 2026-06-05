@@ -40,7 +40,7 @@ spec:
           fix-run-permissions:
             image:
               repository: busybox
-              tag: 1.37.0
+              tag: 1.38.0
             command: ["/bin/sh", "-c"]
             args:
               - chown 1030:1030 /run && chmod 0755 /run
