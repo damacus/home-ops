@@ -130,7 +130,22 @@ spec:
                         type: prometheus
                         uid: prometheus
                       editorMode: code
-                      expr: min by (namespace, job) (time() - cnpg_collector_last_available_backup_timestamp) > 90000
+                      expr: |-
+                        (
+                          min by (namespace, job) (
+                            time() - barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{
+                              job!~"dev/forgejo-green|home-automation/(home-assistant-green|n8n-green)"
+                            }
+                          ) > 10800
+                        )
+                        or
+                        (
+                          min by (namespace, job) (
+                            time() - barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{
+                              job=~"dev/forgejo-green|home-automation/(home-assistant-green|n8n-green)"
+                            }
+                          ) > 129600
+                        )
                       instant: true
                       intervalMs: 1000
                       maxDataPoints: 43200
@@ -178,8 +193,8 @@ spec:
                 execErrState: Alerting
                 for: 15m
                 annotations:
-                  summary: CNPG backup age exceeds 25 hours
-                  description: At least one CNPG cluster has no recent successful backup.
+                  summary: CNPG backup age exceeds expected schedule
+                  description: A CNPG cluster has no recent successful Barman backup for its schedule.
                 labels:
                   severity: critical
               - uid: cnpg-recent-backup-failed
@@ -196,7 +211,17 @@ spec:
                         type: prometheus
                         uid: prometheus
                       editorMode: code
-                      expr: max by (namespace, job) (time() - cnpg_collector_last_failed_backup_timestamp) < 3600
+                      expr: |-
+                        (
+                          max by (namespace, job) (barman_cloud_cloudnative_pg_io_last_failed_backup_timestamp)
+                          > max by (namespace, job) (barman_cloud_cloudnative_pg_io_last_available_backup_timestamp)
+                        )
+                        and on (namespace, job)
+                        (
+                          max by (namespace, job) (
+                            time() - barman_cloud_cloudnative_pg_io_last_failed_backup_timestamp
+                          ) < 3600
+                        )
                       instant: true
                       intervalMs: 1000
                       maxDataPoints: 43200
