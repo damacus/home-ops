@@ -161,6 +161,9 @@ spec:
           access_log off;
 
     # Monitoring
+    lokiCanary:
+      enabled: false
+
     monitoring:
       serviceMonitor:
         enabled: true
