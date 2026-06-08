@@ -108,7 +108,7 @@ spec:
           app:
             image:
               repository: node
-              tag: 22-alpine
+              tag: 24-alpine
             command: ["/bin/sh", "-c"]
             args:
               - |
