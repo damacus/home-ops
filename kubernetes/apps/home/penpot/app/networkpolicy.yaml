@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
-# Frontend: only Traefik may reach port 80
+# Frontend: only Traefik may reach the nginx pod port.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -22,7 +22,7 @@ spec:
             matchLabels:
               app.kubernetes.io/name: traefik
       ports:
-        - port: 80
+        - port: 8080
           protocol: TCP
     # Exporter's headless Chromium loads the frontend internally
     - from:
@@ -34,7 +34,7 @@ spec:
               app.kubernetes.io/controller: exporter
               app.kubernetes.io/instance: penpot
       ports:
-        - port: 80
+        - port: 8080
           protocol: TCP
 ---
 # yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
