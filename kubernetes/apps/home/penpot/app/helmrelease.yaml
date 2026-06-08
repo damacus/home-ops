@@ -193,6 +193,7 @@ spec:
                     key: client-secret
               PENPOT_OIDC_BASE_URI: https://zitadel.damacus.io
               PENPOT_OIDC_SCOPES: openid profile email
+              PENPOT_OIDC_USER_INFO_SOURCE: userinfo
               PENPOT_OIDC_NAME_ATTR: name
               PENPOT_OIDC_EMAIL_ATTR: email
             probes:
