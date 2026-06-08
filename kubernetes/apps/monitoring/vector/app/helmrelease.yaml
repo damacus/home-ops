@@ -87,6 +87,22 @@ spec:
           inputs: [remap_kubernetes_logs]
           condition: '.label.app == "home-assistant" && is_string(.message) && match(string!(.message), r''\\[bluetooth_auto_recovery\\.recover\\] Could not (determine the power state of|cycle|reset the power state of) the Bluetooth adapter hci1'')'
 
+        filter_ingested_logs:
+          type: filter
+          inputs: [remap_kubernetes_logs]
+          condition: |
+            !(
+              .label.namespace == "openebs-system" &&
+              .label.app == "loki" &&
+              is_string(.message) &&
+              (
+                contains(string!(.message), "caller=index_set.go") ||
+                contains(string!(.message), "caller=table_manager.go") ||
+                contains(string!(.message), "caller=recalculate_owned_streams.go") ||
+                contains(string!(.message), "caller=flush.go")
+              )
+            )
+
         home_assistant_bt_metric:
           type: log_to_metric
           inputs: [filter_home_assistant_bt]
@@ -100,7 +116,7 @@ spec:
       sinks:
         loki:
           type: loki
-          inputs: [remap_kubernetes_logs]
+          inputs: [filter_ingested_logs]
           endpoint: http://loki-gateway.monitoring.svc.cluster.local
           encoding:
             codec: json
