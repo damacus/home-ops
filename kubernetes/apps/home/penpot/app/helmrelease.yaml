@@ -52,6 +52,7 @@ spec:
               PENPOT_EXPORTER_URI: http://penpot-exporter.home.svc.cluster.local:6061
               PENPOT_MCP_URI: http://penpot-mcp.home.svc.cluster.local:4401
               PENPOT_MCP_URI_WS: http://penpot-mcp.home.svc.cluster.local:4402
+              PENPOT_OIDC_USER_INFO_SOURCE: userinfo
             probes:
               liveness:
                 enabled: true
@@ -88,7 +89,14 @@ spec:
               allowPrivilegeEscalation: false
               capabilities:
                 drop: ["ALL"]
-                add: ["CHOWN", "DAC_OVERRIDE", "SETUID", "SETGID", "NET_BIND_SERVICE"]
+                add:
+                  [
+                    "CHOWN",
+                    "DAC_OVERRIDE",
+                    "SETUID",
+                    "SETGID",
+                    "NET_BIND_SERVICE",
+                  ]
               seccompProfile:
                 type: RuntimeDefault
             resources:
