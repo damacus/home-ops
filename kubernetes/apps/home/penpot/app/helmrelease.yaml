@@ -41,11 +41,13 @@ spec:
           app:
             image:
               repository: penpotapp/frontend
-              tag: 2.15.3
+              tag: 2.15.4
             env:
-              PENPOT_FLAGS: enable-oidc disable-registration disable-email-verification disable-onboarding disable-onboarding-team
+              PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team
               PENPOT_BACKEND_URI: http://penpot-backend.home.svc.cluster.local:6060
               PENPOT_EXPORTER_URI: http://penpot-exporter.home.svc.cluster.local:6061
+              PENPOT_MCP_URI: http://penpot-mcp.home.svc.cluster.local:4401
+              PENPOT_MCP_URI_WS: http://penpot-mcp.home.svc.cluster.local:4402
             probes:
               liveness:
                 enabled: true
@@ -53,7 +55,7 @@ spec:
                 spec:
                   httpGet:
                     path: /
-                    port: 80
+                    port: 8080
                   initialDelaySeconds: 10
                   periodSeconds: 30
               readiness:
@@ -62,7 +64,7 @@ spec:
                 spec:
                   httpGet:
                     path: /
-                    port: 80
+                    port: 8080
                   initialDelaySeconds: 5
                   periodSeconds: 10
               startup:
@@ -71,10 +73,10 @@ spec:
                 spec:
                   httpGet:
                     path: /
-                    port: 80
+                    port: 8080
                   failureThreshold: 30
                   periodSeconds: 5
-            # S6-overlay needs root to configure and launch nginx on port 80.
+            # S6-overlay needs root to configure and launch nginx.
             # allowPrivilegeEscalation=false still applies (no setuid-bit binaries).
             securityContext:
               runAsUser: 0
@@ -104,9 +106,9 @@ spec:
           app:
             image:
               repository: penpotapp/backend
-              tag: 2.15.3
+              tag: 2.15.4
             env:
-              PENPOT_FLAGS: enable-oidc disable-registration disable-email-verification disable-onboarding disable-onboarding-team
+              PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team
               PENPOT_PUBLIC_URI: https://penpot.ironstone.casa
               PENPOT_DATABASE_URI: postgresql://penpot-rw.home.svc.cluster.local/penpot
               PENPOT_DATABASE_USERNAME: app
@@ -196,9 +198,9 @@ spec:
           app:
             image:
               repository: penpotapp/exporter
-              tag: 2.15.3
+              tag: 2.15.4
             env:
-              PENPOT_FLAGS: enable-oidc disable-registration disable-email-verification disable-onboarding disable-onboarding-team
+              PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team
               # Exporter loads pages via headless Chromium; use the internal frontend service
               PENPOT_PUBLIC_URI: http://penpot-frontend.home.svc.cluster.local
               PENPOT_BROWSER_CONFIG: --no-sandbox --disable-dev-shm-usage
@@ -234,12 +236,58 @@ spec:
             seccompProfile:
               type: RuntimeDefault
 
+      # ── MCP ────────────────────────────────────────────────────────────────
+      mcp:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: node
+              tag: 24-alpine
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                mkdir -p /tmp/bin
+                printf '#!/bin/sh\nexec corepack pnpm "$@"\n' > /tmp/bin/pnpm
+                chmod +x /tmp/bin/pnpm
+                export PATH="/tmp/bin:$PATH"
+                corepack prepare pnpm@11.3.0 --activate
+                npx -y @penpot/mcp@stable
+            env:
+              PENPOT_MCP_LOG_LEVEL: info
+              PENPOT_MCP_PLUGIN_SERVER_LISTEN_ADDRESS: 0.0.0.0
+              PENPOT_MCP_REMOTE_MODE: "true"
+              PENPOT_MCP_SERVER_ADDRESS: penpot.ironstone.casa
+              PENPOT_MCP_SERVER_LISTEN_ADDRESS: 0.0.0.0
+              PNPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS: "true"
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              readOnlyRootFilesystem: false
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+
     service:
       frontend:
         controller: frontend
         ports:
           http:
             port: 80
+            targetPort: 8080
       backend:
         controller: backend
         ports:
@@ -250,6 +298,15 @@ spec:
         ports:
           http:
             port: 6061
+      mcp:
+        controller: mcp
+        ports:
+          http:
+            port: 4401
+          plugin:
+            port: 4400
+          websocket:
+            port: 4402
 
     route:
       app:
