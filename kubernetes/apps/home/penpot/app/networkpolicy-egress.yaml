@@ -155,5 +155,5 @@ spec:
             k8s:app.kubernetes.io/instance: penpot
       toPorts:
         - ports:
-            - port: "80"
+            - port: "8080"
               protocol: TCP
