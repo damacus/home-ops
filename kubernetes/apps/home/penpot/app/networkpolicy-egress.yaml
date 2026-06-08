@@ -89,6 +89,12 @@ spec:
         - ports:
             - port: "6379"
               protocol: TCP
+    - toFQDNs:
+        - matchName: zitadel.damacus.io
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: home
