@@ -31,7 +31,7 @@ charset-normalizer==3.4.7
     # via requests
 click==8.4.1
     # via black
-cryptography==48.0.0
+cryptography==48.0.1
     # via
     #   ansible-core
     #   ansible-lint
