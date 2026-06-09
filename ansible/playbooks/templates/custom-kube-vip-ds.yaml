@@ -58,7 +58,7 @@ spec:
             - name: enable_endpointslices
               value: "true"
             - name: enable_service_security
-              value: "true"
+              value: "false"
             - name: vip_arpRate
               value: "3"
             - name: health_check_port
