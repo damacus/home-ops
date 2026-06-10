@@ -27,10 +27,33 @@ spec:
   uninstall:
     keepHistory: false
   values:
+    operator:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 20Mi
+        limits:
+          cpu: 500m
+          memory: 64Mi
+    scaler:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 20Mi
+        limits:
+          cpu: 500m
+          memory: 64Mi
     interceptor:
       replicas:
         min: 1
         max: 2
+      resources:
+        requests:
+          cpu: 100m
+          memory: 20Mi
+        limits:
+          cpu: 500m
+          memory: 64Mi
       requestTimeout: 60s
       responseHeaderTimeout: 30s
       readinessTimeout: 60s
