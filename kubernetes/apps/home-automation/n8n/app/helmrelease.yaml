@@ -194,6 +194,9 @@ spec:
               - path:
                   type: PathPrefix
                   value: /mcp-server
+              - path:
+                  type: Exact
+                  value: /rest/oauth2-credential/callback
             backendRefs:
               - kind: Service
                 name: n8n
