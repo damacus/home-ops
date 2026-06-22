@@ -76,7 +76,8 @@ spec:
                   secretKeyRef:
                     name: n8n-secret
                     key: encryption_key
-              N8N_HOST: "n8n.ironstone.casa"
+              N8N_EDITOR_BASE_URL: "https://n8n.damacus.io"
+              N8N_HOST: "n8n.damacus.io"
               N8N_LOG_LEVEL: "info"
               N8N_LOG_OUTPUT: "console"
               N8N_PORT: &port 5678
@@ -155,15 +156,21 @@ spec:
     route:
       app:
         annotations:
-          external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
+          external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
         hostnames:
-          - "n8n.ironstone.casa"
+          - "n8n.damacus.io"
         parentRefs:
           - name: traefik-internal
             namespace: network
             sectionName: websecure
         rules:
-          - matches:
+          - filters:
+              - type: ExtensionRef
+                extensionRef:
+                  group: traefik.io
+                  kind: Middleware
+                  name: oauth2-proxy-forward-auth
+            matches:
               - path:
                   type: PathPrefix
                   value: /
@@ -194,9 +201,6 @@ spec:
               - path:
                   type: PathPrefix
                   value: /mcp-server
-              - path:
-                  type: Exact
-                  value: /rest/oauth2-credential/callback
             backendRefs:
               - kind: Service
                 name: n8n
