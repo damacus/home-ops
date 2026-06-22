@@ -4,5 +4,6 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./forgejo-db/ks.yaml
+  - ./forgejo-runner/ks.yaml
   - ./forgejo/ks.yaml
   - ./namespace.yaml
