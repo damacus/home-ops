@@ -112,11 +112,10 @@ spec:
         enabled: false
 
     # Logging
-    logs:
-      general:
-        level: INFO
-      access:
-        enabled: true
+    log:
+      level: INFO
+    accessLog:
+      enabled: true
 
     # Metrics
     metrics:
