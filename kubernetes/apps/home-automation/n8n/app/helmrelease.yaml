@@ -169,7 +169,7 @@ spec:
                 extensionRef:
                   group: traefik.io
                   kind: Middleware
-                  name: oauth2-proxy-forward-auth
+                  name: oauth2-proxy-damacus-forward-auth
             matches:
               - path:
                   type: PathPrefix
