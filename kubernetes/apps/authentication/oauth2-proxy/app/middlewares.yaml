@@ -20,6 +20,23 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
+  name: oauth2-proxy-damacus-forward-auth
+  namespace: home-automation
+spec:
+  forwardAuth:
+    address: http://oauth2-proxy-damacus.authentication.svc.cluster.local:4180/
+    trustForwardHeader: true
+    authResponseHeaders:
+      - Authorization
+      - X-Auth-Request-Access-Token
+      - X-Auth-Request-Email
+      - X-Auth-Request-Groups
+      - X-Auth-Request-Preferred-Username
+      - X-Auth-Request-User
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
   name: oauth2-proxy-auth-only
   namespace: home-automation
 spec:
