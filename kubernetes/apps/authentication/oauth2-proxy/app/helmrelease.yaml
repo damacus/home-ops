@@ -117,6 +117,8 @@ spec:
               - --redirect-url=https://auth.damacus.io/oauth2/callback
               - --email-domain=*
               - --scope=openid profile email groups
+              - --oidc-groups-claim=groups
+              - --allowed-group=user
               - --cookie-domain=.damacus.io
               - --whitelist-domain=.damacus.io
               - --cookie-secure=true
