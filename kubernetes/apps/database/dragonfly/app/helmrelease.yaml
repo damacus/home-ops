@@ -84,6 +84,8 @@ spec:
               capabilities: { drop: ["ALL"] }
         pod:
           automountServiceAccountToken: true
+          labels:
+            control-plane: controller-manager
           securityContext:
             runAsUser: 65534
             runAsGroup: 65534

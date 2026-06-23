@@ -9,6 +9,8 @@ import os
 import subprocess
 import sys
 import urllib.parse
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from typing import Any, Final
@@ -22,6 +24,7 @@ ALERTMANAGER_URL: Final[str] = "http://localhost:9093/api/v2/alerts"
 EXEC_POD: Final[list[str]] = ["kubectl", "exec", "-n", "monitoring", "vmalertmanager-vm-0", "--"]
 STALE_BACKUP_SECONDS: Final[int] = 30 * 60
 HIBERNATION_ANNOTATION: Final[str] = "cnpg.io/hibernation"
+COMMAND_TIMEOUT_SECONDS: int = 45
 
 
 @dataclass
@@ -37,7 +40,22 @@ class CheckResult:
 
 
 def run(command: list[str], input_text: str | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, input=input_text, check=False, capture_output=True, text=True)
+    try:
+        return subprocess.run(
+            command,
+            input=input_text,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=COMMAND_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return subprocess.CompletedProcess(
+            command,
+            124,
+            stdout=exc.stdout or "",
+            stderr=f"command timed out after {COMMAND_TIMEOUT_SECONDS}s: {' '.join(command)}",
+        )
 
 
 def kubectl_json(args: list[str]) -> Any:
@@ -359,32 +377,60 @@ def selected_checks(args: argparse.Namespace) -> list[CheckResult]:
     if args.command == "cnpg-backups":
         return [cnpg_backups()]
     if args.command == "grafana-alerts":
-        return [grafana_alerts(), alertmanager_summary()]
+        return run_checks(
+            [
+                ("grafana-alerts", grafana_alerts),
+                ("alertmanager", alertmanager_summary),
+            ],
+            args.workers,
+        )
     if args.command == "morning-check":
-        results = [
-            check_nodes(),
-            check_kube_vip(),
-            check_cilium(),
-            check_not_ready_pods(),
-            check_deployments(),
-            cnpg_clusters(),
-            cnpg_backups(),
-            grafana_alerts(),
-            alertmanager_summary(),
-            run_edge_smoke(),
+        checks: list[tuple[str, Callable[[], CheckResult]]] = [
+            ("nodes", check_nodes),
+            ("kube-vip", check_kube_vip),
+            ("cilium", check_cilium),
+            ("pods", check_not_ready_pods),
+            ("deployments", check_deployments),
+            ("cnpg-clusters", cnpg_clusters),
+            ("cnpg-backups", cnpg_backups),
+            ("grafana-alerts", grafana_alerts),
+            ("alertmanager", alertmanager_summary),
         ]
+        if args.edge_smoke:
+            checks.append(("edge-smoke", run_edge_smoke))
+        results = run_checks(checks, args.workers)
         if args.log_noise:
             results.append(run_log_noise(args.period, args.top))
         return results
-    return [
-        check_nodes(),
-        check_kube_vip(),
-        check_cilium(),
-        check_not_ready_pods(),
-        check_deployments(),
-        cnpg_clusters(),
-        grafana_alerts(),
-    ]
+    return run_checks(
+        [
+            ("nodes", check_nodes),
+            ("kube-vip", check_kube_vip),
+            ("cilium", check_cilium),
+            ("pods", check_not_ready_pods),
+            ("deployments", check_deployments),
+            ("cnpg-clusters", cnpg_clusters),
+            ("grafana-alerts", grafana_alerts),
+        ],
+        args.workers,
+    )
+
+
+def run_checks(checks: list[tuple[str, Callable[[], CheckResult]]], workers: int) -> list[CheckResult]:
+    results: list[CheckResult | None] = [None] * len(checks)
+    max_workers = max(1, min(workers, len(checks)))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(check): (index, name)
+            for index, (name, check) in enumerate(checks)
+        }
+        for future in as_completed(futures):
+            index, name = futures[future]
+            try:
+                results[index] = future.result()
+            except Exception as exc:  # noqa: BLE001 - health checks should report and continue.
+                results[index] = CheckResult(name, "fail", f"{name} check failed", [str(exc)])
+    return [result for result in results if result is not None]
 
 
 def parse_args() -> argparse.Namespace:
@@ -393,13 +439,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     parser.add_argument("--notify", action="store_true", help="Send phone notification when failures are found")
     parser.add_argument("--log-noise", action="store_true", help="Include log-noise in morning-check")
+    parser.add_argument("--edge-smoke", action="store_true", help="Include local edge smoke checks in morning-check")
     parser.add_argument("--period", default="1h", help="Log-noise period when --log-noise is used")
     parser.add_argument("--top", default="20", help="Log-noise top count when --log-noise is used")
+    parser.add_argument("--workers", type=int, default=6, help="Maximum parallel health checks")
+    parser.add_argument("--timeout", type=int, default=45, help="Timeout in seconds for each subprocess call")
     return parser.parse_args()
 
 
 def main() -> int:
+    global COMMAND_TIMEOUT_SECONDS
     args = parse_args()
+    COMMAND_TIMEOUT_SECONDS = args.timeout
     try:
         results = selected_checks(args)
     except RuntimeError as exc:

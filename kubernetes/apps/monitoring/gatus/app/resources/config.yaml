@@ -5,6 +5,14 @@ connectivity:
     interval: 1m
 
 endpoints:
+  - name: Home Assistant (Internal)
+    group: cluster
+    url: https://home-assistant.ironstone.casa/
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 3000"
+
   - name: Echo Server (External)
     group: cluster
     url: https://echo-server.damacus.io
