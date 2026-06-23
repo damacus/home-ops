@@ -53,6 +53,66 @@ spec:
           expr: (kube_pod_container_status_restarts_total - kube_pod_container_status_restarts_total offset 10m >= 1) and ignoring (reason) min_over_time(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[10m]) == 1
           labels:
             severity: critical
+    - name: resource-state
+      rules:
+        - alert: ExternalSecretNotReady
+          annotations:
+            summary: "ExternalSecret {{ $labels.namespace }}/{{ $labels.name }} is not Ready"
+            description: "ExternalSecret Ready condition is not true. Reason: {{ $labels.reason }}."
+          expr: |
+            kube_external_secret_status_condition{type="Ready"} != 1
+          for: 10m
+          labels:
+            severity: warning
+        - alert: PushSecretNotReady
+          annotations:
+            summary: "PushSecret {{ $labels.namespace }}/{{ $labels.name }} is not Ready"
+            description: "PushSecret Ready condition is not true. Reason: {{ $labels.reason }}."
+          expr: |
+            kube_push_secret_status_condition{type="Ready"} != 1
+          for: 10m
+          labels:
+            severity: warning
+        - alert: PersistentVolumeUnusable
+          annotations:
+            summary: "PersistentVolume {{ $labels.persistentvolume }} is {{ $labels.phase }}"
+            description: "PersistentVolume has stayed in {{ $labels.phase }} for more than 30 minutes."
+          expr: |
+            kube_persistentvolume_status_phase{phase=~"Failed|Released"} == 1
+          for: 30m
+          labels:
+            severity: warning
+        - alert: PersistentVolumeStuckDeleting
+          annotations:
+            summary: "PersistentVolume {{ $labels.persistentvolume }} is stuck deleting"
+            description: "PersistentVolume has a deletion timestamp but is still present after 30 minutes."
+          expr: |
+            kube_persistentvolume_deletion_timestamp > 0
+          for: 30m
+          labels:
+            severity: warning
+        - alert: KubeJobFailedRecently
+          annotations:
+            summary: "Job {{ $labels.namespace }}/{{ $labels.job_name }} failed recently"
+            description: "Job has failed pods and started less than 2 hours ago."
+          expr: |
+            kube_job_status_failed > 0
+            and on(namespace, job_name)
+            (time() - kube_job_status_start_time < 2 * 60 * 60)
+          for: 5m
+          labels:
+            severity: warning
+        - alert: CNPGObjectStoreBackupFailed
+          annotations:
+            summary: "CNPG ObjectStore backup failed for {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "The latest failed Barman backup timestamp is newer than the latest successful backup timestamp."
+          expr: |
+            kube_cnpg_objectstore_last_failed_backup_timestamp
+            > on(namespace, name, cluster)
+            kube_cnpg_objectstore_last_successful_backup_timestamp
+          for: 10m
+          labels:
+            severity: critical
     - name: node-hardware
       rules:
         - alert: NodeHighCpuTemperature

@@ -120,6 +120,83 @@ spec:
     # Enable KubeStateMetrics to be self-contained (duplicates KPS KSM for now)
     kube-state-metrics:
       enabled: true
+      rbac:
+        extraRules:
+          - apiGroups: ["external-secrets.io"]
+            resources: ["externalsecrets", "pushsecrets"]
+            verbs: ["list", "watch"]
+          - apiGroups: ["barmancloud.cnpg.io"]
+            resources: ["objectstores"]
+            verbs: ["list", "watch"]
+      customResourceState:
+        enabled: true
+        config:
+          kind: CustomResourceStateMetrics
+          spec:
+            resources:
+              - groupVersionKind:
+                  group: external-secrets.io
+                  version: v1
+                  kind: ExternalSecret
+                metricNamePrefix: kube_external_secret
+                labelsFromPath:
+                  name: [metadata, name]
+                  namespace: [metadata, namespace]
+                metrics:
+                  - name: status_condition
+                    help: ExternalSecret status condition.
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [status, conditions]
+                        labelsFromPath:
+                          type: [type]
+                          reason: [reason]
+                        valueFrom: [status]
+              - groupVersionKind:
+                  group: external-secrets.io
+                  version: v1alpha1
+                  kind: PushSecret
+                metricNamePrefix: kube_push_secret
+                labelsFromPath:
+                  name: [metadata, name]
+                  namespace: [metadata, namespace]
+                metrics:
+                  - name: status_condition
+                    help: PushSecret status condition.
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [status, conditions]
+                        labelsFromPath:
+                          type: [type]
+                          reason: [reason]
+                        valueFrom: [status]
+              - groupVersionKind:
+                  group: barmancloud.cnpg.io
+                  version: v1
+                  kind: ObjectStore
+                metricNamePrefix: kube_cnpg_objectstore
+                labelsFromPath:
+                  name: [metadata, name]
+                  namespace: [metadata, namespace]
+                metrics:
+                  - name: last_failed_backup_timestamp
+                    help: Last failed Barman ObjectStore backup timestamp.
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [status, serverRecoveryWindow]
+                        labelFromKey: cluster
+                        valueFrom: [lastFailedBackupTime]
+                  - name: last_successful_backup_timestamp
+                    help: Last successful Barman ObjectStore backup timestamp.
+                    each:
+                      type: Gauge
+                      gauge:
+                        path: [status, serverRecoveryWindow]
+                        labelFromKey: cluster
+                        valueFrom: [lastSuccessfulBackupTime]
       resources:
         requests:
           cpu: 25m
