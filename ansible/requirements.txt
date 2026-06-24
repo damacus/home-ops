@@ -29,7 +29,7 @@ cffi==2.0.0
     #   cryptography
 charset-normalizer==3.4.7
     # via requests
-click==8.4.1
+click==8.4.2
     # via black
 cryptography==49.0.0
     # via
