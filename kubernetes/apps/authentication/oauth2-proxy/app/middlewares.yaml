@@ -6,7 +6,7 @@ metadata:
   namespace: home-automation
 spec:
   forwardAuth:
-    address: http://oauth2-proxy.authentication.svc.cluster.local:4180/
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/
     trustForwardHeader: true
     authResponseHeaders:
       - Authorization
@@ -40,7 +40,7 @@ metadata:
   namespace: home-automation
 spec:
   forwardAuth:
-    address: http://oauth2-proxy.authentication.svc.cluster.local:4180/oauth2/auth
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/oauth2/auth
     trustForwardHeader: true
     authResponseHeaders:
       - Authorization
@@ -57,7 +57,7 @@ metadata:
   namespace: home
 spec:
   forwardAuth:
-    address: http://oauth2-proxy.authentication.svc.cluster.local:4180/
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/
     trustForwardHeader: true
     authResponseHeaders:
       - Authorization
@@ -74,7 +74,7 @@ metadata:
   namespace: home
 spec:
   forwardAuth:
-    address: http://oauth2-proxy.authentication.svc.cluster.local:4180/oauth2/auth
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/oauth2/auth
     trustForwardHeader: true
     authResponseHeaders:
       - Authorization
@@ -91,7 +91,7 @@ metadata:
   namespace: monitoring
 spec:
   forwardAuth:
-    address: http://oauth2-proxy.authentication.svc.cluster.local:4180/
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/
     trustForwardHeader: true
     authResponseHeaders:
       - Authorization
@@ -108,7 +108,7 @@ metadata:
   namespace: monitoring
 spec:
   forwardAuth:
-    address: http://oauth2-proxy.authentication.svc.cluster.local:4180/oauth2/auth
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/oauth2/auth
     trustForwardHeader: true
     authResponseHeaders:
       - Authorization
@@ -125,7 +125,7 @@ metadata:
   namespace: storage
 spec:
   forwardAuth:
-    address: http://oauth2-proxy.authentication.svc.cluster.local:4180/
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/
     trustForwardHeader: true
     authResponseHeaders:
       - Authorization
@@ -142,7 +142,7 @@ metadata:
   namespace: storage
 spec:
   forwardAuth:
-    address: http://oauth2-proxy.authentication.svc.cluster.local:4180/oauth2/auth
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/oauth2/auth
     trustForwardHeader: true
     authResponseHeaders:
       - Authorization
@@ -159,7 +159,7 @@ metadata:
   namespace: kube-system
 spec:
   forwardAuth:
-    address: http://oauth2-proxy.authentication.svc.cluster.local:4180/
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/
     trustForwardHeader: true
     authResponseHeaders:
       - Authorization
@@ -176,7 +176,7 @@ metadata:
   namespace: kube-system
 spec:
   forwardAuth:
-    address: http://oauth2-proxy.authentication.svc.cluster.local:4180/oauth2/auth
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/oauth2/auth
     trustForwardHeader: true
     authResponseHeaders:
       - Authorization

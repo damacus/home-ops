@@ -10,7 +10,13 @@ spec:
       namespace: network
       sectionName: websecure
   rules:
-    - backendRefs:
+    - filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: oauth2-proxy-forward-auth
+      backendRefs:
         - name: hubble-ui
           port: 80
       matches:

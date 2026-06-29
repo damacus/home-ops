@@ -1,0 +1,67 @@
+---
+policies:
+  - uid: home-ops-frigate-isolation
+    name: Frigate Isolation Controls
+    version: 1.0.0
+    scoring_system: highest impact
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: local
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    docs:
+      desc: |
+        Validates that Frigate's privileged hardware-access exception is
+        documented and limited to the expected host device mounts.
+    groups:
+      - title: Frigate GitOps manifests
+        filters:
+          - mql: asset.family.contains("unix")
+        checks:
+          - uid: frigate-privileged-exception-documented
+          - uid: frigate-hostpath-allowlist
+          - uid: frigate-sys-hostpath-readonly
+    require:
+      - provider: os
+
+queries:
+  - uid: frigate-privileged-exception-documented
+    title: Frigate privileged mode must be an intentional exception
+    mql: |
+      helmrelease = file("kubernetes/apps/home-automation/frigate/app/HelmRelease.yaml")
+      helmrelease.exists
+      helmrelease.content.contains("privileged: true")
+      helmrelease.content.contains("SECURITY EXCEPTION")
+      helmrelease.content.contains("Rockchip RK3588")
+      helmrelease.content.contains("kubernetes/apps/home-automation/frigate/tests/policy.mql.yaml")
+    docs:
+      desc: Frigate currently needs privileged mode for hardware acceleration, so the exception must be documented beside the setting.
+
+  - uid: frigate-hostpath-allowlist
+    title: Frigate hostPath mounts must stay on the hardware allowlist
+    mql: |
+      helmrelease = file("kubernetes/apps/home-automation/frigate/app/HelmRelease.yaml")
+      helmrelease.exists
+      helmrelease.content.contains("hostPath: /dev/bus/usb")
+      helmrelease.content.contains("hostPath: /dev/dri")
+      helmrelease.content.contains("hostPath: /dev/dma_heap")
+      helmrelease.content.contains("hostPath: /dev/rga")
+      helmrelease.content.contains("hostPath: /dev/mpp_service")
+      helmrelease.content.contains("hostPath: /sys")
+      helmrelease.content.contains("hostPath: /etc") == false
+      helmrelease.content.contains("hostPath: /var/run/docker.sock") == false
+      helmrelease.content.contains("hostPath: /var/lib/kubelet") == false
+      helmrelease.content.contains("hostPath: /root") == false
+    docs:
+      desc: Frigate may mount only the expected video/NPU device paths and read-only sysfs.
+
+  - uid: frigate-sys-hostpath-readonly
+    title: Frigate /sys hostPath must remain read-only
+    mql: |
+      helmrelease = file("kubernetes/apps/home-automation/frigate/app/HelmRelease.yaml")
+      helmrelease.exists
+      helmrelease.content.contains("hostPath: /sys")
+      helmrelease.content.contains("- path: /sys\n            readOnly: true")
+    docs:
+      desc: Frigate can inspect sysfs for hardware acceleration, but must not receive writable /sys.
