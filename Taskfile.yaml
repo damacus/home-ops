@@ -95,4 +95,4 @@ tasks:
   .validate:
     internal: true
     cmds:
-      - task: kubernetes:kubeconform
+      - task: kubernetes:yayamlls

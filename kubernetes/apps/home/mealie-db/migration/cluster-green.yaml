@@ -1,7 +1,6 @@
 ---
 # Green CNPG cluster for the mealie PG16 -> PG18 blue/green migration.
 # Applied imperatively during migration; not included in the Flux app kustomization.
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:

@@ -1,0 +1,13 @@
+---
+catalog: false
+
+kubernetes:
+  enabled: true
+  schemaUrl: "https://kubernetes-schemas.pages.dev/{groupSeg}{kindLower}_{versionLower}.json"
+
+renderers:
+  flate:
+    enabled: true
+    path: kubernetes
+
+renderTimeoutMs: 60000

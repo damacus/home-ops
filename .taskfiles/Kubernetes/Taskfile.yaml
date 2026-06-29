@@ -3,7 +3,6 @@
 version: "3"
 
 vars:
-  KUBECONFORM_SCRIPT: "{{.SCRIPTS_DIR}}/kubeconform.sh"
   CLUSTER_HEALTH_SCRIPT: "{{.SCRIPTS_DIR}}/cluster-health.py"
   MONDOO_SCAN_SCRIPT: "{{.SCRIPTS_DIR}}/mondoo_scan.py"
   RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
@@ -152,11 +151,11 @@ tasks:
       - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
       - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
 
-  kubeconform:
-    desc: Validate Kubernetes manifests with kubeconform
-    cmd: bash {{.KUBECONFORM_SCRIPT}} {{.KUBERNETES_DIR}}
+  yayamlls:
+    desc: Validate Kubernetes manifests with yayamlls and rendered Flux output
+    cmd: yayamlls validate --render {{.KUBERNETES_DIR}}
     preconditions:
-      - { msg: "Missing kubeconform script", sh: "test -f {{.KUBECONFORM_SCRIPT}}" }
+      - { msg: "Missing yayamlls", sh: "command -v yayamlls >/dev/null" }
 
   rustfs-iam-policy:
     desc: Validate RustFS per-app IAM policy with Mondoo cnspec
@@ -344,8 +343,8 @@ tasks:
     preconditions:
       - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
       - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
+      - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
       - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
-      - { msg: "Missing Flux local render script", sh: "test -f {{.SCRIPTS_DIR}}/flux-local-build.sh" }
 
   mondoo-live:
     desc: Run report-only Mondoo posture scan against the current Kubernetes cluster
