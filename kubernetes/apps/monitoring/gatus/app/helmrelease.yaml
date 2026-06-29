@@ -47,8 +47,8 @@ spec:
           auto: false
           prefix: ""
         httproute:
-          enable: false
-          auto: true
+          enable: true
+          auto: false
           prefix: ""
         service:
           enable: false
