@@ -31,9 +31,9 @@ https://oncall-prod-eu-west-0.grafana.net/oncall
 Run the static checks before applying changes:
 
 ```bash
-task kubernetes:kubeconform
-task flux:local-build path=./kubernetes/apps/monitoring/grafana
-task flux:local-build path=./kubernetes/apps/monitoring/victoria-metrics
+task kubernetes:yayamlls
+task flux:flate-build path=./kubernetes/apps/monitoring/grafana
+task flux:flate-build path=./kubernetes/apps/monitoring/victoria-metrics
 ```
 
 After Flux sync:

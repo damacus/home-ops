@@ -47,4 +47,4 @@ ui:
       link: https://github.com/damacus/home-ops
 
 web:
-  port: ${GATUS_WEB_PORT}
+  port: 8080
