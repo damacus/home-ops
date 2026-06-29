@@ -5,4 +5,5 @@ resources:
   - ./externalsecret.yaml
   - ./forgejo-db/ks.yaml
   - ./forgejo/ks.yaml
+  - ./konflate/ks.yaml
   - ./namespace.yaml

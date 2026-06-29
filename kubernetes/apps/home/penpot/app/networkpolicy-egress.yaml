@@ -1,5 +1,4 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
 # Frontend egress: DNS resolution + backend API proxy + MCP proxy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -45,7 +44,6 @@ spec:
             - port: "4402"
               protocol: TCP
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
 # MCP egress: DNS + npm registry for startup-time corepack/npx package downloads
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -77,7 +75,6 @@ spec:
             - port: "443"
               protocol: TCP
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
 # Backend egress: DNS + PostgreSQL + Redis + exporter
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -137,7 +134,6 @@ spec:
             - port: "6061"
               protocol: TCP
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
 # Migration job egress: DNS + penpot-db only
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -172,7 +168,6 @@ spec:
             - port: "5432"
               protocol: TCP
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cilium.io/ciliumnetworkpolicy_v2.json
 # Exporter egress: DNS + frontend (headless Chromium loads pages from frontend) + Redis
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

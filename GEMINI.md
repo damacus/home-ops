@@ -31,10 +31,10 @@ This repository manages a home operations infrastructure using Kubernetes, Flux,
     task k8s:resources
     ```
 
-* **Validate Manifests**: Run `kubeconform` against the Kubernetes manifests.
+* **Validate Manifests**: Run `yayamlls` against the Kubernetes manifests and rendered Flux output.
 
     ```bash
-    task k8s:kubeconform
+    task k8s:yayamlls
     ```
 
 ### 2. Repository Management
@@ -98,7 +98,7 @@ This repository manages a home operations infrastructure using Kubernetes, Flux,
 3. Validate the manifests:
 
     ```bash
-    task k8s:kubeconform
+    task k8s:yayamlls
     ```
 
 4. Apply the changes manually to test (optional):

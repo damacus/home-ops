@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=https://demo.frigate.video/api/config/schema.json
 ---
 logger:
   default: info

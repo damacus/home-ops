@@ -1,5 +1,4 @@
 ---
-# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
