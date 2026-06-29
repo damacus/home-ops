@@ -1,11 +1,17 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/httproute_v1.json
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: home-assistant-traefik-internal
   annotations:
     external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
+    gatus.home-operations.com/endpoint: |
+      name: Home Assistant (Internal)
+      group: cluster
+      url: https://home-assistant.ironstone.casa/
+      conditions:
+        - "[STATUS] == 200"
+        - "[RESPONSE_TIME] < 3000"
 spec:
   hostnames:
     - hass.ironstone.casa
@@ -24,13 +30,13 @@ spec:
             type: PathPrefix
             value: /
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/httproute_v1.json
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: home-assistant-traefik-external
   annotations:
     external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
+    gatus.home-operations.com/enabled: "false"
 spec:
   hostnames:
     - hass.damacus.io

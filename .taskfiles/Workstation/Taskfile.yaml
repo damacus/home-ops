@@ -65,11 +65,12 @@ tasks:
           - cloudflare/cloudflared?as=cloudflared&type=script
           - FiloSottile/age?as=age&type=script
           - fluxcd/flux2?as=flux&type=script
+          - home-operations/flate?as=flate&type=script
+          - home-operations/yayamlls?as=yayamlls&type=script
           - getsops/sops?as=sops&type=script
           - helmfile/helmfile?as=helmfile&type=script
           - jqlang/jq?as=jq&type=script
           - kubernetes-sigs/kustomize?as=kustomize&type=script
-          - yannh/kubeconform?as=kubeconform&type=script
           - mikefarah/yq?as=yq&type=script
         cmd: curl -fsSL "https://i.jpillora.com/{{.ITEM}}" | bash
       - cmd: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"

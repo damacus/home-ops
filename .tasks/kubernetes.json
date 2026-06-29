@@ -514,11 +514,11 @@
 	},
 	{
 		"category": "validation",
-		"description": "Kubeconform manifest validation",
+		"description": "Yayamlls manifest and rendered Flux validation",
 		"steps": [
-			"Run kubeconform on all manifests",
+			"Run yayamlls on all manifests",
 			"Check for schema validation errors",
-			"Validate CRD schemas are available",
+			"Validate rendered Flux resources",
 			"Fix any validation failures",
 			"Integrate into CI pipeline"
 		],
@@ -526,12 +526,12 @@
 	},
 	{
 		"category": "validation",
-		"description": "Flux-local for GitOps validation",
+		"description": "Flate for GitOps validation",
 		"steps": [
-			"Run flux-local build on repository",
+			"Run flate build on repository",
 			"Check for Kustomization errors",
 			"Validate HelmRelease rendering",
-			"Test diff against live cluster",
+			"Test rendered diffs against the baseline branch",
 			"Integrate into PR checks"
 		],
 		"passes": false

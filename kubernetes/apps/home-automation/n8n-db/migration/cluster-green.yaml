@@ -9,7 +9,6 @@
 # After the migration completes and blue is decommissioned, the green cluster
 # stays under the name `n8n-green` permanently — the next major-version
 # upgrade will stand up a new colour against this one.
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:

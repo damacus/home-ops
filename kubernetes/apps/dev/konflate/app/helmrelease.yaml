@@ -1,0 +1,54 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app konflate
+spec:
+  interval: 30m
+  chartRef:
+    kind: OCIRepository
+    name: *app
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    imagePullSecrets:
+      - name: ghcr-credentials
+
+    config:
+      repo: github://damacus/home-ops
+      renderForkPrs: false
+      mcp: false
+      statusChecks: false
+      prComments: false
+      logLevel: info
+      logFormat: json
+
+    persistence:
+      enabled: true
+      size: 5Gi
+
+    httpRoute:
+      enabled: true
+      annotations:
+        external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
+      hostnames:
+        - konflate.ironstone.casa
+      parentRefs:
+        - name: traefik-internal
+          namespace: network
+          sectionName: websecure
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+    monitoring:
+      serviceMonitor:
+        enabled: true
+        interval: 1m
+        scrapeTimeout: 10s

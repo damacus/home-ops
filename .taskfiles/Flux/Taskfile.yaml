@@ -7,6 +7,8 @@ vars:
   PROMETHEUS_OPERATOR_VERSION: v0.92.0
   CLUSTER_SETTINGS_FILE: "{{.KUBERNETES_DIR}}/flux/vars/cluster-settings.yaml"
   GITHUB_DEPLOY_KEY_FILE: "{{.KUBERNETES_DIR}}/bootstrap/flux/github-deploy-key.sops.yaml"
+  FLATE_API_VERSIONS: >-
+    policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule
 
 tasks:
   bootstrap:
@@ -71,27 +73,63 @@ tasks:
           sh: "test -f {{.GITHUB_DEPLOY_KEY_FILE}}",
         }
 
-  local-test:
-    desc: Run flux-local test in container (validates cluster builds)
+  flate-test:
+    desc: Run flate test to validate rendered GitOps resources
     summary: |
-      Runs flux-local test to validate that all Kustomizations and HelmReleases
-      can be built successfully. This matches the GitHub Action behavior.
+      Runs flate test to validate that all Kustomizations and HelmReleases
+      can be rendered successfully.
 
       Args:
         path: Path to test (default: ./kubernetes)
-        verbose: Enable verbose output (default: false)
-    cmd: bash {{.ROOT_DIR}}/scripts/flux-local-container.sh test --enable-helm --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" --path {{.path}} {{if eq .verbose "true"}}--verbosity 1{{end}}
+    cmd: flate --no-progress test all --api-versions "{{.FLATE_API_VERSIONS}}" --path {{.path}}
     vars:
       path: '{{.path | default "./kubernetes"}}'
-      verbose: '{{.verbose | default "false"}}'
+    preconditions:
+      - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
 
-  local-build:
-    desc: Build flux resources locally in container
+  flate-build:
+    desc: Build Flux resources locally with flate
     summary: |
       Builds all Kustomizations in the cluster to verify they are valid.
 
       Args:
         path: Path to build (default: ./kubernetes)
-    cmd: bash {{.ROOT_DIR}}/scripts/flux-local-build.sh {{.path}}
+    cmd: flate --no-progress build all --api-versions "{{.FLATE_API_VERSIONS}}" --path {{.path}}
     vars:
       path: '{{.path | default "./kubernetes"}}'
+    preconditions:
+      - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
+
+  flate-diff:
+    desc: Diff rendered Flux resources with flate
+    summary: |
+      Diffs rendered resources against either a supplied path_orig directory or
+      a temporary worktree for the supplied base ref.
+
+      Args:
+        path: Path to render (default: ./kubernetes)
+        path_orig: Existing baseline path; skips worktree creation when set
+        base: Git ref for the temporary baseline worktree (default: origin/main)
+        output: flate diff output style (default: human)
+    cmd: |
+      set -eu
+      path="{{.path}}"
+      output="{{.output}}"
+      if [ -n "{{.path_orig}}" ]; then
+        flate --no-progress diff all --api-versions "{{.FLATE_API_VERSIONS}}" --path "$path" --path-orig "{{.path_orig}}" -o "$output"
+        exit 0
+      fi
+
+      tmp_dir="$(mktemp -d)"
+      trap 'git worktree remove --force "$tmp_dir/base" >/dev/null 2>&1 || rm -rf "$tmp_dir"' EXIT
+      git worktree add --detach "$tmp_dir/base" "{{.base}}"
+      orig_path="$tmp_dir/base/${path#./}"
+      flate --no-progress diff all --api-versions "{{.FLATE_API_VERSIONS}}" --path "$path" --path-orig "$orig_path" -o "$output"
+    vars:
+      path: '{{.path | default "./kubernetes"}}'
+      path_orig: '{{.path_orig | default ""}}'
+      base: '{{.base | default "origin/main"}}'
+      output: '{{.output | default "human"}}'
+    preconditions:
+      - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
+      - { msg: "Missing git", sh: "command -v git >/dev/null" }
