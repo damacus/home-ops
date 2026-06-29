@@ -69,6 +69,8 @@ jobs:
         run: cnspec policy lint mondoo/policies/*.mql.yaml
 
       - name: Run rendered manifest scans
+        env:
+          FLATE_BASE: ""
         run: >-
           python3 scripts/mondoo_scan.py
           --output junit
@@ -119,6 +121,8 @@ jobs:
           cache: "true"
 
       - name: Run flate test
+        env:
+          FLATE_BASE: ""
         run: >-
           flate --no-progress test all
           --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule"
@@ -149,6 +153,8 @@ jobs:
       - name: Run flate diff
         id: diff
         shell: bash
+        env:
+          FLATE_BASE: ""
         run: |
           set -euo pipefail
           flate --no-progress diff all \
