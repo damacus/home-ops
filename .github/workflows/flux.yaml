@@ -164,22 +164,22 @@ jobs:
             -o github > flate.diff
           if [[ -s flate.diff ]]; then
             {
-              echo 'diff<<EOF'
+              echo '`````diff'
               cat flate.diff
-              echo 'EOF'
-            } >> "$GITHUB_OUTPUT"
+              echo '`````'
+            } > flate-comment.md
+            echo 'has_diff=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'has_diff=false' >> "$GITHUB_OUTPUT"
           fi
 
       - name: PR Comment
         uses: mshick/add-pr-comment@v3
-        if: ${{ steps.diff.outputs.diff != '' }}
+        if: ${{ steps.diff.outputs.has_diff == 'true' }}
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           message-failure: Unable to post flate diff
-          message: |
-            `````diff
-            ${{ steps.diff.outputs.diff }}
-            `````
+          message-path: flate-comment.md
 
   flate-success:
     if: ${{ always() }}
