@@ -81,12 +81,21 @@ class MondooCommandTest(unittest.TestCase):
         self.assertIn("--props", command)
         self.assertIn(f"rootfs={pathlib.Path(mount).resolve()}", command)
 
-    def test_flux_render_command_uses_existing_flux_local_build_script(self) -> None:
+    def test_flux_render_command_uses_flate_build(self) -> None:
         command = self.mondoo_scan.flux_render_command("./kubernetes")
 
-        self.assertEqual(command[0], "bash")
-        self.assertTrue(command[1].endswith("scripts/flux-local-build.sh"))
-        self.assertEqual(command[2], "./kubernetes")
+        self.assertEqual(
+            command,
+            [
+                "flate",
+                "build",
+                "all",
+                "--api-versions",
+                self.mondoo_scan.FLATE_API_VERSIONS,
+                "--path",
+                "./kubernetes",
+            ],
+        )
 
     def test_all_migrated_checks_have_mondoo_policy_markers(self) -> None:
         bundle_text = self.mondoo_scan.policy_text()

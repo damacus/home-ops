@@ -19,6 +19,13 @@ NODE_POLICY = POLICY_DIR / "home-ops-node.mql.yaml"
 IMAGE_POLICY = POLICY_DIR / "home-ops-image.mql.yaml"
 CUSTOM_RISK_THRESHOLD = "1"
 REPORT_ONLY_RISK_THRESHOLD = "101"
+FLATE_API_VERSIONS = (
+    "policy/v1/PodDisruptionBudget,"
+    "monitoring.coreos.com/v1,"
+    "monitoring.coreos.com/v1/ServiceMonitor,"
+    "monitoring.coreos.com/v1/PodMonitor,"
+    "monitoring.coreos.com/v1/PrometheusRule"
+)
 
 
 @dataclass(frozen=True)
@@ -178,7 +185,7 @@ def cnspec_scan_command(
 
 
 def flux_render_command(path: str) -> list[str]:
-    return ["bash", str(ROOT_DIR / "scripts" / "flux-local-build.sh"), path]
+    return ["flate", "build", "all", "--api-versions", FLATE_API_VERSIONS, "--path", path]
 
 
 def run(command: Sequence[str], *, stdout=None, check: bool = True) -> subprocess.CompletedProcess[str]:

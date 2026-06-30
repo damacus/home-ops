@@ -1,5 +1,4 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -68,6 +67,10 @@ spec:
                   timeoutSeconds: 1
                   failureThreshold: 3
             securityContext:
+              # SECURITY EXCEPTION: Frigate's Rockchip RK3588 hardware
+              # acceleration currently requires privileged mode with explicit
+              # host device mounts. Keep this exception documented and covered by
+              # kubernetes/apps/home-automation/frigate/tests/policy.mql.yaml.
               privileged: true
             resources:
               requests:

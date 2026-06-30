@@ -5,7 +5,6 @@
 # `n8n_green_pub` on the blue primary.
 #
 # Applied by `task postgres:publication`. Removed at cleanup.
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/publication_v1.json
 apiVersion: postgresql.cnpg.io/v1
 kind: Publication
 metadata:

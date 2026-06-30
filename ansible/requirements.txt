@@ -17,7 +17,7 @@ attrs==26.1.0
     #   referencing
 black==26.5.1
     # via ansible-lint
-bracex==2.7
+bracex==3.0
     # via wcmatch
 certifi==2026.6.17
     # via
@@ -123,7 +123,7 @@ urllib3==2.7.0
     # via
     #   kubernetes
     #   requests
-wcmatch==10.1
+wcmatch==10.2
     # via ansible-lint
 websocket-client==1.9.0
     # via kubernetes
