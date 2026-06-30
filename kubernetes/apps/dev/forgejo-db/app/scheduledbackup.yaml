@@ -5,7 +5,7 @@ metadata:
   name: forgejo-green
   namespace: dev
 spec:
-  schedule: "0 0 0 * * *"
+  schedule: "0 5 0 * * *"
   backupOwnerReference: self
   method: plugin
   pluginConfiguration:

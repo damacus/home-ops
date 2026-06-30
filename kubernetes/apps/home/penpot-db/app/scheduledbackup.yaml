@@ -5,7 +5,7 @@ metadata:
   name: penpot-db
   namespace: home
 spec:
-  schedule: "0 5 * * *"
+  schedule: "0 0 4 * * *"
   immediate: true
   backupOwnerReference: self
   method: plugin
