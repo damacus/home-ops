@@ -120,6 +120,7 @@ spec:
     metrics:
       prometheus:
         enabled: true
+        disableAPICheck: true
         serviceMonitor:
           enabled: true
           namespace: monitoring
