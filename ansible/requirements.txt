@@ -9,7 +9,7 @@ ansible-core==2.21.1
     #   ansible
     #   ansible-compat
     #   ansible-lint
-ansible-lint==26.4.0
+ansible-lint==26.6.0
     # via -r ansible/requirements.in
 attrs==26.1.0
     # via
