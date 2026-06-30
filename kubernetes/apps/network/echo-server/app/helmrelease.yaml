@@ -1,5 +1,4 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -85,6 +84,12 @@ spec:
       app:
         annotations:
           external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
+          gatus.home-operations.com/endpoint: |
+            name: Echo Server (Internal)
+            group: cluster
+            conditions:
+              - "[STATUS] == 200"
+              - "[RESPONSE_TIME] < 2000"
         hostnames: ["{{ .Release.Name }}.ironstone.casa"]
         parentRefs:
           - name: traefik-internal
@@ -93,6 +98,12 @@ spec:
       external:
         annotations:
           external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
+          gatus.home-operations.com/endpoint: |
+            name: Echo Server (External)
+            group: cluster
+            conditions:
+              - "[STATUS] == 200"
+              - "[RESPONSE_TIME] < 5000"
         hostnames: ["{{ .Release.Name }}.damacus.io"]
         parentRefs:
           - name: traefik-internal

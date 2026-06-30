@@ -2,14 +2,14 @@
 #    uv pip compile ansible/requirements.in -o ansible/requirements.txt
 ansible==14.1.0
     # via -r ansible/requirements.in
-ansible-compat==26.3.0
+ansible-compat==26.6.0
     # via ansible-lint
 ansible-core==2.21.1
     # via
     #   ansible
     #   ansible-compat
     #   ansible-lint
-ansible-lint==26.4.0
+ansible-lint==26.6.0
     # via -r ansible/requirements.in
 attrs==26.1.0
     # via
@@ -17,7 +17,7 @@ attrs==26.1.0
     #   referencing
 black==26.5.1
     # via ansible-lint
-bracex==2.6
+bracex==3.0
     # via wcmatch
 certifi==2026.6.17
     # via
@@ -29,7 +29,7 @@ cffi==2.0.0
     #   cryptography
 charset-normalizer==3.4.7
     # via requests
-click==8.4.1
+click==8.4.2
     # via black
 cryptography==49.0.0
     # via
@@ -123,7 +123,7 @@ urllib3==2.7.0
     # via
     #   kubernetes
     #   requests
-wcmatch==10.1
+wcmatch==10.2
     # via ansible-lint
 websocket-client==1.9.0
     # via kubernetes

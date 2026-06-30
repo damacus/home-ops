@@ -3,7 +3,6 @@
 version: "3"
 
 vars:
-  KUBECONFORM_SCRIPT: "{{.SCRIPTS_DIR}}/kubeconform.sh"
   CLUSTER_HEALTH_SCRIPT: "{{.SCRIPTS_DIR}}/cluster-health.py"
   MONDOO_SCAN_SCRIPT: "{{.SCRIPTS_DIR}}/mondoo_scan.py"
   RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
@@ -42,13 +41,18 @@ tasks:
         task kubernetes:health
         task kubernetes:health json=true
         task kubernetes:health notify=true
+        task kubernetes:health workers=4 timeout=30
     vars:
       JSON: '{{.json | default "false"}}'
       NOTIFY: '{{.notify | default "false"}}'
+      WORKERS: '{{.workers | default "6"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
     cmd: >-
       {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} health
       {{if eq .JSON "true"}}--json{{end}}
       {{if eq .NOTIFY "true"}}--notify{{end}}
+      --workers {{.WORKERS}}
+      --timeout {{.TIMEOUT}}
     preconditions:
       - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
       - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
@@ -59,10 +63,14 @@ tasks:
     vars:
       JSON: '{{.json | default "false"}}'
       NOTIFY: '{{.notify | default "false"}}'
+      WORKERS: '{{.workers | default "6"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
     cmd: >-
       {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} cnpg-health
       {{if eq .JSON "true"}}--json{{end}}
       {{if eq .NOTIFY "true"}}--notify{{end}}
+      --workers {{.WORKERS}}
+      --timeout {{.TIMEOUT}}
     preconditions:
       - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
       - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
@@ -79,10 +87,14 @@ tasks:
     vars:
       JSON: '{{.json | default "false"}}'
       NOTIFY: '{{.notify | default "false"}}'
+      WORKERS: '{{.workers | default "6"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
     cmd: >-
       {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} cnpg-backups
       {{if eq .JSON "true"}}--json{{end}}
       {{if eq .NOTIFY "true"}}--notify{{end}}
+      --workers {{.WORKERS}}
+      --timeout {{.TIMEOUT}}
     preconditions:
       - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
       - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
@@ -92,10 +104,14 @@ tasks:
     vars:
       JSON: '{{.json | default "false"}}'
       NOTIFY: '{{.notify | default "false"}}'
+      WORKERS: '{{.workers | default "6"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
     cmd: >-
       {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} grafana-alerts
       {{if eq .JSON "true"}}--json{{end}}
       {{if eq .NOTIFY "true"}}--notify{{end}}
+      --workers {{.WORKERS}}
+      --timeout {{.TIMEOUT}}
     preconditions:
       - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
       - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
@@ -104,35 +120,42 @@ tasks:
     desc: Run the recurring morning cluster health bundle
     summary: |
       Runs the regular operator checks: cluster core health, CNPG clusters,
-      CNPG backups/WAL archiving, firing alerts, and edge smoke. Log-noise can
-      be included with log_noise=true.
+      CNPG backups/WAL archiving, and firing alerts. Gatus handles continuous
+      edge checks; local edge smoke and log-noise can be included on demand.
 
       Examples:
         task kubernetes:morning-check
         task kubernetes:morning-check notify=true
+        task kubernetes:morning-check edge_smoke=true
         task kubernetes:morning-check log_noise=true period=6h top=10
     vars:
       JSON: '{{.json | default "false"}}'
       NOTIFY: '{{.notify | default "false"}}'
+      EDGE_SMOKE: '{{.edge_smoke | default "false"}}'
       LOG_NOISE: '{{.log_noise | default "false"}}'
       PERIOD: '{{.period | default "1h"}}'
       TOP: '{{.top | default "20"}}'
+      WORKERS: '{{.workers | default "6"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
     cmd: >-
       {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} morning-check
       {{if eq .JSON "true"}}--json{{end}}
       {{if eq .NOTIFY "true"}}--notify{{end}}
+      {{if eq .EDGE_SMOKE "true"}}--edge-smoke{{end}}
       {{if eq .LOG_NOISE "true"}}--log-noise{{end}}
       --period {{.PERIOD}}
       --top {{.TOP}}
+      --workers {{.WORKERS}}
+      --timeout {{.TIMEOUT}}
     preconditions:
       - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
       - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
 
-  kubeconform:
-    desc: Validate Kubernetes manifests with kubeconform
-    cmd: bash {{.KUBECONFORM_SCRIPT}} {{.KUBERNETES_DIR}}
+  yayamlls:
+    desc: Validate Kubernetes manifests with yayamlls and rendered Flux output
+    cmd: yayamlls validate --render {{.KUBERNETES_DIR}}
     preconditions:
-      - { msg: "Missing kubeconform script", sh: "test -f {{.KUBECONFORM_SCRIPT}}" }
+      - { msg: "Missing yayamlls", sh: "command -v yayamlls >/dev/null" }
 
   rustfs-iam-policy:
     desc: Validate RustFS per-app IAM policy with Mondoo cnspec
@@ -320,8 +343,8 @@ tasks:
     preconditions:
       - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
       - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
+      - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
       - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
-      - { msg: "Missing Flux local render script", sh: "test -f {{.SCRIPTS_DIR}}/flux-local-build.sh" }
 
   mondoo-live:
     desc: Run report-only Mondoo posture scan against the current Kubernetes cluster

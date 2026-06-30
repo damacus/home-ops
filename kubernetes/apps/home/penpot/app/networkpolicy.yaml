@@ -1,5 +1,4 @@
 ---
-# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
 # Frontend: only Traefik may reach the nginx pod port.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -37,7 +36,6 @@ spec:
         - port: 8080
           protocol: TCP
 ---
-# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
 # Backend: only penpot frontend (nginx proxy) may reach port 6060
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -64,7 +62,6 @@ spec:
         - port: 6060
           protocol: TCP
 ---
-# yaml-language-server: $schema=https://kubernetesjsonschema.dev/v1.32.1/networkpolicy-networking-v1.json
 # Exporter: only penpot backend may reach port 6061
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

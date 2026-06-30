@@ -1,5 +1,4 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -35,7 +34,7 @@ spec:
           app:
             image:
               repository: ghcr.io/damacus/unifi-release-announcer
-              tag: 0.2.11@sha256:dff269455948097855ac124866135c033f9e42021db603c2189534870b687d1b
+              tag: 0.2.12@sha256:60607a5831915e24f55eb7dd9cf956172db5567bf2dd49308317f3aa1e0f6fff
             env:
               - name: TAGS
                 value: "unifi-drive,unifi-network,unifi-protect"
