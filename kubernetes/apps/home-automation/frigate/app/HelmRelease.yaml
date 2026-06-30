@@ -67,6 +67,10 @@ spec:
                   timeoutSeconds: 1
                   failureThreshold: 3
             securityContext:
+              # SECURITY EXCEPTION: Frigate's Rockchip RK3588 hardware
+              # acceleration currently requires privileged mode with explicit
+              # host device mounts. Keep this exception documented and covered by
+              # kubernetes/apps/home-automation/frigate/tests/policy.mql.yaml.
               privileged: true
             resources:
               requests:
