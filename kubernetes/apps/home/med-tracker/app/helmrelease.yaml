@@ -53,6 +53,7 @@ spec:
                   name: med-tracker-secret
             env:
               DATABASE_ROLE: med_tracker_owner
+              OTEL_TRACES_EXPORTER: none
               RAILS_ENV: production
               TZ: "Europe/London"
         containers:
@@ -68,6 +69,7 @@ spec:
               RAILS_ENV: production
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
+              OTEL_TRACES_EXPORTER: none
               SOLID_QUEUE_IN_PUMA: "true"
               TZ: "Europe/London"
               APP_URL: "https://med-tracker.damacus.io"
