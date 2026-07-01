@@ -1,0 +1,62 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: &name med-tracker-canary
+  namespace: home
+spec:
+  imagePullSecrets:
+    - name: ghcr-credentials
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 18
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 5Gi
+    storageClass: openebs-hostpath
+
+  monitoring:
+    enablePodMonitor: true
+
+  bootstrap:
+    recovery:
+      source: med-tracker-production-backup
+      database: med-tracker
+      owner: med-tracker
+      secret:
+        name: med-tracker-canary-db
+
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: med-tracker-canary-db-superuser
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: 128MB
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: med-tracker-canary-rustfs-store
+        serverName: med-tracker-canary
+
+  externalClusters:
+    - name: med-tracker-production-backup
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: med-tracker-rustfs-store
+          serverName: med-tracker
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 2000m
+      memory: 512Mi

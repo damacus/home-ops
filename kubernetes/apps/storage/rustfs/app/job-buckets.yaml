@@ -226,6 +226,7 @@ spec:
               provision_single_bucket_identity "rustfs-cnpg-immich" "$RUSTFS_CNPG_IMMICH_ACCESS_KEY" "$RUSTFS_CNPG_IMMICH_SECRET_KEY" "cnpg-immich"
               provision_single_bucket_identity "rustfs-cnpg-mealie" "$RUSTFS_CNPG_MEALIE_ACCESS_KEY" "$RUSTFS_CNPG_MEALIE_SECRET_KEY" "cnpg-mealie"
               provision_single_bucket_identity "rustfs-cnpg-med-tracker" "$RUSTFS_CNPG_MED_TRACKER_ACCESS_KEY" "$RUSTFS_CNPG_MED_TRACKER_SECRET_KEY" "cnpg-med-tracker"
+              provision_single_bucket_identity "rustfs-cnpg-med-tracker-canary" "$RUSTFS_CNPG_MED_TRACKER_CANARY_ACCESS_KEY" "$RUSTFS_CNPG_MED_TRACKER_CANARY_SECRET_KEY" "cnpg-med-tracker-canary"
               provision_single_bucket_identity "rustfs-cnpg-penpot" "$RUSTFS_CNPG_PENPOT_ACCESS_KEY" "$RUSTFS_CNPG_PENPOT_SECRET_KEY" "cnpg-penpot"
               provision_single_bucket_identity "rustfs-longhorn" "$RUSTFS_LONGHORN_ACCESS_KEY" "$RUSTFS_LONGHORN_SECRET_KEY" "longhorn"
               provision_single_bucket_identity "rustfs-paperless" "$RUSTFS_PAPERLESS_ACCESS_KEY" "$RUSTFS_PAPERLESS_SECRET_KEY" "volsync-paperless"
