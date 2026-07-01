@@ -254,7 +254,7 @@ spec:
           app:
             image:
               repository: penpotapp/exporter
-              tag: 2.16.1
+              tag: 2.16.2
             env:
               PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team
               # Exporter loads pages via headless Chromium; use the internal frontend service
