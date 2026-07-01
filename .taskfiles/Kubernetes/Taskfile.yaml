@@ -5,6 +5,9 @@ version: "3"
 vars:
   CLUSTER_HEALTH_SCRIPT: "{{.SCRIPTS_DIR}}/cluster-health.py"
   MONDOO_SCAN_SCRIPT: "{{.SCRIPTS_DIR}}/mondoo_scan.py"
+  MED_TRACKER_CANARY_APP: "{{.KUBERNETES_DIR}}/apps/home/med-tracker-canary/app"
+  MED_TRACKER_CANARY_DB: "{{.KUBERNETES_DIR}}/apps/home/med-tracker-canary-db/app"
+  GATUS_CONFIG: "{{.KUBERNETES_DIR}}/apps/monitoring/gatus/app/resources/config.yaml"
   RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
   RUSTFS_IAM_LIVE_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam-live.mql.yaml"
   RUSTFS_IAM_LIVE_CHECK_SCRIPT: "{{.SCRIPTS_DIR}}/rustfs_iam_live_check.sh"
@@ -181,6 +184,44 @@ tasks:
       - { msg: "Missing jq", sh: "command -v jq >/dev/null" }
       - { msg: "Missing RustFS live IAM policy", sh: "test -f {{.RUSTFS_IAM_LIVE_POLICY}}" }
       - { msg: "Missing RustFS live IAM check script", sh: "test -f {{.RUSTFS_IAM_LIVE_CHECK_SCRIPT}}" }
+
+  med-tracker-canary-isolation:
+    desc: Assert Med Tracker canary uses isolated app, storage, route, and database resources
+    cmds:
+      - yq -e '.metadata.name == "med-tracker-canary" and .spec.values.controllers."med-tracker-canary".containers.app.env.APP_URL == "https://med-tracker-canary.damacus.io"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.env.OIDC_REDIRECT_URI == "https://med-tracker-canary.damacus.io/auth/oidc/callback"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.env.SMTP_ENABLED == "false" and .spec.values.controllers."med-tracker-canary".containers.app.env.PUSH_NOTIFICATIONS_ENABLED == "false"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.values.controllers."med-tracker-canary".initContainers.migrate.envFrom[0].secretRef.name == "med-tracker-canary-secret"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.envFrom[0].secretRef.name == "med-tracker-canary-secret"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.values.persistence.storage.existingClaim == "med-tracker-canary-storage"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.values.route.external.hostnames[0] == "med-tracker-canary.damacus.io" and .spec.values.route.external.annotations."external-dns.alpha.kubernetes.io/target" == "traefik-ext.damacus.io"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.values.route.external.rules[] | select(.matches[0].path.value == "/" and .filters[0].extensionRef.name == "oauth2-proxy-damacus-forward-auth" and .backendRefs[0].name == "med-tracker-canary")' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.values.route.external.rules[] | select(.matches[0].path.value == "/up" and .backendRefs[0].name == "med-tracker-canary")' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.values.route.external.rules[] | select(.matches[0].path.value == "/login" and .backendRefs[0].name == "med-tracker-canary")' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.target.name == "med-tracker-canary-secret"' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
+      - yq -e '.spec.dataFrom[] | select(.extract.key == "zitadel-med-tracker-canary-oidc")' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
+      - yq -e '.spec.target.template.data.DATABASE_URL | contains("@med-tracker-canary-rw.home.svc.cluster.local:5432/")' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
+      - yq -e '.spec.target.template.data.SOLID_CACHE_DATABASE_URL | contains("@med-tracker-canary-rw.home.svc.cluster.local:5432/")' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
+      - yq -e '.spec.target.template.data.SOLID_QUEUE_DATABASE_URL | contains("@med-tracker-canary-rw.home.svc.cluster.local:5432/")' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
+      - yq -e '.spec.target.template.data.SOLID_CABLE_DATABASE_URL | contains("@med-tracker-canary-rw.home.svc.cluster.local:5432/")' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
+      - yq -e '.spec.target.template.data.DATABASE_URL | contains("med-tracker-rw.home.svc.cluster.local") | not' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
+      - yq -e '.spec.target.template.data.SOLID_CACHE_DATABASE_URL | contains("med-tracker-rw.home.svc.cluster.local") | not' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
+      - yq -e '.spec.target.template.data.SOLID_QUEUE_DATABASE_URL | contains("med-tracker-rw.home.svc.cluster.local") | not' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
+      - yq -e '.spec.target.template.data.SOLID_CABLE_DATABASE_URL | contains("med-tracker-rw.home.svc.cluster.local") | not' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
+      - yq -e '.metadata.name == "med-tracker-canary" and .spec.bootstrap.recovery.source == "med-tracker-production-backup"' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
+      - yq -e '.spec.bootstrap.recovery.database == "med-tracker" and .spec.bootstrap.recovery.owner == "med-tracker" and .spec.bootstrap.recovery.secret.name == "med-tracker-canary-db"' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
+      - yq -e '.spec.plugins[] | select(.name == "barman-cloud.cloudnative-pg.io" and .isWALArchiver == true and .parameters.barmanObjectName == "med-tracker-canary-rustfs-store" and .parameters.serverName == "med-tracker-canary")' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
+      - yq -e '.spec.externalClusters[] | select(.name == "med-tracker-production-backup" and .plugin.name == "barman-cloud.cloudnative-pg.io" and .plugin.parameters.barmanObjectName == "med-tracker-rustfs-store" and .plugin.parameters.serverName == "med-tracker")' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
+      - yq -e '.metadata.name == "med-tracker-canary" and .spec.bootstrap.initdb == null' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
+      - yq -e '.metadata.name == "med-tracker-canary-rustfs-store" and .spec.configuration.destinationPath == "s3://cnpg-med-tracker-canary/"' {{.MED_TRACKER_CANARY_DB}}/objectstore.yaml
+      - yq -e '.spec.configuration.s3Credentials.accessKeyId.name == "rustfs-cnpg-med-tracker-canary" and .spec.configuration.s3Credentials.secretAccessKey.name == "rustfs-cnpg-med-tracker-canary"' {{.MED_TRACKER_CANARY_DB}}/objectstore.yaml
+      - yq -e '.endpoints[] | select(.name == "Med Tracker Canary Up" and .url == "https://med-tracker-canary.damacus.io/up")' {{.GATUS_CONFIG}}
+      - yq -e '.endpoints[] | select(.name == "Med Tracker Canary Login" and .url == "https://med-tracker-canary.damacus.io/login")' {{.GATUS_CONFIG}}
+    preconditions:
+      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
+      - { msg: "Missing Med Tracker canary app manifests", sh: "test -f {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml" }
+      - { msg: "Missing Med Tracker canary DB manifests", sh: "test -f {{.MED_TRACKER_CANARY_DB}}/cluster.yaml" }
+      - { msg: "Missing Gatus config", sh: "test -f {{.GATUS_CONFIG}}" }
 
   mondoo-operator-assertions:
     desc: Assert the Mondoo Operator GitOps manifests are wired safely
