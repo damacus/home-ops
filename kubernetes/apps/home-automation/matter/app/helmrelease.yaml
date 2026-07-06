@@ -73,7 +73,7 @@ spec:
               STORAGE_PATH: /data
               LOG_LEVEL: info
               PRODUCTION_MODE: "true"
-              NODE_OPTIONS: "--max-old-space-size=512"
+              NODE_OPTIONS: "--max-old-space-size=384"
             probes:
               liveness:
                 enabled: true
@@ -86,10 +86,10 @@ spec:
                   periodSeconds: 5
             resources:
               requests:
-                memory: "128Mi"
+                memory: "256Mi"
                 cpu: "100m"
               limits:
-                memory: "768Mi"
+                memory: "512Mi"
                 cpu: "1000m"
             securityContext:
               allowPrivilegeEscalation: false
