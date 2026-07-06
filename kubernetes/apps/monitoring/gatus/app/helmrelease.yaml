@@ -25,6 +25,7 @@ spec:
     gatus:
       image:
         tag: v5.36.0
+      delayStartSeconds: "5"
       env:
         TZ: Europe/London
       extraEnv:
