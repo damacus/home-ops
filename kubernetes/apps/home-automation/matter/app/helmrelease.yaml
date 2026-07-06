@@ -36,28 +36,44 @@ spec:
       matter-server:
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          fix-data-permissions:
+            image:
+              repository: busybox
+              tag: 1.38.0
+            command: ["/bin/sh", "-c"]
+            args:
+              - chown -R 1000:1000 /data
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+                add: ["CHOWN"]
+              runAsGroup: 0
+              runAsNonRoot: false
+              runAsUser: 0
+              seccompProfile: { type: RuntimeDefault }
         pod:
           securityContext:
-            runAsUser: 0 # Must be run as root user
-            runAsGroup: 100
-            runAsNonRoot: false
-            fsGroup: 100
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
             fsGroupChangePolicy: "OnRootMismatch"
-            supplementalGroups: [34]
 
         containers:
           app:
             image:
-              repository: ghcr.io/home-assistant-libs/python-matter-server
-              tag: 8.1.0@sha256:170aa093ce91c76cde4cc390918307590f0f5558fcec93f913af3cb019e6562a
+              repository: ghcr.io/matter-js/matterjs-server
+              tag: 1.1.7@sha256:e52dc38320b53a0611628a8c3ed416a0dbb47c98ff83c9ef815f4184373f27b5
               pullPolicy: IfNotPresent
             env:
               TZ: "Europe/London"
-              MATTER_SERVER__INSTANCE_NAME: Matter-Server
-              MATTER_SERVER__PORT: &port 5580
-              MATTER_SERVER__APPLICATION_URL: "matter.ironstone.casa"
-              MATTER_SERVER__LOG_LEVEL: info
-              MATTER_SERVER__VENDOR_ID: 4939
+              PORT: "5580"
+              STORAGE_PATH: /data
+              LOG_LEVEL: info
+              PRODUCTION_MODE: "true"
+              NODE_OPTIONS: "--max-old-space-size=512"
             probes:
               liveness:
                 enabled: true
@@ -70,15 +86,19 @@ spec:
                   periodSeconds: 5
             resources:
               requests:
-                memory: "120M"
+                memory: "128Mi"
                 cpu: "100m"
               limits:
-                memory: "500M"
+                memory: "768Mi"
                 cpu: "1000m"
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
 
     # Matter discovers devices using MDNS and neighbors discovery,
     # thus we need the controller to be on the host network.
-    # https://github.com/home-assistant-libs/python-matter-server?tab=readme-ov-file#requirements-to-communicate-with-thread-devices-through-thread-border-routers
+    # https://github.com/matter-js/matterjs-server/blob/main/docs/docker.md
     defaultPodOptions:
       imagePullSecrets:
         - name: ghcr-credentials
@@ -97,7 +117,7 @@ spec:
             enabled: true
             primary: true
             protocol: TCP
-            port: *port
+            port: &port 5580
           mdns-tcp:
             enabled: true
             port: 5353
