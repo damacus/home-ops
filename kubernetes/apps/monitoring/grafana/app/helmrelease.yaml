@@ -135,7 +135,7 @@ spec:
                             time() - barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{
                               job!~"dev/forgejo-green|home-automation/(home-assistant-green|n8n-green)"
                             }
-                          ) > 10800
+                          ) > 108000
                         )
                         or
                         (
