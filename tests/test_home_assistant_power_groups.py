@@ -184,12 +184,60 @@ class PowerGroupConfigTest(unittest.TestCase):
 
         rendered = module.render_package(config)
 
-        self.assertIn("powercalc:\n", rendered)
-        self.assertIn("  create_utility_meters: true\n", rendered)
-        self.assertIn("    - create_group: Downstairs lights\n", rendered)
-        self.assertIn("        - power_sensor_id: sensor.kitchen_lights_power\n", rendered)
-        self.assertIn("          energy_sensor_id: sensor.kitchen_lights_energy\n", rendered)
-        self.assertTrue(rendered.endswith("\n"))
+        self.assertEqual(
+            rendered,
+            "\n".join(
+                [
+                    "powercalc:",
+                    "  create_utility_meters: true",
+                    "  sensors:",
+                    '    - create_group: "Downstairs lights"',
+                    "      entities:",
+                    '        - power_sensor_id: "sensor.kitchen_lights_power"',
+                    '          energy_sensor_id: "sensor.kitchen_lights_energy"',
+                    '        - power_sensor_id: "sensor.living_room_lights_power"',
+                    '          energy_sensor_id: "sensor.living_room_lights_energy"',
+                ]
+            )
+            + "\n",
+        )
+
+    def test_render_powercalc_package_escapes_yaml_string_scalars(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": 'sensor.kitchen_"lights"_power',
+                    "energy_sensor_id": r"sensor.kitchen\lights_energy",
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": r'Downstairs "main" \ lights',
+                    "dashboard": True,
+                    "members": ["Kitchen lights"],
+                }
+            ],
+        }
+
+        rendered = module.render_package(config)
+
+        self.assertEqual(
+            rendered,
+            "\n".join(
+                [
+                    "powercalc:",
+                    "  create_utility_meters: true",
+                    "  sensors:",
+                    '    - create_group: "Downstairs \\"main\\" \\\\ lights"',
+                    "      entities:",
+                    '        - power_sensor_id: "sensor.kitchen_\\"lights\\"_power"',
+                    '          energy_sensor_id: "sensor.kitchen\\\\lights_energy"',
+                ]
+            )
+            + "\n",
+        )
 
     def test_dashboard_energy_sensors_returns_only_area_groups(self) -> None:
         module = load_module()
@@ -218,6 +266,79 @@ class PowerGroupConfigTest(unittest.TestCase):
         sensors = module.dashboard_energy_sensors(config)
 
         self.assertEqual(sensors, ["sensor.downstairs_lights_energy"])
+
+    def test_dashboard_energy_sensors_matches_checked_in_group_config(self) -> None:
+        module = load_module()
+        config = module.load_json(CONFIG_PATH)
+
+        sensors = module.dashboard_energy_sensors(config)
+
+        self.assertEqual(
+            sensors,
+            [
+                "sensor.downstairs_lights_energy",
+                "sensor.main_bedroom_lights_area_energy",
+                "sensor.outdoor_lights_energy",
+                "sensor.loft_lights_area_energy",
+            ],
+        )
+
+    def test_dashboard_energy_sensors_rejects_duplicate_dashboard_slugs(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                },
+                {
+                    "name": "Living room lights",
+                    "power_sensor_id": "sensor.living_room_lights_power",
+                    "energy_sensor_id": "sensor.living_room_lights_energy",
+                },
+            ],
+            "area_groups": [
+                {
+                    "name": "Main lights",
+                    "dashboard": True,
+                    "members": ["Kitchen lights"],
+                },
+                {
+                    "name": "Main-lights",
+                    "dashboard": True,
+                    "members": ["Living room lights"],
+                },
+            ],
+        }
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "Duplicate dashboard energy sensor slug: main_lights",
+        ):
+            module.dashboard_energy_sensors(config)
+
+    def test_dashboard_energy_sensors_rejects_empty_dashboard_slug(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": "!!!",
+                    "dashboard": True,
+                    "members": ["Kitchen lights"],
+                },
+            ],
+        }
+
+        with self.assertRaisesRegex(ValueError, "Dashboard energy sensor slug is empty"):
+            module.dashboard_energy_sensors(config)
 
 
 if __name__ == "__main__":

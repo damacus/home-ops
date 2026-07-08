@@ -78,28 +78,47 @@ def slugify(name: str) -> str:
     return "".join(slug).strip("_")
 
 
+def yaml_double_quote(value: str) -> str:
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
 def render_package(config: dict[str, Any]) -> str:
     validate_config(config)
     room_by_name = {room["name"]: room for room in config["room_groups"]}
     lines = [
-        "powercalc:",
+        PACKAGE_HEADER,
         "  create_utility_meters: true",
         "  sensors:",
     ]
     for area in config["area_groups"]:
-        lines.append(f"    - create_group: {area['name']}")
+        lines.append(f"    - create_group: {yaml_double_quote(area['name'])}")
         lines.append("      entities:")
         for member_name in area["members"]:
             member = room_by_name[member_name]
-            lines.append(f"        - power_sensor_id: {member['power_sensor_id']}")
-            lines.append(f"          energy_sensor_id: {member['energy_sensor_id']}")
+            power_sensor_id = yaml_double_quote(member["power_sensor_id"])
+            energy_sensor_id = yaml_double_quote(member["energy_sensor_id"])
+            lines.append(f"        - power_sensor_id: {power_sensor_id}")
+            lines.append(f"          energy_sensor_id: {energy_sensor_id}")
     return "\n".join(lines) + "\n"
 
 
 def dashboard_energy_sensors(config: dict[str, Any]) -> list[str]:
     validate_config(config)
-    return [
-        f"sensor.{slugify(area['name'])}_energy"
-        for area in config["area_groups"]
-        if area.get("dashboard") is True
-    ]
+    sensors: list[str] = []
+    dashboard_slugs: dict[str, str] = {}
+    for area in config["area_groups"]:
+        if area.get("dashboard") is not True:
+            continue
+        slug = slugify(area["name"])
+        if not slug:
+            raise ValueError(f"Dashboard energy sensor slug is empty for {area['name']!r}")
+        if slug in dashboard_slugs:
+            other = dashboard_slugs[slug]
+            raise ValueError(
+                f"Duplicate dashboard energy sensor slug: {slug} "
+                f"({other!r} and {area['name']!r})"
+            )
+        dashboard_slugs[slug] = area["name"]
+        sensors.append(f"sensor.{slug}_energy")
+    return sensors
