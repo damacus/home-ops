@@ -25,6 +25,76 @@ class PowerGroupConfigTest(unittest.TestCase):
 
         self.assertEqual(module.PACKAGE_HEADER, "powercalc:")
 
+    def test_validate_config_accepts_known_room_members(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": "Downstairs lights",
+                    "dashboard": True,
+                    "members": ["Kitchen lights"],
+                }
+            ],
+        }
+
+        module.validate_config(config)
+
+    def test_validate_config_rejects_unknown_area_member(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": "Downstairs lights",
+                    "dashboard": True,
+                    "members": ["Missing room"],
+                }
+            ],
+        }
+
+        with self.assertRaisesRegex(ValueError, "Unknown room group"):
+            module.validate_config(config)
+
+    def test_validate_config_rejects_duplicate_dashboard_member(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": "Downstairs lights",
+                    "dashboard": True,
+                    "members": ["Kitchen lights"],
+                },
+                {
+                    "name": "Also downstairs lights",
+                    "dashboard": True,
+                    "members": ["Kitchen lights"],
+                },
+            ],
+        }
+
+        with self.assertRaisesRegex(ValueError, "Dashboard double count"):
+            module.validate_config(config)
+
 
 if __name__ == "__main__":
     unittest.main()

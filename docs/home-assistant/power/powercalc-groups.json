@@ -1,0 +1,72 @@
+{
+  "room_groups": [
+    {
+      "name": "Kitchen lights",
+      "power_sensor_id": "sensor.kitchen_lights_power",
+      "energy_sensor_id": "sensor.kitchen_lights_energy"
+    },
+    {
+      "name": "Living room lights",
+      "power_sensor_id": "sensor.living_room_lights_power",
+      "energy_sensor_id": "sensor.living_room_lights_energy"
+    },
+    {
+      "name": "Hall lights",
+      "power_sensor_id": "sensor.hall_lights_power",
+      "energy_sensor_id": "sensor.hall_lights_energy"
+    },
+    {
+      "name": "Main bedroom lights",
+      "power_sensor_id": "sensor.main_bedroom_power",
+      "energy_sensor_id": "sensor.main_bedroom_energy"
+    },
+    {
+      "name": "Garden lights",
+      "power_sensor_id": "sensor.garden_lights_power",
+      "energy_sensor_id": "sensor.garden_lights_energy"
+    },
+    {
+      "name": "Porch lights",
+      "power_sensor_id": "sensor.porch_power",
+      "energy_sensor_id": "sensor.porch_energy"
+    },
+    {
+      "name": "Loft lights",
+      "power_sensor_id": "sensor.loft_ambiance_power",
+      "energy_sensor_id": "sensor.loft_ambiance_energy"
+    }
+  ],
+  "area_groups": [
+    {
+      "name": "Downstairs lights",
+      "dashboard": true,
+      "members": [
+        "Kitchen lights",
+        "Living room lights",
+        "Hall lights"
+      ]
+    },
+    {
+      "name": "Main bedroom lights area",
+      "dashboard": true,
+      "members": [
+        "Main bedroom lights"
+      ]
+    },
+    {
+      "name": "Outdoor lights",
+      "dashboard": true,
+      "members": [
+        "Garden lights",
+        "Porch lights"
+      ]
+    },
+    {
+      "name": "Loft lights area",
+      "dashboard": true,
+      "members": [
+        "Loft lights"
+      ]
+    }
+  ]
+}
