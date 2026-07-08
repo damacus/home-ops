@@ -23,6 +23,8 @@ k3s_server:
   kube-scheduler-arg:
     - "bind-address=0.0.0.0"
   kubelet-arg:
+    - "container-log-max-files=2"
+    - "container-log-max-size=1Mi"
     - "image-gc-high-threshold=55"
     - "image-gc-low-threshold=50"
   node-ip: "{{ ansible_host }}"
