@@ -162,6 +162,32 @@ class PowerGroupConfigTest(unittest.TestCase):
         ):
             module.validate_config(config)
 
+    def test_validate_config_rejects_non_boolean_render_flag(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": "Downstairs lights",
+                    "dashboard": True,
+                    "render": "false",
+                    "members": ["Kitchen lights"],
+                }
+            ],
+        }
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "Downstairs lights render must be a boolean",
+        ):
+            module.validate_config(config)
+
     def test_render_powercalc_package_creates_nested_area_group(self) -> None:
         module = load_module()
         config = {
@@ -196,6 +222,8 @@ class PowerGroupConfigTest(unittest.TestCase):
                     "  create_utility_meters: true",
                     "  sensors:",
                     '    - create_group: "Downstairs lights"',
+                    '      unique_id: "Downstairs lights"',
+                    "      create_energy_sensor: true",
                     "      entities:",
                     '        - power_sensor_id: "sensor.kitchen_lights_power"',
                     '          energy_sensor_id: "sensor.kitchen_lights_energy"',
@@ -235,6 +263,8 @@ class PowerGroupConfigTest(unittest.TestCase):
                     "  create_utility_meters: true",
                     "  sensors:",
                     '    - create_group: "Downstairs \\"main\\" \\\\ lights"',
+                    '      unique_id: "Downstairs \\"main\\" \\\\ lights"',
+                    "      create_energy_sensor: true",
                     "      entities:",
                     '        - power_sensor_id: "sensor.kitchen_\\"lights\\"_power"',
                     '          energy_sensor_id: "sensor.kitchen\\\\lights_energy"',
@@ -270,6 +300,49 @@ class PowerGroupConfigTest(unittest.TestCase):
         sensors = module.dashboard_energy_sensors(config)
 
         self.assertEqual(sensors, ["sensor.downstairs_lights_energy"])
+
+    def test_render_powercalc_package_skips_unmanaged_area_groups(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                },
+                {
+                    "name": "Living room lights",
+                    "power_sensor_id": "sensor.living_room_lights_power",
+                    "energy_sensor_id": "sensor.living_room_lights_energy",
+                },
+            ],
+            "area_groups": [
+                {
+                    "name": "Existing downstairs lights",
+                    "dashboard": True,
+                    "render": False,
+                    "members": ["Kitchen lights"],
+                },
+                {
+                    "name": "Rendered upstairs lights",
+                    "dashboard": True,
+                    "members": ["Living room lights"],
+                },
+            ],
+        }
+
+        rendered = module.render_package(config)
+        sensors = module.dashboard_energy_sensors(config)
+
+        self.assertNotIn("Existing downstairs lights", rendered)
+        self.assertIn('    - create_group: "Rendered upstairs lights"', rendered)
+        self.assertEqual(
+            sensors,
+            [
+                "sensor.existing_downstairs_lights_energy",
+                "sensor.rendered_upstairs_lights_energy",
+            ],
+        )
 
     def test_dashboard_energy_sensors_matches_checked_in_group_config(self) -> None:
         module = load_module()
