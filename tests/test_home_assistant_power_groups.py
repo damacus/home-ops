@@ -7,6 +7,13 @@ import unittest
 
 
 SCRIPT_PATH = pathlib.Path(__file__).resolve().parents[1] / "scripts" / "home_assistant_power_groups.py"
+CONFIG_PATH = (
+    pathlib.Path(__file__).resolve().parents[1]
+    / "docs"
+    / "home-assistant"
+    / "power"
+    / "powercalc-groups.json"
+)
 
 
 def load_module():
@@ -43,6 +50,12 @@ class PowerGroupConfigTest(unittest.TestCase):
                 }
             ],
         }
+
+        module.validate_config(config)
+
+    def test_validate_config_accepts_checked_in_group_config(self) -> None:
+        module = load_module()
+        config = module.load_json(CONFIG_PATH)
 
         module.validate_config(config)
 
@@ -93,6 +106,56 @@ class PowerGroupConfigTest(unittest.TestCase):
         }
 
         with self.assertRaisesRegex(ValueError, "Dashboard double count"):
+            module.validate_config(config)
+
+    def test_validate_config_rejects_non_boolean_dashboard_flag(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": "Downstairs lights",
+                    "dashboard": "true",
+                    "members": ["Kitchen lights"],
+                }
+            ],
+        }
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "Downstairs lights dashboard must be a boolean",
+        ):
+            module.validate_config(config)
+
+    def test_validate_config_rejects_invalid_area_member_type(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": "Downstairs lights",
+                    "dashboard": True,
+                    "members": [""],
+                }
+            ],
+        }
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "Downstairs lights members must contain non-empty strings",
+        ):
             module.validate_config(config)
 
 

@@ -51,7 +51,11 @@ def validate_config(config: dict[str, Any]) -> None:
             raise ValueError("area group name must be a non-empty string")
         if not isinstance(members, list) or not members:
             raise ValueError(f"{area_name} members must be a non-empty list")
+        if not isinstance(dashboard, bool):
+            raise ValueError(f"{area_name} dashboard must be a boolean")
         for member in members:
+            if not isinstance(member, str) or not member:
+                raise ValueError(f"{area_name} members must contain non-empty strings")
             if member not in room_names:
                 raise ValueError(f"Unknown room group {member!r} in area {area_name!r}")
             if dashboard is True and member in dashboard_members:
