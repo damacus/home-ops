@@ -109,6 +109,17 @@ spec:
         # Use the existing Alertmanager configuration secret from KPS/ExternalSecret
         configSecret: alertmanager-secret
 
+    # k3s does not expose these static control-plane components as scrape targets.
+    # Keep the default rule sync aligned with the disabled scrape components below.
+    defaultRules:
+      groups:
+        kube-scheduler.rules:
+          enabled: false
+        kubernetes-system-controller-manager:
+          enabled: false
+        kubernetes-system-scheduler:
+          enabled: false
+
     # Disable components we don't need or are duplicated
     grafana:
       enabled: false
