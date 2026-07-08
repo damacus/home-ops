@@ -63,3 +63,43 @@ def validate_config(config: dict[str, Any]) -> None:
                 raise ValueError(f"Dashboard double count: {member!r} is in {other!r} and {area_name!r}")
             if dashboard is True:
                 dashboard_members[member] = area_name
+
+
+def slugify(name: str) -> str:
+    slug = []
+    previous_underscore = False
+    for char in name.lower():
+        if char.isalnum():
+            slug.append(char)
+            previous_underscore = False
+        elif not previous_underscore:
+            slug.append("_")
+            previous_underscore = True
+    return "".join(slug).strip("_")
+
+
+def render_package(config: dict[str, Any]) -> str:
+    validate_config(config)
+    room_by_name = {room["name"]: room for room in config["room_groups"]}
+    lines = [
+        "powercalc:",
+        "  create_utility_meters: true",
+        "  sensors:",
+    ]
+    for area in config["area_groups"]:
+        lines.append(f"    - create_group: {area['name']}")
+        lines.append("      entities:")
+        for member_name in area["members"]:
+            member = room_by_name[member_name]
+            lines.append(f"        - power_sensor_id: {member['power_sensor_id']}")
+            lines.append(f"          energy_sensor_id: {member['energy_sensor_id']}")
+    return "\n".join(lines) + "\n"
+
+
+def dashboard_energy_sensors(config: dict[str, Any]) -> list[str]:
+    validate_config(config)
+    return [
+        f"sensor.{slugify(area['name'])}_energy"
+        for area in config["area_groups"]
+        if area.get("dashboard") is True
+    ]
