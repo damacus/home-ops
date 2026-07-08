@@ -14,7 +14,7 @@ sensor and its area parent counts the same child energy twice.
 
 ## Group Hierarchy
 
-- Downstairs lights: Kitchen lights, Living room lights, Hall lights.
+- Downstairs light fixtures: Kitchen light fixtures, Living room light fixtures, Hall light fixtures.
 - Upstairs lights: Main bedroom lights, Harrison's bedroom lights, bedroom four lights, and landing lights.
 - Outdoor lights: Garden lights, Porch lights.
 - Loft lights: Loft ambiance.
@@ -27,7 +27,7 @@ PowerCalc room sensor exists for it.
 
 Add these as individual devices:
 
-- `sensor.downstairs_lights_energy_2`
+- `sensor.downstairs_light_fixtures_energy`
 - `sensor.upstairs_lights_energy`
 - `sensor.outdoor_lights_energy`
 - `sensor.loft_lights_energy`
@@ -44,6 +44,10 @@ configuration.
 4. Add each area energy sensor listed above.
 5. Save the Energy configuration.
 6. Wait for the Energy dashboard statistics card to refresh.
+
+Remove `sensor.downstairs_lights_energy_2` if it is currently configured. That
+legacy group uses polluted Kitchen history and produces unrealistic totals in
+the Energy Dashboard.
 
 If verification does not show all four area sensors, complete the UI steps above with
 an authenticated Home Assistant user session. The sensors can exist in Home Assistant
@@ -62,15 +66,15 @@ kubectl exec -n home-automation home-assistant-0 -- cat /config/.storage/energy 
 The output should include the four area sensors listed above:
 
 ```text
-sensor.downstairs_lights_energy_2
+sensor.downstairs_light_fixtures_energy
 sensor.loft_lights_energy
 sensor.outdoor_lights_energy
 sensor.upstairs_lights_energy
 ```
 
-Home Assistant already has an older GUI-created `sensor.downstairs_lights_energy`
-entity which is currently unavailable. The package-managed downstairs group is
-therefore exposed by Home Assistant as `sensor.downstairs_lights_energy_2`.
+Home Assistant already has older GUI-created downstairs and kitchen light group
+entities with polluted history. The Energy Dashboard should use the
+package-managed `sensor.downstairs_light_fixtures_energy` entity instead.
 
 The output should not include child room sensors as Energy Dashboard individual
 devices:
@@ -79,6 +83,9 @@ devices:
 sensor.kitchen_lights_energy
 sensor.living_room_lights_energy
 sensor.hall_lights_energy
+sensor.kitchen_light_fixtures_energy
+sensor.living_room_light_fixtures_energy
+sensor.hall_light_fixtures_energy
 sensor.main_bedroom_energy
 sensor.harrison_s_bedside_lamp_energy
 sensor.harrison_s_colour_bulb_energy

@@ -31,14 +31,28 @@ def validate_config(config: dict[str, Any]) -> None:
         name = room.get("name")
         power_sensor_id = room.get("power_sensor_id")
         energy_sensor_id = room.get("energy_sensor_id")
+        members = room.get("members")
         if not isinstance(name, str) or not name:
             raise ValueError("room group name must be a non-empty string")
         if name in room_names:
             raise ValueError(f"Duplicate room group: {name}")
-        if not isinstance(power_sensor_id, str) or not power_sensor_id.startswith("sensor."):
-            raise ValueError(f"{name} power_sensor_id must be a sensor entity")
-        if not isinstance(energy_sensor_id, str) or not energy_sensor_id.startswith("sensor."):
-            raise ValueError(f"{name} energy_sensor_id must be a sensor entity")
+        if members is not None:
+            if not isinstance(members, list) or not members:
+                raise ValueError(f"{name} members must be a non-empty list")
+            for member in members:
+                if not isinstance(member, dict):
+                    raise ValueError(f"{name} member entries must be objects")
+                member_power_sensor_id = member.get("power_sensor_id")
+                member_energy_sensor_id = member.get("energy_sensor_id")
+                if not isinstance(member_power_sensor_id, str) or not member_power_sensor_id.startswith("sensor."):
+                    raise ValueError(f"{name} member power_sensor_id must be a sensor entity")
+                if not isinstance(member_energy_sensor_id, str) or not member_energy_sensor_id.startswith("sensor."):
+                    raise ValueError(f"{name} member energy_sensor_id must be a sensor entity")
+        else:
+            if not isinstance(power_sensor_id, str) or not power_sensor_id.startswith("sensor."):
+                raise ValueError(f"{name} power_sensor_id must be a sensor entity")
+            if not isinstance(energy_sensor_id, str) or not energy_sensor_id.startswith("sensor."):
+                raise ValueError(f"{name} energy_sensor_id must be a sensor entity")
         room_names.add(name)
 
     dashboard_members: dict[str, str] = {}
@@ -110,8 +124,20 @@ def render_package(config: dict[str, Any]) -> str:
         lines.append("      entities:")
         for member_name in area["members"]:
             member = room_by_name[member_name]
-            power_sensor_id = yaml_double_quote(member["power_sensor_id"])
-            energy_sensor_id = yaml_double_quote(member["energy_sensor_id"])
+            if "members" in member:
+                lines.append(f"        - create_group: {yaml_double_quote(member['name'])}")
+                lines.append(f"          unique_id: {yaml_double_quote(member['name'])}")
+                lines.append("          create_energy_sensor: true")
+                lines.append("          entities:")
+                for nested_member in member["members"]:
+                    power_sensor_id = yaml_double_quote(nested_member["power_sensor_id"])
+                    energy_sensor_id = yaml_double_quote(nested_member["energy_sensor_id"])
+                    lines.append(f"            - power_sensor_id: {power_sensor_id}")
+                    lines.append(f"              energy_sensor_id: {energy_sensor_id}")
+                continue
+            else:
+                power_sensor_id = yaml_double_quote(member["power_sensor_id"])
+                energy_sensor_id = yaml_double_quote(member["energy_sensor_id"])
             lines.append(f"        - power_sensor_id: {power_sensor_id}")
             lines.append(f"          energy_sensor_id: {energy_sensor_id}")
     return "\n".join(lines) + "\n"

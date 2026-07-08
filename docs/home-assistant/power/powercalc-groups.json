@@ -1,19 +1,135 @@
 {
   "room_groups": [
     {
-      "name": "Kitchen lights",
-      "power_sensor_id": "sensor.kitchen_lights_power",
-      "energy_sensor_id": "sensor.kitchen_lights_energy"
+      "name": "Kitchen light fixtures",
+      "members": [
+        {
+          "power_sensor_id": "sensor.left_spot_1_power",
+          "energy_sensor_id": "sensor.left_spot_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.left_spot_2_power",
+          "energy_sensor_id": "sensor.left_spot_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.left_spot_3_power",
+          "energy_sensor_id": "sensor.left_spot_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_left_2_power",
+          "energy_sensor_id": "sensor.kitchen_spot_left_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_left_3_power",
+          "energy_sensor_id": "sensor.kitchen_spot_left_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_left_4_power",
+          "energy_sensor_id": "sensor.kitchen_spot_left_4_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_middle_1_power",
+          "energy_sensor_id": "sensor.kitchen_spot_middle_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_middle_2_power",
+          "energy_sensor_id": "sensor.kitchen_spot_middle_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_middle_3_power",
+          "energy_sensor_id": "sensor.kitchen_spot_middle_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_right_1_power",
+          "energy_sensor_id": "sensor.kitchen_spot_right_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_right_2_power",
+          "energy_sensor_id": "sensor.kitchen_spot_right_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_right_3_power",
+          "energy_sensor_id": "sensor.kitchen_spot_right_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_right_4_power",
+          "energy_sensor_id": "sensor.kitchen_spot_right_4_energy"
+        },
+        {
+          "power_sensor_id": "sensor.spot_left_1_power",
+          "energy_sensor_id": "sensor.spot_left_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_sink_light_strip_power",
+          "energy_sensor_id": "sensor.kitchen_sink_light_strip_energy"
+        }
+      ]
     },
     {
-      "name": "Living room lights",
-      "power_sensor_id": "sensor.living_room_lights_power",
-      "energy_sensor_id": "sensor.living_room_lights_energy"
+      "name": "Living room light fixtures",
+      "members": [
+        {
+          "power_sensor_id": "sensor.fire_candle_1_power",
+          "energy_sensor_id": "sensor.fire_candle_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.fire_candle_2_power",
+          "energy_sensor_id": "sensor.fire_candle_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.fire_candle_3_power",
+          "energy_sensor_id": "sensor.fire_candle_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.living_room_candle_1_power",
+          "energy_sensor_id": "sensor.living_room_candle_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.living_room_candle_2_power",
+          "energy_sensor_id": "sensor.living_room_candle_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.living_room_candle_3_power",
+          "energy_sensor_id": "sensor.living_room_candle_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.filament_power",
+          "energy_sensor_id": "sensor.filament_energy"
+        },
+        {
+          "power_sensor_id": "sensor.tv_floor_lamp_power",
+          "energy_sensor_id": "sensor.tv_floor_lamp_energy"
+        }
+      ]
     },
     {
-      "name": "Hall lights",
-      "power_sensor_id": "sensor.hall_lights_power",
-      "energy_sensor_id": "sensor.hall_lights_energy"
+      "name": "Hall light fixtures",
+      "members": [
+        {
+          "power_sensor_id": "sensor.hall_spot_1_power",
+          "energy_sensor_id": "sensor.hall_spot_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.hall_spot_2_power",
+          "energy_sensor_id": "sensor.hall_spot_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.hall_spot_3_power",
+          "energy_sensor_id": "sensor.hall_spot_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.hall_spot_4_power_2",
+          "energy_sensor_id": "sensor.hall_spot_4_energy_2"
+        },
+        {
+          "power_sensor_id": "sensor.hall_spot_5_power",
+          "energy_sensor_id": "sensor.hall_spot_5_energy"
+        },
+        {
+          "power_sensor_id": "sensor.hall_spot_6_power",
+          "energy_sensor_id": "sensor.hall_spot_6_energy"
+        }
+      ]
     },
     {
       "name": "Main bedroom lights",
@@ -63,13 +179,12 @@
   ],
   "area_groups": [
     {
-      "name": "Downstairs lights",
+      "name": "Downstairs light fixtures",
       "dashboard": true,
-      "dashboard_energy_sensor_id": "sensor.downstairs_lights_energy_2",
       "members": [
-        "Kitchen lights",
-        "Living room lights",
-        "Hall lights"
+        "Kitchen light fixtures",
+        "Living room light fixtures",
+        "Hall light fixtures"
       ]
     },
     {

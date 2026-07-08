@@ -260,6 +260,59 @@ class PowerGroupConfigTest(unittest.TestCase):
             + "\n",
         )
 
+    def test_render_powercalc_package_creates_package_managed_room_group(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen light fixtures",
+                    "members": [
+                        {
+                            "power_sensor_id": "sensor.kitchen_spot_power",
+                            "energy_sensor_id": "sensor.kitchen_spot_energy",
+                        },
+                        {
+                            "power_sensor_id": "sensor.kitchen_strip_power",
+                            "energy_sensor_id": "sensor.kitchen_strip_energy",
+                        },
+                    ],
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": "Downstairs light fixtures",
+                    "dashboard": True,
+                    "members": ["Kitchen light fixtures"],
+                }
+            ],
+        }
+
+        rendered = module.render_package(config)
+
+        self.assertEqual(
+            rendered,
+            "\n".join(
+                [
+                    "powercalc:",
+                    "  create_utility_meters: true",
+                    "  sensors:",
+                    '    - create_group: "Downstairs light fixtures"',
+                    '      unique_id: "Downstairs light fixtures"',
+                    "      create_energy_sensor: true",
+                    "      entities:",
+                    '        - create_group: "Kitchen light fixtures"',
+                    '          unique_id: "Kitchen light fixtures"',
+                    "          create_energy_sensor: true",
+                    "          entities:",
+                    '            - power_sensor_id: "sensor.kitchen_spot_power"',
+                    '              energy_sensor_id: "sensor.kitchen_spot_energy"',
+                    '            - power_sensor_id: "sensor.kitchen_strip_power"',
+                    '              energy_sensor_id: "sensor.kitchen_strip_energy"',
+                ]
+            )
+            + "\n",
+        )
+
     def test_render_powercalc_package_escapes_yaml_string_scalars(self) -> None:
         module = load_module()
         config = {
@@ -403,7 +456,7 @@ class PowerGroupConfigTest(unittest.TestCase):
         self.assertEqual(
             sensors,
             [
-                "sensor.downstairs_lights_energy_2",
+                "sensor.downstairs_light_fixtures_energy",
                 "sensor.upstairs_lights_energy",
                 "sensor.outdoor_lights_energy",
                 "sensor.loft_lights_energy",
