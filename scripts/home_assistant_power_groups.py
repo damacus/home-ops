@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 from typing import Any
@@ -162,3 +163,50 @@ def uncovered_lights(entities: list[dict[str, Any]], devices: list[dict[str, Any
         model = device.get("model") or ""
         rows.append(f"{entity_id}\t{name}\t{manufacturer}\t{model}")
     return sorted(rows)
+
+
+def registry_data_list(registry: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    data = registry.get("data")
+    if not isinstance(data, dict):
+        raise ValueError(f"registry must contain data.{key}")
+    records = data.get(key)
+    if not isinstance(records, list):
+        raise ValueError(f"registry data.{key} must be a list")
+    typed_records: list[dict[str, Any]] = []
+    for record in records:
+        if not isinstance(record, dict):
+            raise ValueError(f"registry data.{key} entries must be objects")
+        typed_records.append(record)
+    return typed_records
+
+
+def uncovered_lights_from_registry_exports(
+    entity_registry: dict[str, Any],
+    device_registry: dict[str, Any],
+) -> list[str]:
+    entities = registry_data_list(entity_registry, "entities")
+    devices = registry_data_list(device_registry, "devices")
+    return uncovered_lights(entities, devices)
+
+
+def load_uncovered_lights(entity_registry_path: Path, device_registry_path: Path) -> list[str]:
+    entity_registry = load_json(entity_registry_path)
+    device_registry = load_json(device_registry_path)
+    return uncovered_lights_from_registry_exports(entity_registry, device_registry)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Report active Home Assistant light entities without PowerCalc power sensors.",
+    )
+    parser.add_argument("entity_registry", type=Path, help="Path to core.entity_registry JSON export")
+    parser.add_argument("device_registry", type=Path, help="Path to core.device_registry JSON export")
+    args = parser.parse_args(argv)
+
+    for row in load_uncovered_lights(args.entity_registry, args.device_registry):
+        print(row)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

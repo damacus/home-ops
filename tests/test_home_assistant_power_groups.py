@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
+import json
 import pathlib
 import sys
+import tempfile
 import unittest
 
 
@@ -398,6 +402,101 @@ class PowerGroupConfigTest(unittest.TestCase):
         uncovered = module.uncovered_lights(entities, devices)
 
         self.assertEqual(uncovered, ["light.unity_light_2\tUnity Office\tLoopOn\tUnity"])
+
+    def test_uncovered_lights_from_registry_exports_extracts_data_lists(self) -> None:
+        module = load_module()
+        entity_registry = {
+            "data": {
+                "entities": [
+                    {
+                        "entity_id": "light.loft_ambiance",
+                        "platform": "hue",
+                        "device_id": "light-device",
+                        "disabled_by": None,
+                    },
+                    {
+                        "entity_id": "light.unity_light_2",
+                        "platform": "esphome",
+                        "device_id": "missing-device",
+                        "disabled_by": None,
+                    },
+                    {
+                        "entity_id": "sensor.loft_ambiance_power",
+                        "platform": "powercalc",
+                        "device_id": "light-device",
+                        "disabled_by": None,
+                    },
+                ],
+            },
+        }
+        device_registry = {
+            "data": {
+                "devices": [
+                    {
+                        "id": "light-device",
+                        "name_by_user": None,
+                        "name": "Loft ambiance",
+                        "manufacturer": "Signify Netherlands B.V.",
+                        "model": "Hue ambiance lamp",
+                        "entry_type": None,
+                    },
+                    {
+                        "id": "missing-device",
+                        "name_by_user": "Unity Office",
+                        "name": "Unity",
+                        "manufacturer": "LoopOn",
+                        "model": "Unity",
+                        "entry_type": None,
+                    },
+                ],
+            },
+        }
+
+        uncovered = module.uncovered_lights_from_registry_exports(entity_registry, device_registry)
+
+        self.assertEqual(uncovered, ["light.unity_light_2\tUnity Office\tLoopOn\tUnity"])
+
+    def test_main_prints_uncovered_light_report_from_registry_exports(self) -> None:
+        module = load_module()
+        entity_registry = {
+            "data": {
+                "entities": [
+                    {
+                        "entity_id": "light.unity_light_2",
+                        "platform": "esphome",
+                        "device_id": "missing-device",
+                        "disabled_by": None,
+                    },
+                ],
+            },
+        }
+        device_registry = {
+            "data": {
+                "devices": [
+                    {
+                        "id": "missing-device",
+                        "name_by_user": "Unity Office",
+                        "name": "Unity",
+                        "manufacturer": "LoopOn",
+                        "model": "Unity",
+                        "entry_type": None,
+                    },
+                ],
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            entity_path = pathlib.Path(temp_dir) / "core.entity_registry"
+            device_path = pathlib.Path(temp_dir) / "core.device_registry"
+            entity_path.write_text(json.dumps(entity_registry), encoding="utf-8")
+            device_path.write_text(json.dumps(device_registry), encoding="utf-8")
+            output = io.StringIO()
+
+            with contextlib.redirect_stdout(output):
+                exit_code = module.main([str(entity_path), str(device_path)])
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(output.getvalue(), "light.unity_light_2\tUnity Office\tLoopOn\tUnity\n")
 
 
 if __name__ == "__main__":
