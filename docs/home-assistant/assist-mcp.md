@@ -88,7 +88,13 @@ Use this shape for MCP clients that support remote Streamable HTTP directly:
 
 ## Stdio-Only mcp-proxy Client Config
 
-Use this shape for clients that only support stdio MCP servers:
+Use one of these shapes for clients that only support stdio MCP servers.
+
+### Private Local Config
+
+Use this only for a private local client config that will never be committed.
+Replace `paste-real-home-assistant-token-here` with the actual long-lived access
+token value:
 
 ```json
 {
@@ -101,16 +107,47 @@ Use this shape for clients that only support stdio MCP servers:
         "https://home-assistant.ironstone.casa/api/mcp"
       ],
       "env": {
-        "API_ACCESS_TOKEN": "${HOMEASSISTANT_TOKEN}"
+        "API_ACCESS_TOKEN": "paste-real-home-assistant-token-here"
       }
     }
   }
 }
 ```
 
-If the client does not expand environment placeholders inside `env`, launch the
-client from a shell where `API_ACCESS_TOKEN` is already set from
-`HOMEASSISTANT_TOKEN`.
+Do not commit this config or paste it into a shared document. Revoke and rotate
+the token if it is exposed.
+
+### Environment Inheritance Config
+
+Use this when the client inherits its environment from the launching shell or
+desktop process. Omit the `env` block so the client cannot override the inherited
+`API_ACCESS_TOKEN` with a literal placeholder value:
+
+```json
+{
+  "mcpServers": {
+    "homeassistant": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport=streamablehttp",
+        "--stateless",
+        "https://home-assistant.ironstone.casa/api/mcp"
+      ]
+    }
+  }
+}
+```
+
+Before launching the client, set `API_ACCESS_TOKEN` to the Home Assistant token.
+For example, in a shell session:
+
+```bash
+export API_ACCESS_TOKEN="${HOMEASSISTANT_TOKEN}"
+```
+
+Do not put the `HOMEASSISTANT_TOKEN` placeholder inside the client `env` block
+unless that specific client is known to expand environment placeholders before
+spawning `mcp-proxy`.
 
 ## Endpoint Checks
 
@@ -138,7 +175,7 @@ token.
 ## Fallback When Codex Cannot Attach MCP
 
 If the current Codex environment cannot attach a user MCP server, use the
-Home Assistant REST states API for the first read-only audit pass:
+Home Assistant REST states API for the first audit pass:
 
 ```bash
 curl -fsS \
@@ -147,5 +184,9 @@ curl -fsS \
   https://home-assistant.ironstone.casa/api/states/sensor.downstairs_lights_energy
 ```
 
-This fallback is read-only and enough for power insight reports. Enable MCP
-later in the desktop app or host settings using one of the configurations above.
+Assist exposure limits the MCP entity surface only. REST API access is not
+limited by Assist exposure settings, and `HOMEASSISTANT_TOKEN` is a broad
+Home Assistant API credential for the issuing user. Keep this fallback limited to
+explicit `GET /api/states/<sensor>` checks for the documented power and energy
+sensors. Revoke and rotate the token if it is exposed. Enable MCP later in the
+desktop app or host settings using one of the configurations above.
