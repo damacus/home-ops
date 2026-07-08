@@ -188,6 +188,32 @@ class PowerGroupConfigTest(unittest.TestCase):
         ):
             module.validate_config(config)
 
+    def test_validate_config_rejects_invalid_dashboard_energy_sensor_override(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": "Downstairs lights",
+                    "dashboard": True,
+                    "dashboard_energy_sensor_id": "binary_sensor.downstairs_lights",
+                    "members": ["Kitchen lights"],
+                }
+            ],
+        }
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "Downstairs lights dashboard_energy_sensor_id must be a sensor entity",
+        ):
+            module.validate_config(config)
+
     def test_render_powercalc_package_creates_nested_area_group(self) -> None:
         module = load_module()
         config = {
@@ -301,6 +327,30 @@ class PowerGroupConfigTest(unittest.TestCase):
 
         self.assertEqual(sensors, ["sensor.downstairs_lights_energy"])
 
+    def test_dashboard_energy_sensors_uses_explicit_energy_sensor_override(self) -> None:
+        module = load_module()
+        config = {
+            "room_groups": [
+                {
+                    "name": "Kitchen lights",
+                    "power_sensor_id": "sensor.kitchen_lights_power",
+                    "energy_sensor_id": "sensor.kitchen_lights_energy",
+                }
+            ],
+            "area_groups": [
+                {
+                    "name": "Downstairs lights",
+                    "dashboard": True,
+                    "dashboard_energy_sensor_id": "sensor.downstairs_lights_energy_2",
+                    "members": ["Kitchen lights"],
+                },
+            ],
+        }
+
+        sensors = module.dashboard_energy_sensors(config)
+
+        self.assertEqual(sensors, ["sensor.downstairs_lights_energy_2"])
+
     def test_render_powercalc_package_skips_unmanaged_area_groups(self) -> None:
         module = load_module()
         config = {
@@ -353,10 +403,10 @@ class PowerGroupConfigTest(unittest.TestCase):
         self.assertEqual(
             sensors,
             [
-                "sensor.downstairs_lights_energy",
-                "sensor.main_bedroom_lights_area_energy",
+                "sensor.downstairs_lights_energy_2",
+                "sensor.upstairs_lights_energy",
                 "sensor.outdoor_lights_energy",
-                "sensor.loft_lights_area_energy",
+                "sensor.loft_lights_energy",
             ],
         )
 

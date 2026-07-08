@@ -15,18 +15,22 @@ sensor and its area parent counts the same child energy twice.
 ## Group Hierarchy
 
 - Downstairs lights: Kitchen lights, Living room lights, Hall lights.
-- Main bedroom lights area: Main bedroom lights.
+- Upstairs lights: Main bedroom lights, Harrison's bedroom lights, bedroom four lights, and landing lights.
 - Outdoor lights: Garden lights, Porch lights.
-- Loft lights area: Loft lights.
+- Loft lights: Loft ambiance.
+
+Jack's bedroom is part of upstairs, but it does not currently have a Jack or
+Bedroom 3 PowerCalc energy sensor. Add that room to `Upstairs lights` after a
+PowerCalc room sensor exists for it.
 
 ## Energy Dashboard Sensors
 
 Add these as individual devices:
 
-- `sensor.downstairs_lights_energy`
-- `sensor.main_bedroom_lights_area_energy`
+- `sensor.downstairs_lights_energy_2`
+- `sensor.upstairs_lights_energy`
 - `sensor.outdoor_lights_energy`
-- `sensor.loft_lights_area_energy`
+- `sensor.loft_lights_energy`
 
 ## UI Steps
 
@@ -58,11 +62,15 @@ kubectl exec -n home-automation home-assistant-0 -- cat /config/.storage/energy 
 The output should include the four area sensors listed above:
 
 ```text
-sensor.downstairs_lights_energy
-sensor.loft_lights_area_energy
-sensor.main_bedroom_lights_area_energy
+sensor.downstairs_lights_energy_2
+sensor.loft_lights_energy
 sensor.outdoor_lights_energy
+sensor.upstairs_lights_energy
 ```
+
+Home Assistant already has an older GUI-created `sensor.downstairs_lights_energy`
+entity which is currently unavailable. The package-managed downstairs group is
+therefore exposed by Home Assistant as `sensor.downstairs_lights_energy_2`.
 
 The output should not include child room sensors as Energy Dashboard individual
 devices:
@@ -72,6 +80,11 @@ sensor.kitchen_lights_energy
 sensor.living_room_lights_energy
 sensor.hall_lights_energy
 sensor.main_bedroom_energy
+sensor.harrison_s_bedside_lamp_energy
+sensor.harrison_s_colour_bulb_energy
+sensor.big_spare_bedroom_light_energy
+sensor.landing_ambiance_energy
+sensor.landing_ambiance_2_energy
 sensor.garden_lights_energy
 sensor.porch_energy
 sensor.loft_ambiance_energy

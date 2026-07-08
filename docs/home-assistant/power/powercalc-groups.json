@@ -21,6 +21,31 @@
       "energy_sensor_id": "sensor.main_bedroom_energy"
     },
     {
+      "name": "Harrison's bedroom lights",
+      "power_sensor_id": "sensor.harrison_s_bedside_lamp_power",
+      "energy_sensor_id": "sensor.harrison_s_bedside_lamp_energy"
+    },
+    {
+      "name": "Harrison's bedroom colour bulb",
+      "power_sensor_id": "sensor.harrison_s_colour_bulb_power",
+      "energy_sensor_id": "sensor.harrison_s_colour_bulb_energy"
+    },
+    {
+      "name": "Bedroom four lights",
+      "power_sensor_id": "sensor.big_spare_bedroom_light_power",
+      "energy_sensor_id": "sensor.big_spare_bedroom_light_energy"
+    },
+    {
+      "name": "Landing lights",
+      "power_sensor_id": "sensor.landing_ambiance_power",
+      "energy_sensor_id": "sensor.landing_ambiance_energy"
+    },
+    {
+      "name": "Landing second light",
+      "power_sensor_id": "sensor.landing_ambiance_2_power",
+      "energy_sensor_id": "sensor.landing_ambiance_2_energy"
+    },
+    {
       "name": "Garden lights",
       "power_sensor_id": "sensor.garden_lights_power",
       "energy_sensor_id": "sensor.garden_lights_energy"
@@ -40,7 +65,7 @@
     {
       "name": "Downstairs lights",
       "dashboard": true,
-      "render": false,
+      "dashboard_energy_sensor_id": "sensor.downstairs_lights_energy_2",
       "members": [
         "Kitchen lights",
         "Living room lights",
@@ -48,10 +73,15 @@
       ]
     },
     {
-      "name": "Main bedroom lights area",
+      "name": "Upstairs lights",
       "dashboard": true,
       "members": [
-        "Main bedroom lights"
+        "Main bedroom lights",
+        "Harrison's bedroom lights",
+        "Harrison's bedroom colour bulb",
+        "Bedroom four lights",
+        "Landing lights",
+        "Landing second light"
       ]
     },
     {
@@ -63,7 +93,7 @@
       ]
     },
     {
-      "name": "Loft lights area",
+      "name": "Loft lights",
       "dashboard": true,
       "members": [
         "Loft lights"

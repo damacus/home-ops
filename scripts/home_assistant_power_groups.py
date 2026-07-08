@@ -49,6 +49,7 @@ def validate_config(config: dict[str, Any]) -> None:
         members = area.get("members")
         dashboard = area.get("dashboard", False)
         render = area.get("render", True)
+        dashboard_energy_sensor_id = area.get("dashboard_energy_sensor_id")
         if not isinstance(area_name, str) or not area_name:
             raise ValueError("area group name must be a non-empty string")
         if not isinstance(members, list) or not members:
@@ -57,6 +58,11 @@ def validate_config(config: dict[str, Any]) -> None:
             raise ValueError(f"{area_name} dashboard must be a boolean")
         if not isinstance(render, bool):
             raise ValueError(f"{area_name} render must be a boolean")
+        if dashboard_energy_sensor_id is not None and (
+            not isinstance(dashboard_energy_sensor_id, str)
+            or not dashboard_energy_sensor_id.startswith("sensor.")
+        ):
+            raise ValueError(f"{area_name} dashboard_energy_sensor_id must be a sensor entity")
         for member in members:
             if not isinstance(member, str) or not member:
                 raise ValueError(f"{area_name} members must contain non-empty strings")
@@ -128,7 +134,7 @@ def dashboard_energy_sensors(config: dict[str, Any]) -> list[str]:
                 f"({other!r} and {area['name']!r})"
             )
         dashboard_slugs[slug] = area["name"]
-        sensors.append(f"sensor.{slug}_energy")
+        sensors.append(area.get("dashboard_energy_sensor_id") or f"sensor.{slug}_energy")
     return sensors
 
 

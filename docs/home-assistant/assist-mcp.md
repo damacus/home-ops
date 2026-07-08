@@ -34,14 +34,14 @@ verification evidence and make exposure changes through the Home Assistant UI.
 3. Open Expose.
 4. Select Assist.
 5. Expose only these read-only sensor entities:
-   - `sensor.downstairs_lights_power`
-   - `sensor.downstairs_lights_energy`
-   - `sensor.main_bedroom_lights_area_power`
-   - `sensor.main_bedroom_lights_area_energy`
+   - `sensor.downstairs_lights_power_2`
+   - `sensor.downstairs_lights_energy_2`
+   - `sensor.upstairs_lights_power`
+   - `sensor.upstairs_lights_energy`
    - `sensor.outdoor_lights_power`
    - `sensor.outdoor_lights_energy`
-   - `sensor.loft_lights_area_power`
-   - `sensor.loft_lights_area_energy`
+   - `sensor.loft_lights_power`
+   - `sensor.loft_lights_energy`
    - `sensor.washing_machine_current_consumption`
    - `sensor.washing_machine_today_s_consumption`
    - `sensor.tv_socket_current_consumption`
