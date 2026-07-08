@@ -122,3 +122,43 @@ def dashboard_energy_sensors(config: dict[str, Any]) -> list[str]:
         dashboard_slugs[slug] = area["name"]
         sensors.append(f"sensor.{slug}_energy")
     return sensors
+
+
+def active_entities(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [entity for entity in entities if entity.get("disabled_by") is None]
+
+
+def device_by_id(devices: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {device["id"]: device for device in devices if isinstance(device.get("id"), str)}
+
+
+def powercalc_device_ids(entities: list[dict[str, Any]]) -> set[str]:
+    return {
+        entity["device_id"]
+        for entity in active_entities(entities)
+        if entity.get("platform") == "powercalc"
+        and isinstance(entity.get("entity_id"), str)
+        and entity["entity_id"].endswith("_power")
+        and isinstance(entity.get("device_id"), str)
+    }
+
+
+def uncovered_lights(entities: list[dict[str, Any]], devices: list[dict[str, Any]]) -> list[str]:
+    devices_by_id = device_by_id(devices)
+    covered_devices = powercalc_device_ids(entities)
+    rows: list[str] = []
+    for entity in active_entities(entities):
+        entity_id = entity.get("entity_id")
+        if not isinstance(entity_id, str) or not entity_id.startswith("light."):
+            continue
+        device_id = entity.get("device_id")
+        if isinstance(device_id, str) and device_id in covered_devices:
+            continue
+        device = devices_by_id.get(device_id, {})
+        if device.get("entry_type") == "service":
+            continue
+        name = device.get("name_by_user") or device.get("name") or entity.get("name") or entity.get("original_name") or ""
+        manufacturer = device.get("manufacturer") or ""
+        model = device.get("model") or ""
+        rows.append(f"{entity_id}\t{name}\t{manufacturer}\t{model}")
+    return sorted(rows)

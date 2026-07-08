@@ -340,6 +340,65 @@ class PowerGroupConfigTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Dashboard energy sensor slug is empty"):
             module.dashboard_energy_sensors(config)
 
+    def test_uncovered_lights_excludes_hue_rooms_and_powercalc_devices(self) -> None:
+        module = load_module()
+        entities = [
+            {
+                "entity_id": "light.kitchen",
+                "platform": "hue",
+                "device_id": "room-device",
+                "disabled_by": None,
+            },
+            {
+                "entity_id": "light.loft_ambiance",
+                "platform": "hue",
+                "device_id": "light-device",
+                "disabled_by": None,
+            },
+            {
+                "entity_id": "light.unity_light_2",
+                "platform": "esphome",
+                "device_id": "missing-device",
+                "disabled_by": None,
+            },
+            {
+                "entity_id": "sensor.loft_ambiance_power",
+                "platform": "powercalc",
+                "device_id": "light-device",
+                "disabled_by": None,
+            },
+        ]
+        devices = [
+            {
+                "id": "room-device",
+                "name_by_user": None,
+                "name": "Kitchen",
+                "manufacturer": "Signify Netherlands B.V.",
+                "model": "Room",
+                "entry_type": "service",
+            },
+            {
+                "id": "light-device",
+                "name_by_user": None,
+                "name": "Loft ambiance",
+                "manufacturer": "Signify Netherlands B.V.",
+                "model": "Hue ambiance lamp",
+                "entry_type": None,
+            },
+            {
+                "id": "missing-device",
+                "name_by_user": "Unity Office",
+                "name": "Unity",
+                "manufacturer": "LoopOn",
+                "model": "Unity",
+                "entry_type": None,
+            },
+        ]
+
+        uncovered = module.uncovered_lights(entities, devices)
+
+        self.assertEqual(uncovered, ["light.unity_light_2\tUnity Office\tLoopOn\tUnity"])
+
 
 if __name__ == "__main__":
     unittest.main()
