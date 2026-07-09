@@ -2,17 +2,17 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: rustfs-iam-bootstrap-v4
+  name: rustfs-iam-bootstrap-v5
   namespace: storage
   annotations:
     kustomize.toolkit.fluxcd.io/substitute: disabled
 spec:
-  backoffLimit: 6
-  ttlSecondsAfterFinished: 3600
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 86400
   template:
     spec:
       automountServiceAccountToken: false
-      restartPolicy: OnFailure
+      restartPolicy: Never
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
@@ -158,18 +158,6 @@ spec:
                 rc admin policy create rustfs "$policy_name" "$policy_file" || true
               }
 
-              mirror_prefix_if_present() {
-                source_path="$1"
-                destination_bucket="$2"
-
-                if rc object list "rustfs/$source_path" >/dev/null 2>&1; then
-                  echo "Mirroring existing data from $source_path to $destination_bucket"
-                  rc mirror --overwrite "rustfs/$source_path" "rustfs/$destination_bucket"
-                else
-                  echo "No existing data found at $source_path; skipping mirror"
-                fi
-              }
-
               ensure_user() {
                 identity="$1"
                 access_key="$2"
@@ -230,16 +218,6 @@ spec:
               provision_single_bucket_identity "rustfs-longhorn" "$RUSTFS_LONGHORN_ACCESS_KEY" "$RUSTFS_LONGHORN_SECRET_KEY" "longhorn"
               provision_single_bucket_identity "rustfs-paperless" "$RUSTFS_PAPERLESS_ACCESS_KEY" "$RUSTFS_PAPERLESS_SECRET_KEY" "volsync-paperless"
               provision_loki_identity
-
-              mirror_prefix_if_present "cnpg-backups/zitadel" "cnpg-zitadel"
-              mirror_prefix_if_present "cnpg-backups/forgejo" "cnpg-forgejo"
-              mirror_prefix_if_present "cnpg-backups/home-assistant" "cnpg-home-assistant"
-              mirror_prefix_if_present "cnpg-backups/n8n" "cnpg-n8n"
-              mirror_prefix_if_present "cnpg-backups/immich" "cnpg-immich"
-              mirror_prefix_if_present "cnpg-backups/mealie" "cnpg-mealie"
-              mirror_prefix_if_present "cnpg-backups/med-tracker" "cnpg-med-tracker"
-              mirror_prefix_if_present "cnpg-backups/penpot" "cnpg-penpot"
-              mirror_prefix_if_present "volsync-backups/paperless" "volsync-paperless"
       volumes:
         - name: tmp
           emptyDir: {}
