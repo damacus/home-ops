@@ -132,9 +132,24 @@
       ]
     },
     {
-      "name": "Main bedroom lights",
-      "power_sensor_id": "sensor.main_bedroom_power",
-      "energy_sensor_id": "sensor.main_bedroom_energy"
+      "name": "Main bedroom colour light",
+      "power_sensor_id": "sensor.bedroom_colour_power",
+      "energy_sensor_id": "sensor.bedroom_colour_energy"
+    },
+    {
+      "name": "Main bedroom Dan bedside lamp",
+      "power_sensor_id": "sensor.dan_s_bedside_lamp_power",
+      "energy_sensor_id": "sensor.dan_s_bedside_lamp_energy"
+    },
+    {
+      "name": "Main bedroom Hue colour lamp",
+      "power_sensor_id": "sensor.hue_colour_lamp_power",
+      "energy_sensor_id": "sensor.hue_colour_lamp_energy"
+    },
+    {
+      "name": "Main bedroom Laura bedside lamp",
+      "power_sensor_id": "sensor.laura_s_bedside_lamp_power",
+      "energy_sensor_id": "sensor.laura_s_bedside_lamp_energy"
     },
     {
       "name": "Harrison's bedroom lights",
@@ -188,10 +203,13 @@
       ]
     },
     {
-      "name": "Upstairs lights",
+      "name": "Upstairs light fixtures",
       "dashboard": true,
       "members": [
-        "Main bedroom lights",
+        "Main bedroom colour light",
+        "Main bedroom Dan bedside lamp",
+        "Main bedroom Hue colour lamp",
+        "Main bedroom Laura bedside lamp",
         "Harrison's bedroom lights",
         "Harrison's bedroom colour bulb",
         "Bedroom four lights",

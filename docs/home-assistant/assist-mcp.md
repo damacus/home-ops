@@ -36,8 +36,8 @@ verification evidence and make exposure changes through the Home Assistant UI.
 5. Expose only these read-only sensor entities:
    - `sensor.downstairs_light_fixtures_power`
    - `sensor.downstairs_light_fixtures_energy`
-   - `sensor.upstairs_lights_power`
-   - `sensor.upstairs_lights_energy`
+   - `sensor.upstairs_light_fixtures_power`
+   - `sensor.upstairs_light_fixtures_energy`
    - `sensor.outdoor_lights_power`
    - `sensor.outdoor_lights_energy`
    - `sensor.loft_lights_power`

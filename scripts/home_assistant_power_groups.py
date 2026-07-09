@@ -63,6 +63,7 @@ def validate_config(config: dict[str, Any]) -> None:
         members = area.get("members")
         dashboard = area.get("dashboard", False)
         render = area.get("render", True)
+        force_calculate_group_energy = area.get("force_calculate_group_energy", False)
         dashboard_energy_sensor_id = area.get("dashboard_energy_sensor_id")
         if not isinstance(area_name, str) or not area_name:
             raise ValueError("area group name must be a non-empty string")
@@ -72,6 +73,8 @@ def validate_config(config: dict[str, Any]) -> None:
             raise ValueError(f"{area_name} dashboard must be a boolean")
         if not isinstance(render, bool):
             raise ValueError(f"{area_name} render must be a boolean")
+        if not isinstance(force_calculate_group_energy, bool):
+            raise ValueError(f"{area_name} force_calculate_group_energy must be a boolean")
         if dashboard_energy_sensor_id is not None and (
             not isinstance(dashboard_energy_sensor_id, str)
             or not dashboard_energy_sensor_id.startswith("sensor.")
@@ -121,6 +124,8 @@ def render_package(config: dict[str, Any]) -> str:
         lines.append(f"    - create_group: {yaml_double_quote(area['name'])}")
         lines.append(f"      unique_id: {yaml_double_quote(area['name'])}")
         lines.append("      create_energy_sensor: true")
+        if area.get("force_calculate_group_energy", False):
+            lines.append("      force_calculate_group_energy: true")
         lines.append("      entities:")
         for member_name in area["members"]:
             member = room_by_name[member_name]

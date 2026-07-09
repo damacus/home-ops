@@ -282,6 +282,7 @@ class PowerGroupConfigTest(unittest.TestCase):
                 {
                     "name": "Downstairs light fixtures",
                     "dashboard": True,
+                    "force_calculate_group_energy": True,
                     "members": ["Kitchen light fixtures"],
                 }
             ],
@@ -299,6 +300,7 @@ class PowerGroupConfigTest(unittest.TestCase):
                     '    - create_group: "Downstairs light fixtures"',
                     '      unique_id: "Downstairs light fixtures"',
                     "      create_energy_sensor: true",
+                    "      force_calculate_group_energy: true",
                     "      entities:",
                     '        - create_group: "Kitchen light fixtures"',
                     '          unique_id: "Kitchen light fixtures"',
@@ -457,11 +459,45 @@ class PowerGroupConfigTest(unittest.TestCase):
             sensors,
             [
                 "sensor.downstairs_light_fixtures_energy",
-                "sensor.upstairs_lights_energy",
+                "sensor.upstairs_light_fixtures_energy",
                 "sensor.outdoor_lights_energy",
                 "sensor.loft_lights_energy",
             ],
         )
+
+    def test_checked_in_upstairs_group_uses_main_bedroom_light_fixtures(self) -> None:
+        module = load_module()
+        config = module.load_json(CONFIG_PATH)
+        room_groups = {room["name"]: room for room in config["room_groups"]}
+        area_groups = {area["name"]: area for area in config["area_groups"]}
+
+        self.assertNotIn("Main bedroom lights", room_groups)
+        self.assertIn("Upstairs light fixtures", area_groups)
+        self.assertNotIn("Upstairs lights", area_groups)
+        self.assertEqual(
+            area_groups["Upstairs light fixtures"]["members"],
+            [
+                "Main bedroom colour light",
+                "Main bedroom Dan bedside lamp",
+                "Main bedroom Hue colour lamp",
+                "Main bedroom Laura bedside lamp",
+                "Harrison's bedroom lights",
+                "Harrison's bedroom colour bulb",
+                "Bedroom four lights",
+                "Landing lights",
+                "Landing second light",
+            ],
+        )
+        self.assertNotIn("Main bedroom lights", area_groups["Upstairs light fixtures"]["members"])
+        upstairs_member_sensors = []
+        for member_name in area_groups["Upstairs light fixtures"]["members"]:
+            member = room_groups[member_name]
+            upstairs_member_sensors.extend([member["power_sensor_id"], member["energy_sensor_id"]])
+
+        self.assertNotIn("sensor.main_bedroom_power", upstairs_member_sensors)
+        self.assertNotIn("sensor.main_bedroom_energy", upstairs_member_sensors)
+        self.assertFalse(any("socket" in sensor for sensor in upstairs_member_sensors))
+        self.assertFalse(any("consumption" in sensor for sensor in upstairs_member_sensors))
 
     def test_dashboard_energy_sensors_rejects_duplicate_dashboard_slugs(self) -> None:
         module = load_module()

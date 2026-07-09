@@ -15,12 +15,12 @@ sensor and its area parent counts the same child energy twice.
 ## Group Hierarchy
 
 - Downstairs light fixtures: Kitchen light fixtures, Living room light fixtures, Hall light fixtures.
-- Upstairs lights: Main bedroom lights, Harrison's bedroom lights, bedroom four lights, and landing lights.
+- Upstairs light fixtures: main bedroom light fixtures, Harrison's bedroom lights, bedroom four lights, and landing lights.
 - Outdoor lights: Garden lights, Porch lights.
 - Loft lights: Loft ambiance.
 
 Jack's bedroom is part of upstairs, but it does not currently have a Jack or
-Bedroom 3 PowerCalc energy sensor. Add that room to `Upstairs lights` after a
+Bedroom 3 PowerCalc energy sensor. Add that room to `Upstairs light fixtures` after a
 PowerCalc room sensor exists for it.
 
 ## Energy Dashboard Sensors
@@ -28,7 +28,7 @@ PowerCalc room sensor exists for it.
 Add these as individual devices:
 
 - `sensor.downstairs_light_fixtures_energy`
-- `sensor.upstairs_lights_energy`
+- `sensor.upstairs_light_fixtures_energy`
 - `sensor.outdoor_lights_energy`
 - `sensor.loft_lights_energy`
 
@@ -45,9 +45,9 @@ configuration.
 5. Save the Energy configuration.
 6. Wait for the Energy dashboard statistics card to refresh.
 
-Remove `sensor.downstairs_lights_energy_2` if it is currently configured. That
-legacy group uses polluted Kitchen history and produces unrealistic totals in
-the Energy Dashboard.
+Remove `sensor.downstairs_lights_energy_2` and `sensor.upstairs_lights_energy`
+if they are currently configured. Those legacy groups use polluted room
+aggregate history and produce unrealistic totals in the Energy Dashboard.
 
 If verification does not show all four area sensors, complete the UI steps above with
 an authenticated Home Assistant user session. The sensors can exist in Home Assistant
@@ -69,12 +69,12 @@ The output should include the four area sensors listed above:
 sensor.downstairs_light_fixtures_energy
 sensor.loft_lights_energy
 sensor.outdoor_lights_energy
-sensor.upstairs_lights_energy
+sensor.upstairs_light_fixtures_energy
 ```
 
-Home Assistant already has older GUI-created downstairs and kitchen light group
-entities with polluted history. The Energy Dashboard should use the
-package-managed `sensor.downstairs_light_fixtures_energy` entity instead.
+Home Assistant already has older GUI-created downstairs, kitchen, and upstairs
+light group entities with polluted history. The Energy Dashboard should use the
+package-managed fixture entities instead.
 
 The output should not include child room sensors as Energy Dashboard individual
 devices:
