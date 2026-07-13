@@ -169,19 +169,20 @@ policies:
               file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("longhorn")
               file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("loki-chunks")
               file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("loki-data")
-          - uid: rustfs-bootstrap-preserves-old-prefix-mirroring
-            title: RustFS bootstrap keeps old-prefix mirror jobs for safe migration
+          - uid: rustfs-bootstrap-does-not-run-legacy-mirroring
+            title: RustFS bootstrap does not run legacy-prefix mirrors
             impact: 100
             mql: |
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/zitadel")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/forgejo")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/home-assistant")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/n8n")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/immich")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/mealie")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/med-tracker")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/penpot")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("volsync-backups/paperless")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mirror_prefix_if_present") == false
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc mirror") == false
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/") == false
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("volsync-backups/paperless") == false
+          - uid: rustfs-bootstrap-retains-failed-pods
+            title: RustFS bootstrap keeps failed pod logs available for debugging
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("ttlSecondsAfterFinished: 86400")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("restartPolicy: Never")
           - uid: rustfs-bootstrap-creates-app-identities
             title: RustFS bootstrap job creates all app IAM identities
             impact: 100
