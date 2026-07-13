@@ -117,18 +117,18 @@ spec:
         - alert: NodeHighCpuTemperature
           annotations:
             summary: "High CPU temperature on {{ $labels.instance }}"
-            description: "CPU thermal zone {{ $labels.chip_name }} on {{ $labels.instance }} is at {{ $value | printf \"%.1f\" }}°C (threshold: 75°C)"
+            description: "CPU thermal zone {{ $labels.chip }} on {{ $labels.instance }} is at {{ $value | printf \"%.1f\" }}°C (threshold: 75°C)"
           expr: |
-            node_hwmon_temp_celsius{chip_name=~".*_thermal"} > 75
+            node_hwmon_temp_celsius{chip=~"thermal.*"} > 75
           for: 5m
           labels:
             severity: warning
         - alert: NodeCriticalCpuTemperature
           annotations:
             summary: "Critical CPU temperature on {{ $labels.instance }}"
-            description: "CPU thermal zone {{ $labels.chip_name }} on {{ $labels.instance }} is at {{ $value | printf \"%.1f\" }}°C, approaching critical threshold"
+            description: "CPU thermal zone {{ $labels.chip }} on {{ $labels.instance }} is at {{ $value | printf \"%.1f\" }}°C, approaching critical threshold"
           expr: |
-            node_hwmon_temp_celsius{chip_name=~".*_thermal"} > 90
+            node_hwmon_temp_celsius{chip=~"thermal.*"} > 90
           for: 2m
           labels:
             severity: critical
@@ -144,7 +144,7 @@ spec:
         - alert: NodeTemperatureNearCritical
           annotations:
             summary: "Temperature approaching critical on {{ $labels.instance }}"
-            description: "{{ $labels.chip_name }} on {{ $labels.instance }} is at {{ $value | printf \"%.0f\" }}% of critical threshold"
+            description: "{{ $labels.chip }} on {{ $labels.instance }} is at {{ $value | printf \"%.0f\" }}% of critical threshold"
           expr: |
             (node_hwmon_temp_celsius / on(chip, instance, sensor) node_hwmon_temp_crit_celsius) * 100 > 80
           for: 5m
