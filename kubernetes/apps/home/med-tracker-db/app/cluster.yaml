@@ -14,6 +14,18 @@ spec:
     major: 18
   instances: 2
   primaryUpdateStrategy: unsupervised
+  managed:
+    roles:
+      - name: med_tracker_audit_exporter
+        ensure: present
+        login: false
+        superuser: false
+        bypassrls: false
+      - name: med_tracker_audit_verifier
+        ensure: present
+        login: false
+        superuser: false
+        bypassrls: false
   storage:
     size: 5Gi
     storageClass: openebs-hostpath
