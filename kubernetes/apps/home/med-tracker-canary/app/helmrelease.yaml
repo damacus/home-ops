@@ -1,0 +1,208 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: med-tracker-canary
+  namespace: home
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.0.1
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  maxHistory: 3
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    defaultPodOptions:
+      imagePullSecrets:
+        - name: ghcr-credentials
+
+    controllers:
+      med-tracker-canary:
+        type: deployment
+        strategy: Recreate
+        # TODO: Needs a RWX PVC
+        # replicas: 2
+        # rollingUpdate:
+        #   maxSurge: 1
+        #   maxUnavailable: 0
+
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          migrate:
+            image:
+              repository: &repository ghcr.io/damacus/med-tracker
+              tag: &tag sha-8661aa8d76d86a7f37f42f9f16515bf10cf9b692
+            command: ["bin/rails", "db:prepare"]
+            envFrom:
+              - secretRef:
+                  name: med-tracker-canary-secret
+            env:
+              DATABASE_ROLE: med_tracker_owner
+              OTEL_TRACES_EXPORTER: none
+              RAILS_ENV: production
+              TZ: "Europe/London"
+        containers:
+          app:
+            image:
+              repository: *repository
+              tag: *tag
+
+            envFrom:
+              - secretRef:
+                  name: med-tracker-canary-secret
+            env:
+              RAILS_ENV: production
+              RAILS_FORCE_SSL: "false"
+              RAILS_LOG_LEVEL: info
+              OTEL_TRACES_EXPORTER: none
+              SMTP_ENABLED: "false"
+              PUSH_NOTIFICATIONS_ENABLED: "false"
+              SOLID_QUEUE_IN_PUMA: "true"
+              TZ: "Europe/London"
+              APP_URL: "https://med-tracker-canary.damacus.io"
+              OIDC_ISSUER_URL: "https://zitadel.damacus.io"
+              OIDC_REDIRECT_URI: "https://med-tracker-canary.damacus.io/auth/oidc/callback"
+              OIDC_PROVIDER_NAME: "Zitadel"
+
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /up
+                    port: &port 80
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /up
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /up
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                  failureThreshold: 30
+
+            resources:
+              requests:
+                cpu: 10m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+
+    route:
+      app:
+        parentRefs:
+          - name: traefik-internal
+            namespace: network
+            sectionName: websecure
+        hostnames:
+          - "med-tracker-canary.ironstone.casa"
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - kind: Service
+                name: med-tracker-canary
+                namespace: home
+                port: 80
+                weight: 1
+      external:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
+        parentRefs:
+          - name: traefik-internal
+            namespace: network
+            sectionName: websecure
+        hostnames:
+          - "med-tracker-canary.damacus.io"
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /up
+            backendRefs:
+              - kind: Service
+                name: med-tracker-canary
+                namespace: home
+                port: 80
+                weight: 1
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /login
+            backendRefs:
+              - kind: Service
+                name: med-tracker-canary
+                namespace: home
+                port: 80
+                weight: 1
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            filters:
+              - type: ExtensionRef
+                extensionRef:
+                  group: traefik.io
+                  kind: Middleware
+                  name: oauth2-proxy-damacus-forward-auth
+            backendRefs:
+              - kind: Service
+                name: med-tracker-canary
+                namespace: home
+                port: 80
+                weight: 1
+
+    service:
+      app:
+        controller: med-tracker-canary
+        ports:
+          http:
+            port: 80
+
+    persistence:
+      storage:
+        existingClaim: med-tracker-canary-storage
+        globalMounts:
+          - path: /app/storage

@@ -7,6 +7,8 @@ resources:
   - ./mealie-db/ks.yaml
   - ./mealie/ks.yaml
   - ./memos/ks.yaml
+  - ./med-tracker-canary-db/ks.yaml
+  - ./med-tracker-canary/ks.yaml
   - ./med-tracker-db/ks.yaml
   - ./med-tracker/ks.yaml
   - ./namespace.yaml

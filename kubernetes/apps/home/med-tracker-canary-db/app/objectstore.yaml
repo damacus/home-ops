@@ -1,0 +1,23 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: med-tracker-canary-rustfs-store
+  namespace: home
+spec:
+  retentionPolicy: 30d
+  configuration:
+    destinationPath: s3://cnpg-med-tracker-canary/
+    endpointURL: http://rustfs.storage.svc.cluster.local:9000
+    s3Credentials:
+      accessKeyId:
+        name: rustfs-cnpg-med-tracker-canary
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: rustfs-cnpg-med-tracker-canary
+        key: SECRET_ACCESS_KEY
+    data:
+      compression: bzip2
+    wal:
+      compression: bzip2
+      maxParallel: 2

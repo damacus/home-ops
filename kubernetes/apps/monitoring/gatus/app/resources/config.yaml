@@ -25,6 +25,22 @@ endpoints:
     conditions:
       - "[DNS_RCODE] == NOERROR"
 
+  - name: Med Tracker Canary Up
+    group: med-tracker-canary
+    url: https://med-tracker-canary.damacus.io/up
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 5000"
+
+  - name: Med Tracker Canary Login
+    group: med-tracker-canary
+    url: https://med-tracker-canary.damacus.io/login
+    interval: 5m
+    conditions:
+      - "[STATUS] < 400"
+      - "[RESPONSE_TIME] < 5000"
+
 external-endpoints:
   - name: Alertmanager Watchdog
     group: cluster
