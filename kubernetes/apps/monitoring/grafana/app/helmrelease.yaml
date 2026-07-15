@@ -130,21 +130,9 @@ spec:
                         uid: prometheus
                       editorMode: code
                       expr: |-
-                        (
-                          min by (namespace, job) (
-                            time() - barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{
-                              job!~"dev/forgejo-green|home-automation/(home-assistant-green|n8n-green)"
-                            }
-                          ) > 10800
-                        )
-                        or
-                        (
-                          min by (namespace, job) (
-                            time() - barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{
-                              job=~"dev/forgejo-green|home-automation/(home-assistant-green|n8n-green)"
-                            }
-                          ) > 129600
-                        )
+                        min by (namespace, job) (
+                          time() - barman_cloud_cloudnative_pg_io_last_available_backup_timestamp
+                        ) > 108000
                       instant: true
                       intervalMs: 1000
                       maxDataPoints: 43200
@@ -192,7 +180,7 @@ spec:
                 execErrState: Alerting
                 for: 15m
                 annotations:
-                  summary: CNPG backup age exceeds expected schedule
+                  summary: CNPG backup age exceeds 30 hours
                   description: A CNPG cluster has no recent successful Barman backup for its schedule.
                 labels:
                   severity: critical
