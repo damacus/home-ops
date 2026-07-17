@@ -189,7 +189,8 @@ tasks:
     desc: Assert Med Tracker canary isolation and production update controls
     cmds:
       - yq -e '[.packageRules[] | select(.matchPackageNames[] == "ghcr.io/damacus/med-tracker")] | (length == 1 and .[0].enabled == false)' {{.ROOT_DIR}}/.github/renovate.json5
-      - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.image.tag == "0.5.7"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
+      - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.image.tag == "0.5.15"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
+      - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.env | has("DATABASE_ROLE") | not' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
       - yq -e '.metadata.name == "med-tracker-canary" and .spec.values.controllers."med-tracker-canary".containers.app.env.APP_URL == "https://med-tracker-canary.damacus.io"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.env.OIDC_REDIRECT_URI == "https://med-tracker-canary.damacus.io/auth/oidc/callback"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.env.SMTP_ENABLED == "false" and .spec.values.controllers."med-tracker-canary".containers.app.env.PUSH_NOTIFICATIONS_ENABLED == "false"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
