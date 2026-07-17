@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: vector
-      version: 0.57.0
+      version: 0.56.0
       sourceRef:
         kind: HelmRepository
         name: vector
@@ -27,7 +27,7 @@ spec:
 
     image:
       repository: timberio/vector
-      tag: 0.57.0-debian
+      tag: 0.56.0-debian
 
     service:
       enabled: true
@@ -90,18 +90,7 @@ spec:
         filter_ingested_logs:
           type: filter
           inputs: [remap_kubernetes_logs]
-          condition: |
-            !(
-              .label.namespace == "openebs-system" &&
-              .label.app == "loki" &&
-              is_string(.message) &&
-              (
-                contains(string!(.message), "caller=index_set.go") ||
-                contains(string!(.message), "caller=table_manager.go") ||
-                contains(string!(.message), "caller=recalculate_owned_streams.go") ||
-                contains(string!(.message), "caller=flush.go")
-              )
-            )
+          condition: '.label.namespace != "openebs-system" || .label.app != "loki" || !is_string(.message) || !(contains(string!(.message), "caller=index_set.go") || contains(string!(.message), "caller=table_manager.go") || contains(string!(.message), "caller=recalculate_owned_streams.go") || contains(string!(.message), "caller=flush.go"))'
 
         home_assistant_bt_metric:
           type: log_to_metric
