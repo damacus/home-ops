@@ -9,12 +9,12 @@ spec:
     kind: OCIRepository
     name: traefik
   install:
-    crds: Create
+    crds: Skip
     remediation:
       retries: 3
   upgrade:
     cleanupOnFail: true
-    crds: CreateReplace
+    crds: Skip
     remediation:
       strategy: rollback
       retries: 3
@@ -35,7 +35,7 @@ spec:
         allowEmptyServices: true
       kubernetesGateway:
         enabled: true
-        experimentalChannel: true
+        experimentalChannel: false
 
     # Gateway configuration
     gateway:

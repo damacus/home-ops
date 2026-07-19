@@ -1,0 +1,33 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/gitrepository_v1.json
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: gateway-api
+  namespace: flux-system
+spec:
+  interval: 1h
+  ref:
+    # renovate: depName=kubernetes-sigs/gateway-api datasource=github-releases versioning=semver-coerced
+    tag: v1.5.1
+  url: https://github.com/kubernetes-sigs/gateway-api.git
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app gateway-api-crds
+  namespace: flux-system
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  interval: 1h
+  path: ./config/crd/standard
+  prune: false # never delete cluster-scoped CRDs during source changes
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: gateway-api
+  timeout: 5m
+  wait: true
