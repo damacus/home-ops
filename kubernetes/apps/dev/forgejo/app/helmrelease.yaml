@@ -95,6 +95,11 @@ spec:
           PROVIDER: db
         queue:
           TYPE: level
+        actions:
+          ENABLED: "true"
+          DEFAULT_ACTIONS_URL: https://data.forgejo.org
+          LOG_RETENTION_DAYS: 30
+          ARTIFACT_RETENTION_DAYS: 30
         security:
           INSTALL_LOCK: "true"
         oauth2_client:
