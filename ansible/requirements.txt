@@ -17,7 +17,7 @@ attrs==26.1.0
     #   referencing
 black==26.5.1
     # via ansible-lint
-bracex==3.0
+bracex==3.0.1
     # via wcmatch
 certifi==2026.6.17
     # via
