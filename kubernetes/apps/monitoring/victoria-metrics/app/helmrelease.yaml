@@ -112,6 +112,11 @@ spec:
     # k3s does not expose these static control-plane components as scrape targets.
     # Keep the default rule sync aligned with the disabled scrape components below.
     defaultRules:
+      rules:
+        RecordingRulesNoData:
+          spec:
+            # count:up0 intentionally returns no series when every scrape target is healthy.
+            expr: sum(vmalert_recording_rules_last_evaluation_samples{recording!="count:up0"}) without(id) < 1
       groups:
         kube-scheduler.rules:
           enabled: false

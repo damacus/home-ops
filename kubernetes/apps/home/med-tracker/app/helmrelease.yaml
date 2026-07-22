@@ -34,6 +34,8 @@ spec:
       med-tracker:
         type: deployment
         strategy: Recreate
+        serviceAccount:
+          identifier: med-tracker-app
         # TODO: Needs a RWX PVC
         # replicas: 2
         # rollingUpdate:
@@ -171,6 +173,10 @@ spec:
         ports:
           http:
             port: 80
+
+    serviceAccount:
+      med-tracker-app:
+        forceRename: med-tracker-app
 
     persistence:
       storage:

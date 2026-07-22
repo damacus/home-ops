@@ -176,7 +176,8 @@ spec:
                       expression: B
                       refId: C
                       type: threshold
-                noDataState: NoData
+                # No matching series means every backup is within the 30-hour limit.
+                noDataState: OK
                 execErrState: Alerting
                 for: 15m
                 annotations:

@@ -34,6 +34,8 @@ spec:
       med-tracker-canary:
         type: deployment
         strategy: Recreate
+        serviceAccount:
+          identifier: med-tracker-canary-app
         # TODO: Needs a RWX PVC
         # replicas: 2
         # rollingUpdate:
@@ -200,6 +202,10 @@ spec:
         ports:
           http:
             port: 80
+
+    serviceAccount:
+      med-tracker-canary-app:
+        forceRename: med-tracker-canary-app
 
     persistence:
       storage:
