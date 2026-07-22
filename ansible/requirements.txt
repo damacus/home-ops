@@ -19,7 +19,7 @@ black==26.5.1
     # via ansible-lint
 bracex==3.0.1
     # via wcmatch
-certifi==2026.6.17
+certifi==2026.7.22
     # via
     #   kubernetes
     #   requests
