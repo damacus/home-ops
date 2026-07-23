@@ -175,6 +175,10 @@ spec:
             port: 80
 
     serviceAccount:
+      med-tracker:
+        annotations:
+          helm.sh/resource-policy: keep
+        forceRename: med-tracker
       med-tracker-app:
         forceRename: med-tracker-app
 

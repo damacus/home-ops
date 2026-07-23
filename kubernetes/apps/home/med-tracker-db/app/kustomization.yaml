@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: home
 resources:
   - cluster.yaml
-  - serviceaccount.yaml
   - databases.yaml
   - externalsecret.yaml
   - PrometheusRules.yaml

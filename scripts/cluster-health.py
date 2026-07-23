@@ -172,7 +172,10 @@ def service_account_health() -> CheckResult:
         "pass" if not missing else "fail",
         "all active pods have ServiceAccounts"
         if not missing
-        else f"{len(missing)} active pod{'s' if len(missing) != 1 else ''} has a missing ServiceAccount",
+        else (
+            f"{len(missing)} active pod{'s' if len(missing) != 1 else ''} "
+            f"{'have' if len(missing) != 1 else 'has'} a missing ServiceAccount"
+        ),
         missing,
     )
 
@@ -203,20 +206,34 @@ def resource_readiness_failures(
     for resource in resources:
         if ignore_suspended and resource.get("spec", {}).get("suspend") is True:
             continue
+        conditions = resource.get("status", {}).get("conditions", [])
         ready = next(
             (
                 condition
-                for condition in resource.get("status", {}).get("conditions", [])
+                for condition in conditions
                 if condition.get("type") == "Ready"
             ),
             None,
         )
         if ready and ready.get("status") == "True":
             continue
-        if ready and ready.get("reason") == "Progressing":
-            transition_time = ready.get("lastTransitionTime")
-            if transition_time and age_seconds(transition_time) <= RECONCILIATION_GRACE_SECONDS:
-                continue
+        reconciling = next(
+            (
+                condition
+                for condition in conditions
+                if condition.get("type") == "Reconciling" and condition.get("status") == "True"
+            ),
+            None,
+        )
+        transition_time = (
+            reconciling.get("lastTransitionTime")
+            if reconciling
+            else ready.get("lastTransitionTime")
+            if ready and ready.get("reason") == "Progressing"
+            else None
+        )
+        if transition_time and age_seconds(transition_time) <= RECONCILIATION_GRACE_SECONDS:
+            continue
 
         metadata = resource.get("metadata", {})
         name = f"{metadata.get('namespace', '-')}/{metadata.get('name', '-')}"

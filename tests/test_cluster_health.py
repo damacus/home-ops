@@ -258,6 +258,23 @@ class ReadinessChecksTest(unittest.TestCase):
                             ]
                         },
                     },
+                    {
+                        "metadata": {"name": "dependency", "namespace": "flux-system"},
+                        "status": {
+                            "conditions": [
+                                {
+                                    "type": "Ready",
+                                    "status": "False",
+                                    "reason": "DependencyNotReady",
+                                },
+                                {
+                                    "type": "Reconciling",
+                                    "status": "True",
+                                    "lastTransitionTime": "2026-07-23T03:00:00Z",
+                                },
+                            ]
+                        },
+                    },
                 ]
             },
             ("get", "helmrelease", "-A"): {
@@ -354,6 +371,30 @@ class ReadinessChecksTest(unittest.TestCase):
         self.assertEqual(result.status, "fail")
         self.assertEqual(result.summary, "1 active pod has a missing ServiceAccount")
         self.assertEqual(result.details, ["home/med-tracker-1: ServiceAccount med-tracker is missing"])
+
+    def test_service_account_health_uses_plural_grammar(self) -> None:
+        resources = {
+            ("get", "pods", "-A"): {
+                "items": [
+                    {
+                        "metadata": {"name": "app-1", "namespace": "home"},
+                        "spec": {"serviceAccountName": "missing"},
+                        "status": {"phase": "Running"},
+                    },
+                    {
+                        "metadata": {"name": "app-2", "namespace": "home"},
+                        "spec": {"serviceAccountName": "missing"},
+                        "status": {"phase": "Running"},
+                    },
+                ]
+            },
+            ("get", "serviceaccount", "-A"): {"items": []},
+        }
+        self.cluster_health.kubectl_json = lambda args: resources[tuple(args)]
+
+        result = self.cluster_health.service_account_health()
+
+        self.assertEqual(result.summary, "2 active pods have a missing ServiceAccount")
 
     def test_wal_queue_is_reported_without_failing_a_healthy_archiver(self) -> None:
         self.cluster_health.run = lambda command: self.cluster_health.subprocess.CompletedProcess(

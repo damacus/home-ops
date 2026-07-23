@@ -263,6 +263,8 @@ tasks:
       - yq -e '[.packageRules[] | select(.matchPackageNames[] == "ghcr.io/damacus/med-tracker")] | (length == 1 and .[0].enabled == false)' {{.ROOT_DIR}}/.github/renovate.json5
       - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.image.tag == "0.5.15"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.env | has("DATABASE_ROLE") | not' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
+      - yq -e '.spec.values.controllers."med-tracker".serviceAccount.identifier == "med-tracker-app"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
+      - yq -e '.spec.values.serviceAccount."med-tracker".forceRename == "med-tracker" and .spec.values.serviceAccount."med-tracker".annotations."helm.sh/resource-policy" == "keep"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
       - yq -e '.metadata.name == "med-tracker-canary" and .spec.values.controllers."med-tracker-canary".containers.app.env.APP_URL == "https://med-tracker-canary.damacus.io"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.env.OIDC_REDIRECT_URI == "https://med-tracker-canary.damacus.io/auth/oidc/callback"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.env.SMTP_ENABLED == "false" and .spec.values.controllers."med-tracker-canary".containers.app.env.PUSH_NOTIFICATIONS_ENABLED == "false"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
@@ -289,6 +291,7 @@ tasks:
       - yq -e '.spec.plugins[] | select(.name == "barman-cloud.cloudnative-pg.io" and .isWALArchiver == true and .parameters.barmanObjectName == "med-tracker-canary-rustfs-store" and .parameters.serverName == "med-tracker-canary")' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
       - yq -e '.spec.externalClusters[] | select(.name == "med-tracker-production-backup" and .plugin.name == "barman-cloud.cloudnative-pg.io" and .plugin.parameters.barmanObjectName == "med-tracker-rustfs-store" and .plugin.parameters.serverName == "med-tracker")' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
       - yq -e '.metadata.name == "med-tracker-canary" and .spec.bootstrap.initdb == null' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
+      - yq -e '.resources | contains(["serviceaccount.yaml"]) | not' {{.KUBERNETES_DIR}}/apps/home/med-tracker-db/app/kustomization.yaml
       - yq -e '.metadata.name == "med-tracker-canary-rustfs-store" and .spec.configuration.destinationPath == "s3://cnpg-med-tracker-canary/"' {{.MED_TRACKER_CANARY_DB}}/objectstore.yaml
       - yq -e '.spec.configuration.s3Credentials.accessKeyId.name == "rustfs-cnpg-med-tracker-canary" and .spec.configuration.s3Credentials.secretAccessKey.name == "rustfs-cnpg-med-tracker-canary"' {{.MED_TRACKER_CANARY_DB}}/objectstore.yaml
       - yq -e '.endpoints[] | select(.name == "Med Tracker Canary Up" and .url == "https://med-tracker-canary.damacus.io/up")' {{.GATUS_CONFIG}}
