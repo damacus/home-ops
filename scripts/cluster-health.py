@@ -235,18 +235,21 @@ def cnpg_backups() -> CheckResult:
                 bad.append(f"{key}: latest backup still started since {started_at}")
         if latest_success is None:
             bad.append(f"{key}: no successful backup found")
-        else:
+        elif latest_success_time:
             backup_age = age_seconds(latest_success_time)
             if backup_age > MAX_BACKUP_AGE_SECONDS:
                 bad.append(
                     f"{key}: last successful backup is {backup_age / 3600:.1f} hours old "
                     f"(maximum {MAX_BACKUP_AGE_SECONDS / 3600:.0f} hours)"
                 )
+        else:
+            bad.append(f"{key}: last successful backup has no completion timestamp")
 
         archiver = archive_status_from_cluster(namespace, name)
         if archiver.failed:
             bad.extend(archiver.details)
-        details.extend(archiver.details)
+        else:
+            details.extend(archiver.details)
 
     return CheckResult(
         "cnpg-backups",
