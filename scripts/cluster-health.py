@@ -16,7 +16,8 @@ from datetime import UTC, datetime
 from typing import Any, Final
 
 
-ALERT_QUERY: Final[str] = 'ALERTS{alertstate="firing",alertname!="Watchdog"}'
+ALERT_QUERY: Final[str] = 'ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor"}'
+IGNORED_ALERTS: Final[frozenset[str]] = frozenset({"Watchdog", "InfoInhibitor"})
 PROMETHEUS_QUERY_URL: Final[str] = (
     "http://vmsingle-vm.monitoring.svc.cluster.local:8428/api/v1/query?query={query}"
 )
@@ -24,6 +25,7 @@ ALERTMANAGER_URL: Final[str] = "http://localhost:9093/api/v2/alerts"
 EXEC_POD: Final[list[str]] = ["kubectl", "exec", "-n", "monitoring", "vmalertmanager-vm-0", "--"]
 MAX_BACKUP_AGE_SECONDS: Final[int] = 30 * 60 * 60
 STALE_BACKUP_SECONDS: Final[int] = 30 * 60
+RECONCILIATION_GRACE_SECONDS: Final[int] = 10 * 60
 HIBERNATION_ANNOTATION: Final[str] = "cnpg.io/hibernation"
 COMMAND_TIMEOUT_SECONDS: int = 45
 
@@ -149,6 +151,32 @@ def check_not_ready_pods() -> CheckResult:
     )
 
 
+def service_account_health() -> CheckResult:
+    pods = kubectl_json(["get", "pods", "-A"])["items"]
+    service_accounts = kubectl_json(["get", "serviceaccount", "-A"])["items"]
+    available = {
+        f"{account['metadata']['namespace']}/{account['metadata']['name']}"
+        for account in service_accounts
+    }
+    missing = []
+    for pod in pods:
+        if pod.get("status", {}).get("phase") in {"Succeeded", "Failed"}:
+            continue
+        namespace = pod["metadata"]["namespace"]
+        name = pod["metadata"]["name"]
+        service_account = pod.get("spec", {}).get("serviceAccountName", "default")
+        if f"{namespace}/{service_account}" not in available:
+            missing.append(f"{namespace}/{name}: ServiceAccount {service_account} is missing")
+    return CheckResult(
+        "service-accounts",
+        "pass" if not missing else "fail",
+        "all active pods have ServiceAccounts"
+        if not missing
+        else f"{len(missing)} active pod{'s' if len(missing) != 1 else ''} has a missing ServiceAccount",
+        missing,
+    )
+
+
 def check_deployments() -> CheckResult:
     deployments = kubectl_json(["get", "deploy", "-A"])
     bad = []
@@ -165,6 +193,74 @@ def check_deployments() -> CheckResult:
         "pass" if not bad else "fail",
         "all deployments available" if not bad else f"{len(bad)} deployments unavailable",
         bad,
+    )
+
+
+def resource_readiness_failures(
+    resources: list[dict[str, Any]], kind: str, ignore_suspended: bool = False
+) -> list[str]:
+    failures = []
+    for resource in resources:
+        if ignore_suspended and resource.get("spec", {}).get("suspend") is True:
+            continue
+        ready = next(
+            (
+                condition
+                for condition in resource.get("status", {}).get("conditions", [])
+                if condition.get("type") == "Ready"
+            ),
+            None,
+        )
+        if ready and ready.get("status") == "True":
+            continue
+        if ready and ready.get("reason") == "Progressing":
+            transition_time = ready.get("lastTransitionTime")
+            if transition_time and age_seconds(transition_time) <= RECONCILIATION_GRACE_SECONDS:
+                continue
+
+        metadata = resource.get("metadata", {})
+        name = f"{metadata.get('namespace', '-')}/{metadata.get('name', '-')}"
+        if ready is None:
+            failures.append(f"{kind} {name}: Ready condition missing")
+            continue
+
+        reason = ready.get("reason") or f"Ready={ready.get('status', 'Unknown')}"
+        message = ready.get("message")
+        failures.append(f"{kind} {name}: {reason}{f': {message}' if message else ''}")
+    return failures
+
+
+def gitops_health() -> CheckResult:
+    resources = (
+        ("GitRepository", ["get", "gitrepository", "-A"]),
+        ("Kustomization", ["get", "kustomization", "-A"]),
+        ("HelmRelease", ["get", "helmrelease", "-A"]),
+    )
+    failures = []
+    for kind, args in resources:
+        failures.extend(resource_readiness_failures(kubectl_json(args)["items"], kind, ignore_suspended=True))
+    return CheckResult(
+        "gitops",
+        "pass" if not failures else "fail",
+        "all unsuspended Flux resources Ready"
+        if not failures
+        else f"{len(failures)} Flux resources not Ready",
+        failures,
+    )
+
+
+def external_secrets_health() -> CheckResult:
+    failures = resource_readiness_failures(
+        kubectl_json(["get", "externalsecret", "-A"])["items"],
+        "ExternalSecret",
+    )
+    return CheckResult(
+        "external-secrets",
+        "pass" if not failures else "fail",
+        "all ExternalSecrets Ready"
+        if not failures
+        else f"{len(failures)} ExternalSecret{'s' if len(failures) != 1 else ''} not Ready",
+        failures,
     )
 
 
@@ -288,7 +384,7 @@ def archive_status_from_cluster(namespace: str, name: str) -> CheckResult:
         details.append(f"{namespace}/{name}: WAL archiving failing")
     if waiting and waiting != "0":
         details.append(f"{namespace}/{name}: {waiting} WALs waiting")
-    return CheckResult("cnpg-wal", "fail" if details else "pass", "WAL archiving checked", details)
+    return CheckResult("cnpg-wal", "fail" if failing else "pass", "WAL archiving checked", details)
 
 
 def age_seconds(timestamp: str) -> float:
@@ -309,7 +405,7 @@ def grafana_alerts() -> CheckResult:
     return CheckResult(
         "grafana-alerts",
         "pass" if not details else "fail",
-        "no firing non-Watchdog alerts" if not details else f"{len(details)} firing non-Watchdog alerts",
+        "no firing actionable alerts" if not details else f"{len(details)} firing actionable alerts",
         details,
     )
 
@@ -320,7 +416,7 @@ def alertmanager_summary() -> CheckResult:
         alert
         for alert in alerts
         if alert.get("status", {}).get("state") == "active"
-        and alert.get("labels", {}).get("alertname") != "Watchdog"
+        and alert.get("labels", {}).get("alertname") not in IGNORED_ALERTS
     ]
     details = []
     for alert in active:
@@ -330,7 +426,9 @@ def alertmanager_summary() -> CheckResult:
     return CheckResult(
         "alertmanager",
         "pass" if not active else "fail",
-        "no active non-Watchdog Alertmanager alerts" if not active else f"{len(active)} active non-Watchdog alerts",
+        "no active actionable Alertmanager alerts"
+        if not active
+        else f"{len(active)} active actionable Alertmanager alerts",
         details,
     )
 
@@ -390,6 +488,12 @@ def print_text(results: list[CheckResult]) -> None:
 
 
 def selected_checks(args: argparse.Namespace) -> list[CheckResult]:
+    if args.command == "gitops-health":
+        return [gitops_health()]
+    if args.command == "external-secrets-health":
+        return [external_secrets_health()]
+    if args.command == "service-account-health":
+        return [service_account_health()]
     if args.command == "cnpg-health":
         return [cnpg_clusters()]
     if args.command == "cnpg-backups":
@@ -408,10 +512,12 @@ def selected_checks(args: argparse.Namespace) -> list[CheckResult]:
             ("kube-vip", check_kube_vip),
             ("cilium", check_cilium),
             ("pods", check_not_ready_pods),
+            ("service-accounts", service_account_health),
             ("deployments", check_deployments),
+            ("gitops", gitops_health),
+            ("external-secrets", external_secrets_health),
             ("cnpg-clusters", cnpg_clusters),
             ("cnpg-backups", cnpg_backups),
-            ("grafana-alerts", grafana_alerts),
             ("alertmanager", alertmanager_summary),
         ]
         if args.edge_smoke:
@@ -453,7 +559,19 @@ def run_checks(checks: list[tuple[str, Callable[[], CheckResult]]], workers: int
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["health", "cnpg-health", "cnpg-backups", "grafana-alerts", "morning-check"])
+    parser.add_argument(
+        "command",
+        choices=[
+            "health",
+            "gitops-health",
+            "external-secrets-health",
+            "service-account-health",
+            "cnpg-health",
+            "cnpg-backups",
+            "grafana-alerts",
+            "morning-check",
+        ],
+    )
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     parser.add_argument("--notify", action="store_true", help="Send phone notification when failures are found")
     parser.add_argument("--log-noise", action="store_true", help="Include log-noise in morning-check")

@@ -103,6 +103,75 @@ tasks:
       - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
       - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
 
+  gitops-health:
+    desc: Check unsuspended Flux sources and releases are Ready
+    summary: |
+      Checks GitRepositories, Kustomizations, and HelmReleases that are not
+      intentionally suspended. Failed details include the controller reason
+      and message where available.
+
+      Examples:
+        task kubernetes:gitops-health
+        task kubernetes:gitops-health notify=true
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} gitops-health
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+      --timeout {{.TIMEOUT}}
+    preconditions:
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+
+  external-secrets-health:
+    desc: Check all ExternalSecrets have synchronized successfully
+    summary: |
+      Checks ExternalSecret Ready conditions and reports sync failures with
+      their controller reason and message. This detects missing or invalid
+      1Password items before dependent workloads fail to start.
+
+      Examples:
+        task kubernetes:external-secrets-health
+        task kubernetes:external-secrets-health notify=true
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} external-secrets-health
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+      --timeout {{.TIMEOUT}}
+    preconditions:
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+
+  service-account-health:
+    desc: Check active pods do not reference deleted ServiceAccounts
+    summary: |
+      Checks every non-terminal pod has an existing ServiceAccount in its
+      namespace. This catches workloads that remain Ready with a deleted
+      identity, but can no longer authenticate to the Kubernetes API.
+
+      Examples:
+        task kubernetes:service-account-health
+        task kubernetes:service-account-health notify=true
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} service-account-health
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+      --timeout {{.TIMEOUT}}
+    preconditions:
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+
   grafana-alerts:
     desc: Check firing Grafana/Prometheus and Alertmanager alerts
     vars:
@@ -123,19 +192,21 @@ tasks:
   morning-check:
     desc: Run the recurring morning cluster health bundle
     summary: |
-      Runs the regular operator checks: cluster core health, CNPG clusters,
-      CNPG backups/WAL archiving, and firing alerts. Gatus handles continuous
-      edge checks; local edge smoke and log-noise can be included on demand.
+      Runs the regular operator checks: cluster core health, unsuspended Flux
+      resources, ExternalSecret synchronization, active ServiceAccounts, CNPG
+      clusters, CNPG backups/WAL archiving, active actionable Alertmanager
+      alerts, and local edge smoke. Log-noise remains opt-in because it is
+      diagnostic volume, not a health signal.
 
       Examples:
         task kubernetes:morning-check
         task kubernetes:morning-check notify=true
-        task kubernetes:morning-check edge_smoke=true
+        task kubernetes:morning-check edge_smoke=false
         task kubernetes:morning-check log_noise=true period=6h top=10
     vars:
       JSON: '{{.json | default "false"}}'
       NOTIFY: '{{.notify | default "false"}}'
-      EDGE_SMOKE: '{{.edge_smoke | default "false"}}'
+      EDGE_SMOKE: '{{.edge_smoke | default "true"}}'
       LOG_NOISE: '{{.log_noise | default "false"}}'
       PERIOD: '{{.period | default "1h"}}'
       TOP: '{{.top | default "20"}}'
