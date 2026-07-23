@@ -22,6 +22,7 @@ PROMETHEUS_QUERY_URL: Final[str] = (
 )
 ALERTMANAGER_URL: Final[str] = "http://localhost:9093/api/v2/alerts"
 EXEC_POD: Final[list[str]] = ["kubectl", "exec", "-n", "monitoring", "vmalertmanager-vm-0", "--"]
+MAX_BACKUP_AGE_SECONDS: Final[int] = 30 * 60 * 60
 STALE_BACKUP_SECONDS: Final[int] = 30 * 60
 HIBERNATION_ANNOTATION: Final[str] = "cnpg.io/hibernation"
 COMMAND_TIMEOUT_SECONDS: int = 45
@@ -213,8 +214,15 @@ def cnpg_backups() -> CheckResult:
             None,
         )
         latest_phase = latest.get("status", {}).get("phase", "unknown") if latest else "missing"
-        latest_success_time = latest_success.get("status", {}).get("stoppedAt", "-") if latest_success else "-"
-        details.append(f"{key}: latest={latest_phase}, last_success={latest_success_time}")
+        latest_success_time = latest_success.get("status", {}).get("stoppedAt") if latest_success else None
+        if latest_success_time:
+            latest_success_age = age_seconds(latest_success_time)
+            details.append(
+                f"{key}: latest={latest_phase}, last_success={latest_success_time} "
+                f"(age={latest_success_age / 3600:.1f} hours)"
+            )
+        else:
+            details.append(f"{key}: latest={latest_phase}, last_success=-")
 
         if latest is None:
             bad.append(f"{key}: no Backup resources found")
@@ -227,17 +235,27 @@ def cnpg_backups() -> CheckResult:
                 bad.append(f"{key}: latest backup still started since {started_at}")
         if latest_success is None:
             bad.append(f"{key}: no successful backup found")
+        elif latest_success_time:
+            backup_age = age_seconds(latest_success_time)
+            if backup_age > MAX_BACKUP_AGE_SECONDS:
+                bad.append(
+                    f"{key}: last successful backup is {backup_age / 3600:.1f} hours old "
+                    f"(maximum {MAX_BACKUP_AGE_SECONDS / 3600:.0f} hours)"
+                )
+        else:
+            bad.append(f"{key}: last successful backup has no completion timestamp")
 
         archiver = archive_status_from_cluster(namespace, name)
         if archiver.failed:
             bad.extend(archiver.details)
-        details.extend(archiver.details)
+        else:
+            details.extend(archiver.details)
 
     return CheckResult(
         "cnpg-backups",
         "pass" if not bad else "fail",
         "all CNPG backups and WAL archiving healthy" if not bad else f"{len(bad)} CNPG backup/WAL issues",
-        bad or details,
+        bad + details,
     )
 
 

@@ -79,10 +79,11 @@ tasks:
       - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
 
   cnpg-backups:
-    desc: Check CNPG backup resources and WAL archiving status
+    desc: Check CNPG backup freshness, resources, and WAL archiving status
     summary: |
-      Summarizes latest Backup resources, latest successful backups, and
-      kubectl cnpg status WAL archiving health for every CNPG cluster.
+      Checks that every active CNPG cluster has a successful backup no more
+      than 30 hours old, then summarizes Backup resources and WAL archiving
+      health.
 
       Examples:
         task kubernetes:cnpg-backups
@@ -196,6 +197,7 @@ tasks:
       - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.env.SMTP_ENABLED == "false" and .spec.values.controllers."med-tracker-canary".containers.app.env.PUSH_NOTIFICATIONS_ENABLED == "false"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker-canary".initContainers.migrate.envFrom[0].secretRef.name == "med-tracker-canary-secret"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.envFrom[0].secretRef.name == "med-tracker-canary-secret"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '.spec.values.controllers."med-tracker-canary".serviceAccount.identifier == "med-tracker-canary-app" and .spec.values.serviceAccount."med-tracker-canary-app".forceRename == "med-tracker-canary-app"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.persistence.storage.existingClaim == "med-tracker-canary-storage"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.route.external.hostnames[0] == "med-tracker-canary.damacus.io" and .spec.values.route.external.annotations."external-dns.alpha.kubernetes.io/target" == "traefik-ext.damacus.io"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.route.external.rules[] | select(.matches[0].path.value == "/" and .filters[0].extensionRef.name == "oauth2-proxy-damacus-forward-auth" and .backendRefs[0].name == "med-tracker-canary")' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml

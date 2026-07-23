@@ -78,9 +78,111 @@ class CnpgBackupsTest(unittest.TestCase):
         result = self.run_cnpg_backups([backup], [cluster])
 
         self.assertEqual(result.status, "fail")
-        self.assertEqual(result.details, ["default/app: latest backup failed: backup failed", "default/app: no successful backup found"])
+        self.assertEqual(
+            result.details,
+            [
+                "default/app: latest backup failed: backup failed",
+                "default/app: no successful backup found",
+                "default/app: latest=failed, last_success=-",
+            ],
+        )
 
-    def run_cnpg_backups(self, backups: list[dict], clusters: list[dict]):
+    def test_successful_backup_within_thirty_hours_passes(self) -> None:
+        cluster = {
+            "metadata": {"annotations": {}, "name": "app", "namespace": "default"},
+            "status": {},
+        }
+        backup = self.successful_backup("2026-05-19T09:03:00Z")
+
+        result = self.run_cnpg_backups([backup], [cluster], age_seconds=29 * 60 * 60)
+
+        self.assertEqual(result.status, "pass")
+
+    def test_successful_backup_older_than_thirty_hours_fails(self) -> None:
+        cluster = {
+            "metadata": {"annotations": {}, "name": "app", "namespace": "default"},
+            "status": {},
+        }
+        backup = self.successful_backup("2026-05-19T09:03:00Z")
+
+        result = self.run_cnpg_backups([backup], [cluster], age_seconds=31 * 60 * 60)
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(
+            result.details,
+            [
+                "default/app: last successful backup is 31.0 hours old (maximum 30 hours)",
+                "default/app: latest=completed, last_success=2026-05-19T09:03:00Z (age=31.0 hours)",
+            ],
+        )
+
+    def test_completed_backup_without_stop_time_fails_without_crashing(self) -> None:
+        cluster = {
+            "metadata": {"annotations": {}, "name": "app", "namespace": "default"},
+            "status": {},
+        }
+        backup = self.successful_backup("2026-05-19T09:03:00Z")
+        del backup["status"]["stoppedAt"]
+
+        result = self.run_cnpg_backups([backup], [cluster])
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(
+            result.details,
+            [
+                "default/app: last successful backup has no completion timestamp",
+                "default/app: latest=completed, last_success=-",
+            ],
+        )
+
+    def test_failed_wal_archiving_is_reported_once(self) -> None:
+        cluster = {
+            "metadata": {"annotations": {}, "name": "app", "namespace": "default"},
+            "status": {},
+        }
+        backup = self.successful_backup("2026-05-19T09:03:00Z")
+        archiver = self.cluster_health.CheckResult(
+            "cnpg-wal",
+            "fail",
+            "WAL archiving checked",
+            ["default/app: WAL archiving failing"],
+        )
+
+        result = self.run_cnpg_backups(
+            [backup], [cluster], age_seconds=60, archiver_result=archiver
+        )
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(
+            result.details,
+            [
+                "default/app: WAL archiving failing",
+                "default/app: latest=completed, last_success=2026-05-19T09:03:00Z (age=0.0 hours)",
+            ],
+        )
+
+    @staticmethod
+    def successful_backup(stopped_at: str) -> dict:
+        return {
+            "metadata": {
+                "creationTimestamp": stopped_at,
+                "namespace": "default",
+            },
+            "spec": {"cluster": {"name": "app"}},
+            "status": {
+                "phase": "completed",
+                "startedAt": stopped_at,
+                "stoppedAt": stopped_at,
+            },
+        }
+
+    def run_cnpg_backups(
+        self,
+        backups: list[dict],
+        clusters: list[dict],
+        age_seconds: float | None = None,
+        archiver_result=None,
+    ):
         def kubectl_json(args: list[str]):
             if args == ["get", "backups.postgresql.cnpg.io", "-A"]:
                 return {"items": backups}
@@ -89,10 +191,14 @@ class CnpgBackupsTest(unittest.TestCase):
             raise AssertionError(f"unexpected kubectl args: {args}")
 
         def archive_status_from_cluster(namespace: str, name: str):
+            if archiver_result is not None:
+                return archiver_result
             return self.cluster_health.CheckResult("cnpg-wal", "pass", "WAL archiving checked", [])
 
         self.cluster_health.kubectl_json = kubectl_json
         self.cluster_health.archive_status_from_cluster = archive_status_from_cluster
+        if age_seconds is not None:
+            self.cluster_health.age_seconds = lambda timestamp: age_seconds
 
         return self.cluster_health.cnpg_backups()
 
