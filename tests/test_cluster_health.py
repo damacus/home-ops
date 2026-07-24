@@ -203,5 +203,212 @@ class CnpgBackupsTest(unittest.TestCase):
         return self.cluster_health.cnpg_backups()
 
 
+class ReadinessChecksTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.cluster_health = load_cluster_health()
+
+    def test_gitops_reports_unsuspended_resources_without_ready_condition(self) -> None:
+        resources = {
+            ("get", "gitrepository", "-A"): {
+                "items": [
+                    {
+                        "metadata": {"name": "flux-system", "namespace": "flux-system"},
+                        "status": {"conditions": [{"type": "Ready", "status": "True"}]},
+                    }
+                ]
+            },
+            ("get", "kustomization", "-A"): {
+                "items": [
+                    {
+                        "metadata": {"name": "paused", "namespace": "flux-system"},
+                        "spec": {"suspend": True},
+                        "status": {
+                            "conditions": [
+                                {
+                                    "type": "Ready",
+                                    "status": "False",
+                                    "reason": "HealthCheckFailed",
+                                }
+                            ]
+                        },
+                    },
+                    {
+                        "metadata": {"name": "apps", "namespace": "flux-system"},
+                        "status": {
+                            "conditions": [
+                                {
+                                    "type": "Ready",
+                                    "status": "False",
+                                    "reason": "HealthCheckFailed",
+                                    "message": "deployment unavailable",
+                                }
+                            ]
+                        },
+                    },
+                    {
+                        "metadata": {"name": "reconciling", "namespace": "flux-system"},
+                        "status": {
+                            "conditions": [
+                                {
+                                    "type": "Ready",
+                                    "status": "False",
+                                    "reason": "Progressing",
+                                    "lastTransitionTime": "2026-07-23T03:00:00Z",
+                                }
+                            ]
+                        },
+                    },
+                    {
+                        "metadata": {"name": "dependency", "namespace": "flux-system"},
+                        "status": {
+                            "conditions": [
+                                {
+                                    "type": "Ready",
+                                    "status": "False",
+                                    "reason": "DependencyNotReady",
+                                },
+                                {
+                                    "type": "Reconciling",
+                                    "status": "True",
+                                    "lastTransitionTime": "2026-07-23T03:00:00Z",
+                                },
+                            ]
+                        },
+                    },
+                ]
+            },
+            ("get", "helmrelease", "-A"): {
+                "items": [{"metadata": {"name": "grafana", "namespace": "monitoring"}}]
+            },
+        }
+
+        self.cluster_health.kubectl_json = lambda args: resources[tuple(args)]
+        self.cluster_health.age_seconds = lambda timestamp: 60
+
+        result = self.cluster_health.gitops_health()
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(result.summary, "2 Flux resources not Ready")
+        self.assertEqual(
+            result.details,
+            [
+                "Kustomization flux-system/apps: HealthCheckFailed: deployment unavailable",
+                "HelmRelease monitoring/grafana: Ready condition missing",
+            ],
+        )
+
+    def test_external_secrets_reports_sync_failures(self) -> None:
+        self.cluster_health.kubectl_json = lambda args: {
+            "items": [
+                {
+                    "metadata": {"name": "rustfs-app-credentials", "namespace": "home"},
+                    "status": {
+                        "conditions": [
+                            {
+                                "type": "Ready",
+                                "status": "False",
+                                "reason": "SecretSyncedError",
+                                "message": "missing 1Password item",
+                            }
+                        ]
+                    },
+                },
+                {
+                    "metadata": {"name": "healthy", "namespace": "home"},
+                    "status": {"conditions": [{"type": "Ready", "status": "True"}]},
+                },
+            ]
+        }
+
+        result = self.cluster_health.external_secrets_health()
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(result.summary, "1 ExternalSecret not Ready")
+        self.assertEqual(
+            result.details,
+            [
+                "ExternalSecret home/rustfs-app-credentials: SecretSyncedError: missing 1Password item"
+            ],
+        )
+
+    def test_alertmanager_ignores_expected_baseline_alerts(self) -> None:
+        self.cluster_health.remote_get = lambda url: [
+            {"status": {"state": "active"}, "labels": {"alertname": "Watchdog"}},
+            {"status": {"state": "active"}, "labels": {"alertname": "InfoInhibitor"}},
+        ]
+
+        result = self.cluster_health.alertmanager_summary()
+
+        self.assertEqual(result.status, "pass")
+        self.assertEqual(result.details, [])
+
+    def test_service_account_health_reports_active_pods_with_deleted_accounts(self) -> None:
+        resources = {
+            ("get", "pods", "-A"): {
+                "items": [
+                    {
+                        "metadata": {"name": "med-tracker-1", "namespace": "home"},
+                        "spec": {"serviceAccountName": "med-tracker"},
+                        "status": {"phase": "Running"},
+                    },
+                    {
+                        "metadata": {"name": "finished", "namespace": "home"},
+                        "spec": {"serviceAccountName": "missing"},
+                        "status": {"phase": "Succeeded"},
+                    },
+                ]
+            },
+            ("get", "serviceaccount", "-A"): {
+                "items": [
+                    {"metadata": {"name": "default", "namespace": "home"}},
+                ]
+            },
+        }
+        self.cluster_health.kubectl_json = lambda args: resources[tuple(args)]
+
+        result = self.cluster_health.service_account_health()
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(result.summary, "1 active pod has a missing ServiceAccount")
+        self.assertEqual(result.details, ["home/med-tracker-1: ServiceAccount med-tracker is missing"])
+
+    def test_service_account_health_uses_plural_grammar(self) -> None:
+        resources = {
+            ("get", "pods", "-A"): {
+                "items": [
+                    {
+                        "metadata": {"name": "app-1", "namespace": "home"},
+                        "spec": {"serviceAccountName": "missing"},
+                        "status": {"phase": "Running"},
+                    },
+                    {
+                        "metadata": {"name": "app-2", "namespace": "home"},
+                        "spec": {"serviceAccountName": "missing"},
+                        "status": {"phase": "Running"},
+                    },
+                ]
+            },
+            ("get", "serviceaccount", "-A"): {"items": []},
+        }
+        self.cluster_health.kubectl_json = lambda args: resources[tuple(args)]
+
+        result = self.cluster_health.service_account_health()
+
+        self.assertEqual(result.summary, "2 active pods have a missing ServiceAccount")
+
+    def test_wal_queue_is_reported_without_failing_a_healthy_archiver(self) -> None:
+        self.cluster_health.run = lambda command: self.cluster_health.subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="Working WAL archiving: OK\nWALs waiting to be archived: 12\n",
+            stderr="",
+        )
+
+        result = self.cluster_health.archive_status_from_cluster("home", "home-assistant-green")
+
+        self.assertEqual(result.status, "pass")
+        self.assertEqual(result.details, ["home/home-assistant-green: 12 WALs waiting"])
+
+
 if __name__ == "__main__":
     unittest.main()
