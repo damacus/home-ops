@@ -48,7 +48,7 @@ jobs:
         uses: Homebrew/actions/setup-homebrew@main
 
       - name: Setup flate
-        uses: home-operations/flate/action@v0.4.10
+        uses: home-operations/flate/action@v0.4.12
         with:
           base: ""
           token: ${{ github.token }}
@@ -116,7 +116,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup flate
-        uses: home-operations/flate/action@v0.4.10
+        uses: home-operations/flate/action@v0.4.12
         with:
           base: ""
           token: ${{ github.token }}
@@ -141,7 +141,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup flate
-        uses: home-operations/flate/action@v0.4.10
+        uses: home-operations/flate/action@v0.4.12
         with:
           base: ""
           token: ${{ github.token }}
