@@ -36,9 +36,10 @@
       ],
     },
     {
-      description: "Disable all MedTracker updates",
+      description: "Enable MedTracker updates without auto-merge",
       matchPackageNames: ["ghcr.io/damacus/med-tracker"],
-      enabled: false,
+      enabled: true,
+      automerge: false,
     },
     {
       description: "Auto-merge non-major updates for selected home-ops assets",
