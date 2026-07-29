@@ -25,6 +25,17 @@
       automerge: true,
     },
     {
+      description: "Group Flux platform updates",
+      groupName: "flux",
+      matchPackageNames: [
+        "controlplaneio-fluxcd/distribution",
+        "fluxcd/flux2",
+        "ghcr.io/controlplaneio-fluxcd/charts/flux-instance",
+        "ghcr.io/controlplaneio-fluxcd/charts/flux-operator",
+        "ghcr.io/fluxcd/flux-manifests",
+      ],
+    },
+    {
       description: "Disable all MedTracker updates",
       matchPackageNames: ["ghcr.io/damacus/med-tracker"],
       enabled: false,
@@ -37,6 +48,7 @@
         "ghcr.io/mealie-recipes/mealie",
         "ghcr.io/paperless-ngx/paperless-ngx",
         "registry.k8s.io/kubectl",
+        "rustfs/rc",
         "ghcr.io/zitadel/zitadel",
         "quay.io/jetstack/charts/cert-manager",
         "external-secrets",
