@@ -103,6 +103,75 @@ tasks:
       - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
       - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
 
+  gitops-health:
+    desc: Check unsuspended Flux sources and releases are Ready
+    summary: |
+      Checks GitRepositories, Kustomizations, and HelmReleases that are not
+      intentionally suspended. Failed details include the controller reason
+      and message where available.
+
+      Examples:
+        task kubernetes:gitops-health
+        task kubernetes:gitops-health notify=true
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} gitops-health
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+      --timeout {{.TIMEOUT}}
+    preconditions:
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+
+  external-secrets-health:
+    desc: Check all ExternalSecrets have synchronized successfully
+    summary: |
+      Checks ExternalSecret Ready conditions and reports sync failures with
+      their controller reason and message. This detects missing or invalid
+      1Password items before dependent workloads fail to start.
+
+      Examples:
+        task kubernetes:external-secrets-health
+        task kubernetes:external-secrets-health notify=true
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} external-secrets-health
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+      --timeout {{.TIMEOUT}}
+    preconditions:
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+
+  service-account-health:
+    desc: Check active pods do not reference deleted ServiceAccounts
+    summary: |
+      Checks every non-terminal pod has an existing ServiceAccount in its
+      namespace. This catches workloads that remain Ready with a deleted
+      identity, but can no longer authenticate to the Kubernetes API.
+
+      Examples:
+        task kubernetes:service-account-health
+        task kubernetes:service-account-health notify=true
+    vars:
+      JSON: '{{.json | default "false"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
+    cmd: >-
+      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} service-account-health
+      {{if eq .JSON "true"}}--json{{end}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+      --timeout {{.TIMEOUT}}
+    preconditions:
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
+      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+
   grafana-alerts:
     desc: Check firing Grafana/Prometheus and Alertmanager alerts
     vars:
@@ -123,19 +192,21 @@ tasks:
   morning-check:
     desc: Run the recurring morning cluster health bundle
     summary: |
-      Runs the regular operator checks: cluster core health, CNPG clusters,
-      CNPG backups/WAL archiving, and firing alerts. Gatus handles continuous
-      edge checks; local edge smoke and log-noise can be included on demand.
+      Runs the regular operator checks: cluster core health, unsuspended Flux
+      resources, ExternalSecret synchronization, active ServiceAccounts, CNPG
+      clusters, CNPG backups/WAL archiving, active actionable Alertmanager
+      alerts, and local edge smoke. Log-noise remains opt-in because it is
+      diagnostic volume, not a health signal.
 
       Examples:
         task kubernetes:morning-check
         task kubernetes:morning-check notify=true
-        task kubernetes:morning-check edge_smoke=true
+        task kubernetes:morning-check edge_smoke=false
         task kubernetes:morning-check log_noise=true period=6h top=10
     vars:
       JSON: '{{.json | default "false"}}'
       NOTIFY: '{{.notify | default "false"}}'
-      EDGE_SMOKE: '{{.edge_smoke | default "false"}}'
+      EDGE_SMOKE: '{{.edge_smoke | default "true"}}'
       LOG_NOISE: '{{.log_noise | default "false"}}'
       PERIOD: '{{.period | default "1h"}}'
       TOP: '{{.top | default "20"}}'
@@ -192,6 +263,8 @@ tasks:
       - yq -e '[.packageRules[] | select(.matchPackageNames[] == "ghcr.io/damacus/med-tracker")] | (length == 1 and .[0].enabled == false)' {{.ROOT_DIR}}/.github/renovate.json5
       - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.image.tag == "0.5.15"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.env | has("DATABASE_ROLE") | not' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
+      - yq -e '.spec.values.controllers."med-tracker".serviceAccount.identifier == "med-tracker-app"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
+      - yq -e '.spec.values.serviceAccount."med-tracker".forceRename == "med-tracker" and .spec.values.serviceAccount."med-tracker".annotations."helm.sh/resource-policy" == "keep"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
       - yq -e '.metadata.name == "med-tracker-canary" and .spec.values.controllers."med-tracker-canary".containers.app.env.APP_URL == "https://med-tracker-canary.damacus.io"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.env.OIDC_REDIRECT_URI == "https://med-tracker-canary.damacus.io/auth/oidc/callback"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.env.SMTP_ENABLED == "false" and .spec.values.controllers."med-tracker-canary".containers.app.env.PUSH_NOTIFICATIONS_ENABLED == "false"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
@@ -218,6 +291,7 @@ tasks:
       - yq -e '.spec.plugins[] | select(.name == "barman-cloud.cloudnative-pg.io" and .isWALArchiver == true and .parameters.barmanObjectName == "med-tracker-canary-rustfs-store" and .parameters.serverName == "med-tracker-canary")' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
       - yq -e '.spec.externalClusters[] | select(.name == "med-tracker-production-backup" and .plugin.name == "barman-cloud.cloudnative-pg.io" and .plugin.parameters.barmanObjectName == "med-tracker-rustfs-store" and .plugin.parameters.serverName == "med-tracker")' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
       - yq -e '.metadata.name == "med-tracker-canary" and .spec.bootstrap.initdb == null' {{.MED_TRACKER_CANARY_DB}}/cluster.yaml
+      - yq -e '.resources | contains(["serviceaccount.yaml"]) | not' {{.KUBERNETES_DIR}}/apps/home/med-tracker-db/app/kustomization.yaml
       - yq -e '.metadata.name == "med-tracker-canary-rustfs-store" and .spec.configuration.destinationPath == "s3://cnpg-med-tracker-canary/"' {{.MED_TRACKER_CANARY_DB}}/objectstore.yaml
       - yq -e '.spec.configuration.s3Credentials.accessKeyId.name == "rustfs-cnpg-med-tracker-canary" and .spec.configuration.s3Credentials.secretAccessKey.name == "rustfs-cnpg-med-tracker-canary"' {{.MED_TRACKER_CANARY_DB}}/objectstore.yaml
       - yq -e '.endpoints[] | select(.name == "Med Tracker Canary Up" and .url == "https://med-tracker-canary.damacus.io/up")' {{.GATUS_CONFIG}}
