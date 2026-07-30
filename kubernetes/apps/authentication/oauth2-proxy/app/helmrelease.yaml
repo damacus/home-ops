@@ -114,8 +114,7 @@ spec:
               - --provider=oidc
               - --oidc-issuer-url=https://zitadel.damacus.io
               - --redirect-url=https://auth.damacus.io/oauth2/callback
-              - --email-domain=*
-              - --scope=openid profile email
+              - --scope=openid profile email groups
               - --authenticated-emails-file=/etc/oauth2-proxy/authenticated-emails.txt
               - --cookie-domain=.damacus.io
               - --whitelist-domain=.damacus.io

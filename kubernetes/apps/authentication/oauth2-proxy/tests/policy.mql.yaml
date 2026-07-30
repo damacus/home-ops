@@ -29,6 +29,10 @@ queries:
       helmrelease.content.contains("authenticated-emails.txt: |")
       helmrelease.content.contains("dan.m.webb@gmail.com")
       helmrelease.content.contains("dan.webb@damacus.io")
+      helmrelease.content.contains("--redirect-url=https://auth.damacus.io/oauth2/callback\n              - --email-domain=*") == false
       helmrelease.content.contains("--allowed-group=user") == false
+      action = file("kubernetes/apps/authentication/zitadel/actions/set-groups-claim.js")
+      action.exists
+      action.content.contains("if (!user.human)")
     docs:
       desc: The public proxy must authorize an explicit email list without relying on optional OIDC custom claims.
