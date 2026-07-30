@@ -31,6 +31,9 @@ spec:
               app.kubernetes.io/component: login
               app.kubernetes.io/instance: zitadel
               app.kubernetes.io/name: zitadel-login
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: access-policy
       ports:
         - port: 8080
           protocol: TCP
