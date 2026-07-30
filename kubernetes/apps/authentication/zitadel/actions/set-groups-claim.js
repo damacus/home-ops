@@ -23,8 +23,12 @@ function setGroupsClaim(ctx, api) {
         'dan.webb@damacus.io'
     ];
 
-    // Get user email from context
-    const userEmail = ctx.v1.user.email;
+    // Complement Token actions can also run for machine users.
+    const user = ctx.v1.getUser();
+    if (!user.human) {
+        return;
+    }
+    const userEmail = user.human.email;
 
     // Initialize groups array
     const groups = [];

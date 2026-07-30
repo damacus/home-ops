@@ -1,0 +1,41 @@
+---
+policies:
+  - uid: home-ops-oauth2-proxy-access
+    name: OAuth2 Proxy Access Controls
+    version: 1.0.0
+    scoring_system: highest impact
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: local
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    groups:
+      - title: OAuth2 Proxy GitOps manifests
+        filters:
+          - mql: asset.family.contains("unix")
+        checks:
+          - uid: damacus-oauth2-proxy-email-allowlist
+    require:
+      - provider: os
+
+queries:
+  - uid: damacus-oauth2-proxy-email-allowlist
+    title: Public OAuth2 Proxy must use the approved email allowlist
+    mql: |
+      helmrelease = file("kubernetes/apps/authentication/oauth2-proxy/app/helmrelease.yaml")
+      helmrelease.exists
+      helmrelease.content.contains("--authenticated-emails-file=/etc/oauth2-proxy/authenticated-emails.txt")
+      helmrelease.content.contains("authenticated-emails.txt: |")
+      helmrelease.content.contains("28lauracummings@gmail.com")
+      helmrelease.content.contains("dan.m.webb@gmail.com")
+      helmrelease.content.contains("dan.webb@damacus.io")
+      helmrelease.content.contains("gtxthor37@gmail.com") == false
+      helmrelease.content.contains("webbglor@googlemail.com") == false
+      helmrelease.content.contains("--redirect-url=https://auth.damacus.io/oauth2/callback\n              - --email-domain=*") == false
+      helmrelease.content.contains("--allowed-group=user") == false
+      action = file("kubernetes/apps/authentication/zitadel/actions/set-groups-claim.js")
+      action.exists
+      action.content.contains("if (!user.human)")
+    docs:
+      desc: The public proxy must authorize an explicit email list without relying on optional OIDC custom claims.

@@ -37,15 +37,24 @@ This directory contains Zitadel Actions - JavaScript functions that execute duri
 3. Click **"Add Trigger"**
 4. Select:
    - **Flow Type**: `Complement token`
-   - **Trigger Type**: `Pre token creation`
+   - **Trigger Type**: `Pre Userinfo creation`
    - **Action**: `setGroupsClaim` (the action you just created)
 5. Click **"Save"**
+6. Repeat the trigger setup for:
+   - **Flow Type**: `Complement token`
+   - **Trigger Type**: `Pre access token creation`
+   - **Action**: `setGroupsClaim`
+
+The userinfo trigger adds `groups` to ID tokens, userinfo responses, and
+introspection responses. The access-token trigger adds `groups` to JWT access
+tokens. OAuth2 Proxy requires the userinfo trigger when enforcing
+`--allowed-group`.
 
 ### Step 3: Verify Action is Active
 
 1. Go back to **Actions**
 2. Find `setGroupsClaim`
-3. Ensure it shows as **"Active"** and attached to **"Complement token"** flow
+3. Ensure it shows as **"Active"** and attached to both Complement Token triggers
 
 ## Testing
 
