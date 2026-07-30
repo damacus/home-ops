@@ -552,7 +552,9 @@ spec:
                 filterByTraceID: true
                 filterBySpanID: false
                 customQuery: false
-                tags: []
+                tags:
+                  - key: service.name
+                    value: app
               streamingEnabled:
                 search: true
 
