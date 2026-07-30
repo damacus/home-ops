@@ -86,7 +86,9 @@ Canary uses:
 
 - `OTEL_TRACES_EXPORTER=otlp`
 - `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf`
-- The cluster-internal OTLP endpoint through the existing secret-backed endpoint contract
+- The cluster-internal `/v1/traces` endpoint through the secret-backed
+  `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` contract, so this trace-only backend
+  does not activate the application's independent metrics exporter
 - The exact application image containing the approved tracing implementation
 
 Run the application's safe observability canary and retain only identifiers, image digests, timestamps, queries, counts, and pass/fail results as evidence. Do not record trace payloads containing health data.

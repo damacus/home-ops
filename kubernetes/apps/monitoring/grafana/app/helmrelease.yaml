@@ -536,7 +536,7 @@ spec:
                 - name: trace.id
                   matcherRegex: '"trace\.id":"([0-9a-f]{32})"'
                   datasourceUid: tempo
-                  url: "$${__value.raw}"
+                  url: "$$$${__value.raw}"
           - name: Tempo
             type: tempo
             uid: tempo

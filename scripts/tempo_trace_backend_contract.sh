@@ -53,6 +53,7 @@ assert_match '4318' "$tempo_app/helmrelease.yaml"
 assert_match '3200' "$tempo_app/helmrelease.yaml"
 assert_match '336h' "$tempo_app/helmrelease.yaml"
 assert_match 'tempo-traces' "$tempo_app/helmrelease.yaml"
+assert_yq '.spec.values.tempo.storage.trace.s3.access_key == "$${RUSTFS_TEMPO_ACCESS_KEY}" and .spec.values.tempo.storage.trace.s3.secret_key == "$${RUSTFS_TEMPO_SECRET_KEY}"' "$tempo_app/helmrelease.yaml"
 assert_yq '.spec.target.name == "tempo-secret" and .spec.dataFrom[0].extract.key == "rustfs-tempo"' "$tempo_app/externalsecret.yaml"
 assert_yq '.resources | contains(["externalsecret.yaml", "helmrelease.yaml", "networkpolicy.yaml", "oci-repository.yaml", "prometheusrule.yaml"])' "$tempo_app/kustomization.yaml"
 assert_yq '.resources | contains(["./tempo/ks.yaml"])' "$monitoring_kustomization"
@@ -79,10 +80,11 @@ fi
 assert_yq '.spec.values.datasources."datasources.yaml".datasources[] | select(.name == "Tempo" and .type == "tempo" and .uid == "tempo" and .url == "http://tempo.monitoring.svc.cluster.local:3200" and .isDefault == false)' "$grafana_release"
 assert_yq '.spec.values.datasources."datasources.yaml".datasources[] | select(.name == "Prometheus" and .uid == "prometheus" and .isDefault == true)' "$grafana_release"
 assert_yq '.spec.values.datasources."datasources.yaml".datasources[] | select(.uid == "tempo" and .jsonData.streamingEnabled.search == true and .jsonData.tracesToLogsV2.datasourceUid == "loki" and .jsonData.tracesToLogsV2.filterByTraceID == true)' "$grafana_release"
-assert_yq '.spec.values.datasources."datasources.yaml".datasources[] | select(.uid == "loki" and (.jsonData.derivedFields[] | select(.name == "trace.id" and .datasourceUid == "tempo" and .url == "$${__value.raw}")))' "$grafana_release"
+assert_yq '.spec.values.datasources."datasources.yaml".datasources[] | select(.uid == "loki" and (.jsonData.derivedFields[] | select(.name == "trace.id" and .datasourceUid == "tempo" and .url == "$$$${__value.raw}")))' "$grafana_release"
 
-assert_yq '.spec.target.template.data.OTEL_EXPORTER_OTLP_ENDPOINT == "http://tempo.monitoring.svc.cluster.local:4318"' "$canary_external_secret"
+assert_yq '.spec.target.template.data.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT == "http://tempo.monitoring.svc.cluster.local:4318/v1/traces" and (.spec.target.template.data | has("OTEL_EXPORTER_OTLP_ENDPOINT") | not)' "$canary_external_secret"
 assert_yq '.spec.values.controllers."med-tracker-canary".containers.app.env.OTEL_TRACES_EXPORTER == "otlp" and .spec.values.controllers."med-tracker-canary".containers.app.env.OTEL_EXPORTER_OTLP_PROTOCOL == "http/protobuf"' "$canary_release"
+assert_yq 'explode(.) | .spec.values.controllers."med-tracker-canary".initContainers.migrate.image.tag == "sha-1c23f5184e318f2606dd0817df0f2601eada3814" and .spec.values.controllers."med-tracker-canary".containers.app.image.tag == "sha-1c23f5184e318f2606dd0817df0f2601eada3814"' "$canary_release"
 assert_yq '.spec.values.controllers."med-tracker".containers.app.env.OTEL_TRACES_EXPORTER == "none" and (.spec.values.controllers."med-tracker".containers.app.env | has("OTEL_EXPORTER_OTLP_ENDPOINT") | not)' "$production_release"
 
 printf 'Tempo trace backend contract passed\n'
