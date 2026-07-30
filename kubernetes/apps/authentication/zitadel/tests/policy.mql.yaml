@@ -1,0 +1,44 @@
+---
+policies:
+  - uid: home-ops-zitadel-access-policy
+    name: Zitadel Access Policy
+    version: 1.0.0
+    scoring_system: highest impact
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: local
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    groups:
+      - title: Zitadel account admission
+        filters:
+          - mql: asset.family.contains("unix")
+        checks:
+          - uid: zitadel-account-admission-is-git-managed
+    require:
+      - provider: os
+
+queries:
+  - uid: zitadel-account-admission-is-git-managed
+    title: Zitadel must reconcile account admission from Git
+    mql: |
+      policy = file("kubernetes/apps/authentication/zitadel/app/access-policy.yaml")
+      policy.exists
+      policy.content.contains("allowRegister: false")
+      policy.content.contains("isCreationAllowed: false")
+      policy.content.contains("isAutoCreation: false")
+      reconciler = file("kubernetes/apps/authentication/zitadel/app/reconcile-access-policy.rb")
+      reconciler.exists
+      reconciler.content.contains("verify_policy")
+      cronjob = file("kubernetes/apps/authentication/zitadel/app/access-policy-cronjob.yaml")
+      cronjob.exists
+      cronjob.content.contains("17 * * * *")
+      cronjob.content.contains("secretName: zitadel-admin-sa")
+      kustomization = file("kubernetes/apps/authentication/zitadel/app/kustomization.yaml")
+      kustomization.content.contains("access-policy-cronjob.yaml")
+      kustomization.content.contains("reconcile-access-policy.rb")
+      kustomization.content.contains("access-policy.yaml")
+      kustomization.content.contains("disableNameSuffixHash: true")
+    docs:
+      desc: Local and Google account creation must remain disabled through an hourly Git-managed reconciler.

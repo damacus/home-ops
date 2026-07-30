@@ -1,0 +1,69 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: zitadel-access-policy
+  namespace: authentication
+spec:
+  schedule: "17 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: reconciler
+              image: docker.io/library/ruby:3.4-alpine@sha256:c5a5064d190055633011c03aa800170cc36945ff3afb5f6c915329f92d6f1e00
+              command:
+                - ruby
+                - /config/reconcile-access-policy.rb
+              env:
+                - name: ZITADEL_ENDPOINT
+                  value: http://zitadel.authentication.svc.cluster.local:8080
+                - name: ZITADEL_ISSUER
+                  value: https://zitadel.damacus.io
+                - name: ZITADEL_POLICY_FILE
+                  value: /config/access-policy.yaml
+                - name: ZITADEL_SERVICE_ACCOUNT_KEY
+                  value: /var/run/secrets/zitadel/service-account.json
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: service-account-key
+                  mountPath: /var/run/secrets/zitadel
+                  readOnly: true
+          volumes:
+            - name: config
+              configMap:
+                name: zitadel-access-policy
+            - name: service-account-key
+              secret:
+                secretName: zitadel-admin-sa
+                items:
+                  - key: zitadel-admin-sa.json
+                    path: service-account.json
