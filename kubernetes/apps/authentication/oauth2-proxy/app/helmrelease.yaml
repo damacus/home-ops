@@ -115,9 +115,8 @@ spec:
               - --oidc-issuer-url=https://zitadel.damacus.io
               - --redirect-url=https://auth.damacus.io/oauth2/callback
               - --email-domain=*
-              - --scope=openid profile email groups
-              - --oidc-groups-claim=groups
-              - --allowed-group=user
+              - --scope=openid profile email
+              - --authenticated-emails-file=/etc/oauth2-proxy/authenticated-emails.txt
               - --cookie-domain=.damacus.io
               - --whitelist-domain=.damacus.io
               - --cookie-secure=true
@@ -171,3 +170,25 @@ spec:
         ports:
           http:
             port: *port
+
+    configMaps:
+      approved-emails:
+        enabled: true
+        data:
+          authenticated-emails.txt: |
+            28lauracummings@gmail.com
+            dan.m.webb@gmail.com
+            dan.webb@damacus.io
+            gtxthor37@gmail.com
+            webbglor@googlemail.com
+
+    persistence:
+      approved-emails:
+        type: configMap
+        name: oauth2-proxy
+        advancedMounts:
+          oauth2-proxy-damacus:
+            app:
+              - path: /etc/oauth2-proxy/authenticated-emails.txt
+                subPath: authenticated-emails.txt
+                readOnly: true
