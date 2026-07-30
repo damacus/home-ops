@@ -1,0 +1,58 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tempo
+spec:
+  groups:
+    - name: tempo
+      rules:
+        - alert: TempoWorkloadUnavailable
+          annotations:
+            summary: Tempo has no ready replica
+            description: Tempo has had no ready replica in the monitoring namespace for 10 minutes.
+          expr: |
+            kube_statefulset_status_replicas_ready{namespace="monitoring", statefulset="tempo"} < 1
+          for: 10m
+          labels:
+            severity: critical
+        - alert: TempoDurableStorageErrors
+          annotations:
+            summary: Tempo cannot reliably poll durable trace storage
+            description: Tempo has encountered errors while polling the trace block list in RustFS.
+          expr: |
+            sum(increase(tempodb_blocklist_poll_errors_total{namespace="monitoring"}[15m])) > 0
+          for: 5m
+          labels:
+            severity: critical
+        - alert: TempoRejectingSpans
+          annotations:
+            summary: Tempo is rejecting spans
+            description: Tempo has continuously discarded spans for 10 minutes. Inspect the reason label before changing limits.
+          expr: |
+            sum by (reason) (rate(tempo_discarded_spans_total{namespace="monitoring"}[5m])) > 0
+          for: 10m
+          labels:
+            severity: warning
+        - alert: TempoContainerRestarting
+          annotations:
+            summary: Tempo is repeatedly restarting
+            description: The Tempo container restarted more than twice in 15 minutes.
+          expr: |
+            sum(increase(kube_pod_container_status_restarts_total{namespace="monitoring", container="tempo"}[15m])) > 2
+          for: 5m
+          labels:
+            severity: warning
+        - alert: TempoMemoryPressure
+          annotations:
+            summary: Tempo is approaching its memory limit
+            description: Tempo memory working set has exceeded 90 percent of its configured limit for 15 minutes.
+          expr: |
+            (
+              sum(container_memory_working_set_bytes{namespace="monitoring", container="tempo"})
+              /
+              sum(kube_pod_container_resource_limits{namespace="monitoring", container="tempo", resource="memory"})
+            ) > 0.9
+          for: 15m
+          labels:
+            severity: warning

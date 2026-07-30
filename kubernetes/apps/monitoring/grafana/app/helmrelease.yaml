@@ -513,6 +513,7 @@ spec:
           - { name: Alertmanager, orgId: 1 }
           - { name: Prometheus, orgId: 1 }
           - { name: Loki, orgId: 1 }
+          - { name: Tempo, orgId: 1 }
         datasources:
           - name: Prometheus
             type: prometheus
@@ -531,6 +532,29 @@ spec:
             url: http://loki-gateway.monitoring.svc.cluster.local
             jsonData:
               maxLines: 1000
+              derivedFields:
+                - name: trace.id
+                  matcherRegex: '"trace\.id":"([0-9a-f]{32})"'
+                  datasourceUid: tempo
+                  url: "$${__value.raw}"
+          - name: Tempo
+            type: tempo
+            uid: tempo
+            url: http://tempo.monitoring.svc.cluster.local:3200
+            access: proxy
+            basicAuth: false
+            isDefault: false
+            jsonData:
+              tracesToLogsV2:
+                datasourceUid: loki
+                spanStartTimeShift: -5m
+                spanEndTimeShift: 5m
+                filterByTraceID: true
+                filterBySpanID: false
+                customQuery: false
+                tags: []
+              streamingEnabled:
+                search: true
 
     dashboards:
       kubernetes:

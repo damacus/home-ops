@@ -153,6 +153,7 @@ policies:
               file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_LONGHORN_ACCESS_KEY")
               file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_PAPERLESS_ACCESS_KEY")
               file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_LOKI_ACCESS_KEY")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_TEMPO_ACCESS_KEY")
           - uid: rustfs-bootstrap-creates-app-buckets
             title: RustFS bootstrap job creates all per-app buckets
             impact: 100
@@ -169,6 +170,7 @@ policies:
               file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("longhorn")
               file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("loki-chunks")
               file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("loki-data")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("tempo-traces")
           - uid: rustfs-bootstrap-does-not-run-legacy-mirroring
             title: RustFS bootstrap does not run legacy-prefix mirrors
             impact: 100
@@ -198,6 +200,7 @@ policies:
               file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-longhorn")
               file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-paperless")
               file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-loki")
+              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-tempo")
           - uid: rustfs-bootstrap-attaches-bucket-scoped-policies
             title: RustFS bootstrap job attaches bucket-scoped IAM policies
             impact: 100

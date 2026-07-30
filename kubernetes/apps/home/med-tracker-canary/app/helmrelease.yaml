@@ -71,7 +71,8 @@ spec:
               RAILS_ENV: production
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
-              OTEL_TRACES_EXPORTER: none
+              OTEL_TRACES_EXPORTER: otlp
+              OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
               SMTP_ENABLED: "false"
               PUSH_NOTIFICATIONS_ENABLED: "false"
               SOLID_QUEUE_IN_PUMA: "true"

@@ -11,6 +11,7 @@ vars:
   RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
   RUSTFS_IAM_LIVE_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam-live.mql.yaml"
   RUSTFS_IAM_LIVE_CHECK_SCRIPT: "{{.SCRIPTS_DIR}}/rustfs_iam_live_check.sh"
+  TEMPO_TRACE_BACKEND_CONTRACT: "{{.SCRIPTS_DIR}}/tempo_trace_backend_contract.sh"
 
 tasks:
   resources:
@@ -260,8 +261,8 @@ tasks:
   med-tracker-canary-isolation:
     desc: Assert Med Tracker canary isolation and production update controls
     cmds:
-      - yq -e '[.packageRules[] | select(.matchPackageNames[] == "ghcr.io/damacus/med-tracker")] | (length == 1 and .[0].enabled == false)' {{.ROOT_DIR}}/.github/renovate.json5
-      - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.image.tag == "0.5.15"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
+      - yq -e '[.packageRules[] | select(.matchPackageNames[] == "ghcr.io/damacus/med-tracker")] | (length == 1 and .[0].enabled == true and .[0].automerge == false)' {{.ROOT_DIR}}/.github/renovate.json5
+      - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.image.tag == "0.5.17"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.env | has("DATABASE_ROLE") | not' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker".serviceAccount.identifier == "med-tracker-app"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
       - yq -e '.spec.values.serviceAccount."med-tracker".forceRename == "med-tracker" and .spec.values.serviceAccount."med-tracker".annotations."helm.sh/resource-policy" == "keep"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
@@ -301,6 +302,24 @@ tasks:
       - { msg: "Missing Med Tracker canary app manifests", sh: "test -f {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml" }
       - { msg: "Missing Med Tracker canary DB manifests", sh: "test -f {{.MED_TRACKER_CANARY_DB}}/cluster.yaml" }
       - { msg: "Missing Gatus config", sh: "test -f {{.GATUS_CONFIG}}" }
+
+  tempo-trace-backend-contract:
+    desc: Assert Tempo storage, private networking, Grafana, and staged Med Tracker OTLP wiring
+    cmd: bash {{.TEMPO_TRACE_BACKEND_CONTRACT}} {{.ROOT_DIR}}
+    preconditions:
+      - { msg: "Missing bash", sh: "command -v bash >/dev/null" }
+      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
+      - { msg: "Missing rg", sh: "command -v rg >/dev/null" }
+      - { msg: "Missing Tempo trace backend contract script", sh: "test -f {{.TEMPO_TRACE_BACKEND_CONTRACT}}" }
+
+  tempo-trace-backend-foundation-contract:
+    desc: Assert Tempo storage, private networking, and alerting before application wiring
+    cmd: bash {{.TEMPO_TRACE_BACKEND_CONTRACT}} {{.ROOT_DIR}} foundation
+    preconditions:
+      - { msg: "Missing bash", sh: "command -v bash >/dev/null" }
+      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
+      - { msg: "Missing rg", sh: "command -v rg >/dev/null" }
+      - { msg: "Missing Tempo trace backend contract script", sh: "test -f {{.TEMPO_TRACE_BACKEND_CONTRACT}}" }
 
   mondoo-operator-assertions:
     desc: Assert the Mondoo Operator GitOps manifests are wired safely
