@@ -1,0 +1,67 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rustfs-iam-bootstrap-v7
+spec:
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: rc
+          image: rustfs/rc:v0.1.30
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          env:
+            - name: RUSTFS_ENDPOINT
+              value: "http://rustfs.storage.svc.cluster.local:9000"
+            - name: HOME
+              value: /tmp
+            - name: RUSTFS_TEMPO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rustfs-app-credentials
+                  key: RUSTFS_TEMPO_ACCESS_KEY
+                  optional: false
+            - name: RUSTFS_TEMPO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rustfs-app-credentials
+                  key: RUSTFS_TEMPO_SECRET_KEY
+                  optional: false
+          envFrom:
+            - secretRef:
+                name: rustfs-credentials
+            - secretRef:
+                name: rustfs-app-credentials
+          command:
+            - /bin/sh
+            - /scripts/bootstrap.sh
+            - all
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: bootstrap-script
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: bootstrap-script
+          configMap:
+            name: rustfs-iam-bootstrap
+            defaultMode: 0555

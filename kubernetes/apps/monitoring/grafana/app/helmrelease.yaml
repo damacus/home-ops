@@ -534,7 +534,7 @@ spec:
               maxLines: 1000
               derivedFields:
                 - name: trace.id
-                  matcherRegex: '"trace\.id":"([0-9a-f]{32})"'
+                  matcherRegex: '\\"trace\.id\\":\\"([0-9a-f]{32})\\"'
                   datasourceUid: tempo
                   url: "$$$${__value.raw}"
           - name: Tempo
@@ -553,8 +553,8 @@ spec:
                 filterBySpanID: false
                 customQuery: false
                 tags:
-                  - key: service.name
-                    value: app
+                  - key: host.name
+                    value: pod
               streamingEnabled:
                 search: true
 

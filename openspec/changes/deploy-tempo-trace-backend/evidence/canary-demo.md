@@ -1,5 +1,8 @@
 ## MedTracker canary trace demo
 
+> Superseded: this run predates the final correlation, persistence, IAM-ordering,
+> and privacy-gate remediation. It must not be used to satisfy task 4.2.
+
 - Started at: `2026-07-30T15:38:49Z`
 - Completed within the 15-minute acceptance window
 - MedTracker source commit: `1c23f5184e318f2606dd0817df0f2601eada3814`
@@ -29,9 +32,10 @@ application event by exact event ID on the exact deployed image.
 - Span count: `18`
 
 The exact request trace contained a root span and nested child spans. The
-bounded attribute-key inspection found no medication, person, household,
-credential, token, cookie, authorization, request-body, or raw model identifier
-keys. Loki returned the same trace identifier on the request event.
+original inspection checked attribute keys only, so it did not prove that
+prohibited values were absent. This result is invalidated; the final revision
+must rerun the value-aware privacy command from task 4.2. Loki returned the same
+trace identifier on the request event during this superseded run.
 
 Grafana reported Tempo, Loki, and Prometheus healthy. Tempo-to-Loki correlation
 was configured against Loki UID `loki` with trace-ID filtering. Loki's live

@@ -12,6 +12,7 @@ vars:
   RUSTFS_IAM_LIVE_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam-live.mql.yaml"
   RUSTFS_IAM_LIVE_CHECK_SCRIPT: "{{.SCRIPTS_DIR}}/rustfs_iam_live_check.sh"
   TEMPO_TRACE_BACKEND_CONTRACT: "{{.SCRIPTS_DIR}}/tempo_trace_backend_contract.sh"
+  TEMPO_PRIVACY_CHECK: "{{.SCRIPTS_DIR}}/tempo_privacy_check.sh"
 
 tasks:
   resources:
@@ -305,6 +306,7 @@ tasks:
 
   tempo-trace-backend-contract:
     desc: Assert Tempo storage, private networking, Grafana, and staged Med Tracker OTLP wiring
+    silent: true
     cmd: bash {{.TEMPO_TRACE_BACKEND_CONTRACT}} {{.ROOT_DIR}}
     preconditions:
       - { msg: "Missing bash", sh: "command -v bash >/dev/null" }
@@ -314,12 +316,27 @@ tasks:
 
   tempo-trace-backend-foundation-contract:
     desc: Assert Tempo storage, private networking, and alerting before application wiring
+    silent: true
     cmd: bash {{.TEMPO_TRACE_BACKEND_CONTRACT}} {{.ROOT_DIR}} foundation
     preconditions:
       - { msg: "Missing bash", sh: "command -v bash >/dev/null" }
       - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
       - { msg: "Missing rg", sh: "command -v rg >/dev/null" }
       - { msg: "Missing Tempo trace backend contract script", sh: "test -f {{.TEMPO_TRACE_BACKEND_CONTRACT}}" }
+
+  tempo-privacy-check:
+    desc: Reject prohibited keys and values in bounded Tempo and Loki JSON evidence
+    silent: true
+    requires:
+      vars:
+        - TRACE_JSON
+        - LOKI_JSON
+    cmd: bash {{.TEMPO_PRIVACY_CHECK}} {{.TRACE_JSON | shellQuote}} {{.LOKI_JSON | shellQuote}}
+    preconditions:
+      - { msg: "Missing bash", sh: "command -v bash >/dev/null" }
+      - { msg: "Missing jq", sh: "command -v jq >/dev/null" }
+      - { msg: "Missing rg", sh: "command -v rg >/dev/null" }
+      - { msg: "Missing Tempo privacy check script", sh: "test -f {{.TEMPO_PRIVACY_CHECK}}" }
 
   mondoo-operator-assertions:
     desc: Assert the Mondoo Operator GitOps manifests are wired safely

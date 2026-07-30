@@ -101,11 +101,14 @@ jobs:
         run: |
           bash -c "$(curl -sSL https://install.mondoo.com/sh)"
           brew tap go-task/tap
-          brew install go-task/tap/go-task
+          brew install go-task/tap/go-task yq ripgrep
           cnspec providers install os
 
       - name: Run RustFS IAM policy
         run: task k8s:rustfs-iam-policy
+
+      - name: Run Tempo trace backend contract
+        run: task k8s:tempo-trace-backend-contract
 
   flate-test:
     name: Flate Test

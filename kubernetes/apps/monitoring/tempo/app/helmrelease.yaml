@@ -18,6 +18,12 @@ spec:
   values:
     replicas: 1
 
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+
+    serviceAccount:
+      automountServiceAccountToken: false
+
     tempo:
       tag: 2.10.7
       pullSecrets:
@@ -75,6 +81,14 @@ spec:
         limits:
           cpu: 500m
           memory: 1Gi
+
+    persistence:
+      enabled: true
+      enableStatefulSetAutoDeletePVC: false
+      storageClassName: longhorn
+      accessModes:
+        - ReadWriteOnce
+      size: 10Gi
 
     service:
       type: ClusterIP

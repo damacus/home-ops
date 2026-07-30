@@ -12,16 +12,31 @@ spec:
             summary: Tempo has no ready replica
             description: Tempo has had no ready replica in the monitoring namespace for 10 minutes.
           expr: |
-            kube_statefulset_status_replicas_ready{namespace="monitoring", statefulset="tempo"} < 1
+            (
+              kube_statefulset_status_replicas_ready{
+                namespace="monitoring",
+                statefulset="tempo"
+              } < 1
+            )
+            or absent(
+              kube_statefulset_status_replicas_ready{
+                namespace="monitoring",
+                statefulset="tempo"
+              }
+            )
           for: 10m
           labels:
             severity: critical
         - alert: TempoDurableStorageErrors
           annotations:
-            summary: Tempo cannot reliably poll durable trace storage
-            description: Tempo has encountered errors while polling the trace block list in RustFS.
+            summary: Tempo cannot reliably use durable trace storage
+            description: Tempo has encountered RustFS read, write, flush, compaction, or retention errors.
           expr: |
             sum(increase(tempodb_blocklist_poll_errors_total{namespace="monitoring"}[15m])) > 0
+            or sum(increase(tempo_ingester_failed_flushes_total{namespace="monitoring"}[15m])) > 0
+            or sum(increase(tempo_ingester_flush_failed_retries_total{namespace="monitoring"}[15m])) > 0
+            or sum(increase(tempodb_compaction_errors_total{namespace="monitoring"}[15m])) > 0
+            or sum(increase(tempodb_retention_errors_total{namespace="monitoring"}[15m])) > 0
           for: 5m
           labels:
             severity: critical
@@ -49,10 +64,45 @@ spec:
             description: Tempo memory working set has exceeded 90 percent of its configured limit for 15 minutes.
           expr: |
             (
-              sum(container_memory_working_set_bytes{namespace="monitoring", container="tempo"})
+              sum(
+                max by (namespace, pod, container) (
+                  container_memory_working_set_bytes{
+                    namespace="monitoring",
+                    container="tempo",
+                    metrics_path="/metrics/cadvisor"
+                  }
+                )
+              )
               /
-              sum(kube_pod_container_resource_limits{namespace="monitoring", container="tempo", resource="memory"})
+              sum(
+                max by (namespace, pod, container) (
+                  kube_pod_container_resource_limits{
+                    namespace="monitoring",
+                    container="tempo",
+                    resource="memory"
+                  }
+                )
+              )
             ) > 0.9
+          for: 15m
+          labels:
+            severity: warning
+        - alert: TempoWalStoragePressure
+          annotations:
+            summary: Tempo WAL storage is approaching capacity
+            description: Tempo's persistent WAL volume has exceeded 80 percent capacity for 15 minutes.
+          expr: |
+            (
+              kubelet_volume_stats_used_bytes{
+                namespace="monitoring",
+                persistentvolumeclaim=~"storage-tempo-.*"
+              }
+              /
+              kubelet_volume_stats_capacity_bytes{
+                namespace="monitoring",
+                persistentvolumeclaim=~"storage-tempo-.*"
+              }
+            ) > 0.8
           for: 15m
           labels:
             severity: warning

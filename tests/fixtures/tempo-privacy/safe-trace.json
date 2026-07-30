@@ -1,0 +1,41 @@
+{
+  "batches": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "medtracker"
+            }
+          },
+          {
+            "key": "host.name",
+            "value": {
+              "stringValue": "med-tracker-canary-safe"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "spans": [
+            {
+              "traceId": "00000000000000000000000000000001",
+              "spanId": "0000000000000001",
+              "name": "GET /up",
+              "attributes": [
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/up"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

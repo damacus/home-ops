@@ -105,6 +105,8 @@ Add a focused repository task that renders and asserts the Tempo, RustFS, Grafan
 
 - [Single replica is a trace-visibility single point of failure] → Keep application export fail-open, persist blocks in RustFS, alert on unavailability, and allow exporter disablement without changing domain behavior.
 - [Tempo has no built-in authentication] → Expose no public route and enforce least-privilege NetworkPolicy on ingest and query ports.
+- [Tempo's query listener also exposes administrative handlers] → Use Cilium HTTP rules so Grafana and VictoriaMetrics receive read-only paths while `/flush` and `/shutdown` remain unreachable from those peers.
+- [OTLP and RustFS traffic is not encrypted between nodes] → Keep both endpoints cluster-only for this change and track endpoint TLS or Cilium WireGuard as an explicit follow-up before broadening trace export.
 - [Direct export has no collector buffer or tail sampling] → Retain application batching and sampling, monitor rejected exports, and defer a collector until measured need justifies it.
 - [Trace volume could pressure memory or object storage] → Set explicit requests and limits, keep 14-day retention, monitor usage, and enable only MedTracker after canary measurement.
 - [Tempo major versions and Helm values can drift] → Pin chart and image versions, verify the current schema, render in CI, and test upgrade and rollback against retained storage.
