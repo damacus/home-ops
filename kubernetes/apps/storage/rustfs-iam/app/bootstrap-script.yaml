@@ -8,13 +8,13 @@ data:
     #!/bin/sh
     set -eu
 
-    scope="${1:-all}"
+    scope="$${1:-all}"
 
-    echo "Configuring rc alias and waiting for RustFS at ${RUSTFS_ENDPOINT:?}..."
+    echo "Configuring rc alias and waiting for RustFS at $${RUSTFS_ENDPOINT:?}..."
     i=1
     ready=false
     while [ "$i" -le 60 ]; do
-      if rc alias set rustfs "${RUSTFS_ENDPOINT:?}" "${RUSTFS_ACCESS_KEY:?}" "${RUSTFS_SECRET_KEY:?}" --region us-east-1 >/dev/null 2>&1; then
+      if rc alias set rustfs "$${RUSTFS_ENDPOINT:?}" "$${RUSTFS_ACCESS_KEY:?}" "$${RUSTFS_SECRET_KEY:?}" --region us-east-1 >/dev/null 2>&1; then
         if rc bucket list rustfs/ >/dev/null 2>&1; then
           echo "RustFS is reachable"
           ready=true
@@ -165,7 +165,7 @@ data:
       bucket="$4"
       alias_name="$${identity}-check"
 
-      rc alias set "$alias_name" "${RUSTFS_ENDPOINT:?}" "$access_key" "$secret_key" --region us-east-1 >/dev/null
+      rc alias set "$alias_name" "$${RUSTFS_ENDPOINT:?}" "$access_key" "$secret_key" --region us-east-1 >/dev/null
       rc bucket list "$alias_name/$bucket" >/dev/null
     }
 
