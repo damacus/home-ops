@@ -201,6 +201,12 @@ policies:
               file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-paperless")
               file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-loki")
               file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-tempo")
+          - uid: rustfs-bootstrap-preserves-runtime-shell-variables
+            title: RustFS bootstrap escapes runtime variables for Flux
+            impact: 100
+            mql: |
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${identity}")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${grace_seconds}")
           - uid: rustfs-bootstrap-attaches-bucket-scoped-policies
             title: RustFS bootstrap job attaches bucket-scoped IAM policies
             impact: 100
