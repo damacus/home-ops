@@ -205,6 +205,10 @@ policies:
             title: RustFS bootstrap escapes runtime variables for Flux
             impact: 100
             mql: |
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${1:-all}")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${RUSTFS_ENDPOINT:?}")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${RUSTFS_ACCESS_KEY:?}")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${RUSTFS_SECRET_KEY:?}")
               file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${identity}")
               file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${grace_seconds}")
           - uid: rustfs-bootstrap-attaches-bucket-scoped-policies
