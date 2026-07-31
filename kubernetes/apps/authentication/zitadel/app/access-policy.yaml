@@ -1,0 +1,12 @@
+---
+loginPolicy:
+  allowRegister: false
+identityProviders:
+  - id: "355231265344982063"
+    type: google
+    providerOptions:
+      isLinkingAllowed: true
+      isCreationAllowed: false
+      isAutoCreation: false
+      isAutoUpdate: true
+      autoLinking: AUTO_LINKING_OPTION_EMAIL

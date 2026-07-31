@@ -58,7 +58,14 @@ After Zitadel is deployed, configure OIDC applications for:
 ## Google Identity Provider
 
 The Google OAuth credentials from Dex are reused via the `zitadel-google-idp` ExternalSecret.
-Configure the Google IDP in Zitadel console after deployment.
+The provider itself is created in Zitadel, while `app/access-policy.yaml` defines
+the account-admission controls. The `zitadel-access-policy` CronJob reconciles
+those controls hourly through the Zitadel Admin API using the existing
+`zitadel-admin-sa` service-account key.
+
+Local registration and Google account creation must remain disabled. Existing
+users can still authenticate and link their Google identity. Console changes to
+these admission settings are temporary and will be corrected by the reconciler.
 
 ## Passkeys
 
