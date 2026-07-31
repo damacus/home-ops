@@ -48,7 +48,7 @@ spec:
           migrate:
             image:
               repository: &repository ghcr.io/damacus/med-tracker
-              tag: &tag sha-8661aa8d76d86a7f37f42f9f16515bf10cf9b692
+              tag: &tag sha-1c23f5184e318f2606dd0817df0f2601eada3814
             command: ["bin/rails", "db:prepare"]
             envFrom:
               - secretRef:
@@ -71,7 +71,8 @@ spec:
               RAILS_ENV: production
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
-              OTEL_TRACES_EXPORTER: none
+              OTEL_TRACES_EXPORTER: otlp
+              OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
               SMTP_ENABLED: "false"
               PUSH_NOTIFICATIONS_ENABLED: "false"
               SOLID_QUEUE_IN_PUMA: "true"

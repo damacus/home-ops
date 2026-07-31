@@ -10,3 +10,4 @@ resources:
   - ./longhorn/ks.yaml
   - ./minio/ks.yaml
   - ./rustfs/ks.yaml
+  - ./rustfs-iam/ks.yaml

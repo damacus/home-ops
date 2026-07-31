@@ -2,16 +2,17 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app rustfs
+  name: rustfs-iam
   namespace: flux-system
 spec:
   targetNamespace: storage
   commonMetadata:
     labels:
-      app.kubernetes.io/name: *app
+      app.kubernetes.io/name: rustfs-iam
   dependsOn:
     - name: external-secrets-stores
-  path: ./kubernetes/apps/storage/rustfs/app
+    - name: rustfs
+  path: ./kubernetes/apps/storage/rustfs-iam/app
   prune: true
   sourceRef:
     kind: GitRepository
@@ -19,7 +20,7 @@ spec:
   wait: true
   interval: 30m
   retryInterval: 1m
-  timeout: 5m
+  timeout: 15m
   postBuild:
     substituteFrom:
       - kind: ConfigMap

@@ -1,0 +1,7 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./bootstrap-script.yaml
+  - ./cronjob-buckets.yaml
+  - ./job-buckets.yaml

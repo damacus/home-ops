@@ -1,0 +1,245 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rustfs-iam-bootstrap
+data:
+  bootstrap.sh: |
+    #!/bin/sh
+    set -eu
+
+    scope="${1:-all}"
+
+    echo "Configuring rc alias and waiting for RustFS at ${RUSTFS_ENDPOINT:?}..."
+    i=1
+    ready=false
+    while [ "$i" -le 60 ]; do
+      if rc alias set rustfs "${RUSTFS_ENDPOINT:?}" "${RUSTFS_ACCESS_KEY:?}" "${RUSTFS_SECRET_KEY:?}" --region us-east-1 >/dev/null 2>&1; then
+        if rc bucket list rustfs/ >/dev/null 2>&1; then
+          echo "RustFS is reachable"
+          ready=true
+          break
+        fi
+      fi
+      echo "Attempt $i: RustFS not ready, retrying..."
+      sleep 5
+      i=$((i + 1))
+    done
+
+    if [ "$ready" != "true" ]; then
+      echo "RustFS did not become reachable in time"
+      exit 1
+    fi
+
+    create_bucket() {
+      bucket="$1"
+      echo "Ensuring bucket: $bucket"
+      rc bucket create --ignore-existing "rustfs/$bucket"
+    }
+
+    write_single_bucket_policy() {
+      policy_name="$1"
+      bucket="$2"
+      policy_file="/tmp/$policy_name.json"
+
+      cat > "$policy_file" <<EOF
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetBucketLocation",
+            "s3:ListBucket",
+            "s3:ListBucketMultipartUploads"
+          ],
+          "Resource": [
+            "arn:aws:s3:::$bucket"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:AbortMultipartUpload",
+            "s3:DeleteObject",
+            "s3:GetObject",
+            "s3:ListMultipartUploadParts",
+            "s3:PutObject"
+          ],
+          "Resource": [
+            "arn:aws:s3:::$bucket/*"
+          ]
+        }
+      ]
+    }
+    EOF
+    }
+
+    write_loki_policy() {
+      policy_file="/tmp/rustfs-loki.json"
+
+      cat > "$policy_file" <<EOF
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetBucketLocation",
+            "s3:ListBucket",
+            "s3:ListBucketMultipartUploads"
+          ],
+          "Resource": [
+            "arn:aws:s3:::loki-chunks",
+            "arn:aws:s3:::loki-data"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:AbortMultipartUpload",
+            "s3:DeleteObject",
+            "s3:GetObject",
+            "s3:ListMultipartUploadParts",
+            "s3:PutObject"
+          ],
+          "Resource": [
+            "arn:aws:s3:::loki-chunks/*",
+            "arn:aws:s3:::loki-data/*"
+          ]
+        }
+      ]
+    }
+    EOF
+    }
+
+    create_or_update_policy() {
+      policy_name="$1"
+      policy_file="/tmp/$policy_name.json"
+
+      echo "Creating or updating policy: $policy_name"
+      rc admin policy create rustfs "$policy_name" "$policy_file"
+    }
+
+    reconcile_user() {
+      identity="$1"
+      access_key="$2"
+      secret_key="$3"
+
+      if [ -z "$access_key" ] || [ -z "$secret_key" ]; then
+        echo "Missing credentials for $identity"
+        exit 1
+      fi
+
+      echo "Creating or updating user: $identity"
+      rc admin user add rustfs "$access_key" "$secret_key"
+      rc admin user enable rustfs "$access_key" >/dev/null
+
+      user_json="$(rc admin user info rustfs "$access_key" --json)"
+      printf '%s' "$user_json" | jq -r --arg identity "$identity" \
+        '.policies[]? | select(. != $identity)' |
+        while IFS= read -r unexpected_policy; do
+          [ -n "$unexpected_policy" ] || continue
+          echo "Detaching unexpected policy $unexpected_policy from $identity"
+          rc admin policy detach rustfs "$unexpected_policy" --user "$access_key"
+        done
+
+      printf '%s' "$user_json" | jq -r '.memberOf[]?' |
+        while IFS= read -r group; do
+          [ -n "$group" ] || continue
+          echo "Removing $identity from unexpected group $group"
+          rc admin group rm-members rustfs "$group" "$access_key"
+        done
+
+      rc admin policy attach rustfs "$identity" --user "$access_key"
+
+      rc admin user info rustfs "$access_key" --json |
+        jq -e --arg identity "$identity" \
+          '.status == "enabled" and .policies == [$identity] and .memberOf == []' >/dev/null
+    }
+
+    verify_user_credentials() {
+      identity="$1"
+      access_key="$2"
+      secret_key="$3"
+      bucket="$4"
+      alias_name="${identity}-check"
+
+      rc alias set "$alias_name" "${RUSTFS_ENDPOINT:?}" "$access_key" "$secret_key" --region us-east-1 >/dev/null
+      rc bucket list "$alias_name/$bucket" >/dev/null
+    }
+
+    remove_stale_policy_users() {
+      identity="$1"
+      desired_access_key="$2"
+      grace_seconds="$3"
+
+      stale_users="$(
+        rc admin user ls rustfs --json |
+          jq -r --arg identity "$identity" --arg desired "$desired_access_key" \
+            '.users[] | select((.policies | index($identity)) != null and .accessKey != $desired) | .accessKey'
+      )"
+
+      [ -n "$stale_users" ] || return 0
+
+      echo "Waiting ${grace_seconds}s before revoking stale $identity credentials"
+      sleep "$grace_seconds"
+      for stale_access_key in $stale_users; do
+        echo "Removing stale user for $identity"
+        rc admin user rm rustfs "$stale_access_key"
+      done
+    }
+
+    provision_single_bucket_identity() {
+      identity="$1"
+      access_key="$2"
+      secret_key="$3"
+      bucket="$4"
+
+      create_bucket "$bucket"
+      write_single_bucket_policy "$identity" "$bucket"
+      create_or_update_policy "$identity"
+      reconcile_user "$identity" "$access_key" "$secret_key"
+      verify_user_credentials "$identity" "$access_key" "$secret_key" "$bucket"
+    }
+
+    provision_tempo_identity() {
+      provision_single_bucket_identity \
+        "rustfs-tempo" \
+        "$RUSTFS_TEMPO_ACCESS_KEY" \
+        "$RUSTFS_TEMPO_SECRET_KEY" \
+        "tempo-traces"
+      remove_stale_policy_users "rustfs-tempo" "$RUSTFS_TEMPO_ACCESS_KEY" 120
+    }
+
+    provision_loki_identity() {
+      create_bucket "loki-chunks"
+      create_bucket "loki-data"
+      write_loki_policy
+      create_or_update_policy "rustfs-loki"
+      reconcile_user "rustfs-loki" "$RUSTFS_LOKI_ACCESS_KEY" "$RUSTFS_LOKI_SECRET_KEY"
+    }
+
+    if [ "$scope" = "tempo" ]; then
+      provision_tempo_identity
+      exit 0
+    fi
+
+    if [ "$scope" != "all" ]; then
+      echo "Unsupported bootstrap scope: $scope"
+      exit 2
+    fi
+
+    provision_single_bucket_identity "rustfs-cnpg-zitadel" "$RUSTFS_CNPG_ZITADEL_ACCESS_KEY" "$RUSTFS_CNPG_ZITADEL_SECRET_KEY" "cnpg-zitadel"
+    provision_single_bucket_identity "rustfs-cnpg-forgejo" "$RUSTFS_CNPG_FORGEJO_ACCESS_KEY" "$RUSTFS_CNPG_FORGEJO_SECRET_KEY" "cnpg-forgejo"
+    provision_single_bucket_identity "rustfs-cnpg-home-assistant" "$RUSTFS_CNPG_HOME_ASSISTANT_ACCESS_KEY" "$RUSTFS_CNPG_HOME_ASSISTANT_SECRET_KEY" "cnpg-home-assistant"
+    provision_single_bucket_identity "rustfs-cnpg-n8n" "$RUSTFS_CNPG_N8N_ACCESS_KEY" "$RUSTFS_CNPG_N8N_SECRET_KEY" "cnpg-n8n"
+    provision_single_bucket_identity "rustfs-cnpg-immich" "$RUSTFS_CNPG_IMMICH_ACCESS_KEY" "$RUSTFS_CNPG_IMMICH_SECRET_KEY" "cnpg-immich"
+    provision_single_bucket_identity "rustfs-cnpg-mealie" "$RUSTFS_CNPG_MEALIE_ACCESS_KEY" "$RUSTFS_CNPG_MEALIE_SECRET_KEY" "cnpg-mealie"
+    provision_single_bucket_identity "rustfs-cnpg-med-tracker" "$RUSTFS_CNPG_MED_TRACKER_ACCESS_KEY" "$RUSTFS_CNPG_MED_TRACKER_SECRET_KEY" "cnpg-med-tracker"
+    provision_single_bucket_identity "rustfs-cnpg-med-tracker-canary" "$RUSTFS_CNPG_MED_TRACKER_CANARY_ACCESS_KEY" "$RUSTFS_CNPG_MED_TRACKER_CANARY_SECRET_KEY" "cnpg-med-tracker-canary"
+    provision_single_bucket_identity "rustfs-cnpg-penpot" "$RUSTFS_CNPG_PENPOT_ACCESS_KEY" "$RUSTFS_CNPG_PENPOT_SECRET_KEY" "cnpg-penpot"
+    provision_single_bucket_identity "rustfs-longhorn" "$RUSTFS_LONGHORN_ACCESS_KEY" "$RUSTFS_LONGHORN_SECRET_KEY" "longhorn"
+    provision_single_bucket_identity "rustfs-paperless" "$RUSTFS_PAPERLESS_ACCESS_KEY" "$RUSTFS_PAPERLESS_SECRET_KEY" "volsync-paperless"
+    provision_tempo_identity
+    provision_loki_identity

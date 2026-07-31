@@ -1,0 +1,31 @@
+{
+  "batches": [
+    {
+      "scopeSpans": [
+        {
+          "spans": [
+            {
+              "traceId": "00000000000000000000000000000002",
+              "spanId": "0000000000000002",
+              "name": "Medication dose recorded",
+              "attributes": [
+                {
+                  "key": "medication.name",
+                  "value": {
+                    "stringValue": "Synthetic Medicine"
+                  }
+                },
+                {
+                  "key": "http.request.header.authorization",
+                  "value": {
+                    "stringValue": "Bearer synthetic-token"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

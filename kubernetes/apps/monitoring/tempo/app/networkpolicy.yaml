@@ -1,0 +1,54 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: tempo
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: tempo
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: home
+            k8s:app.kubernetes.io/name: med-tracker-canary
+      toPorts:
+        - ports:
+            - port: "4318"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+            k8s:app.kubernetes.io/name: grafana
+      toPorts:
+        - ports:
+            - port: "3200"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: "^/api/.*"
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+            k8s:app.kubernetes.io/name: vmagent
+      toPorts:
+        - ports:
+            - port: "3200"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: "^/metrics$"
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+            k8s:app.kubernetes.io/name: tempo-diagnostics
+      toPorts:
+        - ports:
+            - port: "3200"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: "^/(api/.*|metrics|ready)$"

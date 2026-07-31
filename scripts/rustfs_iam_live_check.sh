@@ -42,7 +42,11 @@ buckets_json="$(jq -cn '$ARGS.positional' --args "${buckets[@]}")"
 user_json="$(rc admin user info rustfs "$access_key" --json)"
 printf '%s' "$user_json" | jq -e \
   --arg policy_name "$policy_name" \
-  '.status == "enabled" and (.policies | index($policy_name) != null)' >/dev/null
+  '
+    .status == "enabled"
+    and .policies == [$policy_name]
+    and .memberOf == []
+  ' >/dev/null
 
 policy_json="$(rc admin policy info rustfs "$policy_name" --json)"
 printf '%s' "$policy_json" | jq -e \

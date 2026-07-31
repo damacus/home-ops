@@ -1,0 +1,98 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tempo
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: tempo
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    replicas: 1
+
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+
+    serviceAccount:
+      automountServiceAccountToken: false
+
+    tempo:
+      tag: 2.10.7
+      pullSecrets:
+        - dockerhub-credentials
+      reportingEnabled: false
+      streamOverHttpEnabled: true
+      memBallastSizeMbs: 0
+      retention: 336h
+      extraArgs:
+        config.expand-env: "true"
+      extraEnvFrom:
+        - secretRef:
+            name: tempo-secret
+      metricsGenerator:
+        enabled: false
+      receivers:
+        otlp:
+          protocols:
+            http:
+              endpoint: 0.0.0.0:4318
+      server:
+        http_listen_port: 3200
+      storage:
+        trace:
+          backend: s3
+          s3:
+            bucket: tempo-traces
+            endpoint: rustfs.storage.svc.cluster.local:9000
+            access_key: "$${RUSTFS_TEMPO_ACCESS_KEY}"
+            secret_key: "$${RUSTFS_TEMPO_SECRET_KEY}"
+            insecure: true
+            forcepathstyle: true
+          wal:
+            path: /var/tempo/wal
+      livenessProbe:
+        httpGet:
+          path: /ready
+          port: 3200
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
+      readinessProbe:
+        httpGet:
+          path: /ready
+          port: 3200
+        initialDelaySeconds: 20
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+    persistence:
+      enabled: true
+      enableStatefulSetAutoDeletePVC: false
+      storageClassName: longhorn
+      accessModes:
+        - ReadWriteOnce
+      size: 10Gi
+
+    service:
+      type: ClusterIP
+
+    serviceMonitor:
+      enabled: true
+      interval: 1m

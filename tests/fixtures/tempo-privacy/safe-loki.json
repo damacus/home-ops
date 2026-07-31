@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "streams",
+    "result": [
+      {
+        "stream": {
+          "app": "med-tracker-canary",
+          "pod": "med-tracker-canary-safe"
+        },
+        "values": [
+          [
+            "0",
+            "{\"message\":\"{\\\"trace.id\\\":\\\"00000000000000000000000000000001\\\",\\\"event_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\"}\"}"
+          ]
+        ]
+      }
+    ]
+  }
+}

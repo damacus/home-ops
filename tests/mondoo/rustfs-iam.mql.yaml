@@ -153,57 +153,63 @@ policies:
               file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_LONGHORN_ACCESS_KEY")
               file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_PAPERLESS_ACCESS_KEY")
               file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_LOKI_ACCESS_KEY")
+              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_TEMPO_ACCESS_KEY")
           - uid: rustfs-bootstrap-creates-app-buckets
             title: RustFS bootstrap job creates all per-app buckets
             impact: 100
             mql: |
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-zitadel")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-forgejo")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-home-assistant")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-n8n")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-immich")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-mealie")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-med-tracker")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-penpot")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("volsync-paperless")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("longhorn")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("loki-chunks")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("loki-data")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-zitadel")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-forgejo")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-home-assistant")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-n8n")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-immich")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-mealie")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-med-tracker")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-penpot")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("volsync-paperless")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("longhorn")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("loki-chunks")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("loki-data")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("tempo-traces")
           - uid: rustfs-bootstrap-does-not-run-legacy-mirroring
             title: RustFS bootstrap does not run legacy-prefix mirrors
             impact: 100
             mql: |
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mirror_prefix_if_present") == false
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc mirror") == false
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("cnpg-backups/") == false
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("volsync-backups/paperless") == false
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("mirror_prefix_if_present") == false
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rc mirror") == false
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-backups/") == false
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("volsync-backups/paperless") == false
           - uid: rustfs-bootstrap-retains-failed-pods
             title: RustFS bootstrap keeps failed pod logs available for debugging
             impact: 100
             mql: |
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("ttlSecondsAfterFinished: 86400")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("restartPolicy: Never")
+              file("kubernetes/apps/storage/rustfs-iam/app/job-buckets.yaml").content.contains("ttlSecondsAfterFinished: 86400")
+              file("kubernetes/apps/storage/rustfs-iam/app/job-buckets.yaml").content.contains("restartPolicy: Never")
           - uid: rustfs-bootstrap-creates-app-identities
             title: RustFS bootstrap job creates all app IAM identities
             impact: 100
             mql: |
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-zitadel")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-forgejo")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-home-assistant")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-n8n")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-immich")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-mealie")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-med-tracker")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-cnpg-penpot")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-longhorn")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-paperless")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rustfs-loki")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-cnpg-zitadel")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-cnpg-forgejo")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-cnpg-home-assistant")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-cnpg-n8n")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-cnpg-immich")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-cnpg-mealie")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-cnpg-med-tracker")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-cnpg-penpot")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-longhorn")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-paperless")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-loki")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-tempo")
           - uid: rustfs-bootstrap-attaches-bucket-scoped-policies
             title: RustFS bootstrap job attaches bucket-scoped IAM policies
             impact: 100
             mql: |
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("arn:aws:s3:::")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc admin policy")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc admin user")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("rc admin policy attach")
-              file("kubernetes/apps/storage/rustfs/app/job-buckets.yaml").content.contains("mc admin") == false
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("arn:aws:s3:::")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rc admin policy")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rc admin user add")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rc admin policy attach")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rc admin policy detach")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rc admin group rm-members")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rc admin user rm")
+              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("mc admin") == false

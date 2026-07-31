@@ -75,3 +75,8 @@ policies:
             impact: 100
             mql: |
               command("bash scripts/rustfs_iam_live_check.sh rustfs-loki loki loki-chunks loki-data").exitcode == 0
+          - uid: live-rustfs-tempo
+            title: Tempo RustFS IAM policy is bucket-scoped
+            impact: 100
+            mql: |
+              command("bash scripts/rustfs_iam_live_check.sh rustfs-tempo rustfs-tempo tempo-traces").exitcode == 0
