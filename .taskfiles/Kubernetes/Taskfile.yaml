@@ -275,9 +275,7 @@ tasks:
       - yq -e '.spec.values.controllers."med-tracker-canary".serviceAccount.identifier == "med-tracker-canary-app" and .spec.values.serviceAccount."med-tracker-canary-app".forceRename == "med-tracker-canary-app"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.persistence.storage.existingClaim == "med-tracker-canary-storage"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.route.external.hostnames[0] == "med-tracker-canary.damacus.io" and .spec.values.route.external.annotations."external-dns.alpha.kubernetes.io/target" == "traefik-ext.damacus.io"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
-      - yq -e '.spec.values.route.external.rules[] | select(.matches[0].path.value == "/" and .filters[0].extensionRef.name == "oauth2-proxy-damacus-forward-auth" and .backendRefs[0].name == "med-tracker-canary")' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
-      - yq -e '.spec.values.route.external.rules[] | select(.matches[0].path.value == "/up" and .backendRefs[0].name == "med-tracker-canary")' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
-      - yq -e '.spec.values.route.external.rules[] | select(.matches[0].path.value == "/login" and .backendRefs[0].name == "med-tracker-canary")' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e '(.spec.values.route.external.rules | length) == 1 and .spec.values.route.external.rules[0].matches[0].path.type == "PathPrefix" and .spec.values.route.external.rules[0].matches[0].path.value == "/" and (.spec.values.route.external.rules[0] | has("filters") | not) and .spec.values.route.external.rules[0].backendRefs[0].name == "med-tracker-canary"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.target.name == "med-tracker-canary-secret"' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
       - yq -e '.spec.dataFrom[] | select(.extract.key == "zitadel-med-tracker-canary-oidc")' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
       - yq -e '.spec.target.template.data.DATABASE_URL | contains("@med-tracker-canary-rw.home.svc.cluster.local:5432/")' {{.MED_TRACKER_CANARY_APP}}/externalsecret.yaml
