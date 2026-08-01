@@ -163,33 +163,7 @@ spec:
           - matches:
               - path:
                   type: PathPrefix
-                  value: /up
-            backendRefs:
-              - kind: Service
-                name: med-tracker-canary
-                namespace: home
-                port: 80
-                weight: 1
-          - matches:
-              - path:
-                  type: PathPrefix
-                  value: /login
-            backendRefs:
-              - kind: Service
-                name: med-tracker-canary
-                namespace: home
-                port: 80
-                weight: 1
-          - matches:
-              - path:
-                  type: PathPrefix
                   value: /
-            filters:
-              - type: ExtensionRef
-                extensionRef:
-                  group: traefik.io
-                  kind: Middleware
-                  name: oauth2-proxy-damacus-forward-auth
             backendRefs:
               - kind: Service
                 name: med-tracker-canary
