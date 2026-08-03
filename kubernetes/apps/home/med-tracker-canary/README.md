@@ -24,10 +24,10 @@ MedTracker image and explicit persistent-disk storage mode. The reset invokes
 The reset service account can only read the canary web Deployment, patch its
 scale subresource, and list pods in the canary namespace. A reset scales the
 writable web controller to zero, waits until every matching web pod has finished
-terminating, and keeps `/up` routed to a small stateless health responder. The
-responder has no application secrets, database access, or storage mount. The web
-controller returns only after every reset invariant passes. A failed reset leaves
-normal demo traffic stopped.
+terminating, then runs the destructive reset. `/up` is served by the real
+MedTracker application, so it is unavailable during the planned reset window and
+stays unavailable if the reset fails. The web controller returns only after every
+reset invariant passes.
 
 To run the reset manually after the CronJob exists:
 
@@ -51,8 +51,8 @@ reviewed. Activate the environment through GitOps in this order:
    cluster, its primary database, and the cache, queue, and cable databases.
 2. Confirm there is no Backup, ScheduledBackup, ObjectStore, Barman plugin,
    external production recovery source, RustFS credential, or canary bucket.
-3. Resume `med-tracker-canary`, let `db:prepare` complete, and wait for the
-   health-only `/up` controller.
+3. Resume `med-tracker-canary`, let `db:prepare` complete, and require the real
+   application `/up` endpoint to become healthy.
 4. Create one manual reset Job and require every post-reset invariant to pass.
 5. Sign in with both demo roles and verify the scheduled and as-needed medication
    scenarios before treating canary as available.
