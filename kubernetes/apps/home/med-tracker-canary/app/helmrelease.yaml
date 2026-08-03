@@ -48,12 +48,13 @@ spec:
           migrate:
             image:
               repository: &repository ghcr.io/damacus/med-tracker
-              tag: &tag sha-1c23f5184e318f2606dd0817df0f2601eada3814
+              tag: &tag sha-f1accf6b8222aa485193584d4339a3a082c845ae
             command: ["bin/rails", "db:prepare"]
             envFrom:
               - secretRef:
                   name: med-tracker-canary-secret
             env:
+              ACTIVE_STORAGE_SERVICE: persistent
               DATABASE_ROLE: med_tracker_owner
               OTEL_TRACES_EXPORTER: none
               RAILS_ENV: production
@@ -68,6 +69,7 @@ spec:
               - secretRef:
                   name: med-tracker-canary-secret
             env:
+              ACTIVE_STORAGE_SERVICE: persistent
               RAILS_ENV: production
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
