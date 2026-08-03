@@ -54,6 +54,11 @@ class MondooCommandTest(unittest.TestCase):
         self.assertEqual(app_scan.policy, "home-ops-app-paperless")
         self.assertEqual(app_scan.asset_name, "home-ops-paperless-oidc")
 
+        forgejo_scan = self.mondoo_scan.APP_SCANS["dev/forgejo"]
+
+        self.assertEqual(forgejo_scan.policy, "home-ops-app-forgejo")
+        self.assertEqual(forgejo_scan.asset_name, "home-ops-forgejo")
+
     def test_node_scan_uses_ssh_sudo_and_pi_user(self) -> None:
         command = self.mondoo_scan.cnspec_scan_command(
             ["ssh", "pi@node-abcdef"],

@@ -12,6 +12,7 @@ vars:
   GATUS_CONFIG: "{{.KUBERNETES_DIR}}/apps/monitoring/gatus/app/resources/config.yaml"
   RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
   RUSTFS_IAM_LIVE_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam-live.mql.yaml"
+  FORGEJO_POLICY: "{{.ROOT_DIR}}/tests/mondoo/forgejo.mql.yaml"
   RUSTFS_IAM_LIVE_CHECK_SCRIPT: "{{.SCRIPTS_DIR}}/rustfs_iam_live_check.sh"
   TEMPO_TRACE_BACKEND_CONTRACT: "{{.SCRIPTS_DIR}}/tempo_trace_backend_contract.sh"
   TEMPO_PRIVACY_CHECK: "{{.SCRIPTS_DIR}}/tempo_privacy_check.sh"
@@ -244,6 +245,15 @@ tasks:
     preconditions:
       - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
       - { msg: "Missing RustFS IAM policy", sh: "test -f {{.RUSTFS_IAM_POLICY}}" }
+
+  forgejo-policy:
+    desc: Validate the Forgejo v16 and production-hardening manifest contract
+    cmds:
+      - cnspec --auto-update=false policy lint {{.FORGEJO_POLICY}}
+      - cnspec --auto-update=false scan local --policy-bundle {{.FORGEJO_POLICY}} --incognito --risk-threshold 1
+    preconditions:
+      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
+      - { msg: "Missing Forgejo policy", sh: "test -f {{.FORGEJO_POLICY}}" }
 
   rustfs-iam-live-policy:
     desc: Validate live RustFS IAM users and policies with Mondoo cnspec

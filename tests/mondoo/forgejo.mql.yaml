@@ -1,0 +1,53 @@
+---
+policies:
+  - uid: home-ops-forgejo-manifests
+    name: Home Ops Forgejo Manifest Contract
+    version: 1.0.0
+    scoring_system: highest impact
+    tags:
+      mondoo.com/platform: os
+      mondoo.com/category: security
+    require:
+      - provider: os
+    authors:
+      - name: Home Ops
+        email: security@ironstone.casa
+    docs:
+      desc: |
+        Validate the controlled Forgejo v16 upgrade and low-risk production
+        hardening without depending on the live cluster rollout.
+    groups:
+      - title: Forgejo v16 and hardening
+        filters: asset.platform != ""
+        checks:
+          - uid: forgejo-v16-image-contract
+            title: Forgejo uses chart 17.1.4 with the exact v16 rootless image
+            impact: 100
+            mql: |
+              file("kubernetes/apps/dev/forgejo/app/helmrelease.yaml").content.contains('version: "17.1.4"') &&
+              file("kubernetes/apps/dev/forgejo/app/helmrelease.yaml").content.contains(/image:\s+tag: "16\.0\.2"\s+rootless: true/) &&
+              file("kubernetes/apps/dev/forgejo/app/helmrelease.yaml").content.contains("postgresql-ha:") == false &&
+              file("kubernetes/apps/dev/forgejo/app/helmrelease.yaml").content.contains("postgresql:") == false
+          - uid: forgejo-upgrade-remediation-contract
+            title: Forgejo major upgrades cannot automatically roll back
+            impact: 100
+            mql: |
+              file("kubernetes/apps/dev/forgejo/app/helmrelease.yaml").content.contains(/upgrade:\s+cleanupOnFail: true\s+remediation:\s+retries: 0/) &&
+              file("kubernetes/apps/dev/forgejo/app/helmrelease.yaml").content.contains("strategy: rollback") == false
+          - uid: forgejo-resource-contract
+            title: Forgejo has measured resource requests and limits
+            impact: 100
+            mql: |
+              file("kubernetes/apps/dev/forgejo/app/helmrelease.yaml").content.contains(/resources:\s+requests:\s+cpu: 50m\s+memory: 128Mi\s+limits:\s+cpu: 500m\s+memory: 512Mi/)
+          - uid: forgejo-observability-contract
+            title: Forgejo exposes monitored metrics and has a migration-safe startup probe
+            impact: 100
+            mql: |
+              file("kubernetes/apps/dev/forgejo/app/helmrelease.yaml").content.contains(/metrics:\s+enabled: true\s+serviceMonitor:\s+enabled: true/) &&
+              file("kubernetes/apps/dev/forgejo/app/helmrelease.yaml").content.contains(/serviceMonitor:\s+enabled: true\s+namespace: monitoring/) == false &&
+              file("kubernetes/apps/dev/forgejo/app/helmrelease.yaml").content.contains(/startupProbe:\s+enabled: true\s+initialDelaySeconds: 10\s+periodSeconds: 10\s+timeoutSeconds: 1\s+failureThreshold: 60/)
+          - uid: forgejo-vmagent-ingress-contract
+            title: Only the monitoring vmagent is added as a metrics scraper
+            impact: 100
+            mql: |
+              file("kubernetes/apps/dev/forgejo/app/networkpolicy.yaml").content.contains(/kubernetes.io\/metadata.name: monitoring\s+podSelector:\s+matchLabels:\s+app.kubernetes.io\/instance: vm\s+app.kubernetes.io\/name: vmagent\s+ports:\s+- port: 3000\s+protocol: TCP/)
