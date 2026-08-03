@@ -13,6 +13,7 @@ data:
     ca_file=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     deployment_url="${api}/apis/apps/v1/namespaces/home/deployments/med-tracker-canary"
     scale_url="${deployment_url}/scale"
+    pods_url="${api}/api/v1/namespaces/home/pods?labelSelector=app.kubernetes.io%2Fcontroller%3Dmed-tracker-canary"
     token="$(cat "${token_file}")"
 
     api_request() {
@@ -31,13 +32,24 @@ data:
         "${scale_url}" >/dev/null
     }
 
-    web_stopped() {
+    deployment_scaled_to_zero() {
       api_request "${deployment_url}" | ruby -rjson -e '
         deployment = JSON.parse($stdin.read)
         desired = deployment.dig("spec", "replicas").to_i
         running = deployment.dig("status", "replicas").to_i
         exit(desired.zero? && running.zero? ? 0 : 1)
       '
+    }
+
+    web_pods_gone() {
+      api_request "${pods_url}" | ruby -rjson -e '
+        pods = JSON.parse($stdin.read)
+        exit(pods.fetch("items").empty? ? 0 : 1)
+      '
+    }
+
+    web_stopped() {
+      deployment_scaled_to_zero && web_pods_gone
     }
 
     web_available() {

@@ -17,15 +17,17 @@ Those registrations are disposable and are removed by the next reset.
 ## Weekly And Manual Reset
 
 The `med-tracker-canary-reset` CronJob runs every Sunday at 04:15
-`Europe/London`. It uses the same `ghcr.io/damacus/med-tracker:beta` image as the
-web and health controllers and invokes `bin/rails canary:demo_reset` outside
-Solid Queue.
+`Europe/London`. The migration, web, and reset workloads use the same immutable
+MedTracker image and explicit persistent-disk storage mode. The reset invokes
+`bin/rails canary:demo_reset` outside Solid Queue.
 
-The reset service account can only read the canary web Deployment and patch its
-scale subresource. A reset scales the writable web controller to zero, waits for
-all web and in-Puma queue writers to stop, and keeps `/up` routed to the separate
-queue-free health controller. The web controller returns only after every reset
-invariant passes. A failed reset leaves normal demo traffic stopped.
+The reset service account can only read the canary web Deployment, patch its
+scale subresource, and list pods in the canary namespace. A reset scales the
+writable web controller to zero, waits until every matching web pod has finished
+terminating, and keeps `/up` routed to a small stateless health responder. The
+responder has no application secrets, database access, or storage mount. The web
+controller returns only after every reset invariant passes. A failed reset leaves
+normal demo traffic stopped.
 
 To run the reset manually after the CronJob exists:
 
