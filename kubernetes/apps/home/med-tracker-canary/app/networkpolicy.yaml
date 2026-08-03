@@ -6,7 +6,6 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/controller: med-tracker-canary
       app.kubernetes.io/instance: med-tracker-canary
       app.kubernetes.io/name: med-tracker-canary
   policyTypes:

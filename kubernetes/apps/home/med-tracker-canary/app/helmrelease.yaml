@@ -48,7 +48,7 @@ spec:
           migrate:
             image:
               repository: &repository ghcr.io/damacus/med-tracker
-              tag: &tag sha-f1accf6b8222aa485193584d4339a3a082c845ae
+              tag: &tag beta
             command: ["bin/rails", "db:prepare"]
             envFrom:
               - secretRef:
@@ -76,8 +76,8 @@ spec:
               OTEL_TRACES_EXPORTER: otlp
               OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
               SMTP_ENABLED: "false"
-              PUSH_NOTIFICATIONS_ENABLED: "false"
               SOLID_QUEUE_IN_PUMA: "true"
+              DEMO_MODE: "true"
               TZ: "Europe/London"
               APP_URL: "https://med-tracker-canary.damacus.io"
               OIDC_ISSUER_URL: "https://zitadel.damacus.io"
@@ -133,6 +133,130 @@ spec:
             fsGroup: 1000
             fsGroupChangePolicy: OnRootMismatch
 
+      health:
+        type: deployment
+        strategy: Recreate
+        replicas: 1
+        serviceAccount:
+          identifier: med-tracker-canary-app
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: *repository
+              tag: *tag
+            envFrom:
+              - secretRef:
+                  name: med-tracker-canary-secret
+            env:
+              RAILS_ENV: production
+              RAILS_FORCE_SSL: "false"
+              RAILS_LOG_LEVEL: info
+              OTEL_TRACES_EXPORTER: none
+              SMTP_ENABLED: "false"
+              SOLID_QUEUE_IN_PUMA: "false"
+              DEMO_MODE: "true"
+              TZ: "Europe/London"
+              APP_URL: "https://med-tracker-canary.damacus.io"
+              OIDC_ISSUER_URL: "https://zitadel.damacus.io"
+              OIDC_REDIRECT_URI: "https://med-tracker-canary.damacus.io/auth/oidc/callback"
+              OIDC_PROVIDER_NAME: "Zitadel"
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /up
+                    port: *port
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /up
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /up
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                  failureThreshold: 30
+            resources:
+              requests:
+                cpu: 10m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+
+      reset:
+        type: cronjob
+        cronjob:
+          schedule: "15 4 * * 0"
+          timeZone: Europe/London
+          concurrencyPolicy: Forbid
+          startingDeadlineSeconds: 300
+          activeDeadlineSeconds: 900
+          backoffLimit: 0
+          successfulJobsHistory: 1
+          failedJobsHistory: 3
+        serviceAccount:
+          identifier: med-tracker-canary-reset
+        containers:
+          app:
+            image:
+              repository: *repository
+              tag: *tag
+            command: ["/bin/sh", "/app/bin/canary-reset"]
+            envFrom:
+              - secretRef:
+                  name: med-tracker-canary-secret
+            env:
+              RAILS_ENV: production
+              RAILS_LOG_LEVEL: info
+              OTEL_TRACES_EXPORTER: none
+              SMTP_ENABLED: "false"
+              DEMO_MODE: "true"
+              DATABASE_ROLE: med_tracker_owner
+              ACTIVE_STORAGE_ROOT: /app/storage
+              TZ: "Europe/London"
+              APP_URL: "https://med-tracker-canary.damacus.io"
+            resources:
+              requests:
+                cpu: 10m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+        pod:
+          restartPolicy: Never
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+
     route:
       app:
         parentRefs:
@@ -145,10 +269,20 @@ spec:
           - matches:
               - path:
                   type: PathPrefix
+                  value: /up
+            backendRefs:
+              - kind: Service
+                name: med-tracker-canary-health
+                namespace: home
+                port: 80
+                weight: 1
+          - matches:
+              - path:
+                  type: PathPrefix
                   value: /
             backendRefs:
               - kind: Service
-                name: med-tracker-canary
+                name: med-tracker-canary-app
                 namespace: home
                 port: 80
                 weight: 1
@@ -165,10 +299,20 @@ spec:
           - matches:
               - path:
                   type: PathPrefix
+                  value: /up
+            backendRefs:
+              - kind: Service
+                name: med-tracker-canary-health
+                namespace: home
+                port: 80
+                weight: 1
+          - matches:
+              - path:
+                  type: PathPrefix
                   value: /
             backendRefs:
               - kind: Service
-                name: med-tracker-canary
+                name: med-tracker-canary-app
                 namespace: home
                 port: 80
                 weight: 1
@@ -179,13 +323,34 @@ spec:
         ports:
           http:
             port: 80
+      health:
+        controller: health
+        ports:
+          http:
+            port: 80
 
     serviceAccount:
       med-tracker-canary-app:
         forceRename: med-tracker-canary-app
+      med-tracker-canary-reset:
+        forceRename: med-tracker-canary-reset
 
     persistence:
       storage:
         existingClaim: med-tracker-canary-storage
-        globalMounts:
-          - path: /app/storage
+        advancedMounts:
+          med-tracker-canary:
+            app:
+              - path: /app/storage
+          reset:
+            app:
+              - path: /app/storage
+      reset-script:
+        type: configMap
+        name: med-tracker-canary-reset-script
+        advancedMounts:
+          reset:
+            app:
+              - path: /app/bin/canary-reset
+                subPath: canary-reset
+                readOnly: true

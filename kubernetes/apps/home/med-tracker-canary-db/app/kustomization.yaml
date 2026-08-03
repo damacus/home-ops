@@ -7,5 +7,3 @@ resources:
   - databases.yaml
   - externalsecret.yaml
   - PrometheusRules.yaml
-  - objectstore.yaml
-  - scheduledbackup.yaml
