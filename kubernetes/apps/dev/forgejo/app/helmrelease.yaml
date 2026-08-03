@@ -19,16 +19,13 @@ spec:
   upgrade:
     cleanupOnFail: true
     remediation:
-      retries: 3
-      strategy: rollback
+      retries: 0
   uninstall:
     keepHistory: false
   values:
-    # Disable bundled databases
-    postgresql-ha:
-      enabled: false
-    postgresql:
-      enabled: false
+    image:
+      tag: "16.0.2"
+      rootless: true
     podAnnotations:
       reloader.stakater.com/auto: "true"
     podSecurityContext:
@@ -46,6 +43,13 @@ spec:
       runAsGroup: 1000
       runAsNonRoot: true
       runAsUser: 1000
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
     persistence:
       enabled: true
       create: false
@@ -63,6 +67,16 @@ spec:
     ingress:
       enabled: false
     gitea:
+      metrics:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+      startupProbe:
+        enabled: true
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        timeoutSeconds: 1
+        failureThreshold: 60
       admin:
         existingSecret: forgejo-admin
       oauth:

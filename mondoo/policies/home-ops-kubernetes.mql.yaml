@@ -300,3 +300,43 @@ policies:
             title: Mealie NetworkPolicy exists
             impact: 0
             mql: k8s.networkPolicies.where(namespace == "home").map(name).contains("mealie")
+
+  - uid: home-ops-app-forgejo
+    name: Home Ops Forgejo Checks
+    version: "1.0.0"
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: k8s
+    require:
+      - provider: k8s
+    scoring_system: highest impact
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    groups:
+      - title: forgejo-runtime
+        filters: asset.platform == "k8s-cluster"
+        checks:
+          - uid: forgejo-v16-runtime
+            title: Forgejo runs the approved v16 rootless image
+            impact: 100
+            mql: |
+              k8s.deployments.where(namespace == "dev" && name == "forgejo").all(
+                containers.where(name == "forgejo").all(imageName == "code.forgejo.org/forgejo/forgejo:16.0.2-rootless")
+              )
+          - uid: forgejo-runtime-resources
+            title: Forgejo defines workload resource requests and limits
+            impact: 100
+            mql: |
+              k8s.deployments.where(namespace == "dev" && name == "forgejo").all(
+                containers.where(name == "forgejo").all(resources["requests"] != empty && resources["limits"] != empty)
+              )
+          - uid: forgejo-metrics-servicemonitor
+            title: Forgejo metrics have a ServiceMonitor
+            impact: 100
+            mql: |
+              k8s.customresources.where(kind == "ServiceMonitor" && namespace == "dev").map(name).contains("forgejo")
+          - uid: forgejo-networkpolicy
+            title: Forgejo retains an ingress NetworkPolicy
+            impact: 100
+            mql: k8s.networkPolicies.where(namespace == "dev").map(name).contains("forgejo")

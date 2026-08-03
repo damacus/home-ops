@@ -22,6 +22,17 @@ spec:
         - port: 3000
           protocol: TCP
     - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: vm
+              app.kubernetes.io/name: vmagent
+      ports:
+        - port: 3000
+          protocol: TCP
+    - from:
         - ipBlock:
             cidr: 0.0.0.0/0
       ports:

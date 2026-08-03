@@ -51,6 +51,10 @@ APP_SCANS: dict[str, AppScan] = {
         policy="home-ops-app-mealie",
         asset_name="home-ops-mealie-oidc",
     ),
+    "dev/forgejo": AppScan(
+        policy="home-ops-app-forgejo",
+        asset_name="home-ops-forgejo",
+    ),
 }
 
 
