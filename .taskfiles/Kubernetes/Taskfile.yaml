@@ -7,6 +7,8 @@ vars:
   MONDOO_SCAN_SCRIPT: "{{.SCRIPTS_DIR}}/mondoo_scan.py"
   MED_TRACKER_CANARY_APP: "{{.KUBERNETES_DIR}}/apps/home/med-tracker-canary/app"
   MED_TRACKER_CANARY_DB: "{{.KUBERNETES_DIR}}/apps/home/med-tracker-canary-db/app"
+  MED_TRACKER_CANARY_KS: "{{.KUBERNETES_DIR}}/apps/home/med-tracker-canary/ks.yaml"
+  MED_TRACKER_CANARY_DB_KS: "{{.KUBERNETES_DIR}}/apps/home/med-tracker-canary-db/ks.yaml"
   GATUS_CONFIG: "{{.KUBERNETES_DIR}}/apps/monitoring/gatus/app/resources/config.yaml"
   RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
   RUSTFS_IAM_LIVE_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam-live.mql.yaml"
@@ -262,6 +264,8 @@ tasks:
   med-tracker-canary-isolation:
     desc: Assert Med Tracker canary isolation and production update controls
     cmds:
+      - yq -e '.metadata.name == "med-tracker-canary" and .metadata.namespace == "flux-system" and .spec.suspend == true' {{.MED_TRACKER_CANARY_KS}}
+      - yq -e '.metadata.name == "med-tracker-canary-db" and .metadata.namespace == "flux-system" and .spec.suspend == true' {{.MED_TRACKER_CANARY_DB_KS}}
       - yq -e '[.packageRules[] | select(.matchPackageNames[] == "ghcr.io/damacus/med-tracker")] | (length == 1 and .[0].enabled == true and .[0].automerge == false)' {{.ROOT_DIR}}/.github/renovate.json5
       - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.image.tag == "0.5.17"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.env | has("DATABASE_ROLE") | not' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
@@ -298,6 +302,8 @@ tasks:
       - yq -e '.endpoints[] | select(.name == "Med Tracker Canary Login" and .url == "https://med-tracker-canary.damacus.io/login")' {{.GATUS_CONFIG}}
     preconditions:
       - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
+      - { msg: "Missing Med Tracker canary Kustomization", sh: "test -f {{.MED_TRACKER_CANARY_KS}}" }
+      - { msg: "Missing Med Tracker canary DB Kustomization", sh: "test -f {{.MED_TRACKER_CANARY_DB_KS}}" }
       - { msg: "Missing Med Tracker canary app manifests", sh: "test -f {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml" }
       - { msg: "Missing Med Tracker canary DB manifests", sh: "test -f {{.MED_TRACKER_CANARY_DB}}/cluster.yaml" }
       - { msg: "Missing Gatus config", sh: "test -f {{.GATUS_CONFIG}}" }

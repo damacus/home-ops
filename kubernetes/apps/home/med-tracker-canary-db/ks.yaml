@@ -5,6 +5,7 @@ metadata:
   name: med-tracker-canary-db
   namespace: flux-system
 spec:
+  suspend: true
   targetNamespace: home
   path: ./kubernetes/apps/home/med-tracker-canary-db/app
   prune: true
