@@ -65,10 +65,10 @@ spec:
               repository: *repository
               tag: *tag
 
-            envFrom:
+            envFrom: &appEnvFrom
               - secretRef:
                   name: med-tracker-canary-secret
-            env:
+            env: &appEnvironment
               ACTIVE_STORAGE_SERVICE: persistent
               RAILS_ENV: production
               RAILS_FORCE_SSL: "false"
@@ -76,7 +76,6 @@ spec:
               OTEL_TRACES_EXPORTER: otlp
               OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
               SMTP_ENABLED: "false"
-              SOLID_QUEUE_IN_PUMA: "true"
               DEMO_MODE: "true"
               TZ: "Europe/London"
               APP_URL: "https://med-tracker-canary.damacus.io"
@@ -122,6 +121,18 @@ spec:
             resources:
               requests:
                 cpu: 10m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+          worker:
+            image:
+              repository: *repository
+              tag: *tag
+            command: ["bin/jobs"]
+            envFrom: *appEnvFrom
+            env: *appEnvironment
+            resources:
+              requests:
                 memory: 256Mi
               limits:
                 memory: 1Gi
@@ -240,6 +251,8 @@ spec:
         advancedMounts:
           med-tracker-canary:
             app:
+              - path: /app/storage
+            worker:
               - path: /app/storage
           reset:
             app:

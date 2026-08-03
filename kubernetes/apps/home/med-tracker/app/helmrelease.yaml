@@ -63,15 +63,14 @@ spec:
               repository: *repository
               tag: *tag
 
-            envFrom:
+            envFrom: &appEnvFrom
               - secretRef:
                   name: med-tracker-secret
-            env:
+            env: &appEnvironment
               RAILS_ENV: production
               RAILS_FORCE_SSL: "false"
               RAILS_LOG_LEVEL: info
               OTEL_TRACES_EXPORTER: none
-              SOLID_QUEUE_IN_PUMA: "true"
               TZ: "Europe/London"
               APP_URL: "https://med-tracker.damacus.io"
               OIDC_ISSUER_URL: "https://zitadel.damacus.io"
@@ -116,6 +115,18 @@ spec:
             resources:
               requests:
                 cpu: 10m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+          worker:
+            image:
+              repository: *repository
+              tag: *tag
+            command: ["bin/jobs"]
+            envFrom: *appEnvFrom
+            env: *appEnvironment
+            resources:
+              requests:
                 memory: 256Mi
               limits:
                 memory: 1Gi
