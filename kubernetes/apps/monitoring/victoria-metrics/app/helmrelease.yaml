@@ -136,6 +136,8 @@ spec:
     # Enable KubeStateMetrics to be self-contained (duplicates KPS KSM for now)
     kube-state-metrics:
       enabled: true
+      extraArgs:
+        - --auto-gomemlimit
       rbac:
         extraRules:
           - apiGroups: ["external-secrets.io"]
@@ -219,7 +221,7 @@ spec:
           memory: 64Mi
         limits:
           cpu: 200m
-          memory: 256Mi
+          memory: 512Mi
 
     # Scrape Core Components
     kubelet:
