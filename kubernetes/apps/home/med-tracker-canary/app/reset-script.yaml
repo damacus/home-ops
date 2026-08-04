@@ -14,6 +14,9 @@ data:
     deployment_url="${api}/apis/apps/v1/namespaces/home/deployments/med-tracker-canary"
     scale_url="${deployment_url}/scale"
     pods_url="${api}/api/v1/namespaces/home/pods?labelSelector=app.kubernetes.io%2Fcontroller%3Dmed-tracker-canary"
+    worker_deployment_url="${api}/apis/apps/v1/namespaces/home/deployments/med-tracker-canary-worker"
+    worker_scale_url="${worker_deployment_url}/scale"
+    worker_pods_url="${api}/api/v1/namespaces/home/pods?labelSelector=app.kubernetes.io%2Fcontroller%3Dmed-tracker-canary-worker"
     token="$(cat "${token_file}")"
 
     api_request() {
@@ -32,6 +35,15 @@ data:
         "${scale_url}" >/dev/null
     }
 
+    scale_worker() {
+      replicas="$1"
+      api_request \
+        --request PATCH \
+        --header "Content-Type: application/merge-patch+json" \
+        --data "{\"spec\":{\"replicas\":${replicas}}}" \
+        "${worker_scale_url}" >/dev/null
+    }
+
     deployment_scaled_to_zero() {
       api_request "${deployment_url}" | ruby -rjson -e '
         deployment = JSON.parse($stdin.read)
@@ -48,8 +60,28 @@ data:
       '
     }
 
+    worker_deployment_scaled_to_zero() {
+      api_request "${worker_deployment_url}" | ruby -rjson -e '
+        deployment = JSON.parse($stdin.read)
+        desired = deployment.dig("spec", "replicas").to_i
+        running = deployment.dig("status", "replicas").to_i
+        exit(desired.zero? && running.zero? ? 0 : 1)
+      '
+    }
+
+    worker_pods_gone() {
+      api_request "${worker_pods_url}" | ruby -rjson -e '
+        pods = JSON.parse($stdin.read)
+        exit(pods.fetch("items").empty? ? 0 : 1)
+      '
+    }
+
     web_stopped() {
       deployment_scaled_to_zero && web_pods_gone
+    }
+
+    worker_stopped() {
+      worker_deployment_scaled_to_zero && worker_pods_gone
     }
 
     web_available() {
@@ -61,7 +93,16 @@ data:
       '
     }
 
-    wait_for_web() {
+    worker_available() {
+      api_request "${worker_deployment_url}" | ruby -rjson -e '
+        deployment = JSON.parse($stdin.read)
+        desired = deployment.dig("spec", "replicas").to_i
+        available = deployment.dig("status", "availableReplicas").to_i
+        exit(desired == 1 && available == 1 ? 0 : 1)
+      '
+    }
+
+    wait_for_workload() {
       predicate="$1"
       attempts="$2"
       current=0
@@ -73,7 +114,11 @@ data:
     }
 
     scale_web 0
-    wait_for_web web_stopped 60
+    scale_worker 0
+    wait_for_workload web_stopped 60
+    wait_for_workload worker_stopped 60
     bin/rails canary:demo_reset
     scale_web 1
-    wait_for_web web_available 90
+    scale_worker 1
+    wait_for_workload web_available 90
+    wait_for_workload worker_available 90

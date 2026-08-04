@@ -65,10 +65,10 @@ spec:
               repository: *repository
               tag: *tag
 
-            envFrom:
+            envFrom: &appEnvFrom
               - secretRef:
                   name: med-tracker-canary-secret
-            env:
+            env: &appEnvironment
               ACTIVE_STORAGE_SERVICE: persistent
               RAILS_ENV: production
               RAILS_FORCE_SSL: "false"
@@ -76,7 +76,6 @@ spec:
               OTEL_TRACES_EXPORTER: otlp
               OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
               SMTP_ENABLED: "false"
-              SOLID_QUEUE_IN_PUMA: "true"
               DEMO_MODE: "true"
               TZ: "Europe/London"
               APP_URL: "https://med-tracker-canary.damacus.io"
@@ -122,6 +121,65 @@ spec:
             resources:
               requests:
                 cpu: 10m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+
+      med-tracker-canary-worker:
+        type: deployment
+        strategy: Recreate
+        serviceAccount:
+          identifier: med-tracker-canary-app
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          migrate:
+            image:
+              repository: *repository
+              tag: *tag
+            command: ["bin/rails", "db:prepare"]
+            envFrom:
+              - secretRef:
+                  name: med-tracker-canary-secret
+            env:
+              ACTIVE_STORAGE_SERVICE: persistent
+              DATABASE_ROLE: med_tracker_owner
+              OTEL_TRACES_EXPORTER: none
+              RAILS_ENV: production
+              TZ: "Europe/London"
+        containers:
+          worker:
+            image:
+              repository: *repository
+              tag: *tag
+            command: ["bin/jobs"]
+            envFrom: *appEnvFrom
+            env: *appEnvironment
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command:
+                      - bin/rails
+                      - runner
+                      - >-
+                        process = SolidQueue::Process.where(hostname: Socket.gethostname).where("kind LIKE ?", "Supervisor%").order(last_heartbeat_at: :desc).first;
+                        exit(process && process.last_heartbeat_at >= SolidQueue.process_alive_threshold.ago ? 0 : 1)
+                  initialDelaySeconds: 90
+                  periodSeconds: 60
+                  timeoutSeconds: 15
+                  failureThreshold: 2
+            resources:
+              requests:
                 memory: 256Mi
               limits:
                 memory: 1Gi
@@ -240,6 +298,9 @@ spec:
         advancedMounts:
           med-tracker-canary:
             app:
+              - path: /app/storage
+          med-tracker-canary-worker:
+            worker:
               - path: /app/storage
           reset:
             app:
