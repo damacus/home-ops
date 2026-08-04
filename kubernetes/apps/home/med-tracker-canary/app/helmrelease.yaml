@@ -297,9 +297,13 @@ spec:
         existingClaim: med-tracker-canary-storage
         advancedMounts:
           med-tracker-canary:
+            migrate:
+              - path: /app/storage
             app:
               - path: /app/storage
           med-tracker-canary-worker:
+            migrate:
+              - path: /app/storage
             worker:
               - path: /app/storage
           reset:
