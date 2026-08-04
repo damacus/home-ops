@@ -7,11 +7,11 @@ metadata:
 rules:
   - apiGroups: ["apps"]
     resources: ["deployments"]
-    resourceNames: ["med-tracker-canary"]
+    resourceNames: ["med-tracker-canary", "med-tracker-canary-worker"]
     verbs: ["get"]
   - apiGroups: ["apps"]
     resources: ["deployments/scale"]
-    resourceNames: ["med-tracker-canary"]
+    resourceNames: ["med-tracker-canary", "med-tracker-canary-worker"]
     verbs: ["get", "patch"]
   - apiGroups: [""]
     resources: ["pods"]
