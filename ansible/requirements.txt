@@ -63,7 +63,7 @@ oauthlib==3.3.1
     # via requests-oauthlib
 openshift==0.13.2
     # via -r ansible/requirements.in
-packaging==26.2
+packaging==26.3
     # via
     #   ansible-compat
     #   ansible-core
