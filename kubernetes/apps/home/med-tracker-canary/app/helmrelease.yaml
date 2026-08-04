@@ -5,6 +5,7 @@ metadata:
   name: med-tracker-canary
   namespace: home
 spec:
+  suspend: false
   interval: 15m
   chart:
     spec:
@@ -48,7 +49,7 @@ spec:
           migrate:
             image:
               repository: &repository ghcr.io/damacus/med-tracker
-              tag: &tag sha-2b0c7327e1958f7c828f84951efe45105abadc26
+              tag: &tag sha-6635c39cc31c8f536206c87f6e8d98e4ce87ada9
             command: ["bin/rails", "db:prepare"]
             envFrom:
               - secretRef:
