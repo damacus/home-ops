@@ -295,16 +295,8 @@ spec:
     persistence:
       storage:
         existingClaim: med-tracker-canary-storage
-        advancedMounts:
-          med-tracker-canary:
-            app:
-              - path: /app/storage
-          med-tracker-canary-worker:
-            worker:
-              - path: /app/storage
-          reset:
-            app:
-              - path: /app/storage
+        globalMounts:
+          - path: /app/storage
       reset-script:
         type: configMap
         name: med-tracker-canary-reset-script
