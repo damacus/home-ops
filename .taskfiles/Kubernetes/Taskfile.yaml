@@ -278,7 +278,7 @@ tasks:
     desc: Assert Med Tracker canary isolation and production update controls
     cmds:
       - yq -e '.metadata.name == "med-tracker-canary-db" and .metadata.namespace == "flux-system" and .spec.suspend == false' {{.MED_TRACKER_CANARY_DB_KS}}
-      - yq -e '.metadata.name == "med-tracker-canary" and .metadata.namespace == "flux-system" and .spec.suspend == false and (.spec.dependsOn | map(.name) | contains(["med-tracker-canary-db", "tempo"]))' {{.MED_TRACKER_CANARY_KS}}
+      - yq -e '.metadata.name == "med-tracker-canary" and .metadata.namespace == "flux-system" and .spec.suspend == true and (.spec.dependsOn | map(.name) | contains(["med-tracker-canary-db", "tempo"]))' {{.MED_TRACKER_CANARY_KS}}
       - yq -e '[.packageRules[] | select(.matchPackageNames[] == "ghcr.io/damacus/med-tracker")] | (length == 1 and .[0].enabled == true and .[0].automerge == false)' {{.ROOT_DIR}}/.github/renovate.json5
       - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.image.tag == "0.5.17"' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
       - yq -e '.spec.values.controllers."med-tracker".initContainers.migrate.env | has("DATABASE_ROLE") | not' {{.KUBERNETES_DIR}}/apps/home/med-tracker/app/helmrelease.yaml
