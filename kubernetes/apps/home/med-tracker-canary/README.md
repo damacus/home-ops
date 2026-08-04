@@ -44,18 +44,30 @@ manual Job. Do not restore the web replica manually around a failed reset.
 
 ## First Deployment
 
-Both Flux Kustomizations remain suspended while this manifest transition is
-reviewed. Activate the environment through GitOps in this order:
+The `med-tracker-canary-db` and `med-tracker-canary` Flux Kustomizations, and
+the `med-tracker-canary` HelmRelease, are active with `suspend: false`.
 
-1. Resume only `med-tracker-canary-db` and wait for the one-instance CNPG
-   cluster, its primary database, and the cache, queue, and cable databases.
-2. Confirm there is no Backup, ScheduledBackup, ObjectStore, Barman plugin,
-   external production recovery source, RustFS credential, or canary bucket.
-3. Resume `med-tracker-canary`, let `db:prepare` complete, and require the real
-   application `/up` endpoint to become healthy.
-4. Create one manual reset Job and require every post-reset invariant to pass.
-5. Sign in with both demo roles and verify the scheduled and as-needed medication
-   scenarios before treating canary as available.
+For a planned future suspension, make and reconcile each GitOps change
+separately:
+
+1. Set `suspend: true` on the canary HelmRelease, then confirm that the
+   HelmRelease has applied the change and reports suspended. Suspending
+   reconciliation does not stop its running workloads.
+2. Set `suspend: true` on the `med-tracker-canary` Kustomization, then confirm
+   that it has applied the change and reports suspended.
+3. Set `suspend: true` on `med-tracker-canary-db` last, only when database
+   reconciliation must also stop, and confirm that it reports suspended.
+
+To resume, first restore `suspend: false` on `med-tracker-canary-db` if it was
+paused, and confirm that it has reconciled before waiting for the one-instance
+CNPG cluster, its primary database, and the cache, queue, and cable databases.
+Then restore `suspend: false` on the canary Kustomization and confirm that it
+has reconciled. Finally, restore `suspend: false` on the canary HelmRelease and
+confirm that it has reconciled, let `db:prepare` complete, and require the real
+application `/up` endpoint to become healthy. Create one manual reset Job and
+require every post-reset invariant to pass. Sign in with both demo roles and
+verify the scheduled and as-needed medication scenarios before treating canary
+as available.
 
 ## Recovery
 
