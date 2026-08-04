@@ -1,0 +1,32 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: med-tracker-canary-reset
+  namespace: home
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["med-tracker-canary"]
+    verbs: ["get"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    resourceNames: ["med-tracker-canary"]
+    verbs: ["get", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: med-tracker-canary-reset
+  namespace: home
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: med-tracker-canary-reset
+subjects:
+  - kind: ServiceAccount
+    name: med-tracker-canary-reset
+    namespace: home

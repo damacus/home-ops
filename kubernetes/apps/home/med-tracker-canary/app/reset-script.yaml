@@ -1,0 +1,79 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: med-tracker-canary-reset-script
+  namespace: home
+data:
+  canary-reset: |-
+    set -eu
+
+    api="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT_HTTPS}"
+    token_file=/var/run/secrets/kubernetes.io/serviceaccount/token
+    ca_file=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    deployment_url="${api}/apis/apps/v1/namespaces/home/deployments/med-tracker-canary"
+    scale_url="${deployment_url}/scale"
+    pods_url="${api}/api/v1/namespaces/home/pods?labelSelector=app.kubernetes.io%2Fcontroller%3Dmed-tracker-canary"
+    token="$(cat "${token_file}")"
+
+    api_request() {
+      curl --fail --silent --show-error \
+        --cacert "${ca_file}" \
+        --header "Authorization: Bearer ${token}" \
+        "$@"
+    }
+
+    scale_web() {
+      replicas="$1"
+      api_request \
+        --request PATCH \
+        --header "Content-Type: application/merge-patch+json" \
+        --data "{\"spec\":{\"replicas\":${replicas}}}" \
+        "${scale_url}" >/dev/null
+    }
+
+    deployment_scaled_to_zero() {
+      api_request "${deployment_url}" | ruby -rjson -e '
+        deployment = JSON.parse($stdin.read)
+        desired = deployment.dig("spec", "replicas").to_i
+        running = deployment.dig("status", "replicas").to_i
+        exit(desired.zero? && running.zero? ? 0 : 1)
+      '
+    }
+
+    web_pods_gone() {
+      api_request "${pods_url}" | ruby -rjson -e '
+        pods = JSON.parse($stdin.read)
+        exit(pods.fetch("items").empty? ? 0 : 1)
+      '
+    }
+
+    web_stopped() {
+      deployment_scaled_to_zero && web_pods_gone
+    }
+
+    web_available() {
+      api_request "${deployment_url}" | ruby -rjson -e '
+        deployment = JSON.parse($stdin.read)
+        desired = deployment.dig("spec", "replicas").to_i
+        available = deployment.dig("status", "availableReplicas").to_i
+        exit(desired == 1 && available == 1 ? 0 : 1)
+      '
+    }
+
+    wait_for_web() {
+      predicate="$1"
+      attempts="$2"
+      current=0
+      until "${predicate}"; do
+        current=$((current + 1))
+        test "${current}" -lt "${attempts}"
+        sleep 2
+      done
+    }
+
+    scale_web 0
+    wait_for_web web_stopped 60
+    bin/rails canary:demo_reset
+    scale_web 1
+    wait_for_web web_available 90

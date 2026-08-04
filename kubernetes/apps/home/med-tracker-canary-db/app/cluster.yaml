@@ -12,8 +12,30 @@ spec:
     kind: ClusterImageCatalog
     name: postgresql
     major: 18
-  instances: 2
+  instances: 1
   primaryUpdateStrategy: unsupervised
+  managed:
+    roles:
+      - name: med_tracker_owner
+        ensure: present
+        login: false
+        superuser: false
+        bypassrls: false
+      - name: med_tracker_app
+        ensure: present
+        login: false
+        superuser: false
+        bypassrls: false
+      - name: med-tracker
+        ensure: present
+        login: true
+        superuser: false
+        bypassrls: false
+        inRoles:
+          - med_tracker_owner
+          - med_tracker_app
+        passwordSecret:
+          name: med-tracker-canary-db
   storage:
     size: 5Gi
     storageClass: openebs-hostpath
@@ -22,36 +44,24 @@ spec:
     enablePodMonitor: true
 
   bootstrap:
-    recovery:
-      source: med-tracker-production-backup
+    initdb:
       database: med-tracker
       owner: med-tracker
       secret:
         name: med-tracker-canary-db
+      postInitApplicationSQL:
+        - CREATE ROLE med_tracker_owner NOLOGIN NOSUPERUSER NOBYPASSRLS
+        - CREATE ROLE med_tracker_app NOLOGIN NOSUPERUSER NOBYPASSRLS
+        - GRANT med_tracker_owner, med_tracker_app TO "med-tracker"
+        - ALTER DATABASE "med-tracker" OWNER TO med_tracker_owner
+        - ALTER SCHEMA public OWNER TO med_tracker_owner
 
-  enableSuperuserAccess: true
-  superuserSecret:
-    name: med-tracker-canary-db-superuser
+  enableSuperuserAccess: false
 
   postgresql:
     parameters:
       max_connections: "100"
       shared_buffers: 128MB
-
-  plugins:
-    - name: barman-cloud.cloudnative-pg.io
-      isWALArchiver: true
-      parameters:
-        barmanObjectName: med-tracker-canary-rustfs-store
-        serverName: med-tracker-canary
-
-  externalClusters:
-    - name: med-tracker-production-backup
-      plugin:
-        name: barman-cloud.cloudnative-pg.io
-        parameters:
-          barmanObjectName: med-tracker-rustfs-store
-          serverName: med-tracker
 
   resources:
     requests:
