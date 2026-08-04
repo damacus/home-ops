@@ -4,6 +4,8 @@ kind: ConfigMap
 metadata:
   name: med-tracker-canary-reset-script
   namespace: home
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: disabled
 data:
   canary-reset: |-
     set -eu

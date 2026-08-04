@@ -319,6 +319,7 @@ tasks:
       - yq -e 'select(.kind == "Role") | .rules[] | select(.apiGroups[0] == "" and (.resources | length) == 1 and .resources[0] == "pods" and (.verbs | length) == 1 and .verbs[0] == "list" and (has("resourceNames") | not))' {{.MED_TRACKER_CANARY_RESET_RBAC}}
       - yq -e 'select(.kind == "RoleBinding") | .metadata.name == "med-tracker-canary-reset" and .subjects[0].name == "med-tracker-canary-reset" and .roleRef.name == "med-tracker-canary-reset"' {{.MED_TRACKER_CANARY_RESET_RBAC}}
       - yq -e '.metadata.name == "med-tracker-canary-reset-script"' {{.MED_TRACKER_CANARY_RESET_SCRIPT}}
+      - yq -e '.metadata.annotations."kustomize.toolkit.fluxcd.io/substitute" == "disabled"' {{.MED_TRACKER_CANARY_RESET_SCRIPT}}
       - yq -e '.data."canary-reset" | contains("deployments/med-tracker-canary")' {{.MED_TRACKER_CANARY_RESET_SCRIPT}}
       - yq -e '.data."canary-reset" | contains("deployments/med-tracker-canary-worker")' {{.MED_TRACKER_CANARY_RESET_SCRIPT}}
       - yq -e '.data."canary-reset" | contains("scale_url=")' {{.MED_TRACKER_CANARY_RESET_SCRIPT}}
