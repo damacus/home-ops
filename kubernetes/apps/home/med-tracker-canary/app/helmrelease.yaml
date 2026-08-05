@@ -223,6 +223,11 @@ spec:
               DEMO_MODE: "true"
               DATABASE_ROLE: med_tracker_owner
               ACTIVE_STORAGE_ROOT: /app/storage
+              DEMO_RESET_EXPECTED_APPLICATION_HOST: med-tracker-canary.damacus.io
+              DEMO_RESET_EXPECTED_DATABASE_HOST: med-tracker-canary-rw.home.svc.cluster.local
+              DEMO_RESET_EXPECTED_STORAGE_SERVICE: persistent
+              DEMO_RESET_EXPECTED_STORAGE_ROOT: /app/storage
+              DEMO_RESET_EXPECTED_DATABASE_ROLE: med_tracker_owner
               TZ: "Europe/London"
               APP_URL: "https://med-tracker-canary.damacus.io"
             resources:
@@ -234,6 +239,7 @@ spec:
         pod:
           automountServiceAccountToken: true
           restartPolicy: Never
+          terminationGracePeriodSeconds: 60
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
