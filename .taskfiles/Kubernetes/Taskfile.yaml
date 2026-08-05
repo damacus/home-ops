@@ -291,6 +291,13 @@ tasks:
       - { msg: "Missing flux", sh: "command -v flux >/dev/null" }
       - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
 
+  med-tracker-canary-reset-recovery-contract:
+    desc: Assert Med Tracker canary reset preflight and failure recovery
+    cmds:
+      - sh ./scripts/test_med_tracker_canary_reset_recovery.sh
+    preconditions:
+      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
+
   med-tracker-canary-isolation:
     desc: Assert Med Tracker canary isolation and production update controls
     deps:
@@ -318,7 +325,7 @@ tasks:
       - yq -e '.spec.values.controllers."med-tracker-canary".containers.app.envFrom[0].secretRef.name == "med-tracker-canary-secret"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.controllers | has("health") | not' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e 'explode(.) | .spec.values.controllers.reset.type == "cronjob" and .spec.values.controllers.reset.cronjob.schedule == "15 4 * * 0" and .spec.values.controllers.reset.cronjob.timeZone == "Europe/London" and .spec.values.controllers.reset.cronjob.concurrencyPolicy == "Forbid" and .spec.values.controllers.reset.cronjob.backoffLimit == 0 and .spec.values.controllers.reset.cronjob.activeDeadlineSeconds == 900 and .spec.values.controllers.reset.cronjob.successfulJobsHistory == 1 and .spec.values.controllers.reset.cronjob.failedJobsHistory == 3' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
-      - yq -e 'explode(.) | .spec.values.controllers.reset.containers.app.command[0] == "/bin/sh" and .spec.values.controllers.reset.containers.app.command[1] == "/app/bin/canary-reset" and .spec.values.controllers.reset.containers.app.env.DEMO_MODE == "true" and .spec.values.controllers.reset.containers.app.env.DATABASE_ROLE == "med_tracker_owner" and .spec.values.controllers.reset.containers.app.env.ACTIVE_STORAGE_SERVICE == "persistent" and .spec.values.controllers.reset.containers.app.envFrom[0].secretRef.name == "med-tracker-canary-secret"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
+      - yq -e 'explode(.) | .spec.values.controllers.reset.containers.app.command[0] == "/bin/sh" and .spec.values.controllers.reset.containers.app.command[1] == "/app/bin/canary-reset" and .spec.values.controllers.reset.containers.app.env.DEMO_MODE == "true" and .spec.values.controllers.reset.containers.app.env.DATABASE_ROLE == "med_tracker_owner" and .spec.values.controllers.reset.containers.app.env.ACTIVE_STORAGE_SERVICE == "persistent" and .spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_APPLICATION_HOST == "med-tracker-canary.damacus.io" and .spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_DATABASE_HOST == "med-tracker-canary-rw.home.svc.cluster.local" and .spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_STORAGE_SERVICE == "persistent" and .spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_STORAGE_ROOT == "/app/storage" and .spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_DATABASE_ROLE == "med_tracker_owner" and ([.spec.values.controllers.reset.containers.app.env | keys[] | select(test("^DEMO_RESET_EXPECTED_(S3_ENDPOINT|S3_BUCKET)$"))] | length == 0) and .spec.values.controllers.reset.containers.app.envFrom[0].secretRef.name == "med-tracker-canary-secret"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.controllers.reset.serviceAccount.identifier == "med-tracker-canary-reset" and .spec.values.controllers.reset.pod.automountServiceAccountToken == true and .spec.values.serviceAccount."med-tracker-canary-reset".forceRename == "med-tracker-canary-reset"' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - yq -e '.spec.values.serviceAccount | has("med-tracker-canary-health") | not' {{.MED_TRACKER_CANARY_APP}}/helmrelease.yaml
       - >-

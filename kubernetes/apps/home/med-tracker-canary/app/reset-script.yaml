@@ -20,6 +20,7 @@ data:
     worker_scale_url="${worker_deployment_url}/scale"
     worker_pods_url="${api}/api/v1/namespaces/home/pods?labelSelector=app.kubernetes.io%2Fcontroller%3Dworker"
     token="$(cat "${token_file}")"
+    restore_required=false
 
     api_request() {
       curl --fail --silent --show-error \
@@ -115,6 +116,22 @@ data:
       done
     }
 
+    restore_writers_after_failure() {
+      reset_status=$?
+      trap - EXIT
+
+      if test "${reset_status}" -ne 0 && test "${restore_required}" = true; then
+        set +e
+        scale_web 1
+        scale_worker 1
+      fi
+
+      exit "${reset_status}"
+    }
+
+    trap restore_writers_after_failure EXIT
+
+    restore_required=true
     scale_web 0
     scale_worker 0
     wait_for_workload web_stopped 60
