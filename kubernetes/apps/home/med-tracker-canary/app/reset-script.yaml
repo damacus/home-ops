@@ -130,6 +130,8 @@ data:
     }
 
     trap restore_writers_after_failure EXIT
+    trap 'trap - INT TERM; exit 130' INT
+    trap 'trap - INT TERM; exit 143' TERM
 
     restore_required=true
     scale_web 0
