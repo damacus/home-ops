@@ -10,7 +10,7 @@ test "$(yq -r '.spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPE
 test "$(yq -r '.spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_STORAGE_SERVICE' "$helmrelease")" = "persistent"
 test "$(yq -r '.spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_STORAGE_ROOT' "$helmrelease")" = "/app/storage"
 test "$(yq -r '.spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_DATABASE_ROLE' "$helmrelease")" = "med_tracker_owner"
-test "$(yq -e '[.spec.values.controllers.reset.containers.app.env | keys[] | select(test("^DEMO_RESET_EXPECTED_(S3_ENDPOINT|S3_BUCKET)$"))] | length == 0' "$helmrelease")" = "true"
+test "$(yq -e '[.spec.values.controllers.reset.containers.app.env | keys[] | select(test("^DEMO_RESET_EXPECTED_STORAGE_(ENDPOINT|BUCKET)$"))] | length == 0' "$helmrelease")" = "true"
 
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
