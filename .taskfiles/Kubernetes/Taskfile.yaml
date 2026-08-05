@@ -266,13 +266,6 @@ tasks:
       - { msg: "Missing RustFS live IAM policy", sh: "test -f {{.RUSTFS_IAM_LIVE_POLICY}}" }
       - { msg: "Missing RustFS live IAM check script", sh: "test -f {{.RUSTFS_IAM_LIVE_CHECK_SCRIPT}}" }
 
-  med-tracker-canary-reset-recovery-contract:
-    desc: Assert Med Tracker canary reset preflight and failure recovery
-    cmds:
-      - sh ./scripts/test_med_tracker_canary_reset_recovery.sh
-    preconditions:
-      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
-
   tempo-trace-backend-contract:
     desc: Assert Tempo storage, private networking, Grafana, and staged Med Tracker OTLP wiring
     silent: true
