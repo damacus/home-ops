@@ -274,8 +274,25 @@ tasks:
       - { msg: "Missing RustFS live IAM policy", sh: "test -f {{.RUSTFS_IAM_LIVE_POLICY}}" }
       - { msg: "Missing RustFS live IAM check script", sh: "test -f {{.RUSTFS_IAM_LIVE_CHECK_SCRIPT}}" }
 
+  med-tracker-canary-render-contract:
+    desc: Assert the rendered Med Tracker canary worker Deployment name
+    cmds:
+      - |
+        rendered="$(mktemp)"
+        trap 'rm -f "$rendered"' EXIT
+        flate --no-progress build hr med-tracker-canary --namespace home --path {{.KUBERNETES_DIR}} > "$rendered"
+        yq -e 'select(.kind == "Deployment" and .metadata.namespace == "home" and .metadata.name == "med-tracker-canary-worker")' "$rendered" >/dev/null
+        if yq -e 'select(.kind == "Deployment" and .metadata.namespace == "home" and .metadata.name == "med-tracker-canary-med-tracker-canary-worker")' "$rendered" >/dev/null 2>&1; then
+          exit 1
+        fi
+    preconditions:
+      - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
+      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
+
   med-tracker-canary-isolation:
     desc: Assert Med Tracker canary isolation and production update controls
+    deps:
+      - med-tracker-canary-render-contract
     cmds:
       - yq -e '.metadata.name == "med-tracker-canary-db" and .metadata.namespace == "flux-system" and .spec.suspend == false' {{.MED_TRACKER_CANARY_DB_KS}}
       - yq -e '.metadata.name == "med-tracker-canary" and .metadata.namespace == "flux-system" and .spec.suspend == false and (.spec.dependsOn | map(.name) | contains(["med-tracker-canary-db", "tempo"]))' {{.MED_TRACKER_CANARY_KS}}
