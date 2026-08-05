@@ -239,6 +239,7 @@ spec:
         pod:
           automountServiceAccountToken: true
           restartPolicy: Never
+          terminationGracePeriodSeconds: 60
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

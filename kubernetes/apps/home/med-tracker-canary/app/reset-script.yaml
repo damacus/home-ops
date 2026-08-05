@@ -20,10 +20,13 @@ data:
     worker_scale_url="${worker_deployment_url}/scale"
     worker_pods_url="${api}/api/v1/namespaces/home/pods?labelSelector=app.kubernetes.io%2Fcontroller%3Dworker"
     token="$(cat "${token_file}")"
+    rails_pid=
     restore_required=false
 
     api_request() {
       curl --fail --silent --show-error \
+        --connect-timeout 5 \
+        --max-time 10 \
         --cacert "${ca_file}" \
         --header "Authorization: Bearer ${token}" \
         "$@"
@@ -129,16 +132,40 @@ data:
       exit "${reset_status}"
     }
 
+    terminate_reset() {
+      signal="$1"
+      signal_status="$2"
+      trap - INT TERM
+
+      if test -n "${rails_pid}"; then
+        kill "-${signal}" "${rails_pid}" 2>/dev/null || true
+        wait "${rails_pid}" 2>/dev/null || true
+        rails_pid=
+      fi
+
+      exit "${signal_status}"
+    }
+
     trap restore_writers_after_failure EXIT
-    trap 'trap - INT TERM; exit 130' INT
-    trap 'trap - INT TERM; exit 143' TERM
+    trap 'terminate_reset INT 130' INT
+    trap 'terminate_reset TERM 143' TERM
 
     restore_required=true
     scale_web 0
     scale_worker 0
     wait_for_workload web_stopped 60
     wait_for_workload worker_stopped 60
-    bin/rails canary:demo_reset
+    bin/rails canary:demo_reset &
+    rails_pid=$!
+    if wait "${rails_pid}"; then
+      rails_status=0
+    else
+      rails_status=$?
+    fi
+    rails_pid=
+    if test "${rails_status}" -ne 0; then
+      exit "${rails_status}"
+    fi
     scale_web 1
     scale_worker 1
     wait_for_workload web_available 90
