@@ -18,7 +18,7 @@ data:
     pods_url="${api}/api/v1/namespaces/home/pods?labelSelector=app.kubernetes.io%2Fcontroller%3Dmed-tracker-canary"
     worker_deployment_url="${api}/apis/apps/v1/namespaces/home/deployments/med-tracker-canary-worker"
     worker_scale_url="${worker_deployment_url}/scale"
-    worker_pods_url="${api}/api/v1/namespaces/home/pods?labelSelector=app.kubernetes.io%2Fcontroller%3Dmed-tracker-canary-worker"
+    worker_pods_url="${api}/api/v1/namespaces/home/pods?labelSelector=app.kubernetes.io%2Fcontroller%3Dworker"
     token="$(cat "${token_file}")"
 
     api_request() {
