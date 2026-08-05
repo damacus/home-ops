@@ -5,12 +5,15 @@ root_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 helmrelease="$root_dir/kubernetes/apps/home/med-tracker-canary/app/helmrelease.yaml"
 reset_script="$root_dir/kubernetes/apps/home/med-tracker-canary/app/reset-script.yaml"
 
-test "$(yq -r '.spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_APPLICATION_HOST' "$helmrelease")" = "med-tracker-canary.damacus.io"
-test "$(yq -r '.spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_DATABASE_HOST' "$helmrelease")" = "med-tracker-canary-rw.home.svc.cluster.local"
-test "$(yq -r '.spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_STORAGE_SERVICE' "$helmrelease")" = "persistent"
-test "$(yq -r '.spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_STORAGE_ROOT' "$helmrelease")" = "/app/storage"
-test "$(yq -r '.spec.values.controllers.reset.containers.app.env.DEMO_RESET_EXPECTED_DATABASE_ROLE' "$helmrelease")" = "med_tracker_owner"
-test "$(yq -e '[.spec.values.controllers.reset.containers.app.env | keys[] | select(test("^DEMO_RESET_EXPECTED_STORAGE_(ENDPOINT|BUCKET)$"))] | length == 0' "$helmrelease")" = "true"
+yq -e '
+  (.spec.values.controllers.reset.containers.app.env) as $env |
+  ($env.DEMO_RESET_EXPECTED_APPLICATION_HOST == "med-tracker-canary.damacus.io" and
+  $env.DEMO_RESET_EXPECTED_DATABASE_HOST == "med-tracker-canary-rw.home.svc.cluster.local" and
+  $env.DEMO_RESET_EXPECTED_STORAGE_SERVICE == "persistent" and
+  $env.DEMO_RESET_EXPECTED_STORAGE_ROOT == "/app/storage" and
+  $env.DEMO_RESET_EXPECTED_DATABASE_ROLE == "med_tracker_owner" and
+  ([$env | keys[] | select(test("^DEMO_RESET_EXPECTED_STORAGE_(ENDPOINT|BUCKET)$"))] | length == 0))
+' "$helmrelease" >/dev/null
 
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
