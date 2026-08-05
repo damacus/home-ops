@@ -275,18 +275,20 @@ tasks:
       - { msg: "Missing RustFS live IAM check script", sh: "test -f {{.RUSTFS_IAM_LIVE_CHECK_SCRIPT}}" }
 
   med-tracker-canary-render-contract:
-    desc: Assert the rendered Med Tracker canary worker Deployment name
+    desc: Assert the local Med Tracker canary worker Deployment identity
     cmds:
       - |
         rendered="$(mktemp)"
         trap 'rm -f "$rendered"' EXIT
-        flate --no-progress build hr med-tracker-canary --namespace home --path {{.KUBERNETES_DIR}} > "$rendered"
-        yq -e 'select(.kind == "Deployment" and .metadata.namespace == "home" and .metadata.name == "med-tracker-canary-worker")' "$rendered" >/dev/null
-        if yq -e 'select(.kind == "Deployment" and .metadata.namespace == "home" and .metadata.name == "med-tracker-canary-med-tracker-canary-worker")' "$rendered" >/dev/null 2>&1; then
+        flux build kustomization med-tracker-canary --dry-run --path {{.MED_TRACKER_CANARY_APP}} --kustomization-file {{.MED_TRACKER_CANARY_KS}} > "$rendered"
+        release="$(yq -r 'select(.kind == "HelmRelease" and .metadata.namespace == "home") | .metadata.name' "$rendered")"
+        controller="$(yq -r 'select(.kind == "HelmRelease" and .metadata.namespace == "home") | .spec.values.controllers | keys | .[] | select(. == "worker")' "$rendered")"
+        test "$release-$controller" = "med-tracker-canary-worker"
+        if test "$release-$controller" = "med-tracker-canary-med-tracker-canary-worker"; then
           exit 1
         fi
     preconditions:
-      - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
+      - { msg: "Missing flux", sh: "command -v flux >/dev/null" }
       - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
 
   med-tracker-canary-isolation:
