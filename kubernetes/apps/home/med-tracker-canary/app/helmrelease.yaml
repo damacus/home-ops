@@ -161,6 +161,7 @@ spec:
               repository: *repository
               tag: *tag
             command: ["bin/jobs"]
+            args: ["--mode", "async"]
             envFrom: *appEnvFrom
             env: *appEnvironment
             probes:
