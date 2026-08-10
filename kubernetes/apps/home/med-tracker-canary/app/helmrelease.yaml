@@ -164,22 +164,6 @@ spec:
             args: ["--mode", "async"]
             envFrom: *appEnvFrom
             env: *appEnvironment
-            probes:
-              liveness:
-                enabled: true
-                custom: true
-                spec:
-                  exec:
-                    command:
-                      - bin/rails
-                      - runner
-                      - >-
-                        process = SolidQueue::Process.where(hostname: Socket.gethostname).where("kind LIKE ?", "Supervisor%").order(last_heartbeat_at: :desc).first;
-                        exit(process && process.last_heartbeat_at >= SolidQueue.process_alive_threshold.ago ? 0 : 1)
-                  initialDelaySeconds: 90
-                  periodSeconds: 60
-                  timeoutSeconds: 15
-                  failureThreshold: 2
             resources:
               requests:
                 memory: 256Mi
