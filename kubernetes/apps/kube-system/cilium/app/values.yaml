@@ -1,4 +1,6 @@
 ---
+upgradeCompatibility: "1.19"
+
 autoDirectNodeRoutes: true
 
 bandwidthManager:
