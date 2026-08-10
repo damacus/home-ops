@@ -20,7 +20,7 @@ spec:
             value: /
       backendRefs:
         - kind: Service
-          name: oauth2-proxy
+          name: oauth2-proxy-app
           port: 4180
 ---
 apiVersion: gateway.networking.k8s.io/v1
