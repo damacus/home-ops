@@ -1,0 +1,10 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coredns
+  namespace: kube-system
+  annotations:
+    kustomize.toolkit.fluxcd.io/ssa: Override
+spec:
+  replicas: 2
