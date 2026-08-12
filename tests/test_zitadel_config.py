@@ -20,8 +20,11 @@ class ZitadelConfigTests(unittest.TestCase):
         )
         values = json.loads(result.stdout)["spec"]["values"]
 
-        self.assertEqual("alpine/k8s", values["tools"]["kubectl"]["image"]["repository"])
-        self.assertEqual("1.34.1", values["tools"]["kubectl"]["image"]["tag"])
+        self.assertEqual("rancher/k3s", values["tools"]["kubectl"]["image"]["repository"])
+        self.assertEqual(
+            "v1.36.3-k3s1",
+            values["tools"]["kubectl"]["image"]["tag"],
+        )
         self.assertNotIn("setupJob", values)
 
 
