@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: vector
-      version: 0.57.0
+      version: 0.56.0
       sourceRef:
         kind: HelmRepository
         name: vector
@@ -27,7 +27,7 @@ spec:
 
     image:
       repository: timberio/vector
-      tag: 0.57.0-debian
+      tag: 0.56.0-debian
 
     service:
       enabled: true
@@ -107,8 +107,6 @@ spec:
           type: loki
           inputs: [filter_ingested_logs]
           endpoint: http://loki-gateway.monitoring.svc.cluster.local
-          # Dynamic labels contain trusted Kubernetes metadata and must not gain a static prefix.
-          dangerously_allow_unconfined_template_resolution: true
           encoding:
             codec: json
           # NOTE: Labels use Vector template syntax {{ label.* }}, NOT Helm templates.

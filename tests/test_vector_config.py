@@ -9,7 +9,7 @@ HELMRELEASE = REPO_ROOT / "kubernetes/apps/monitoring/vector/app/helmrelease.yam
 
 
 class VectorConfigTests(unittest.TestCase):
-    def test_loki_allows_dynamic_kubernetes_label_templates(self) -> None:
+    def test_vector_stays_on_safe_release_for_dynamic_loki_labels(self) -> None:
         result = subprocess.run(
             ["yq", "-o=json", str(HELMRELEASE)],
             check=True,
@@ -17,9 +17,13 @@ class VectorConfigTests(unittest.TestCase):
             text=True,
         )
         manifest = json.loads(result.stdout)
+        chart = manifest["spec"]["chart"]["spec"]
+        image = manifest["spec"]["values"]["image"]
         loki = manifest["spec"]["values"]["customConfig"]["sinks"]["loki"]
 
-        self.assertIs(True, loki["dangerously_allow_unconfined_template_resolution"])
+        self.assertEqual("0.56.0", chart["version"])
+        self.assertEqual("0.56.0-debian", image["tag"])
+        self.assertNotIn("dangerously_allow_unconfined_template_resolution", loki)
 
 
 if __name__ == "__main__":
