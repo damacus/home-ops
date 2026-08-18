@@ -5,7 +5,7 @@ metadata:
   name: paperless-local-backup
   namespace: home-automation
 spec:
-  sourcePVC: paperless-data
+  sourcePVC: paperless-localdata
   trigger:
     schedule: "0 3 * * *"
   restic:
