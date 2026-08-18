@@ -42,6 +42,12 @@
       automerge: false,
     },
     {
+      description: "Hold Vector below 0.57 until Loki template confinement is resolved",
+      matchDatasources: ["docker", "helm"],
+      matchPackageNames: ["timberio/vector", "vector"],
+      allowedVersions: "<0.57.0",
+    },
+    {
       description: "Auto-merge non-major updates for selected home-ops assets",
       matchPackageNames: [
         "ghcr.io/coder/code-server",
