@@ -54,8 +54,10 @@ jobs:
               - 'kubernetes/apps/home/med-tracker*/**'
               - 'kubernetes/apps/home/penpot-db/**'
               - 'kubernetes/apps/monitoring/grafana/**'
+              - 'kubernetes/apps/monitoring/kustomization.yaml'
               - 'kubernetes/apps/monitoring/loki/**'
               - 'kubernetes/apps/monitoring/tempo/**'
+              - 'kubernetes/apps/storage/kustomization.yaml'
               - 'kubernetes/apps/storage/longhorn/**'
               - 'kubernetes/apps/storage/rustfs*/**'
               - 'scripts/tempo_privacy_check.sh'
@@ -164,6 +166,7 @@ jobs:
       - name: Setup Workflow Tools
         run: |
           bash -c "$(curl -sSL https://install.mondoo.com/sh)"
+          sudo apt-get update
           sudo apt-get install --no-install-recommends --yes ripgrep
           cnspec providers install os
 

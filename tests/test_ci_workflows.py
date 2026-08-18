@@ -51,6 +51,10 @@ class CiWorkflowContractTest(unittest.TestCase):
         self.assertIn("kubernetes:", changes)
         self.assertIn("mondoo:", changes)
         self.assertIn("contracts:", changes)
+        self.assertIn(
+            "'kubernetes/apps/monitoring/kustomization.yaml'", changes
+        )
+        self.assertIn("'kubernetes/apps/storage/kustomization.yaml'", changes)
 
         self.assertIn(
             "needs.changes.outputs.yaml == 'true'", job_block(workflow, "yaml-lint")
@@ -73,7 +77,14 @@ class CiWorkflowContractTest(unittest.TestCase):
 
         self.assertNotIn("Homebrew/actions/setup-homebrew", workflow)
         self.assertNotIn("brew install", workflow)
-        self.assertIn("arduino/setup-task@", job_block(workflow, "rustfs-iam-policy"))
+        rustfs_job = job_block(workflow, "rustfs-iam-policy")
+        self.assertIn("arduino/setup-task@", rustfs_job)
+        update_index = rustfs_job.find("sudo apt-get update")
+        install_index = rustfs_job.find(
+            "sudo apt-get install --no-install-recommends --yes ripgrep"
+        )
+        self.assertGreaterEqual(update_index, 0)
+        self.assertGreater(install_index, update_index)
 
 
 if __name__ == "__main__":
