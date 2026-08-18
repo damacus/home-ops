@@ -41,7 +41,7 @@ durationpy==0.10
     # via kubernetes
 filelock==3.32.3
     # via ansible-lint
-idna==3.18
+idna==3.19
     # via requests
 jinja2==3.1.6
     # via ansible-core
