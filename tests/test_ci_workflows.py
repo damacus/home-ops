@@ -25,7 +25,7 @@ class CiWorkflowContractTest(unittest.TestCase):
 
     def test_lightweight_jobs_use_slim_runners(self) -> None:
         expected_jobs = {
-            "docs.yml": ("build", "deploy"),
+            "docs.yml": ("deploy",),
             "labeler.yaml": ("labeler",),
             "label-sync.yaml": ("label-sync",),
             "flux.yaml": ("changes", "flate-success"),
@@ -36,6 +36,11 @@ class CiWorkflowContractTest(unittest.TestCase):
             for job in jobs:
                 with self.subTest(workflow=workflow_name, job=job):
                     self.assertIn("runs-on: ubuntu-slim", job_block(workflow, job))
+
+    def test_documentation_build_keeps_parallel_runner(self) -> None:
+        workflow = self.workflow("docs.yml")
+
+        self.assertIn("runs-on: ubuntu-latest", job_block(workflow, "build"))
 
     def test_flux_workflow_skips_irrelevant_validation(self) -> None:
         workflow = self.workflow("flux.yaml")
