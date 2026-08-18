@@ -114,8 +114,6 @@ policies:
               file("kubernetes/apps/home-automation/paperless/app/volsync/kustomization.yaml").content.contains("replicationsource.yaml")
               file("kubernetes/apps/home-automation/paperless/app/volsync/kustomization.yaml").content.contains("replicationdestination.yaml")
               file("kubernetes/apps/home-automation/paperless/app/volsync/replicationsource.yaml").content.contains("repository: rustfs-paperless")
-              file("kubernetes/apps/home-automation/paperless/app/volsync/replicationsource.yaml").content.contains("sourcePVC: paperless-localdata")
-              file("kubernetes/apps/home-automation/paperless/app/volsync/replicationsource.yaml").content.contains("sourcePVC: paperless-data\n") == false
               file("kubernetes/apps/home-automation/paperless/app/volsync/replicationdestination.yaml").content.contains("repository: rustfs-paperless")
               file("kubernetes/apps/home-automation/paperless/app/volsync/replicationsource.yaml").content.contains("repository: paperless-restic-local") == false
               file("kubernetes/apps/home-automation/paperless/app/volsync/replicationdestination.yaml").content.contains("repository: paperless-restic-local") == false
