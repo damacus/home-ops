@@ -11,7 +11,61 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Relevant Changes
+    runs-on: ubuntu-slim
+    permissions:
+      pull-requests: read
+    outputs:
+      yaml: ${{ steps.filter.outputs.yaml }}
+      kubernetes: ${{ steps.filter.outputs.kubernetes }}
+      mondoo: ${{ steps.filter.outputs.mondoo }}
+      contracts: ${{ steps.filter.outputs.contracts }}
+    steps:
+      - name: Classify changed paths
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            yaml:
+              - '**/*.yaml'
+              - '**/*.yml'
+              - '.yamllint*'
+            kubernetes:
+              - '.github/workflows/flux.yaml'
+              - '.taskfiles/Flux/**'
+              - 'kubernetes/**'
+            mondoo:
+              - '.github/workflows/flux.yaml'
+              - 'kubernetes/**'
+              - 'mondoo/**'
+              - 'scripts/mondoo_scan.py'
+              - 'tests/test_mondoo_scan.py'
+            contracts:
+              - '.github/workflows/flux.yaml'
+              - '.taskfiles/Kubernetes/Taskfile.yaml'
+              - 'kubernetes/apps/authentication/zitadel-db/**'
+              - 'kubernetes/apps/dev/forgejo-db/**'
+              - 'kubernetes/apps/home-automation/home-assistant-db/**'
+              - 'kubernetes/apps/home-automation/n8n-db/**'
+              - 'kubernetes/apps/home-automation/paperless/**'
+              - 'kubernetes/apps/home/immich-db/**'
+              - 'kubernetes/apps/home/mealie-db/**'
+              - 'kubernetes/apps/home/med-tracker*/**'
+              - 'kubernetes/apps/home/penpot-db/**'
+              - 'kubernetes/apps/monitoring/grafana/**'
+              - 'kubernetes/apps/monitoring/loki/**'
+              - 'kubernetes/apps/monitoring/tempo/**'
+              - 'kubernetes/apps/storage/longhorn/**'
+              - 'kubernetes/apps/storage/rustfs*/**'
+              - 'scripts/tempo_privacy_check.sh'
+              - 'scripts/tempo_trace_backend_contract.sh'
+              - 'tests/fixtures/tempo-privacy/**'
+              - 'tests/mondoo/rustfs-iam.mql.yaml'
+
   yaml-lint:
+    needs: changes
+    if: ${{ needs.changes.outputs.yaml == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -22,7 +76,11 @@ jobs:
 
   yayamlls:
     name: Yayamlls
-    needs: yaml-lint
+    needs: [changes, yaml-lint]
+    if: >-
+      ${{ always() && needs.changes.outputs.kubernetes == 'true' &&
+      needs.yaml-lint.result != 'failure' &&
+      needs.yaml-lint.result != 'cancelled' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -38,14 +96,15 @@ jobs:
 
   mondoo:
     name: Mondoo
-    needs: [yaml-lint, yayamlls, flate-test]
+    needs: [changes, yaml-lint, yayamlls, flate-test]
+    if: >-
+      ${{ always() && needs.changes.outputs.mondoo == 'true' &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Setup Homebrew
-        uses: Homebrew/actions/setup-homebrew@main
 
       - name: Setup flate
         uses: home-operations/flate/action@v0.5.0
@@ -56,7 +115,6 @@ jobs:
 
       - name: Setup Workflow Tools
         run: |
-          brew install yq
           bash -c "$(curl -sSL https://install.mondoo.com/sh)"
           cnspec version
 
@@ -88,20 +146,25 @@ jobs:
 
   rustfs-iam-policy:
     name: RustFS IAM Policy
-    needs: yaml-lint
+    needs: [changes, yaml-lint]
+    if: >-
+      ${{ always() && needs.changes.outputs.contracts == 'true' &&
+      needs.yaml-lint.result != 'failure' &&
+      needs.yaml-lint.result != 'cancelled' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Setup Homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+      - name: Setup Task
+        uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52 # v3.0.0
+        with:
+          repo-token: ${{ github.token }}
 
       - name: Setup Workflow Tools
         run: |
           bash -c "$(curl -sSL https://install.mondoo.com/sh)"
-          brew tap go-task/tap
-          brew install go-task/tap/go-task yq ripgrep
+          sudo apt-get install --no-install-recommends --yes ripgrep
           cnspec providers install os
 
       - name: Run RustFS IAM policy
@@ -112,7 +175,11 @@ jobs:
 
   flate-test:
     name: Flate Test
-    needs: [yaml-lint, yayamlls, rustfs-iam-policy]
+    needs: [changes, yaml-lint, yayamlls, rustfs-iam-policy]
+    if: >-
+      ${{ always() && needs.changes.outputs.kubernetes == 'true' &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -135,7 +202,11 @@ jobs:
 
   flate-diff:
     name: Flate Diff
-    needs: [yaml-lint, yayamlls, rustfs-iam-policy]
+    needs: [changes, yaml-lint, yayamlls, rustfs-iam-policy]
+    if: >-
+      ${{ always() && needs.changes.outputs.kubernetes == 'true' &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -190,9 +261,9 @@ jobs:
 
   flate-success:
     if: ${{ always() }}
-    needs: ["flate-diff", "flate-test", "mondoo"]
+    needs: ["changes", "flate-diff", "flate-test", "mondoo", "rustfs-iam-policy"]
     name: Flate Successful
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
         name: Check matrix status
