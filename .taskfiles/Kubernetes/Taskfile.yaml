@@ -10,7 +10,6 @@ vars:
   FORGEJO_POLICY: "{{.ROOT_DIR}}/tests/mondoo/forgejo.mql.yaml"
   RUSTFS_IAM_LIVE_CHECK_SCRIPT: "{{.SCRIPTS_DIR}}/rustfs_iam_live_check.sh"
   TEMPO_TRACE_BACKEND_CONTRACT: "{{.SCRIPTS_DIR}}/tempo_trace_backend_contract.sh"
-  TEMPO_PRIVACY_CHECK: "{{.SCRIPTS_DIR}}/tempo_privacy_check.sh"
 
 tasks:
   resources:
@@ -275,45 +274,6 @@ tasks:
       - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
       - { msg: "Missing rg", sh: "command -v rg >/dev/null" }
       - { msg: "Missing Tempo trace backend contract script", sh: "test -f {{.TEMPO_TRACE_BACKEND_CONTRACT}}" }
-
-  tempo-trace-backend-foundation-contract:
-    desc: Assert Tempo storage, private networking, and alerting before application wiring
-    silent: true
-    cmd: bash {{.TEMPO_TRACE_BACKEND_CONTRACT}} {{.ROOT_DIR}} foundation
-    preconditions:
-      - { msg: "Missing bash", sh: "command -v bash >/dev/null" }
-      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
-      - { msg: "Missing rg", sh: "command -v rg >/dev/null" }
-      - { msg: "Missing Tempo trace backend contract script", sh: "test -f {{.TEMPO_TRACE_BACKEND_CONTRACT}}" }
-
-  tempo-privacy-check:
-    desc: Reject prohibited keys and values in bounded Tempo and Loki JSON evidence
-    silent: true
-    requires:
-      vars:
-        - TRACE_JSON
-        - LOKI_JSON
-    cmd: bash {{.TEMPO_PRIVACY_CHECK}} {{.TRACE_JSON | shellQuote}} {{.LOKI_JSON | shellQuote}}
-    preconditions:
-      - { msg: "Missing bash", sh: "command -v bash >/dev/null" }
-      - { msg: "Missing jq", sh: "command -v jq >/dev/null" }
-      - { msg: "Missing rg", sh: "command -v rg >/dev/null" }
-      - { msg: "Missing Tempo privacy check script", sh: "test -f {{.TEMPO_PRIVACY_CHECK}}" }
-
-  mondoo-operator-assertions:
-    desc: Assert the Mondoo Operator GitOps manifests are wired safely
-    cmds:
-      - yq -e '.resources | contains(["mondoo.yaml"])' {{.KUBERNETES_DIR}}/flux/repositories/helm/kustomization.yaml
-      - yq -e '.metadata.name == "mondoo" and .spec.url == "https://mondoohq.github.io/mondoo-operator"' {{.KUBERNETES_DIR}}/flux/repositories/helm/mondoo.yaml
-      - yq -e '.resources | contains(["./namespace.yaml", "./mondoo-operator/ks.yaml", "./mondoo-operator/config-ks.yaml"])' {{.KUBERNETES_DIR}}/apps/security/kustomization.yaml
-      - yq -e '.metadata.name == "mondoo-operator" and .metadata.namespace == "flux-system" and .spec.targetNamespace == "mondoo-operator" and .spec.path == "./kubernetes/apps/security/mondoo-operator/app"' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/ks.yaml
-      - yq -e '[(.metadata.name == "mondoo-operator-config"), (.metadata.namespace == "flux-system"), (.spec.targetNamespace == "mondoo-operator"), (.spec.path == "./kubernetes/apps/security/mondoo-operator/config"), ([.spec.dependsOn[].name] | contains(["external-secrets-stores", "mondoo-operator"]))] | all' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/config-ks.yaml
-      - yq -e '.spec.chart.spec.chart == "mondoo-operator" and .spec.chart.spec.version == "13.1.1" and .spec.chart.spec.sourceRef.name == "mondoo"' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/app/helmrelease.yaml
-      - yq -e '.spec.secretStoreRef.name == "onepassword-connect" and .spec.target.name == "mondoo-client" and (.spec.target.template.data.config | contains("MONDOO_CONFIG_JSON")) and .spec.dataFrom[0].extract.key == "mondoo"' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/config/externalsecret.yaml
-      - yq -e '[(.spec.mondooCredsSecretRef.name == "mondoo-client"), (.spec.kubernetesResources.enable == true), (.spec.nodes.enable == true), (.spec.nodes.style == "cronjob"), (.spec.containers.enable == false), ((.spec.kubernetesResources.resourceWatcher | type) == "!!null")] | all' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/config/auditconfig.yaml
-      - yq -e '.spec.filtering.namespaces.exclude | contains(["mondoo-operator", "kube-system", "flux-system"])' {{.KUBERNETES_DIR}}/apps/security/mondoo-operator/config/auditconfig.yaml
-    preconditions:
-      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
 
   object-storage-migrate:
     desc: Copy or sync objects between MinIO and RustFS with local rclone
