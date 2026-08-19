@@ -6,5 +6,6 @@ resources:
   - ./externalsecret.yaml
   - ./HelmRelease.yaml
   - ./httproute.yaml
+  - ./networkpolicy.yaml
   - ./PrometheusRule.yaml
   - ./servicemonitor.yaml
