@@ -27,6 +27,7 @@ spec:
       prComments: false
       logLevel: info
       logFormat: json
+      maxDiffConcurrency: 2
 
     persistence:
       enabled: true
