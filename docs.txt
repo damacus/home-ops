@@ -1,0 +1,171 @@
+ARMBIAN BUILD SYSTEM FIELD NOTES
+================================
+
+Purpose
+-------
+
+Keep this file. It records the awkward parts of the Armbian image build and the
+provisioning mistakes already made around it. It is a pointer for the next
+engineer or LLM, not generated output and not a replacement for the executable
+configuration.
+
+When a statement becomes stale, correct it and retain the useful history. Do
+not delete the file merely because the implementation, task runner, or
+provisioning language changes.
+
+Current authorities
+-------------------
+
+Verify these before relying on anything in this historical guide:
+
+* provisioning/provision.py currently orchestrates the image and node
+  lifecycle. It is large and should be decomposed rather than copied into task
+  files or rewritten wholesale as shell.
+* .mise/tasks/provisioning/ contains the operator entry points.
+* provisioning/armbian-build/userpatches/ contains the files and hooks injected
+  into the image.
+* provisioning/armbian-build/armbian-build-repo is the pinned Armbian
+  submodule. Do not silently build another checkout or another revision.
+* kubernetes/apps/system-upgrade/k3s/app/plan.yaml is the K3s version authority.
+* provisioning/README.md describes the supported operator workflow.
+* provisioning/docs/README.md describes the intended image state and
+  verification boundary.
+
+Build shape
+-----------
+
+The current path is:
+
+    Mise file task -> provisioning controller -> Armbian compile.sh -> Docker
+
+Armbian is a large Bash build system, so the final shell boundary is expected.
+Keep Mise as the command interface and keep complicated orchestration in a
+structured, testable program. Do not hide lifecycle logic in layers of Bash
+wrappers.
+
+Armbian build facts and traps
+-----------------------------
+
+1. The build must use the pinned submodule revision. Check the submodule before
+   and after compilation because the build framework and cleanup commands can
+   alter their own checkout.
+
+2. Armbian generates state in output/, cache/, .tmp/, Dockerfile, and
+   .dockerignore. Build-source validation must allow only the exact generated
+   paths the workflow owns. A broad ignored-file exception can hide real source
+   changes.
+
+3. The home-ops userpatches tree is injected temporarily into the pinned
+   checkout. Always restore the original submodule userpatches before the final
+   source-state check and before publishing artifact metadata.
+
+4. Pass all important image parameters explicitly. Do not rely on remembered
+   Armbian defaults. The board is rock-5b-plus, the image is ARM64 minimal
+   userspace, and the configured kernel branch and release must come from the
+   current build plan.
+
+5. The compact image is deliberately small and Armbian grows its root
+   filesystem on first boot. Check the actual partition table produced by the
+   pinned build instead of assuming a traditional p1 boot plus p2 root layout.
+
+6. Image output discovery must use files created by the current invocation.
+   Do not publish an older image left in output/images after a failed build.
+
+7. The build is disk hungry. Check Docker's storage, not only host free space.
+   Cleanup must remain scoped to resources owned by this Armbian checkout.
+   Never turn a build cleanup task into a general Docker prune.
+
+8. Terminal and CI environments have caused failures in the past. Preserve raw
+   build output as an explicit verbose option. Diagnose the pinned build before
+   adding terminal workarounds globally.
+
+9. customize-image.sh runs inside the image customization environment. Hardware
+   probing there describes the build environment, not the future Radxa node.
+   Hardware-specific behaviour must be installed as a boot-time hook or checked
+   after flashing.
+
+NVMe boot history
+-----------------
+
+Two of the three Radxa nodes use Crucial P310 NVMe drives which can fail to
+enumerate their namespace early enough for the root mount. The image therefore
+needs this initramfs hook:
+
+    /etc/initramfs-tools/scripts/local-premount/nvme-rescan
+
+The Armbian nvme-rescan extension installs the hook and customize-image.sh
+rebuilds every installed initramfs. Verification must check both the executable
+rootfs file and the matching entry inside the built initramfs. Checking only the
+source overlay is not proof that the boot image contains it.
+
+An older Ansible kernel post-install script only warned if the hook was absent;
+it did not rebuild the initramfs. Do not restore it and claim it provides
+persistence. Kernel package installation normally rebuilds initramfs from the
+persistent hook file.
+
+Partition history
+-----------------
+
+The retired post_create_partitions hook attempted to reserve a fixed 10 GiB
+K3S_DATA partition. It must not be restored:
+
+* it assumed p1 was boot and p2 was root;
+* the current image has one ext4 root partition at p1;
+* it shortened a partition without first shrinking the ext4 filesystem; and
+* a fixed reservation conflicts with a portable 3 GiB image and varying target
+  disk sizes.
+
+A second partition on the same NVMe provides capacity isolation, not disk-fault
+or I/O-device isolation. If separate /var/lib/rancher storage is chosen later,
+implement and verify it explicitly at first boot, for example with
+systemd-repart. Treat that as a storage design change, not an image-build tweak.
+
+K3s enrolment history
+---------------------
+
+The golden image is deliberately not a cluster member. k3s.service remains
+dormant until both of these files exist:
+
+    /etc/rancher/k3s/config.yaml
+    /etc/rancher/k3s/cluster-token
+
+The old k3s-init.service fetched the server token from NFS during boot. It was
+removed so a freshly flashed machine cannot obtain cluster credentials merely
+by reaching a file share. Explicit enrolment now reads the config and token
+from a Ready control-plane node over SSH, installs them with private modes, and
+waits for the new node to become Ready with control-plane and etcd roles.
+
+The old k3s-node-ip.sh selected the address used by the default route. Removing
+it from the reusable image was reasonable, but enrolment still needs an
+equivalent target-specific guarantee. Do not depend silently on K3s address
+autodetection on a multi-interface host. Derive and validate the route to the
+Kubernetes API address, write node-ip during enrolment, and retain an explicit
+override.
+
+Verification boundary
+---------------------
+
+Static source tests are not a successful image build. A useful release check
+must cover, in order:
+
+1. pinned and clean build inputs;
+2. a real Docker-backed Armbian build;
+3. immutable image, checksum, and manifest agreement;
+4. read-only inspection of the generated root filesystem;
+5. inspection of boot-critical initramfs content;
+6. guarded flashing to a non-system whole disk; and
+7. hardware boot and explicit K3s enrolment.
+
+Keep dry runs, secret redaction, source-state checks, immutable artifact IDs,
+and typed confirmation for destructive operations while changing the
+implementation language.
+
+Historical provenance
+---------------------
+
+docs.txt was originally added during the early Armbian provisioning work and
+expanded in "Provisioning update" (#2666). It was deleted during the Ansible
+replacement because parts were stale. That deletion also removed the useful
+record of why the build has unusual checks and hooks. This rewritten version
+keeps the operational history without preserving obsolete instructions as
+current truth.

@@ -50,4 +50,8 @@ When working in this repository:
 - Consult `.tasks/*.json` for your current objectives.
 - Update the relevant task list by setting `"passes": true` only after verifying functionality with tests.
 - Reference `GEMINI.md` for specific maintenance commands and troubleshooting.
+- Never delete the root `docs.txt`. It is the historical field guide to the
+  Armbian build system and preserves hard-won context for future engineers and
+  LLMs. Correct or rewrite stale sections while retaining the file and its
+  useful history.
 - Maintain consistency with existing architecture and naming conventions.
