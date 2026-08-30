@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
+import json
 import pathlib
+import subprocess
 import sys
 import unittest
 
@@ -408,6 +412,83 @@ class ReadinessChecksTest(unittest.TestCase):
 
         self.assertEqual(result.status, "pass")
         self.assertEqual(result.details, ["home/home-assistant-green: 12 WALs waiting"])
+
+
+class ClusterHealthOutputTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.cluster_health = load_cluster_health()
+
+    def test_compact_output_hides_healthy_details(self) -> None:
+        result = self.cluster_health.CheckResult("nodes", "pass", "all nodes Ready", ["node-a", "node-b"])
+
+        output = self.render([result], verbose=False)
+
+        self.assertIn("[PASS] nodes: all nodes Ready", output)
+        self.assertNotIn("node-a", output)
+
+    def test_verbose_output_shows_healthy_details(self) -> None:
+        result = self.cluster_health.CheckResult("nodes", "pass", "all nodes Ready", ["node-a"])
+
+        self.assertIn("  - node-a", self.render([result], verbose=True))
+
+    def test_compact_output_keeps_failure_details(self) -> None:
+        result = self.cluster_health.CheckResult("pods", "fail", "1 active pods not ready", ["default/app: CrashLoopBackOff"])
+
+        self.assertIn("  - default/app: CrashLoopBackOff", self.render([result], verbose=False))
+
+    def test_individual_command_selects_one_check(self) -> None:
+        expected = self.cluster_health.CheckResult("nodes", "pass", "all nodes Ready", [])
+        self.cluster_health.check_nodes = lambda: expected
+        args = self.args(command="nodes")
+
+        self.assertEqual(self.cluster_health.selected_checks(args), [expected])
+
+    def test_log_noise_formats_sorted_compact_details(self) -> None:
+        payload = {
+            "data": {
+                "result": [
+                    {"metric": {"app": "quiet"}, "value": ["0", "4"]},
+                    {"metric": {"app": "noisy"}, "value": ["0", "19"]},
+                ]
+            }
+        }
+        self.cluster_health.run = lambda command: subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+
+        result = self.cluster_health.log_noise("1h", 1)
+
+        self.assertEqual(result.status, "pass")
+        self.assertEqual(result.summary, "top 1 log producers over 1h")
+        self.assertEqual(result.details, ["noisy: 19"])
+
+    def test_log_noise_reports_malformed_metric_data(self) -> None:
+        payload = {"data": {"result": [{"metric": {"app": "broken"}, "value": ["0", "not-a-number"]}]}}
+        self.cluster_health.run = lambda command: subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+
+        result = self.cluster_health.log_noise("1h", 20)
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(result.summary, "log-noise query returned invalid data")
+
+    def render(self, results, verbose: bool) -> str:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.cluster_health.print_text(results, verbose)
+        return output.getvalue()
+
+    def args(self, command: str):
+        return type(
+            "Args",
+            (),
+            {
+                "command": command,
+                "skip_http3": False,
+                "period": "1h",
+                "top": 20,
+                "workers": 1,
+                "edge_smoke": False,
+                "log_noise": False,
+            },
+        )()
 
 
 if __name__ == "__main__":

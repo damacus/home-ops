@@ -12,7 +12,7 @@ import urllib.parse
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any, Final
 
 
@@ -406,7 +406,7 @@ def archive_status_from_cluster(namespace: str, name: str) -> CheckResult:
 
 def age_seconds(timestamp: str) -> float:
     parsed = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-    return (datetime.now(UTC) - parsed).total_seconds()
+    return (datetime.now(timezone.utc) - parsed).total_seconds()
 
 
 def grafana_alerts() -> CheckResult:
@@ -462,8 +462,11 @@ def alert_resource(labels: dict[str, Any]) -> str:
     )
 
 
-def run_edge_smoke() -> CheckResult:
-    result = run(["task", "kubernetes:edge-smoke"])
+def run_edge_smoke(skip_http3: bool) -> CheckResult:
+    command = [sys.executable, os.path.join(os.path.dirname(__file__), "edge_smoke.py")]
+    if skip_http3:
+        command.append("--skip-http3")
+    result = run(command)
     output = "\n".join(part for part in [result.stdout.strip(), result.stderr.strip()] if part)
     return CheckResult(
         "edge-smoke",
@@ -473,14 +476,51 @@ def run_edge_smoke() -> CheckResult:
     )
 
 
-def run_log_noise(period: str, top: str) -> CheckResult:
-    result = run(["task", "kubernetes:log-noise", f"PERIOD={period}", f"TOP={top}"])
-    output = "\n".join(part for part in [result.stdout.strip(), result.stderr.strip()] if part)
+def log_noise(period: str, top: int) -> CheckResult:
+    query = (
+        "sum(count_over_time({namespace=~\".+\"}["
+        f"{period}])) by (app)"
+    )
+    result = run(
+        [
+            "kubectl",
+            "exec",
+            "-n",
+            "monitoring",
+            "deploy/loki-gateway",
+            "--",
+            "wget",
+            "-qO-",
+            f"http://localhost:8080/loki/api/v1/query?query={urllib.parse.quote(query)}&limit=100",
+        ]
+    )
+    if result.returncode != 0:
+        message = result.stderr.strip() or "Loki query failed"
+        return CheckResult("log-noise", "fail", "log-noise query failed", [message])
+
+    try:
+        entries = json.loads(result.stdout).get("data", {}).get("result", [])
+    except json.JSONDecodeError as exc:
+        return CheckResult("log-noise", "fail", "log-noise query returned invalid JSON", [str(exc)])
+
+    try:
+        rows = sorted(
+            (
+                (entry.get("metric", {}).get("app", "unknown"), float(entry["value"][1]))
+                for entry in entries
+                if entry.get("value") and len(entry["value"]) > 1
+            ),
+            key=lambda item: item[1],
+            reverse=True,
+        )[:top]
+    except (KeyError, TypeError, ValueError) as exc:
+        return CheckResult("log-noise", "fail", "log-noise query returned invalid data", [str(exc)])
+    details = [f"{app}: {count:.0f}" for app, count in rows]
     return CheckResult(
         "log-noise",
-        "pass" if result.returncode == 0 else "fail",
-        "log-noise query completed" if result.returncode == 0 else "log-noise query failed",
-        output.splitlines()[-30:],
+        "pass",
+        f"top {len(rows)} log producers over {period}",
+        details,
     )
 
 
@@ -493,18 +533,30 @@ def notify(results: list[CheckResult]) -> None:
     run([os.path.join("scripts", "notify"), "--status", "failure", "--title", title, "--message", message])
 
 
-def print_text(results: list[CheckResult]) -> None:
-    print(f"Collected at {datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')}")
+def print_text(results: list[CheckResult], verbose: bool) -> None:
+    print(
+        f"Collected at {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}"
+    )
     print()
     for result in results:
         marker = "PASS" if result.status == "pass" else "FAIL"
         print(f"[{marker}] {result.name}: {result.summary}")
-        for detail in result.details:
-            print(f"  - {detail}")
+        if result.failed or verbose:
+            for detail in result.details:
+                print(f"  - {detail}")
         print()
 
 
 def selected_checks(args: argparse.Namespace) -> list[CheckResult]:
+    individual_checks: dict[str, Callable[[], CheckResult]] = {
+        "nodes": check_nodes,
+        "kube-vip": check_kube_vip,
+        "cilium": check_cilium,
+        "pods": check_not_ready_pods,
+        "deployments": check_deployments,
+    }
+    if args.command in individual_checks:
+        return [individual_checks[args.command]()]
     if args.command == "gitops-health":
         return [gitops_health()]
     if args.command == "external-secrets-health":
@@ -515,6 +567,10 @@ def selected_checks(args: argparse.Namespace) -> list[CheckResult]:
         return [cnpg_clusters()]
     if args.command == "cnpg-backups":
         return [cnpg_backups()]
+    if args.command == "edge-smoke":
+        return [run_edge_smoke(args.skip_http3)]
+    if args.command == "log-noise":
+        return [log_noise(args.period, args.top)]
     if args.command == "grafana-alerts":
         return run_checks(
             [
@@ -538,10 +594,10 @@ def selected_checks(args: argparse.Namespace) -> list[CheckResult]:
             ("alertmanager", alertmanager_summary),
         ]
         if args.edge_smoke:
-            checks.append(("edge-smoke", run_edge_smoke))
+            checks.append(("edge-smoke", lambda: run_edge_smoke(args.skip_http3)))
         results = run_checks(checks, args.workers)
         if args.log_noise:
-            results.append(run_log_noise(args.period, args.top))
+            results.append(log_noise(args.period, args.top))
         return results
     return run_checks(
         [
@@ -580,21 +636,31 @@ def parse_args() -> argparse.Namespace:
         "command",
         choices=[
             "health",
+            "nodes",
+            "kube-vip",
+            "cilium",
+            "pods",
+            "deployments",
             "gitops-health",
             "external-secrets-health",
             "service-account-health",
             "cnpg-health",
             "cnpg-backups",
             "grafana-alerts",
+            "edge-smoke",
+            "log-noise",
             "morning-check",
         ],
     )
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
+    parser.add_argument("--verbose", action="store_true", help="Print full diagnostic evidence for healthy checks")
+    parser.add_argument("--raw", action="store_true", help="Alias for --verbose plain diagnostic output")
     parser.add_argument("--notify", action="store_true", help="Send phone notification when failures are found")
     parser.add_argument("--log-noise", action="store_true", help="Include log-noise in morning-check")
     parser.add_argument("--edge-smoke", action="store_true", help="Include local edge smoke checks in morning-check")
+    parser.add_argument("--skip-http3", action="store_true", help="Skip informational HTTP/3 edge smoke checks")
     parser.add_argument("--period", default="1h", help="Log-noise period when --log-noise is used")
-    parser.add_argument("--top", default="20", help="Log-noise top count when --log-noise is used")
+    parser.add_argument("--top", type=int, default=20, help="Log-noise top count when --log-noise is used")
     parser.add_argument("--workers", type=int, default=6, help="Maximum parallel health checks")
     parser.add_argument("--timeout", type=int, default=45, help="Timeout in seconds for each subprocess call")
     return parser.parse_args()
@@ -613,7 +679,7 @@ def main() -> int:
     if args.json:
         print(json.dumps([asdict(result) for result in results], indent=2, sort_keys=True))
     else:
-        print_text(results)
+        print_text(results, args.verbose or args.raw)
 
     if args.notify:
         notify(results)
