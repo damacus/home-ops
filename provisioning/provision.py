@@ -248,16 +248,19 @@ def require_clean_armbian_source(
         fail(f"pinned Armbian checkout is dirty:\n{dirty}")
 
 
-def require_armbian_command(command: str) -> None:
+def require_armbian_command(command: str, *, handler: str = "docker") -> None:
     commands = ARMBIAN_ROOT / "lib/functions/cli/commands.sh"
     command_text = commands.read_text(encoding="utf-8") if commands.is_file() else ""
-    if not re.search(rf'\["{re.escape(command)}"\]\s*=\s*"docker"', command_text):
+    if not re.search(
+        rf'\["{re.escape(command)}"\]\s*=\s*"{re.escape(handler)}"',
+        command_text,
+    ):
         fail(f"pinned Armbian source does not register the compile.sh {command} command")
 
 
 def require_armbian_build_contract(expected: str) -> None:
     require_clean_armbian_source(expected, allow_userpatches=True)
-    require_armbian_command("docker")
+    require_armbian_command("build", handler="standard_build")
     partitioning = ARMBIAN_ROOT / "lib/functions/image/partitioning.sh"
     partition_text = partitioning.read_text(encoding="utf-8") if partitioning.is_file() else ""
     if "FIXED_IMAGE_SIZE" not in partition_text:
@@ -397,7 +400,7 @@ def build(args: argparse.Namespace) -> None:
     initialise_pinned_submodule(plan["armbian_commit"])
     require_build_inputs_unchanged(plan)
     payloads = stage_k3s_payloads(plan)
-    command = ["./compile.sh", "docker", *(f"{key}={value}" for key, value in BUILD_PARAMETERS.items())]
+    command = ["./compile.sh", "build", *(f"{key}={value}" for key, value in BUILD_PARAMETERS.items())]
     if args.verbose:
         command.append("PROGRESS_DISPLAY=plain")
     started_at = time.time() - 1
