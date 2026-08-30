@@ -25,11 +25,17 @@ queries:
     mql: |
       policy = file("kubernetes/apps/authentication/zitadel/app/access-policy.yaml")
       policy.exists
+      policy.content.contains("allowUsernamePassword: true")
       policy.content.contains("allowRegister: false")
+      policy.content.contains("allowExternalIdp: true")
+      policy.content.contains("passwordlessType: PASSWORDLESS_TYPE_ALLOWED")
+      policy.content.contains("allowDomainDiscovery: false")
       policy.content.contains("isCreationAllowed: false")
       policy.content.contains("isAutoCreation: false")
       reconciler = file("kubernetes/apps/authentication/zitadel/app/reconcile-access-policy.rb")
       reconciler.exists
+      reconciler.content.contains("--validate-policy")
+      reconciler.content.contains("/admin/v1/policies/login/idps/_search")
       reconciler.content.contains("verify_policy")
       cronjob = file("kubernetes/apps/authentication/zitadel/app/access-policy-cronjob.yaml")
       cronjob.exists
@@ -41,4 +47,4 @@ queries:
       kustomization.content.contains("access-policy.yaml")
       kustomization.content.contains("disableNameSuffixHash: true")
     docs:
-      desc: Local and Google account creation must remain disabled through an hourly Git-managed reconciler.
+      desc: Existing users retain password, passkey, and allowlisted IdP login while all account creation remains disabled through an hourly Git-managed reconciler.

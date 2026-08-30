@@ -58,18 +58,28 @@ After Zitadel is deployed, configure OIDC applications for:
 ## Google Identity Provider
 
 The Google OAuth credentials from Dex are reused via the `zitadel-google-idp` ExternalSecret.
-The provider itself is created in Zitadel, while `app/access-policy.yaml` defines
-the account-admission controls. The `zitadel-access-policy` CronJob reconciles
-those controls hourly through the Zitadel Admin API using the existing
-`zitadel-admin-sa` service-account key.
+The provider itself is created in Zitadel, while `app/access-policy.yaml` is the
+single source of truth for login and account-admission controls. The
+`zitadel-access-policy` CronJob reconciles those controls hourly through the
+Zitadel Admin API using the existing `zitadel-admin-sa` service-account key.
 
-Local registration and Google account creation must remain disabled. Existing
-users can still authenticate and link their Google identity. Console changes to
-these admission settings are temporary and will be corrected by the reconciler.
+The Admin API replaces the complete login policy on update, so the Git policy
+must declare every field. The reconciler refuses an incomplete policy before it
+contacts Zitadel. It also compares the IdPs attached to the live login policy
+with the explicit Git allowlist and stops before changing anything if they do
+not match.
+
+Existing users can authenticate with username/password, passkeys, Google, or
+another explicitly supported and linked IdP. Local registration and IdP account
+creation remain disabled. Google email auto-linking may link to an existing
+Zitadel identity, but it may not create a new identity. Adding another IdP
+requires an explicit policy entry and reconciler support. Console changes to
+these settings are temporary and will be corrected by the reconciler.
 
 ## Passkeys
 
-Passkeys are enabled by default via the `PasswordlessType: 1` setting.
+Passkeys are enabled by `passwordlessType: PASSWORDLESS_TYPE_ALLOWED` in the
+Git-managed login policy.
 Users can enroll passkeys from their account settings.
 
 ## Certificates
