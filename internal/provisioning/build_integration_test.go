@@ -217,8 +217,11 @@ func TestBuildRejectsDirtyInputBeforeDownloadOrMutation(t *testing.T) {
 	server := k3sPayloadServer(t)
 	defer server.Close()
 	withBuildEnvironment(t, server.URL)
-	planPath := filepath.Join(fixture.root, "kubernetes/apps/system-upgrade/k3s/app/plan.yaml")
-	if err := os.WriteFile(planPath, []byte("dirty\n"), 0o644); err != nil {
+	buildInputPath := filepath.Join(
+		fixture.root,
+		"provisioning/armbian-build/userpatches/base.txt",
+	)
+	if err := os.WriteFile(buildInputPath, []byte("base\ndirty\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -231,6 +234,9 @@ func TestBuildRejectsDirtyInputBeforeDownloadOrMutation(t *testing.T) {
 		&stderr,
 	); code == 0 {
 		t.Fatal("dirty build input was accepted")
+	}
+	if !strings.Contains(stderr.String(), "build inputs are dirty") {
+		t.Fatalf("build failed for the wrong reason: %s", stderr.String())
 	}
 	if server.requests.Load() != 0 {
 		t.Fatalf("payloads were downloaded before dirty-input rejection: %d requests", server.requests.Load())
