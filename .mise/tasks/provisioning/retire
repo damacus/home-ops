@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#MISE description="Drain, delete, and clean a retired K3s node"
+#MISE quiet=true
+#USAGE arg "<node>" help="Kubernetes node name"
+#USAGE arg "<host>" help="Host name or address to clean"
+#USAGE flag "--dry-run" help="Print the destructive lifecycle plan"
+set -euo pipefail
+# Variables are supplied by Mise's usage parser.
+# shellcheck disable=SC2154
+
+args=("${usage_node}" "${usage_host}")
+[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
+exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" retire "${args[@]}"

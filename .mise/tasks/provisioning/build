@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#MISE description="Build the pinned Radxa 5B+ Armbian image"
+#MISE quiet=true
+#USAGE flag "-v --verbose" help="Show plain Armbian build progress"
+#USAGE flag "--dry-run" help="Print the resolved build plan without network or Docker changes"
+set -euo pipefail
+
+args=()
+[[ "${usage_verbose:-false}" == "true" ]] && args+=(--verbose)
+[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
+exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" build "${args[@]}"

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Report Docker usage and Docker.raw allocation"
+#MISE quiet=true
+set -euo pipefail
+
+exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" docker-usage

@@ -1,9 +1,9 @@
 #!/bin/bash
 # =============================================================================
-# Ironstone First-Boot Bootstrap
+# Ironstone First-Boot Hostname Initialisation
 # =============================================================================
-# Runs before cloud-init to set hostname based on MAC address.
-# This is the ONLY script needed before cloud-init.
+# Runs once from cloud-init bootcmd early during first boot.
+# Sets both the persisted and live hostname before later cloud-init modules.
 # MUST NOT block boot - always exits 0.
 # =============================================================================
 
@@ -24,7 +24,7 @@ get_mac() {
 
     # Fallback: find first ethernet interface (eth*, en*, end*)
     for pattern in eth en end; do
-        for iface in /sys/class/net/${pattern}*; do
+        for iface in /sys/class/net/"${pattern}"*; do
             [ -d "$iface" ] || continue
             cat "$iface/address" 2>/dev/null && return
         done
@@ -41,7 +41,7 @@ else
     log "MAC: $MAC -> Hostname: $HOSTNAME"
 fi
 
-# Set hostname for cloud-init to pick up
+# Persist the hostname and apply it to the running system.
 echo "$HOSTNAME" > /etc/hostname
 hostnamectl set-hostname "$HOSTNAME" 2>/dev/null || hostname "$HOSTNAME" 2>/dev/null || true
 

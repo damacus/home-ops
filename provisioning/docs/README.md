@@ -1,199 +1,61 @@
-# Ironstone Provisioning
+# Radxa image design
 
-Build Armbian-based K3s server images for Rock 5B+ boards.
+The Radxa image is a reusable host baseline, not a cluster member. It contains
+the current verified K3s ARM64 binary and air-gap archive but contains no API
+address, server token, rendered K3s config, or node identity. The K3s systemd
+unit exists and remains disabled until explicit enrolment.
 
-## Quick Start
+## Build inputs
 
-```bash
-# Build the image
-task provisioning:build
+- The Armbian framework is the pinned git submodule at
+  `armbian-build/armbian-build-repo`.
+- `kubernetes/apps/system-upgrade/k3s/app/plan.yaml` is the sole K3s version
+  authority; both Plan resources must agree.
+- `armbian-build/userpatches/` contains portable image policy only.
+- The build targets `rock-5b-plus`, the vendor kernel branch, Noble minimal
+  userspace, no desktop, no kernel configuration, headers enabled, and the
+  `nvme-rescan` extension. The compact initial image is explicitly 3072 MiB.
+- Armbian's normal grow-on-first-boot root filesystem remains intact. There is
+  no fixed `K3S_DATA` partition.
 
-# Copy to local machine for flashing
-task provisioning:copy
+## Baked host state
 
-# Flash with Raspberry Pi Imager or Etcher
-# Boot the board and wait for cloud-init to complete
+The image creates a locked-password `pi` administrator with one approved SSH
+key, locks root, disables SSH password, keyboard-interactive and its deprecated
+challenge-response alias, and root login, and removes host keys,
+machine ID, hostname, and cloud-init instance state. First boot derives a
+`node-<mac-suffix>` hostname and regenerates host identity without downloading
+keys or starting K3s.
 
-# Test the running node
-task provisioning:audit host=<node-ip>
-```
+Noble, Noble updates/security/backports, and Armbian packages receive
+unattended upgrades. Kernel and firmware packages are not blacklisted and
+automatic reboot is disabled. Kured, after later cluster enrolment, owns reboot
+scheduling.
 
-## Architecture
+The image also includes the required Kubernetes, NFS, iSCSI, multipath, NVMe,
+diagnostic, module, sysctl, registry, and NVMe initramfs configuration.
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                        BUILD TIME                                │
-│  ┌─────────────────┐    ┌─────────────────┐                     │
-│  │  armbian-build/ │───▶│  Gold Image     │                     │
-│  │  build.sh       │    │  (.img file)    │                     │
-│  └─────────────────┘    └─────────────────┘                     │
-│         │                       │                                │
-│         ▼                       │                                │
-│  ┌─────────────────┐            │                                │
-│  │ customize-      │            │                                │
-│  │ image.sh        │            │                                │
-│  │ - cloud-init    │            │                                │
-│  │ - k3s binary    │            │                                │
-│  │ - clean state   │            │                                │
-│  └─────────────────┘            │                                │
-│         │                       │                                │
-│         ▼                       │                                │
-│  ┌─────────────────┐            │                                │
-│  │ overlay/        │────────────┘                                │
-│  │ - user-data     │                                             │
-│  │ - k3s.service   │                                             │
-│  │ - config.yaml   │                                             │
-│  │   .template     │                                             │
-│  └─────────────────┘                                             │
-└─────────────────────────────────────────────────────────────────┘
+## Verification boundary
 
-┌─────────────────────────────────────────────────────────────────┐
-│                        FIRST BOOT                                │
-│  ┌─────────────────┐    ┌─────────────────┐                     │
-│  │  cloud-init     │───▶│  Running Node   │                     │
-│  │  user-data      │    │                 │                     │
-│  └─────────────────┘    └─────────────────┘                     │
-│         │                       │                                │
-│         ▼                       ▼                                │
-│  - Install packages      - k3s-init.sh fetches token from NFS   │
-│  - Create pi user        - k3s.service starts                   │
-│  - Set locale/timezone   - Node joins cluster                   │
-│  - Fetch SSH keys        - etcd member added                    │
-│  - Render k3s config                                            │
-│  - Enable services                                               │
-└─────────────────────────────────────────────────────────────────┘
-```
+`mise run provisioning:verify` first checks that the image, checksum, and
+manifest agree. It then mounts the detected ext4 root partition read-only in
+a privileged ephemeral Docker container and checks the effective image state
+there. The container returns only the structured report; it does not copy
+`/etc`, `/home`, SSH material, or ownership metadata to a host bind mount.
 
-## Directory Structure
+- matching K3s payloads and manifest hashes;
+- exact `pi` key and private modes;
+- effective SSH policy, including both keyboard-interactive option names;
+- unattended-upgrade origins, timer, and reboot policy;
+- clean machine and cloud-init identity;
+- dormant K3s with no config or token;
+- no `K3S_DATA` input; and
+- a private kubeconfig if one exists.
 
-```text
-provisioning/
-├── armbian-build/           # Armbian build system
-│   ├── build.sh             # Main build script
-│   └── userpatches/
-│       ├── customize-image.sh   # Image customization (build-time)
-│       └── overlay/             # Files copied to image root
-│           ├── etc/
-│           │   ├── cloud/cloud.cfg.d/   # Cloud-init config
-│           │   ├── ironstone/config     # Build-time variables
-│           │   ├── rancher/k3s/         # K3s config template
-│           │   ├── ssh/sshd_config.d/   # SSH hardening
-│           │   ├── modules-load.d/      # Kernel modules
-│           │   └── sysctl.d/            # Sysctl settings
-│           ├── usr/local/bin/           # Scripts
-│           │   ├── ironstone-init.sh    # Hostname from MAC
-│           │   ├── k3s-init.sh          # Token from NFS
-│           │   └── k3s-node-ip.sh       # Inject node IP
-│           └── var/lib/cloud/seed/nocloud/
-│               ├── user-data            # Cloud-init config
-│               └── meta-data            # Instance metadata
-├── config.env               # Build configuration
-└── docs/                    # This documentation
-```
+`--rootfs <directory> --raw` supplies an already available rootfs without
+mounting an image or contacting Docker. It runs the same image-state checks;
+only artifact manifest, payload-hash, and executable-version checks require a
+real artifact set.
 
-## Configuration
-
-Edit `config.env` before building:
-
-```bash
-# Network
-NFS_SERVER="unas.ironstone.casa"  # NFS server with cluster token
-NFS_SHARE="/var/nfs/shared/nfs"   # NFS share path
-K3S_VIP="192.168.1.220"           # K3s API VIP
-
-# K3s
-K3S_VERSION="v1.33.2+k3s1"        # K3s version to install
-```
-
-## Task Commands
-
-| Command                                      | Description               |
-|----------------------------------------------|---------------------------|
-| `task provisioning:build`                    | Build Armbian image       |
-| `task provisioning:copy`                     | Copy image to ~/Downloads |
-| `task provisioning:clean`                    | Remove build artifacts    |
-| `task provisioning:audit host=<ip>`          | Test running node with Mondoo |
-| `task provisioning:audit-image mount=<path>` | Test mounted image with Mondoo |
-
-Provisioning validation policies live in `mondoo/policies/home-ops-node.mql.yaml`
-and `mondoo/policies/home-ops-image.mql.yaml`.
-
-## Testing
-
-### Image Tests (before boot)
-
-```bash
-# Mount the image and run tests
-task provisioning:audit-image mount=/mnt/image
-```
-
-Tests verify:
-
-- Cloud-init installed and configured
-- K3s binary and symlinks present
-- Config template exists
-- SSH hardening in place
-- Machine-id/hostname cleared
-
-### Node Tests (after boot)
-
-```bash
-# SSH to node and run tests
-task provisioning:audit host=192.168.1.100
-```
-
-Tests verify:
-
-- Pi user created with SSH keys
-- Cloud-init completed successfully
-- K3s service running
-- Node joined cluster as control-plane
-- Packages installed
-- Security hardening applied
-
-## Troubleshooting
-
-### Cloud-init not running
-
-Check cloud-init status:
-
-```bash
-cloud-init status
-cat /var/log/cloud-init-output.log
-```
-
-### K3s not starting
-
-Check k3s-init service (token retrieval):
-
-```bash
-systemctl status k3s-init
-journalctl -u k3s-init
-```
-
-Check k3s service:
-
-```bash
-systemctl status k3s
-journalctl -u k3s -f
-```
-
-### Node not joining cluster
-
-Verify token was retrieved:
-
-```bash
-ls -la /etc/rancher/k3s/cluster-token
-```
-
-Check config was rendered:
-
-```bash
-cat /etc/rancher/k3s/config.yaml
-```
-
-Verify network connectivity to VIP:
-
-```bash
-curl -k https://192.168.1.220:6443/healthz
-```
+The operator workflow and manual zero-cluster recovery prerequisites are in
+the parent [`README.md`](../README.md).

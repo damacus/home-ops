@@ -1,8 +1,8 @@
 ---
 policies:
   - uid: home-ops-node
-    name: Home Ops Running Node Compliance
-    version: "1.0.0"
+    name: Home Ops Explicitly Enrolled Node Compliance
+    version: "2.0.0"
     tags:
       mondoo.com/category: security
       mondoo.com/platform: linux
@@ -13,169 +13,96 @@ policies:
       - name: Dan Webb
         email: dan.webb@damacus.io
     docs:
-      desc: |
-        Replacement for the legacy running-node validation profile.
+      desc: Validate a Radxa host after explicit SSH enrolment into K3s.
     groups:
-      - title: User configuration
+      - title: Identity and access
         filters: asset.platform == "linux"
         checks:
           - uid: NODE-USER-001
-            title: Pi user exists with expected shell and groups
+            title: Pi is the fixed administrator with the approved key
             impact: 100
             mql: |
               users.list.where(name == "pi").all(shell == "/bin/bash") &&
-              command("id -nG pi | grep -qw adm").exitcode == 0 &&
-              command("id -nG pi | grep -qw sudo").exitcode == 0
+              file("/home/pi/.ssh/authorized_keys").content.trim == "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCLr7NoB34qERAAJNLHKgOy9EJ40smz4F9HhU5d5i8s" &&
+              command("stat -c '%a' /home/pi/.ssh/authorized_keys").stdout.trim == "600"
           - uid: NODE-USER-002
-            title: SSH authorized keys are configured
+            title: Root is locked and SSH is key-only
             impact: 100
             mql: |
-              file("/home/pi/.ssh/authorized_keys") {
-                exists
-                size > 0
-              }
-          - uid: NODE-USER-003
-            title: Root account is locked
+              command("sudo getent shadow root | cut -d: -f2 | grep -Eq '^[!*]'").exitcode == 0 &&
+              sshd.config.params["PasswordAuthentication"] == "no" &&
+              sshd.config.params["ChallengeResponseAuthentication"] == "no" &&
+              sshd.config.params["KbdInteractiveAuthentication"] == "no" &&
+              sshd.config.params["PermitRootLogin"] == "no"
+          - uid: NODE-IDENTITY-001
+            title: First boot generated unique host identity
             impact: 100
             mql: |
-              command("sudo getent shadow root | cut -d: -f2 | grep -Eq '^[!*]'").exitcode == 0
-      - title: SSH security
-        filters: asset.platform == "linux"
-        checks:
-          - uid: NODE-SSH-001
-            title: SSH password authentication is disabled
-            impact: 100
-            mql: sshd.config.params["PasswordAuthentication"] == "no"
-          - uid: NODE-SSH-002
-            title: SSH root login is disabled
-            impact: 100
-            mql: sshd.config.params["PermitRootLogin"] == "no"
-          - uid: NODE-SSH-003
-            title: SSH host keys are generated
-            impact: 100
-            mql: command("test -f /etc/ssh/ssh_host_rsa_key -a -f /etc/ssh/ssh_host_ecdsa_key -a -f /etc/ssh/ssh_host_ed25519_key").exitcode == 0
-      - title: System configuration
+              os.hostname == /^node-[a-f0-9]{6}$/ &&
+              os.machineid != empty &&
+              command("test -f /etc/ssh/ssh_host_ed25519_key").exitcode == 0
+      - title: Host baseline
         filters: asset.platform == "linux"
         checks:
           - uid: NODE-SYS-001
-            title: Hostname is generated from MAC address
+            title: Locale timezone and swap policy are effective
             impact: 100
-            mql: os.hostname == /^node-[a-f0-9]{6}$/
+            mql: |
+              command("timedatectl show --property=Timezone --value").stdout.trim == "Europe/London" &&
+              command("locale").stdout.contains("LANG=en_GB.UTF-8") &&
+              command("swapon --show").stdout.trim == ""
           - uid: NODE-SYS-002
-            title: Timezone is Europe/London
-            impact: 70
-            mql: command("timedatectl show --property=Timezone --value").stdout.trim == "Europe/London"
+            title: Cloud-init completed and root filesystem expanded
+            impact: 100
+            mql: |
+              command("cloud-init status").stdout.contains("status: done") &&
+              mount.point("/").size > 3221225472
           - uid: NODE-SYS-003
-            title: Locale is en_GB.UTF-8
-            impact: 70
-            mql: command("locale").stdout.contains("LANG=en_GB.UTF-8")
-          - uid: NODE-SYS-004
-            title: Swap is disabled
-            impact: 100
-            mql: command("swapon --show").stdout.trim == ""
-          - uid: NODE-SYS-005
-            title: Machine ID exists after first boot
-            impact: 100
-            mql: os.machineid != empty
-      - title: Kernel configuration
-        filters: asset.platform == "linux"
-        checks:
-          - uid: NODE-KERNEL-001
-            title: Overlay kernel module is loaded
-            impact: 100
-            mql: command("lsmod | awk '{print $1}' | grep -Fx overlay").exitcode == 0
-          - uid: NODE-KERNEL-002
-            title: br_netfilter kernel module is loaded
-            impact: 100
-            mql: command("lsmod | awk '{print $1}' | grep -Fx br_netfilter").exitcode == 0
-          - uid: NODE-KERNEL-003
-            title: IPv4 forwarding is enabled
-            impact: 100
-            mql: command("sysctl -n net.ipv4.ip_forward").stdout.trim == "1"
-          - uid: NODE-KERNEL-004
-            title: Bridge netfilter is enabled for iptables
+            title: Unattended upgrades are active without automatic reboot
             impact: 100
             mql: |
-              command("sysctl -n net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables") {
-                stdout.contains("net.bridge.bridge-nf-call-iptables = 1")
-                stdout.contains("net.bridge.bridge-nf-call-ip6tables = 1")
-              }
-      - title: Storage services
-        filters: asset.platform == "linux"
-        checks:
+              command("systemctl is-enabled apt-daily-upgrade.timer").exitcode == 0 &&
+              command("systemctl is-active apt-daily-upgrade.timer").exitcode == 0 &&
+              file("/etc/apt/apt.conf.d/50unattended-upgrades").content.contains(/Automatic-Reboot\s+"false"/)
           - uid: NODE-STORAGE-001
-            title: iSCSI package and service are installed and running
-            impact: 100
-            mql: package("open-iscsi").installed && services.any(name == "iscsid" && enabled == true && running == true)
-          - uid: NODE-STORAGE-002
-            title: Multipath package and service are installed and running
-            impact: 70
-            mql: package("multipath-tools").installed && services.any(name == "multipathd" && enabled == true && running == true)
-      - title: Boot and K3s
-        filters: asset.platform == "linux"
-        checks:
-          - uid: NODE-BOOT-001
-            title: Cloud-init completed successfully
+            title: iSCSI and multipath services are enabled
             impact: 100
             mql: |
-              command("cloud-init status").stdout.contains("status: done")
-          - uid: NODE-BOOT-002
-            title: Root filesystem is expanded
-            impact: 100
-            mql: mount.point("/").size > 3221225472
+              services.any(name == "iscsid" && enabled == true) &&
+              services.any(name == "multipathd" && enabled == true)
+      - title: Explicit K3s enrolment
+        filters: asset.platform == "linux"
+        checks:
           - uid: NODE-K3S-001
-            title: K3s service is enabled and running
+            title: K3s is enabled and running only after enrolment
             impact: 100
             mql: services.any(name == "k3s" && enabled == true && running == true)
           - uid: NODE-K3S-002
-            title: K3s config is rendered from template
+            title: K3s config and token are private
             impact: 100
             mql: |
-              file("/etc/rancher/k3s/config.yaml") {
-                exists
-                content.contains("server:")
-                content.contains("cluster-cidr: 10.69.0.0/16")
-                content.contains("service-cidr: 10.96.0.0/16")
-                content.contains("node-ip:")
-                content.contains("${K3S_VIP}") == false
-              }
+              command("stat -c '%a' /etc/rancher/k3s/config.yaml").stdout.trim == "600" &&
+              command("stat -c '%a' /etc/rancher/k3s/cluster-token").stdout.trim == "600"
           - uid: NODE-K3S-003
-            title: K3s token is retrieved from NFS
-            impact: 100
-            mql: file("/etc/rancher/k3s/cluster-token").exists && file("/etc/rancher/k3s/cluster-token").size > 0
-          - uid: NODE-K3S-004
-            title: K3s registry mirrors are configured
+            title: K3s config has no unsafe API or kubeconfig modes
             impact: 100
             mql: |
-              file("/etc/rancher/k3s/registries.yaml") {
-                exists
-                content.contains("mirrors:")
-                content.contains("docker.io:")
-                content.contains("ghcr.io:")
-              }
-          - uid: NODE-K3S-005
-            title: K3s is connecting to or running the cluster
+              file("/etc/rancher/k3s/config.yaml").content.contains(/anonymous-auth.*true/) == false &&
+              file("/etc/rancher/k3s/config.yaml").content.contains(/write-kubeconfig-mode.*0?644/) == false
+          - uid: NODE-K3S-004
+            title: K3s uses the baked air-gap archive
             impact: 100
-            mql: command("journalctl -u k3s --no-pager -n 500").stdout.contains(/etcdserver|Connecting to.*6443|Starting k3s/)
+            mql: file("/var/lib/rancher/k3s/agent/images/k3s-airgap-images-arm64.tar").exists
       - title: Cluster status
         filters: asset.platform == "linux"
         checks:
           - uid: NODE-CLUSTER-001
-            title: Node is Ready
+            title: Node is Ready and control-plane
             impact: 100
-            mql: command("sudo kubectl get nodes -o wide 2>/dev/null | grep $(hostname)").stdout.contains("Ready")
+            mql: |
+              command("sudo kubectl get node $(hostname) --no-headers").stdout.contains("Ready") &&
+              command("sudo kubectl get node $(hostname) --no-headers").stdout.contains("control-plane")
           - uid: NODE-CLUSTER-002
-            title: Node is control-plane
+            title: Kubernetes API is healthy
             impact: 100
-            mql: command("sudo kubectl get nodes -o wide 2>/dev/null | grep $(hostname)").stdout.contains("control-plane")
-          - uid: NODE-CLUSTER-003
-            title: Etcd endpoint is available
-            impact: 100
-            mql: command("sudo kubectl get endpoints -n kube-system etcd -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null").exitcode == 0
-      - title: Required packages
-        filters: asset.platform == "linux"
-        checks:
-          - uid: NODE-PKG-001
-            title: Required Kubernetes node packages are installed
-            impact: 70
-            mql: packages.map(name).containsAll(["curl", "htop", "iptables", "ipvsadm", "nvme-cli", "open-iscsi", "multipath-tools", "vim"])
+            mql: command("sudo kubectl get --raw=/readyz").stdout.trim == "ok"

@@ -1,124 +1,100 @@
 [
     {
-        "category": "cloud-init",
-        "description": "Cloud-init template for k3s nodes",
+        "category": "image",
+        "description": "Golden image security and first-boot contract",
         "steps": [
-            "Verify cloud-init template exists in provisioning/cloud-init/",
-            "Check user-data includes correct SSH authorized keys",
-            "Validate network configuration for static IP assignment",
-            "Confirm hostname templating works correctly",
-            "Test timezone and locale settings (en_GB)",
-            "Verify package installation list is complete",
-            "Check that k3s installation script is included",
-            "Validate disk partitioning configuration",
-            "Test cloud-init on fresh VM boot",
-            "Confirm all runcmd scripts execute successfully",
-            "Verify final message indicates completion",
-            "Check cloud-init logs for any errors"
+            "Verify the pi account contains only the approved SSH key",
+            "Confirm root and password SSH login are disabled",
+            "Verify unattended Noble and Armbian updates include kernel and firmware packages",
+            "Confirm automatic reboot is disabled",
+            "Check host identity and cloud-init state are clean in the image",
+            "Verify K3s remains disabled until enrolment files exist",
+            "Confirm no cluster address, token, or fixed K3S_DATA partition is baked in"
+        ],
+        "passes": true
+    },
+    {
+        "category": "image",
+        "description": "Reusable unjoined node identity contract",
+        "steps": [
+            "Verify first boot derives the hostname from a usable Ethernet MAC address",
+            "Confirm host keys and machine identity are regenerated on first boot",
+            "Verify first-boot paths do not download keys or start K3s",
+            "Confirm site-specific addressing remains outside the image",
+            "Validate the one-shot cloud-init hostname action"
+        ],
+        "passes": true
+    },
+    {
+        "category": "image",
+        "description": "Docker Desktop Armbian image build",
+        "steps": [
+            "Run mise run provisioning:docker:doctor",
+            "Confirm Docker uses ARM64 with at least 8 GiB RAM and 50 GiB free disk",
+            "Build the pinned Armbian checkout with mise run provisioning:build",
+            "Verify the build uses the K3s version declared by both Flux upgrade plans",
+            "Confirm the compact image grows its root filesystem on first boot"
         ],
         "passes": false
     },
     {
-        "category": "cloud-init",
-        "description": "Network configuration for nodes",
+        "category": "artifacts",
+        "description": "Golden image artifact integrity contract",
         "steps": [
-            "Verify static IP configuration template",
-            "Check gateway and DNS settings",
-            "Validate VLAN configuration if used",
-            "Test network connectivity after boot",
-            "Confirm MTU settings are correct"
+            "Verify the canonical set contains an img.xz file, SHA-256 sidecar, and JSON manifest",
+            "Confirm the sidecar and manifest identify the same image filename",
+            "Validate the compressed image checksum",
+            "Verify the manifest records the exact K3s binary and air-gap payload hashes",
+            "Confirm the verifier rejects any version or security regression"
+        ],
+        "passes": true
+    },
+    {
+        "category": "lifecycle",
+        "description": "Flash a verified golden image to Radxa media",
+        "steps": [
+            "Verify the local artifact set before selecting a device",
+            "Confirm the target is a whole disk that does not contain the running system",
+            "Reject devices with mounted child partitions or insufficient capacity",
+            "Require the exact validated device path as typed confirmation",
+            "Flash a real Radxa device and confirm it boots"
         ],
         "passes": false
     },
     {
-        "category": "ansible",
-        "description": "Ansible inventory management",
+        "category": "artifacts",
+        "description": "Stage and publish canonical golden image artifacts",
         "steps": [
-            "Verify inventory file structure",
-            "Check host groups are correctly defined",
-            "Validate host variables are set",
-            "Confirm group variables are configured",
-            "Test inventory with 'ansible-inventory --list'",
-            "Verify SSH connectivity to all hosts",
-            "Check ansible.cfg settings",
-            "Validate vault password file location",
-            "Test ping to all hosts",
-            "Confirm privilege escalation works"
+            "Validate the three-file artifact set before distribution",
+            "Stage the exact set under the release ID on the NAS",
+            "Publish the same files to a GitHub release tagged with the release ID",
+            "Confirm no token, cluster address, or private key appears in published artifacts"
         ],
         "passes": false
     },
     {
-        "category": "ansible",
-        "description": "k3s cluster installation playbook",
+        "category": "lifecycle",
+        "description": "Retire an enrolled Radxa node",
         "steps": [
-            "Verify playbook exists and is valid YAML",
-            "Check role dependencies are installed",
-            "Validate variable definitions",
-            "Test playbook syntax with --check",
-            "Run playbook on test node",
-            "Verify k3s service is running after install",
-            "Check kubeconfig is generated",
-            "Validate cluster token is set correctly",
-            "Confirm node joins cluster successfully",
-            "Test idempotency by running playbook again",
-            "Verify no errors in k3s logs",
-            "Check systemd service configuration"
-        ],
-        "passes": false
-    },
-    {
-        "category": "ansible",
-        "description": "Node preparation playbook",
-        "steps": [
-            "Verify system packages are installed",
-            "Check kernel parameters are set",
-            "Validate sysctl configurations",
-            "Confirm swap is disabled",
-            "Test firewall rules are applied",
-            "Verify NTP synchronization",
-            "Check disk mounts are configured",
-            "Validate user accounts are created"
-        ],
-        "passes": false
-    },
-    {
-        "category": "ansible",
-        "description": "Ansible vault for secrets management",
-        "steps": [
-            "Verify vault file exists",
-            "Check vault password is accessible",
-            "Validate encrypted variables decrypt correctly",
-            "Test playbook with vault variables",
-            "Confirm no plaintext secrets in repository"
-        ],
-        "passes": false
-    },
-    {
-        "category": "ansible",
-        "description": "Node upgrade playbook",
-        "steps": [
-            "Verify upgrade playbook exists",
-            "Check rolling upgrade strategy",
-            "Validate drain and uncordon steps",
-            "Test upgrade on single node",
-            "Confirm cluster remains healthy during upgrade"
+            "Validate the node name and SSH target before mutation",
+            "Drain the node while respecting disruption budgets",
+            "Stop and disable K3s before deleting the Kubernetes node",
+            "Remove local K3s configuration, token, and state",
+            "Confirm remaining cluster nodes and workloads are healthy"
         ],
         "passes": false
     },
     {
         "category": "hardware",
-        "description": "Rock Pi node configuration",
+        "description": "Radxa Rock 5B+ golden image validation",
         "steps": [
-            "Verify Rock Pi specific cloud-init",
-            "Check network interface name (enP4p65s0)",
-            "Validate ARM64 k3s binary is used",
-            "Test boot from SD card or eMMC",
-            "Confirm hardware acceleration settings",
-            "Verify power management configuration",
-            "Check thermal monitoring",
-            "Validate storage configuration",
-            "Test network performance",
-            "Confirm node joins cluster successfully"
+            "Verify the Armbian build targets rock-5b-plus and Noble minimal userspace",
+            "Validate the ARM64 K3s binary and air-gap archive",
+            "Test boot from the intended removable or NVMe media",
+            "Confirm the NVMe rescan hook handles affected Crucial P310 drives",
+            "Verify first-boot hostname and SSH access",
+            "Check thermal, storage, and network operation",
+            "Enrol the host and confirm the node becomes Ready"
         ],
         "passes": false
     },
@@ -143,47 +119,6 @@
             "Validate storage device naming",
             "Test UEFI boot configuration",
             "Confirm virtualization support"
-        ],
-        "passes": false
-    },
-    {
-        "category": "vm",
-        "description": "QEMU VM validation loop",
-        "steps": [
-            "Verify QEMU is installed on host",
-            "Check VM creation script exists",
-            "Validate cloud-init ISO generation",
-            "Test VM boot with cloud-init",
-            "Confirm SSH access to VM",
-            "Verify k3s installation completes",
-            "Check node joins test cluster",
-            "Validate cleanup script works",
-            "Test full provisioning cycle",
-            "Confirm VM resources are released"
-        ],
-        "passes": false
-    },
-    {
-        "category": "vm",
-        "description": "Proxmox VM template creation",
-        "steps": [
-            "Verify Proxmox API access",
-            "Check template creation script",
-            "Validate cloud-init integration",
-            "Test VM clone from template",
-            "Confirm network configuration applies"
-        ],
-        "passes": false
-    },
-    {
-        "category": "vm",
-        "description": "VM resource allocation standards",
-        "steps": [
-            "Define CPU allocation per node type",
-            "Set memory allocation standards",
-            "Configure storage allocation",
-            "Validate resource limits",
-            "Test resource constraints"
         ],
         "passes": false
     },
@@ -340,7 +275,7 @@
     },
     {
         "category": "monitoring",
-        "description": "Node exporter deployment via Ansible",
+        "description": "Node exporter metrics collection",
         "steps": [
             "Verify node_exporter is installed",
             "Check systemd service configuration",
@@ -376,42 +311,37 @@
     },
     {
         "category": "bootstrap",
-        "description": "First control plane node bootstrap",
+        "description": "Manual zero-cluster recovery",
         "steps": [
-            "Verify cloud-init completes successfully",
-            "Check k3s server starts correctly",
-            "Validate kubeconfig is generated",
-            "Test kubectl access from node",
-            "Confirm cluster is initialized",
-            "Verify etcd is running (if applicable)",
-            "Check API server is responding",
-            "Validate node is Ready",
-            "Test pod scheduling works",
-            "Confirm CNI is functioning"
+            "Verify the matching image, checksum, manifest, server token, and snapshot are available offline",
+            "Flash and boot one seed host without automatic K3s startup",
+            "Install reviewed server configuration and token out of band",
+            "Restore the matching etcd snapshot when required",
+            "Confirm the API ready endpoint, recovered nodes, and workloads before further enrolment"
         ],
         "passes": false
     },
     {
         "category": "bootstrap",
-        "description": "Additional control plane node join",
+        "description": "Explicit SSH enrolment into a healthy cluster",
         "steps": [
-            "Verify cluster token is available",
-            "Check k3s server join command",
-            "Validate node joins as control plane",
-            "Test etcd cluster membership",
-            "Confirm high availability"
+            "Verify the target is clean, dormant, and reachable as pi with sudo",
+            "Select a Ready control-plane source node",
+            "Copy sanitised shared K3s configuration and the token without printing it",
+            "Write configuration and token with mode 0600 before enabling K3s",
+            "Confirm the new node becomes Ready and joins etcd"
         ],
         "passes": false
     },
     {
         "category": "bootstrap",
-        "description": "Worker node join process",
+        "description": "Same-name Radxa replacement enrolment",
         "steps": [
-            "Verify cluster token is available",
-            "Check k3s agent configuration",
-            "Validate node joins as worker",
-            "Test pod scheduling to worker",
-            "Confirm node labels are applied"
+            "Retire or confirm the previous node is safely offline",
+            "Run enrolment with the explicit replace option",
+            "Verify the stale Kubernetes node object is removed",
+            "Confirm the replacement node registers with the expected hostname",
+            "Validate workloads reschedule and the cluster remains healthy"
         ],
         "passes": false
     },
@@ -443,11 +373,11 @@
         "category": "maintenance",
         "description": "Node replacement procedure",
         "steps": [
-            "Document node removal steps",
-            "Verify data migration if needed",
-            "Check cluster remains healthy",
-            "Validate new node provisioning",
-            "Confirm workloads reschedule"
+            "Drain and retire the old node with mise run provisioning:retire",
+            "Verify data migration or replica health where needed",
+            "Flash a verified golden image to replacement media",
+            "Enrol the replacement explicitly over SSH",
+            "Confirm workloads reschedule and the cluster remains healthy"
         ],
         "passes": false
     },
@@ -464,38 +394,38 @@
         "passes": false
     },
     {
-        "category": "taskfile",
-        "description": "Taskfile commands for provisioning",
+        "category": "mise",
+        "description": "Mise provisioning command contract",
         "steps": [
-            "Verify provisioning tasks exist",
-            "Check task dependencies",
-            "Validate variable substitution",
-            "Test each provisioning task",
-            "Confirm documentation is accurate"
+            "Verify every documented provisioning command is discoverable with mise tasks",
+            "Check each command accepts its documented help and arguments",
+            "Exercise non-mutating build, flash, enrol, retire, stage, release, and cleanup dry runs",
+            "Confirm secret values are redacted from output",
+            "Validate task files and shared Python implementation"
+        ],
+        "passes": true
+    },
+    {
+        "category": "mise",
+        "description": "Mise SSH node lifecycle",
+        "steps": [
+            "Inspect node and host state with provisioning:status",
+            "Enrol a clean flashed host into an existing healthy cluster",
+            "Replace a stale same-name node only with the explicit replace option",
+            "Retire a node after typed confirmation",
+            "Confirm errors stop before partial mutation and never disclose the cluster token"
         ],
         "passes": false
     },
     {
-        "category": "taskfile",
-        "description": "Ansible task wrappers",
+        "category": "mise",
+        "description": "Docker and local provisioning cleanup",
         "steps": [
-            "Verify ansible:ping task works",
-            "Check ansible:run task",
-            "Validate ansible:list task",
-            "Test ansible:vault tasks",
-            "Confirm error handling"
-        ],
-        "passes": false
-    },
-    {
-        "category": "taskfile",
-        "description": "VM management tasks",
-        "steps": [
-            "Verify VM creation task",
-            "Check VM destruction task",
-            "Validate VM status task",
-            "Test full VM lifecycle",
-            "Confirm cleanup works"
+            "Inspect Docker and Armbian disk usage",
+            "Purge only resources owned by the pinned Armbian build",
+            "Never invoke global Docker prune operations",
+            "Require explicit opt-in before Docker Desktop space reclamation",
+            "Remove the legacy Lima instance only through the separately confirmed one-time task"
         ],
         "passes": false
     },
@@ -503,11 +433,11 @@
         "category": "documentation",
         "description": "Node provisioning runbook",
         "steps": [
-            "Verify runbook exists",
-            "Check step-by-step instructions",
-            "Validate prerequisites section",
-            "Test following runbook on new node",
-            "Confirm troubleshooting section"
+            "Verify the golden-image runbook exists",
+            "Check build, verification, flashing, enrolment, status, retirement, staging, release, and cleanup commands",
+            "Validate Docker, disk-space, hardware, and healthy-cluster prerequisites",
+            "Test the runbook on a new Radxa node",
+            "Confirm zero-cluster recovery and NVMe troubleshooting are documented"
         ],
         "passes": false
     },
