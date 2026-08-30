@@ -35,6 +35,9 @@ PUBLIC_KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCLr7NoB34qERAAJNLHKgOy9EJ40s
 STAGING_ROOT = IMAGE_ROOT / ".staging"
 NAS_ROOT = Path("/var/nfs/shared/nfs/provisioning/images/radxa-5b-plus")
 ARMBIAN_DOCKER_GENERATED_FILES = ("Dockerfile", ".dockerignore")
+REQUIRED_DOCKER_MEMORY = 8 * 1024**3
+MAX_DOCKER_VM_OVERHEAD = 512 * 1024**2
+MINIMUM_DOCKER_MEMORY = REQUIRED_DOCKER_MEMORY - MAX_DOCKER_VM_OVERHEAD
 BUILD_PARAMETERS = {
     "BOARD": "rock-5b-plus",
     "BRANCH": "vendor",
@@ -412,6 +415,10 @@ def docker_info() -> dict[str, Any]:
     return json.loads(result.stdout)
 
 
+def docker_memory_sufficient(memory: int) -> bool:
+    return memory >= MINIMUM_DOCKER_MEMORY
+
+
 def docker_doctor(_: argparse.Namespace) -> None:
     checks: dict[str, dict[str, Any]] = {}
     docker = shutil.which("docker")
@@ -432,8 +439,11 @@ def docker_doctor(_: argparse.Namespace) -> None:
     }
     memory = int(info.get("MemTotal", 0))
     checks["memory"] = {
-        "status": "pass" if memory >= 8 * 1024**3 else "fail",
-        "detail": f"{memory / 1024**3:.1f} GiB assigned",
+        "status": "pass" if docker_memory_sufficient(memory) else "fail",
+        "detail": (
+            f"{memory / 1024**3:.1f} GiB available "
+            f"(minimum {MINIMUM_DOCKER_MEMORY / 1024**3:.1f} GiB after VM overhead)"
+        ),
     }
     free = shutil.disk_usage(Path.home()).free
     checks["host_space"] = {

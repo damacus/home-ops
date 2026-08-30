@@ -23,8 +23,9 @@ mise run provisioning:docker:doctor
 mise run provisioning:docker:usage
 ```
 
-Docker Desktop must expose an ARM64 daemon with at least 8 GiB RAM. The host
-must have at least 50 GiB free space.
+Docker Desktop must allocate at least 8 GiB RAM to an ARM64 daemon. The
+preflight allows up to 512 MiB of that allocation to be reserved by the VM.
+The host must have at least 50 GiB free space.
 
 ## Image workflow
 
