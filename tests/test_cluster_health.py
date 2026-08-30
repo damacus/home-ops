@@ -7,6 +7,7 @@ import json
 import pathlib
 import subprocess
 import sys
+from types import SimpleNamespace
 import unittest
 
 
@@ -418,23 +419,30 @@ class ClusterHealthOutputTest(unittest.TestCase):
     def setUp(self) -> None:
         self.cluster_health = load_cluster_health()
 
-    def test_compact_output_hides_healthy_details(self) -> None:
-        result = self.cluster_health.CheckResult("nodes", "pass", "all nodes Ready", ["node-a", "node-b"])
+    def test_healthy_details_are_shown_only_in_verbose_output(self) -> None:
+        result = self.cluster_health.CheckResult(
+            "nodes", "pass", "all nodes Ready", ["node-a"]
+        )
 
-        output = self.render([result], verbose=False)
+        compact = self.render([result], verbose=False)
+        verbose = self.render([result], verbose=True)
 
-        self.assertIn("[PASS] nodes: all nodes Ready", output)
-        self.assertNotIn("node-a", output)
-
-    def test_verbose_output_shows_healthy_details(self) -> None:
-        result = self.cluster_health.CheckResult("nodes", "pass", "all nodes Ready", ["node-a"])
-
-        self.assertIn("  - node-a", self.render([result], verbose=True))
+        self.assertIn("all nodes Ready", compact)
+        self.assertNotIn("node-a", compact)
+        self.assertIn("node-a", verbose)
 
     def test_compact_output_keeps_failure_details(self) -> None:
-        result = self.cluster_health.CheckResult("pods", "fail", "1 active pods not ready", ["default/app: CrashLoopBackOff"])
+        result = self.cluster_health.CheckResult(
+            "pods",
+            "fail",
+            "1 active pods not ready",
+            ["default/app: CrashLoopBackOff"],
+        )
 
-        self.assertIn("  - default/app: CrashLoopBackOff", self.render([result], verbose=False))
+        self.assertIn(
+            "default/app: CrashLoopBackOff",
+            self.render([result], verbose=False),
+        )
 
     def test_individual_command_selects_one_check(self) -> None:
         expected = self.cluster_health.CheckResult("nodes", "pass", "all nodes Ready", [])
@@ -452,7 +460,9 @@ class ClusterHealthOutputTest(unittest.TestCase):
                 ]
             }
         }
-        self.cluster_health.run = lambda command: subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+        self.cluster_health.run = lambda command: subprocess.CompletedProcess(
+            command, 0, json.dumps(payload), ""
+        )
 
         result = self.cluster_health.log_noise("1h", 1)
 
@@ -461,8 +471,19 @@ class ClusterHealthOutputTest(unittest.TestCase):
         self.assertEqual(result.details, ["noisy: 19"])
 
     def test_log_noise_reports_malformed_metric_data(self) -> None:
-        payload = {"data": {"result": [{"metric": {"app": "broken"}, "value": ["0", "not-a-number"]}]}}
-        self.cluster_health.run = lambda command: subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+        payload = {
+            "data": {
+                "result": [
+                    {
+                        "metric": {"app": "broken"},
+                        "value": ["0", "not-a-number"],
+                    }
+                ]
+            }
+        }
+        self.cluster_health.run = lambda command: subprocess.CompletedProcess(
+            command, 0, json.dumps(payload), ""
+        )
 
         result = self.cluster_health.log_noise("1h", 20)
 
@@ -476,19 +497,15 @@ class ClusterHealthOutputTest(unittest.TestCase):
         return output.getvalue()
 
     def args(self, command: str):
-        return type(
-            "Args",
-            (),
-            {
-                "command": command,
-                "skip_http3": False,
-                "period": "1h",
-                "top": 20,
-                "workers": 1,
-                "edge_smoke": False,
-                "log_noise": False,
-            },
-        )()
+        return SimpleNamespace(
+            command=command,
+            skip_http3=False,
+            period="1h",
+            top=20,
+            workers=1,
+            edge_smoke=False,
+            log_noise=False,
+        )
 
 
 if __name__ == "__main__":

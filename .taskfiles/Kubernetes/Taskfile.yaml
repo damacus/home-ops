@@ -15,12 +15,9 @@ tasks:
   resources:
     desc: Gather common resources in your cluster, useful when asking for support
     silent: true
-    summary: |
-      Lists common Kubernetes resources. Use rtk=true to compact the direct
-      kubectl listings without changing the queried resource set.
     cmds:
       - for: { var: resource }
-        cmd: '{{if eq (.rtk | default "false") "true"}}rtk kubectl get{{else}}kubectl get{{end}} {{.ITEM}} {{.CLI_ARGS | default "-A"}}'
+        cmd: 'kubectl get {{.ITEM}} {{.CLI_ARGS | default "-A"}}'
     vars:
       resource: >-
         nodes
@@ -38,14 +35,7 @@ tasks:
     silent: true
     summary: |
       Shows kube-vip placement and readiness directly from Kubernetes.
-
-      Use rtk=true for RTK's compact Kubernetes listing. This is an inspection
-      command, so it intentionally keeps plain Kubernetes output by default.
-    vars:
-      RTK: '{{.rtk | default "false"}}'
-    cmd: >-
-      {{if eq .RTK "true"}}rtk kubectl get{{else}}kubectl get{{end}}
-      pods -n kube-system -l app.kubernetes.io/name=kube-vip -o wide
+    cmd: kubectl get pods -n kube-system -l app.kubernetes.io/name=kube-vip -o wide
 
   .cluster-health-report:
     internal: true
@@ -81,31 +71,31 @@ tasks:
     desc: Report Kubernetes node readiness
     cmds:
       - task: .cluster-health-report
-        vars: { command: nodes, json: '{{.json | default "false"}}', notify: '{{.notify | default "false"}}', verbose: '{{.verbose | default "false"}}', raw: '{{.raw | default "false"}}', workers: '{{.workers | default "6"}}', timeout: '{{.timeout | default "45"}}' }
+        vars: { command: nodes }
 
   health-kube-vip:
     desc: Report kube-vip readiness
     cmds:
       - task: .cluster-health-report
-        vars: { command: kube-vip, json: '{{.json | default "false"}}', notify: '{{.notify | default "false"}}', verbose: '{{.verbose | default "false"}}', raw: '{{.raw | default "false"}}', workers: '{{.workers | default "6"}}', timeout: '{{.timeout | default "45"}}' }
+        vars: { command: kube-vip }
 
   health-cilium:
     desc: Report Cilium health
     cmds:
       - task: .cluster-health-report
-        vars: { command: cilium, json: '{{.json | default "false"}}', notify: '{{.notify | default "false"}}', verbose: '{{.verbose | default "false"}}', raw: '{{.raw | default "false"}}', workers: '{{.workers | default "6"}}', timeout: '{{.timeout | default "45"}}' }
+        vars: { command: cilium }
 
   health-pods:
     desc: Report active pod readiness
     cmds:
       - task: .cluster-health-report
-        vars: { command: pods, json: '{{.json | default "false"}}', notify: '{{.notify | default "false"}}', verbose: '{{.verbose | default "false"}}', raw: '{{.raw | default "false"}}', workers: '{{.workers | default "6"}}', timeout: '{{.timeout | default "45"}}' }
+        vars: { command: pods }
 
   health-deployments:
     desc: Report deployment availability
     cmds:
       - task: .cluster-health-report
-        vars: { command: deployments, json: '{{.json | default "false"}}', notify: '{{.notify | default "false"}}', verbose: '{{.verbose | default "false"}}', raw: '{{.raw | default "false"}}', workers: '{{.workers | default "6"}}', timeout: '{{.timeout | default "45"}}' }
+        vars: { command: deployments }
 
   health:
     desc: Run composable read-only cluster health checks
@@ -138,25 +128,9 @@ tasks:
 
   cnpg-health:
     desc: Check all CNPG clusters for healthy ready state
-    silent: true
-    vars:
-      JSON: '{{.json | default "false"}}'
-      NOTIFY: '{{.notify | default "false"}}'
-      VERBOSE: '{{.verbose | default "false"}}'
-      RAW: '{{.raw | default "false"}}'
-      WORKERS: '{{.workers | default "6"}}'
-      TIMEOUT: '{{.timeout | default "45"}}'
-    cmd: >-
-      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} cnpg-health
-      {{if eq .JSON "true"}}--json{{end}}
-      {{if eq .NOTIFY "true"}}--notify{{end}}
-      {{if eq .VERBOSE "true"}}--verbose{{end}}
-      {{if eq .RAW "true"}}--raw{{end}}
-      --workers {{.WORKERS}}
-      --timeout {{.TIMEOUT}}
-    preconditions:
-      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
-      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+    cmds:
+      - task: .cluster-health-report
+        vars: { command: cnpg-health }
 
   cnpg-backups:
     desc: Check CNPG backup freshness, resources, and WAL archiving status
@@ -169,24 +143,9 @@ tasks:
       Examples:
         task kubernetes:cnpg-backups
         task kubernetes:cnpg-backups notify=true
-    vars:
-      JSON: '{{.json | default "false"}}'
-      NOTIFY: '{{.notify | default "false"}}'
-      VERBOSE: '{{.verbose | default "false"}}'
-      RAW: '{{.raw | default "false"}}'
-      WORKERS: '{{.workers | default "6"}}'
-      TIMEOUT: '{{.timeout | default "45"}}'
-    cmd: >-
-      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} cnpg-backups
-      {{if eq .JSON "true"}}--json{{end}}
-      {{if eq .NOTIFY "true"}}--notify{{end}}
-      {{if eq .VERBOSE "true"}}--verbose{{end}}
-      {{if eq .RAW "true"}}--raw{{end}}
-      --workers {{.WORKERS}}
-      --timeout {{.TIMEOUT}}
-    preconditions:
-      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
-      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+    cmds:
+      - task: .cluster-health-report
+        vars: { command: cnpg-backups }
 
   gitops-health:
     desc: Check unsuspended Flux sources and releases are Ready
@@ -198,18 +157,9 @@ tasks:
       Examples:
         task kubernetes:gitops-health
         task kubernetes:gitops-health notify=true
-    vars:
-      JSON: '{{.json | default "false"}}'
-      NOTIFY: '{{.notify | default "false"}}'
-      TIMEOUT: '{{.timeout | default "45"}}'
-    cmd: >-
-      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} gitops-health
-      {{if eq .JSON "true"}}--json{{end}}
-      {{if eq .NOTIFY "true"}}--notify{{end}}
-      --timeout {{.TIMEOUT}}
-    preconditions:
-      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
-      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+    cmds:
+      - task: .cluster-health-report
+        vars: { command: gitops-health }
 
   external-secrets-health:
     desc: Check all ExternalSecrets have synchronized successfully
@@ -221,18 +171,9 @@ tasks:
       Examples:
         task kubernetes:external-secrets-health
         task kubernetes:external-secrets-health notify=true
-    vars:
-      JSON: '{{.json | default "false"}}'
-      NOTIFY: '{{.notify | default "false"}}'
-      TIMEOUT: '{{.timeout | default "45"}}'
-    cmd: >-
-      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} external-secrets-health
-      {{if eq .JSON "true"}}--json{{end}}
-      {{if eq .NOTIFY "true"}}--notify{{end}}
-      --timeout {{.TIMEOUT}}
-    preconditions:
-      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
-      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+    cmds:
+      - task: .cluster-health-report
+        vars: { command: external-secrets-health }
 
   service-account-health:
     desc: Check active pods do not reference deleted ServiceAccounts
@@ -244,40 +185,15 @@ tasks:
       Examples:
         task kubernetes:service-account-health
         task kubernetes:service-account-health notify=true
-    vars:
-      JSON: '{{.json | default "false"}}'
-      NOTIFY: '{{.notify | default "false"}}'
-      TIMEOUT: '{{.timeout | default "45"}}'
-    cmd: >-
-      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} service-account-health
-      {{if eq .JSON "true"}}--json{{end}}
-      {{if eq .NOTIFY "true"}}--notify{{end}}
-      --timeout {{.TIMEOUT}}
-    preconditions:
-      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
-      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+    cmds:
+      - task: .cluster-health-report
+        vars: { command: service-account-health }
 
   grafana-alerts:
     desc: Check firing Grafana/Prometheus and Alertmanager alerts
-    silent: true
-    vars:
-      JSON: '{{.json | default "false"}}'
-      NOTIFY: '{{.notify | default "false"}}'
-      VERBOSE: '{{.verbose | default "false"}}'
-      RAW: '{{.raw | default "false"}}'
-      WORKERS: '{{.workers | default "6"}}'
-      TIMEOUT: '{{.timeout | default "45"}}'
-    cmd: >-
-      {{.PYTHON_BIN}} {{.CLUSTER_HEALTH_SCRIPT}} grafana-alerts
-      {{if eq .JSON "true"}}--json{{end}}
-      {{if eq .NOTIFY "true"}}--notify{{end}}
-      {{if eq .VERBOSE "true"}}--verbose{{end}}
-      {{if eq .RAW "true"}}--raw{{end}}
-      --workers {{.WORKERS}}
-      --timeout {{.TIMEOUT}}
-    preconditions:
-      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
-      - { msg: "Missing kubectl", sh: "command -v kubectl >/dev/null" }
+    cmds:
+      - task: .cluster-health-report
+        vars: { command: grafana-alerts }
 
   morning-check:
     desc: Run the recurring morning cluster health bundle from composable subtasks
@@ -307,7 +223,7 @@ tasks:
       TIMEOUT: '{{.timeout | default "45"}}'
     cmd: |
       failed=0
-      checks="health cnpg-backups"
+      checks="health gitops-health external-secrets-health service-account-health cnpg-backups"
       [ "{{.EDGE_SMOKE}}" = "true" ] && checks="${checks} edge-smoke"
       [ "{{.LOG_NOISE}}" = "true" ] && checks="${checks} log-noise"
       for check in ${checks}; do
@@ -411,15 +327,9 @@ tasks:
       Examples:
         task kubernetes:edge-smoke
         task kubernetes:edge-smoke skip_http3=true
-    vars:
-      SKIP_HTTP3: '{{.skip_http3 | default "false"}}'
-      NOTIFY: '{{.notify | default "false"}}'
-      VERBOSE: '{{.verbose | default "false"}}'
-      RAW: '{{.raw | default "false"}}'
-      TIMEOUT: '{{.timeout | default "45"}}'
     cmds:
       - task: .cluster-health-report
-        vars: { command: edge-smoke, notify: '{{.NOTIFY}}', verbose: '{{.VERBOSE}}', raw: '{{.RAW}}', skip_http3: '{{.SKIP_HTTP3}}', timeout: '{{.TIMEOUT}}' }
+        vars: { command: edge-smoke }
 
   edge-smoke-esphome:
     desc: Run edge smoke checks plus the ESPHome Traefik canary hostname
@@ -461,16 +371,9 @@ tasks:
         task kubernetes:log-noise              # Top 20 apps, last 1 hour
         task kubernetes:log-noise top=10       # Top 10 apps
         task kubernetes:log-noise period=24h   # Last 24 hours
-    vars:
-      TOP: '{{.top | default "20"}}'
-      PERIOD: '{{.period | default "1h"}}'
-      NOTIFY: '{{.notify | default "false"}}'
-      VERBOSE: '{{.verbose | default "false"}}'
-      RAW: '{{.raw | default "false"}}'
-      TIMEOUT: '{{.timeout | default "45"}}'
     cmds:
       - task: .cluster-health-report
-        vars: { command: log-noise, notify: '{{.NOTIFY}}', verbose: '{{.VERBOSE}}', raw: '{{.RAW}}', period: '{{.PERIOD}}', top: '{{.TOP}}', timeout: '{{.TIMEOUT}}' }
+        vars: { command: log-noise }
 
   test-app:
     desc: Run Mondoo checks for a Kubernetes application
