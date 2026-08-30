@@ -255,20 +255,6 @@ func (a *App) requireBuildInputsUnchanged(ctx context.Context, plan buildPlan) e
 	return a.requireBuildContract(ctx, plan.ArmbianCommit)
 }
 
-func (a *App) runArmbianCheck(ctx context.Context, args []string) error {
-	if err := requirePositionals(args, 1, "provisioning armbian-check <command>"); err != nil {
-		return err
-	}
-	expected, err := a.armbianCommit(ctx)
-	if err != nil {
-		return err
-	}
-	if err := a.requireCleanArmbian(ctx, expected, false); err != nil {
-		return err
-	}
-	return a.requireArmbianCommand(args[0], "docker")
-}
-
 func (a *App) runArmbian(ctx context.Context, args []string) error {
 	if len(args) == 0 || args[0] != "check" {
 		return usageError{message: "usage: provisioning armbian check docker-purge"}

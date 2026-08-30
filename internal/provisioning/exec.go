@@ -34,6 +34,24 @@ func (e executor) run(
 	return nil
 }
 
+func (e executor) runToStderr(
+	ctx context.Context,
+	dir string,
+	stdin io.Reader,
+	name string,
+	args ...string,
+) error {
+	command := exec.CommandContext(ctx, name, args...)
+	command.Dir = dir
+	command.Stdin = stdin
+	command.Stdout = e.stderr
+	command.Stderr = e.stderr
+	if err := command.Run(); err != nil {
+		return fmt.Errorf("%s failed: %w", name, err)
+	}
+	return nil
+}
+
 func (e executor) output(
 	ctx context.Context,
 	dir string,

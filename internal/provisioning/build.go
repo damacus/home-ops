@@ -56,7 +56,7 @@ func (a *App) runBuild(ctx context.Context, args []string) error {
 		if verbose {
 			commandArgs = append(commandArgs, "PROGRESS_DISPLAY=plain")
 		}
-		return a.exec.run(ctx, a.paths.armbian, nil, "./compile.sh", commandArgs...)
+		return a.exec.runToStderr(ctx, a.paths.armbian, nil, "./compile.sh", commandArgs...)
 	}); err != nil {
 		return err
 	}

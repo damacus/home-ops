@@ -58,8 +58,6 @@ func (a *App) run(ctx context.Context, command string, args []string) error {
 		return a.runArtifact(ctx, args)
 	case "armbian":
 		return a.runArmbian(ctx, args)
-	case "armbian-check": // Kept for direct callers during the task migration.
-		return a.runArmbianCheck(ctx, args)
 	default:
 		return usageError{message: fmt.Sprintf("unknown command %q", command)}
 	}
