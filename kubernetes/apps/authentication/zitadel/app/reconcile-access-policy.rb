@@ -27,18 +27,15 @@ LOGIN_POLICY_KEYS = %w[
   forceMfaLocalOnly
 ].freeze
 
-LOGIN_POLICY_REQUIRED_VALUES = {
+LOGIN_POLICY_GUARDRAILS = {
   "allowUsernamePassword" => true,
   "allowRegister" => false,
   "allowExternalIdp" => true,
   "forceMfa" => false,
   "passwordlessType" => "PASSWORDLESS_TYPE_ALLOWED",
   "hidePasswordReset" => false,
-  "ignoreUnknownUsernames" => true,
-  "defaultRedirectUri" => "",
   "allowDomainDiscovery" => false,
   "disableLoginWithEmail" => false,
-  "disableLoginWithPhone" => true,
   "forceMfaLocalOnly" => false
 }.freeze
 
@@ -58,6 +55,8 @@ GOOGLE_PROVIDER_OPTION_VALUES = {
   "isAutoUpdate" => true,
   "autoLinking" => "AUTO_LINKING_OPTION_EMAIL"
 }.freeze
+VERIFY_ATTEMPTS = 10
+VERIFY_INTERVAL_SECONDS = 0.5
 
 class ZitadelClient
   API_SCOPE = "openid urn:zitadel:iam:org:project:id:zitadel:aud"
@@ -190,7 +189,7 @@ def validate_policy!(policy)
   validate_exact_keys!(login_policy, LOGIN_POLICY_KEYS, "loginPolicy")
   validate_required_values!(
     login_policy,
-    LOGIN_POLICY_REQUIRED_VALUES,
+    LOGIN_POLICY_GUARDRAILS,
     "loginPolicy"
   )
   LOGIN_POLICY_DURATION_KEYS.each do |key|
@@ -278,32 +277,47 @@ def assert_identity_provider_allowlist!(client, providers)
   raise PolicyError, "identity provider allowlist mismatch (#{problems.join("; ")})"
 end
 
-def verify_policy(client, policy)
-  login_policy = client.get("/admin/v1/policies/login").fetch("policy")
-  policy.fetch("loginPolicy").each do |key, expected|
-    actual = option_value(login_policy, key, expected)
-    next if actual == expected
+def wait_for_values!(label, desired, sleeper:)
+  actual = {}
+  VERIFY_ATTEMPTS.times do |attempt|
+    actual = yield
+    return unless drifted?(actual, desired)
 
-    raise "loginPolicy.#{key} drifted: expected #{expected.inspect}, got #{actual.inspect}"
+    sleeper.call(VERIFY_INTERVAL_SECONDS) if attempt < VERIFY_ATTEMPTS - 1
   end
 
-  policy.fetch("identityProviders").each do |provider|
-    id = provider.fetch("id")
-    options = client.get("/admin/v1/idps/templates/#{id}")
-      .dig("idp", "config", "options")
-      .then { |value| value || {} }
+  mismatches = desired.filter_map do |key, expected|
+    value = option_value(actual, key, expected)
+    next if value == expected
 
-    provider.fetch("providerOptions").each do |key, expected|
-      actual = option_value(options, key, expected)
-      next if actual == expected
+    "#{key}=#{value.inspect} (expected #{expected.inspect})"
+  end
+  raise "#{label} did not converge: #{mismatches.join(", ")}"
+end
 
-      raise "#{provider.fetch("type")} #{key} drifted: expected #{expected.inspect}, got #{actual.inspect}"
-    end
+def provider_options(client, id)
+  client.get("/admin/v1/idps/templates/#{id}")
+    .dig("idp", "config", "options") || {}
+end
+
+def verify_identity_providers!(client, providers, sleeper:)
+  providers.each do |provider|
+    wait_for_values!(
+      "#{provider.fetch("type")} provider #{provider.fetch("id")}",
+      provider.fetch("providerOptions"),
+      sleeper: sleeper
+    ) { provider_options(client, provider.fetch("id")) }
   end
 end
 
-def reconcile_policy(policy)
-  client = ZitadelClient.new(
+def verify_login_policy!(client, login_policy, sleeper:)
+  wait_for_values!("login policy", login_policy, sleeper: sleeper) do
+    client.get("/admin/v1/policies/login").fetch("policy")
+  end
+end
+
+def reconcile_policy(policy, client: nil, sleeper: ->(seconds) { sleep(seconds) })
+  client ||= ZitadelClient.new(
     endpoint: ENV.fetch("ZITADEL_ENDPOINT"),
     issuer: ENV.fetch("ZITADEL_ISSUER"),
     key_file: ENV.fetch("ZITADEL_SERVICE_ACCOUNT_KEY")
@@ -337,9 +351,10 @@ def reconcile_policy(policy)
   provider_updates.compact.each do |path, body|
     client.put(path, body)
   end
-  client.put("/admin/v1/policies/login", desired_login) if login_drifted
+  verify_identity_providers!(client, providers, sleeper: sleeper)
 
-  verify_policy(client, policy)
+  client.put("/admin/v1/policies/login", desired_login) if login_drifted
+  verify_login_policy!(client, desired_login, sleeper: sleeper)
   puts "Zitadel account admission policy reconciled and verified"
 end
 

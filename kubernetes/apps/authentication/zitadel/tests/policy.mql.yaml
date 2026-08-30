@@ -36,7 +36,7 @@ queries:
       reconciler.exists
       reconciler.content.contains("--validate-policy")
       reconciler.content.contains("/admin/v1/policies/login/idps/_search")
-      reconciler.content.contains("verify_policy")
+      reconciler.content.contains("verify_identity_providers!")
       cronjob = file("kubernetes/apps/authentication/zitadel/app/access-policy-cronjob.yaml")
       cronjob.exists
       cronjob.content.contains("17 * * * *")

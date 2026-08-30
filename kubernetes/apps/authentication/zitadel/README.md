@@ -67,7 +67,8 @@ The Admin API replaces the complete login policy on update, so the Git policy
 must declare every field. The reconciler refuses an incomplete policy before it
 contacts Zitadel. It also compares the IdPs attached to the live login policy
 with the explicit Git allowlist and stops before changing anything if they do
-not match.
+not match. When provider options drift, the reconciler updates and verifies
+them before it enables external login.
 
 Existing users can authenticate with username/password, passkeys, Google, or
 another explicitly supported and linked IdP. Local registration and IdP account

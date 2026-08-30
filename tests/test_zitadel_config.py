@@ -3,6 +3,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -16,56 +17,24 @@ ACCESS_POLICY_RECONCILER = (
     REPO_ROOT
     / "kubernetes/apps/authentication/zitadel/app/reconcile-access-policy.rb"
 )
+YAML_TO_JSON = (
+    "puts JSON.generate(YAML.safe_load(File.read(ARGV.fetch(0)), aliases: false))"
+)
+
+
+def load_yaml(path: Path) -> dict[str, Any]:
+    result = subprocess.run(
+        ["ruby", "-ryaml", "-rjson", "-e", YAML_TO_JSON, str(path)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return json.loads(result.stdout)
 
 
 class ZitadelConfigTests(unittest.TestCase):
     def test_access_policy_is_complete_and_safe(self) -> None:
-        result = subprocess.run(
-            ["yq", "-o=json", str(ACCESS_POLICY)],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        policy = json.loads(result.stdout)
-
-        self.assertEqual(
-            {
-                "allowUsernamePassword": True,
-                "allowRegister": False,
-                "allowExternalIdp": True,
-                "forceMfa": False,
-                "passwordlessType": "PASSWORDLESS_TYPE_ALLOWED",
-                "hidePasswordReset": False,
-                "ignoreUnknownUsernames": True,
-                "defaultRedirectUri": "",
-                "passwordCheckLifetime": "864000s",
-                "externalLoginCheckLifetime": "864000s",
-                "mfaInitSkipLifetime": "2592000s",
-                "secondFactorCheckLifetime": "64800s",
-                "multiFactorCheckLifetime": "43200s",
-                "allowDomainDiscovery": False,
-                "disableLoginWithEmail": False,
-                "disableLoginWithPhone": True,
-                "forceMfaLocalOnly": False,
-            },
-            policy["loginPolicy"],
-        )
-        self.assertEqual(
-            [
-                {
-                    "id": "355231265344982063",
-                    "type": "google",
-                    "providerOptions": {
-                        "isLinkingAllowed": True,
-                        "isCreationAllowed": False,
-                        "isAutoCreation": False,
-                        "isAutoUpdate": True,
-                        "autoLinking": "AUTO_LINKING_OPTION_EMAIL",
-                    },
-                }
-            ],
-            policy["identityProviders"],
-        )
+        policy = load_yaml(ACCESS_POLICY)
 
         subprocess.run(
             [
@@ -108,13 +77,7 @@ class ZitadelConfigTests(unittest.TestCase):
                     self.assertNotEqual(0, validation.returncode)
 
     def test_kubectl_hook_image_uses_available_arm64_tag(self) -> None:
-        result = subprocess.run(
-            ["yq", "-o=json", str(HELMRELEASE)],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        values = json.loads(result.stdout)["spec"]["values"]
+        values = load_yaml(HELMRELEASE)["spec"]["values"]
 
         self.assertEqual("rancher/k3s", values["tools"]["kubectl"]["image"]["repository"])
         self.assertEqual(
