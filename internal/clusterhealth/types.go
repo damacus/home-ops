@@ -99,6 +99,15 @@ type cnpgBackup struct {
 	} `json:"status"`
 }
 
+type cnpgScheduledBackup struct {
+	Metadata metadata `json:"metadata"`
+	Spec     struct {
+		Cluster struct {
+			Name string `json:"name"`
+		} `json:"cluster"`
+	} `json:"spec"`
+}
+
 type prometheusResponse struct {
 	Data struct {
 		Result []struct {

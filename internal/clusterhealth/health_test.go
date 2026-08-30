@@ -191,7 +191,8 @@ func TestExternalSecretsReportSyncFailures(t *testing.T) {
 
 func TestCNPGBackupsSkipHibernatedClusters(t *testing.T) {
 	responses := map[string]CommandOutput{
-		kubectlGetKey("backups.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{}}),
+		kubectlGetKey("backups.postgresql.cnpg.io"):          jsonOutput(map[string]any{"items": []any{}}),
+		kubectlGetKey("scheduledbackups.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{}}),
 		kubectlGetKey("clusters.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{
 			map[string]any{
 				"metadata": map[string]any{
@@ -213,6 +214,27 @@ func TestCNPGBackupsSkipHibernatedClusters(t *testing.T) {
 	}
 }
 
+func TestCNPGBackupsSkipClustersWithoutSchedule(t *testing.T) {
+	responses := map[string]CommandOutput{
+		kubectlGetKey("backups.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{}}),
+		kubectlGetKey("clusters.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{
+			map[string]any{
+				"metadata": map[string]any{"namespace": "home", "name": "med-tracker-canary"},
+			},
+		}}),
+		kubectlGetKey("scheduledbackups.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{}}),
+	}
+
+	result := fixedChecker(responses).CNPGBackups(context.Background())
+
+	if result.Status != StatusPass {
+		t.Fatalf("unexpected result: %#v", result)
+	}
+	if len(result.Details) != 1 || !strings.Contains(result.Details[0], "no ScheduledBackup configured") {
+		t.Fatalf("unexpected details: %#v", result.Details)
+	}
+}
+
 func TestCNPGBackupsRejectStaleSuccess(t *testing.T) {
 	stoppedAt := "2026-05-19T09:03:00Z"
 	responses := map[string]CommandOutput{
@@ -225,6 +247,12 @@ func TestCNPGBackupsRejectStaleSuccess(t *testing.T) {
 		}}),
 		kubectlGetKey("clusters.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{
 			map[string]any{"metadata": map[string]any{"namespace": "home", "name": "app"}},
+		}}),
+		kubectlGetKey("scheduledbackups.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{
+			map[string]any{
+				"metadata": map[string]any{"namespace": "home", "name": "app"},
+				"spec":     map[string]any{"cluster": map[string]any{"name": "app"}},
+			},
 		}}),
 		commandKey("kubectl", "cnpg", "status", "-n", "home", "app"): {
 			Stdout: "Working WAL archiving: OK\nWALs waiting to be archived: 0\n",
