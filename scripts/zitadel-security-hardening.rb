@@ -2,7 +2,8 @@
 # frozen_string_literal: true
 
 # Zitadel Security Hardening Script
-# Configures security policies via the Management API
+# Configures non-login security policies via the Management API.
+# The login policy is managed only by the Git-managed access-policy reconciler.
 #
 # Usage: ruby scripts/zitadel-security-hardening.rb
 
@@ -139,52 +140,6 @@ def configure_lockout_policy(access_token)
   end
 end
 
-def configure_login_policy(access_token)
-  puts "\n=== Configuring Login Policy ==="
-
-  # Get current policy
-  current = api_get(access_token, '/admin/v1/policies/login')
-  puts "Current login policy:"
-  puts "  Force MFA: #{current.dig('policy', 'forceMfa') || false}"
-  puts "  Allow Username/Password: #{current.dig('policy', 'allowUsernamePassword') || false}"
-  puts "  Allow External IDP: #{current.dig('policy', 'allowExternalIdp') || false}"
-
-  # Update login policy - enable Force MFA
-  code, result = api_put(access_token, '/admin/v1/policies/login', {
-    allowUsernamePassword: true,
-    allowRegister: false,
-    allowExternalIdp: true,
-    forceMfa: false,
-    forceMfaLocalOnly: false,
-    passwordlessType: 'PASSWORDLESS_TYPE_ALLOWED',
-    hidePasswordReset: false,
-    ignoreUnknownUsernames: true,
-    allowDomainDiscovery: true,
-    disableLoginWithEmail: false,
-    disableLoginWithPhone: true,
-    passwordCheckLifetime: '864000s',
-    externalLoginCheckLifetime: '864000s',
-    mfaInitSkipLifetime: '2592000s',
-    secondFactorCheckLifetime: '64800s',
-    multiFactorCheckLifetime: '43200s'
-  })
-
-  if code >= 200 && code < 300
-    puts "✓ Login policy updated:"
-    puts "  - Force MFA: disabled (users can opt-in)"
-    puts "  - Allow Registration: disabled"
-    puts "  - Allow External IDP: enabled"
-    puts "  - MFA Init Skip: 30 days grace period"
-    true
-  elsif result['message']&.include?('has not been changed')
-    puts "✓ Login policy already configured correctly"
-    true
-  else
-    puts "✗ Failed to update login policy: #{result['message'] || result}"
-    false
-  end
-end
-
 def add_second_factors(access_token)
   puts "\n=== Configuring Second Factors ==="
 
@@ -263,8 +218,9 @@ def verify_configuration(access_token)
 
   # Login
   login = api_get(access_token, '/admin/v1/policies/login')
-  puts "\nLogin Policy:"
+  puts "\nLogin Policy (read-only; managed by the access-policy reconciler):"
   puts "  Force MFA: #{login.dig('policy', 'forceMfa') || false}"
+  puts "  Allow Username/Password: #{login.dig('policy', 'allowUsernamePassword') || false}"
   puts "  Allow Registration: #{login.dig('policy', 'allowRegister') || false}"
   puts "  Allow External IDP: #{login.dig('policy', 'allowExternalIdp') || false}"
   puts "  MFA Init Skip Lifetime: #{login.dig('policy', 'mfaInitSkipLifetime') || 'not set'}"
@@ -300,7 +256,6 @@ puts "✓ Authenticated"
 
 # Apply security configurations
 configure_lockout_policy(access_token)
-configure_login_policy(access_token)
 add_second_factors(access_token)
 configure_password_complexity(access_token)
 
@@ -309,7 +264,7 @@ verify_configuration(access_token)
 
 puts "\n✓ Security hardening complete!"
 puts "\nNext steps:"
-puts "1. Users will be prompted to set up MFA on next login"
+puts "1. Login access remains managed by the Git-managed access-policy reconciler"
 puts "2. Email OTP and TOTP are available as second factors"
 puts "3. Account lockout after 5 failed attempts"
 puts "4. Strong password requirements enforced"

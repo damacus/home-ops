@@ -41,6 +41,8 @@ jobs:
               - 'mondoo/**'
               - 'scripts/mondoo_scan.py'
               - 'tests/test_mondoo_scan.py'
+              - 'tests/test_zitadel_access_policy.rb'
+              - 'tests/test_zitadel_config.py'
             contracts:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Kubernetes/Taskfile.yaml'
@@ -108,6 +110,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
+        with:
+          ruby-version: '4.0'
+
       - name: Setup flate
         uses: home-operations/flate/action@v0.6.1
         with:
@@ -120,8 +127,10 @@ jobs:
           bash -c "$(curl -sSL https://install.mondoo.com/sh)"
           cnspec version
 
-      - name: Run wrapper unit tests
-        run: python3 -m unittest tests/test_mondoo_scan.py
+      - name: Run unit tests
+        run: |
+          python3 -m unittest tests/test_mondoo_scan.py tests/test_zitadel_config.py
+          ruby tests/test_zitadel_access_policy.rb
 
       - name: Validate migrated policy parity
         run: python3 scripts/mondoo_scan.py validate-parity
