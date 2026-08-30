@@ -81,7 +81,7 @@ class ZitadelConfigTests(unittest.TestCase):
 
         self.assertEqual("rancher/k3s", values["tools"]["kubectl"]["image"]["repository"])
         self.assertEqual(
-            "v1.36.3-k3s1",
+            "v1.36.4-k3s1",
             values["tools"]["kubectl"]["image"]["tag"],
         )
         self.assertNotIn("setupJob", values)
