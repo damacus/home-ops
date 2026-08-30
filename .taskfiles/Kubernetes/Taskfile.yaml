@@ -179,9 +179,9 @@ tasks:
     desc: Check CNPG backup freshness, resources, and WAL archiving status
     silent: true
     summary: |
-      Checks that every active CNPG cluster has a successful backup no more
-      than 30 hours old, then summarizes Backup resources and WAL archiving
-      health.
+      Checks that every CNPG cluster with a ScheduledBackup has a successful
+      backup no more than 30 hours old, then summarizes Backup resources and
+      WAL archiving health. Clusters without a ScheduledBackup are skipped.
 
       Examples:
         task kubernetes:cnpg-backups

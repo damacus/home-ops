@@ -51,11 +51,24 @@ func (c *Checker) CNPGBackups(ctx context.Context) Result {
 	if err != nil {
 		return c.failedResult("cnpg-backups", err)
 	}
+	schedules, err := kubectlJSON[objectList[cnpgScheduledBackup]](
+		ctx,
+		c,
+		"get", "scheduledbackups.postgresql.cnpg.io", "-A",
+	)
+	if err != nil {
+		return c.failedResult("cnpg-backups", err)
+	}
 
 	byCluster := map[string][]cnpgBackup{}
 	for _, backup := range backups.Items {
 		key := backup.Metadata.Namespace + "/" + backup.Spec.Cluster.Name
 		byCluster[key] = append(byCluster[key], backup)
+	}
+	configuredClusters := map[string]struct{}{}
+	for _, schedule := range schedules.Items {
+		key := schedule.Metadata.Namespace + "/" + schedule.Spec.Cluster.Name
+		configuredClusters[key] = struct{}{}
 	}
 
 	bad := []string{}
@@ -66,6 +79,10 @@ func (c *Checker) CNPGBackups(ctx context.Context) Result {
 		key := namespace + "/" + name
 		if clusterHibernated(cluster) {
 			details = append(details, key+": hibernated, backup/WAL check skipped")
+			continue
+		}
+		if _, configured := configuredClusters[key]; !configured {
+			details = append(details, key+": no ScheduledBackup configured, backup/WAL check skipped")
 			continue
 		}
 		clusterBackups := byCluster[key]
@@ -169,7 +186,7 @@ func (c *Checker) CNPGBackups(ctx context.Context) Result {
 	return NewResult(
 		"cnpg-backups",
 		len(bad) > 0,
-		"all CNPG backups and WAL archiving healthy",
+		"all configured CNPG backups and WAL archiving healthy",
 		fmt.Sprintf("%d CNPG backup/WAL issues", len(bad)),
 		append(bad, details...),
 	)
