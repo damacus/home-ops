@@ -68,6 +68,12 @@ func (e executor) output(
 	command.Stderr = &stderr
 	if err := command.Run(); err != nil {
 		detail := strings.TrimSpace(stderr.String())
+		if captured := strings.TrimSpace(stdout.String()); captured != "" {
+			if detail != "" {
+				detail += "\n"
+			}
+			detail += captured
+		}
 		if detail == "" {
 			detail = err.Error()
 		}
