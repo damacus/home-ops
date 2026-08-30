@@ -802,7 +802,7 @@ class ProvisioningSafetyRegressionTest(unittest.TestCase):
             "#!/usr/bin/env bash\nexit 0\n", encoding="utf-8"
         )
         (armbian / "lib/functions/cli/commands.sh").write_text(
-            '["docker"]="docker"\n["docker-purge"]="docker"\n',
+            '["build"]="standard_build"\n["docker-purge"]="docker"\n',
             encoding="utf-8",
         )
         (armbian / "lib/functions/image/partitioning.sh").write_text(
@@ -959,7 +959,7 @@ class ProvisioningSafetyRegressionTest(unittest.TestCase):
             def intercept_build(
                 command: Sequence[str | Path], **kwargs: Any
             ) -> subprocess.CompletedProcess[str]:
-                if [str(part) for part in command[:2]] == ["./compile.sh", "docker"]:
+                if [str(part) for part in command[:2]] == ["./compile.sh", "build"]:
                     events.append("build")
                     (armbian / "Dockerfile").write_text("generated\n", encoding="utf-8")
                     (armbian / ".dockerignore").write_text(
