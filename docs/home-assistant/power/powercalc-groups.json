@@ -1,0 +1,261 @@
+{
+  "room_groups": [
+    {
+      "name": "Kitchen light fixtures",
+      "members": [
+        {
+          "power_sensor_id": "sensor.left_spot_1_power",
+          "energy_sensor_id": "sensor.left_spot_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.left_spot_2_power",
+          "energy_sensor_id": "sensor.left_spot_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.left_spot_3_power",
+          "energy_sensor_id": "sensor.left_spot_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_left_2_power",
+          "energy_sensor_id": "sensor.kitchen_spot_left_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_left_3_power",
+          "energy_sensor_id": "sensor.kitchen_spot_left_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_left_4_power",
+          "energy_sensor_id": "sensor.kitchen_spot_left_4_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_middle_1_power",
+          "energy_sensor_id": "sensor.kitchen_spot_middle_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_middle_2_power",
+          "energy_sensor_id": "sensor.kitchen_spot_middle_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_middle_3_power",
+          "energy_sensor_id": "sensor.kitchen_spot_middle_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_right_1_power",
+          "energy_sensor_id": "sensor.kitchen_spot_right_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_right_2_power",
+          "energy_sensor_id": "sensor.kitchen_spot_right_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_right_3_power",
+          "energy_sensor_id": "sensor.kitchen_spot_right_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_spot_right_4_power",
+          "energy_sensor_id": "sensor.kitchen_spot_right_4_energy"
+        },
+        {
+          "power_sensor_id": "sensor.spot_left_1_power",
+          "energy_sensor_id": "sensor.spot_left_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.kitchen_sink_light_strip_power",
+          "energy_sensor_id": "sensor.kitchen_sink_light_strip_energy"
+        }
+      ]
+    },
+    {
+      "name": "Living room light fixtures",
+      "members": [
+        {
+          "power_sensor_id": "sensor.fire_candle_1_power",
+          "energy_sensor_id": "sensor.fire_candle_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.fire_candle_2_power",
+          "energy_sensor_id": "sensor.fire_candle_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.fire_candle_3_power",
+          "energy_sensor_id": "sensor.fire_candle_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.living_room_candle_1_power",
+          "energy_sensor_id": "sensor.living_room_candle_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.living_room_candle_2_power",
+          "energy_sensor_id": "sensor.living_room_candle_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.living_room_candle_3_power",
+          "energy_sensor_id": "sensor.living_room_candle_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.filament_power",
+          "energy_sensor_id": "sensor.filament_energy"
+        },
+        {
+          "power_sensor_id": "sensor.tv_floor_lamp_power",
+          "energy_sensor_id": "sensor.tv_floor_lamp_energy"
+        }
+      ]
+    },
+    {
+      "name": "Hall light fixtures",
+      "members": [
+        {
+          "power_sensor_id": "sensor.hall_spot_1_power",
+          "energy_sensor_id": "sensor.hall_spot_1_energy"
+        },
+        {
+          "power_sensor_id": "sensor.hall_spot_2_power",
+          "energy_sensor_id": "sensor.hall_spot_2_energy"
+        },
+        {
+          "power_sensor_id": "sensor.hall_spot_3_power",
+          "energy_sensor_id": "sensor.hall_spot_3_energy"
+        },
+        {
+          "power_sensor_id": "sensor.hall_spot_4_power_2",
+          "energy_sensor_id": "sensor.hall_spot_4_energy_2"
+        },
+        {
+          "power_sensor_id": "sensor.hall_spot_5_power",
+          "energy_sensor_id": "sensor.hall_spot_5_energy"
+        },
+        {
+          "power_sensor_id": "sensor.hall_spot_6_power",
+          "energy_sensor_id": "sensor.hall_spot_6_energy"
+        }
+      ]
+    },
+    {
+      "name": "Main bedroom colour light",
+      "power_sensor_id": "sensor.bedroom_colour_power",
+      "energy_sensor_id": "sensor.bedroom_colour_energy"
+    },
+    {
+      "name": "Main bedroom Dan bedside lamp",
+      "power_sensor_id": "sensor.dan_s_bedside_lamp_power",
+      "energy_sensor_id": "sensor.dan_s_bedside_lamp_energy"
+    },
+    {
+      "name": "Main bedroom Hue colour lamp",
+      "power_sensor_id": "sensor.hue_colour_lamp_power",
+      "energy_sensor_id": "sensor.hue_colour_lamp_energy"
+    },
+    {
+      "name": "Main bedroom Laura bedside lamp",
+      "power_sensor_id": "sensor.laura_s_bedside_lamp_power",
+      "energy_sensor_id": "sensor.laura_s_bedside_lamp_energy"
+    },
+    {
+      "name": "Harrison's bedroom lights",
+      "power_sensor_id": "sensor.harrison_s_bedside_lamp_power",
+      "energy_sensor_id": "sensor.harrison_s_bedside_lamp_energy"
+    },
+    {
+      "name": "Harrison's bedroom colour bulb",
+      "power_sensor_id": "sensor.harrison_s_colour_bulb_power",
+      "energy_sensor_id": "sensor.harrison_s_colour_bulb_energy"
+    },
+    {
+      "name": "Bedroom four lights",
+      "power_sensor_id": "sensor.big_spare_bedroom_light_power",
+      "energy_sensor_id": "sensor.big_spare_bedroom_light_energy"
+    },
+    {
+      "name": "Landing lights",
+      "power_sensor_id": "sensor.landing_ambiance_power",
+      "energy_sensor_id": "sensor.landing_ambiance_energy"
+    },
+    {
+      "name": "Landing second light",
+      "power_sensor_id": "sensor.landing_ambiance_2_power",
+      "energy_sensor_id": "sensor.landing_ambiance_2_energy"
+    },
+    {
+      "name": "Playroom Sonos speaker",
+      "power_sensor_id": "sensor.playroom_power",
+      "energy_sensor_id": "sensor.playroom_energy"
+    },
+    {
+      "name": "Kitchen Sonos speaker",
+      "power_sensor_id": "sensor.kitchen_power",
+      "energy_sensor_id": "sensor.kitchen_energy"
+    },
+    {
+      "name": "Living room Sonos Beam",
+      "power_sensor_id": "sensor.sonos_beam_power",
+      "energy_sensor_id": "sensor.sonos_beam_energy"
+    },
+    {
+      "name": "Garden lights",
+      "power_sensor_id": "sensor.garden_lights_power",
+      "energy_sensor_id": "sensor.garden_lights_energy"
+    },
+    {
+      "name": "Porch lights",
+      "power_sensor_id": "sensor.porch_power",
+      "energy_sensor_id": "sensor.porch_energy"
+    },
+    {
+      "name": "Loft lights",
+      "power_sensor_id": "sensor.loft_ambiance_power",
+      "energy_sensor_id": "sensor.loft_ambiance_energy"
+    }
+  ],
+  "area_groups": [
+    {
+      "name": "Downstairs light fixtures",
+      "dashboard": true,
+      "members": [
+        "Kitchen light fixtures",
+        "Living room light fixtures",
+        "Hall light fixtures"
+      ]
+    },
+    {
+      "name": "Upstairs light fixtures",
+      "dashboard": true,
+      "members": [
+        "Main bedroom colour light",
+        "Main bedroom Dan bedside lamp",
+        "Main bedroom Hue colour lamp",
+        "Main bedroom Laura bedside lamp",
+        "Harrison's bedroom lights",
+        "Harrison's bedroom colour bulb",
+        "Bedroom four lights",
+        "Landing lights",
+        "Landing second light"
+      ]
+    },
+    {
+      "name": "Outdoor lights",
+      "dashboard": true,
+      "members": [
+        "Garden lights",
+        "Porch lights"
+      ]
+    },
+    {
+      "name": "Loft lights",
+      "dashboard": true,
+      "members": [
+        "Loft lights"
+      ]
+    },
+    {
+      "name": "Sonos speakers",
+      "dashboard": true,
+      "create_utility_meters": false,
+      "members": [
+        "Playroom Sonos speaker",
+        "Kitchen Sonos speaker",
+        "Living room Sonos Beam"
+      ]
+    }
+  ]
+}

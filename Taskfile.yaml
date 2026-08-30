@@ -47,6 +47,9 @@ includes:
     aliases: ["pg"]
     taskfile: .taskfiles/Postgres/Taskfile.yaml
   unifi: .taskfiles/Unifi/Taskfile.yaml
+  home-assistant:
+    aliases: ["ha"]
+    taskfile: .taskfiles/HomeAssistant/Taskfile.yaml
 
 tasks:
   default: task -l
