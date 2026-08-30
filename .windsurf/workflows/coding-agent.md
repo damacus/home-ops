@@ -87,8 +87,8 @@ It's ok if you only complete one task in this session, as there will be more ses
 
 Implement the chosen task thoroughly:
 
-1. Write the code (Kubernetes manifests, Ansible playbooks, or scripts as needed)
-2. Test manually using the cluster or VM validation loop
+1. Write the code (Kubernetes manifests, Mise provisioning tasks, or scripts as needed)
+2. Run focused tests and non-mutating Mise dry runs before any approved hardware test
 3. Fix any issues discovered
 4. Verify the task works end-to-end according to the steps in the JSON
 
@@ -97,7 +97,9 @@ Implement the chosen task thoroughly:
 **CRITICAL:** You MUST verify tasks through the actual infrastructure or tests.
 
 - For Kubernetes: Use `kubectl`, `flux`, and browser access to apps.
-- For Provisioning: Use the VM validation loop (`task provisioning:vm-qemu`).
+- For Provisioning: Run the focused image migration contract suite and the
+  relevant `mise run provisioning:* --dry-run` path. Build, flash, enrol, and
+  retire against real hardware only when that operation is explicitly approved.
 - For Security: Use `inspec` and policy enforcement checks.
 
 **DO:**
@@ -186,23 +188,24 @@ task k8s:resources
 task k8s:kubeconform
 ```
 
-### Ansible & Provisioning
+### Radxa Provisioning
 
 ```fish
-# Ping all hosts
-task ansible:ping
+# Check Docker and host prerequisites
+mise run provisioning:docker:doctor
 
-# Run specific playbook
-task ansible:run playbook=cluster-installation
+# Build and verify the golden image
+mise run provisioning:build
+mise run provisioning:verify provisioning/artifacts/<release-id>.img.xz
 
-# List hosts
-task ansible:list
+# Inspect enrolled nodes
+mise run provisioning:status
 
-# Run node audit
-task provisioning:audit host=<ip>
+# Enrol a flashed host into an existing healthy cluster
+mise run provisioning:enrol <host>
 
-# Run VM validation loop
-task provisioning:vm-qemu
+# Retire a node explicitly
+mise run provisioning:retire <node> <host>
 ```
 
 ---

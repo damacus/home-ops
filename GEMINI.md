@@ -4,7 +4,9 @@ This document provides context and common maintenance actions for the `home-ops`
 
 ## Project Overview
 
-This repository manages a home operations infrastructure using Kubernetes, Flux, and Ansible. It uses `task` (Taskfile) as the primary entry point for automation and maintenance.
+This repository manages home infrastructure with Kubernetes and Flux. Taskfile
+drives cluster and repository maintenance. Mise pins the toolchain and exposes
+the golden-image and node lifecycle under `mise run provisioning:*`.
 
 ## Common Maintenance Actions
 
@@ -63,30 +65,35 @@ This repository manages a home operations infrastructure using Kubernetes, Flux,
     task repo:force-reset
     ```
 
-### 3. Ansible Operations
+### 3. Radxa Provisioning
 
-* **Run Playbook**: Run a specific Ansible playbook.
+* **Check prerequisites**: Validate Docker Desktop and available disk space.
 
     ```bash
-    task ansible:run playbook=cluster-installation
+    mise run provisioning:docker:doctor
     ```
 
-* **Ping Hosts**: Check connectivity to all Ansible hosts.
+* **Build and verify an image**: Build the hardened, unjoined golden image,
+  then verify its artifact set before use.
 
     ```bash
-    task ansible:ping
+    mise run provisioning:build
+    mise run provisioning:verify provisioning/artifacts/<release-id>.img.xz
     ```
 
-* **List Hosts**: List all hosts in the Ansible inventory.
+* **Enrol a host**: Join a flashed host to an existing healthy cluster over
+  SSH. This is an explicit operation; the image never contains a token or
+  cluster address.
 
     ```bash
-    task ansible:list
+    mise run provisioning:enrol <host>
     ```
 
-* **Uptime**: Check uptime of all hosts.
+* **Inspect or retire nodes**:
 
     ```bash
-    task ansible:uptime
+    mise run provisioning:status
+    mise run provisioning:retire <node> <host>
     ```
 
 ## Common Workflows
@@ -137,6 +144,7 @@ This repository manages a home operations infrastructure using Kubernetes, Flux,
 ## Directory Structure Key
 
 * `kubernetes/`: Kubernetes manifests and Flux configuration.
-* `ansible/`: Ansible playbooks and inventory.
 * `.taskfiles/`: Definitions for the `task` CLI.
+* `.mise/tasks/provisioning/`: Mise provisioning entry points.
+* `provisioning/`: Armbian image, artifact, and SSH node lifecycle implementation.
 * `scripts/`: Helper scripts used by tasks.

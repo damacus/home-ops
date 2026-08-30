@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#MISE description="Remove local Armbian build and image artifacts"
+#MISE quiet=true
+#USAGE flag "--deep" help="Also purge Armbian-owned Docker data"
+#USAGE flag "--dry-run" help="List files and scoped data that would be removed"
+set -euo pipefail
+
+args=()
+[[ "${usage_deep:-false}" == "true" ]] && args+=(--deep)
+[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
+exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" clean "${args[@]}"

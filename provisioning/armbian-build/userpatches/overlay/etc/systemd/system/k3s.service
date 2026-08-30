@@ -2,13 +2,13 @@
 Description=Lightweight Kubernetes
 Documentation=https://k3s.io
 Wants=network-online.target
-After=network-online.target k3s-init.service
-Requires=k3s-init.service
+After=network-online.target
+ConditionPathExists=/etc/rancher/k3s/config.yaml
+ConditionPathExists=/etc/rancher/k3s/cluster-token
 
 [Service]
 Type=exec
 EnvironmentFile=-/etc/default/k3s
-ExecStartPre=/usr/local/bin/k3s-node-ip.sh
 ExecStart=/usr/local/bin/k3s server --config /etc/rancher/k3s/config.yaml
 KillMode=process
 Delegate=yes

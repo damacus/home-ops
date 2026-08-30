@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#MISE description="Publish a verified Radxa image artifact set to GitHub"
+#MISE quiet=true
+#USAGE arg "<artifact>" help="Local .img.xz artifact"
+#USAGE flag "--dry-run" help="Print the validation and release plan"
+set -euo pipefail
+# Variables are supplied by Mise's usage parser.
+# shellcheck disable=SC2154
+
+args=("${usage_artifact}")
+[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
+exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" release "${args[@]}"

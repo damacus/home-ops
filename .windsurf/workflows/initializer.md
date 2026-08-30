@@ -20,7 +20,7 @@ Based on `AGENTS.md`, create a directory structure in `.tasks/` that segregates 
 
 **Structure:**
 
-- `.tasks/provisioning.json`: Tasks related to infrastructure, Ansible, and node setup.
+- `.tasks/provisioning.json`: Tasks related to golden images and node setup.
 - `.tasks/kubernetes.json`: Tasks related to cluster configuration, Flux, and core services.
 - `.tasks/home-automation.json`: Tasks related to home automation apps (Home Assistant, etc.).
 - `.tasks/media.json`: Tasks related to media services (Plex, etc.).

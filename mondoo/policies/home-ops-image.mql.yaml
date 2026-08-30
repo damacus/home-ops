@@ -1,8 +1,8 @@
 ---
 policies:
   - uid: home-ops-image
-    name: Home Ops Armbian Image Compliance
-    version: "1.0.0"
+    name: Home Ops Unjoined Armbian Image Compliance
+    version: "2.0.0"
     tags:
       mondoo.com/category: security
       mondoo.com/platform: linux
@@ -14,154 +14,139 @@ policies:
         email: dan.webb@damacus.io
     docs:
       desc: |
-        Replacement for the legacy mounted-image validation profile. Pass the mounted root
-        filesystem with --props rootfs=/path/to/mount.
+        Validate the mounted root filesystem of the hardened Radxa image before
+        it is enrolled into a cluster. Pass --props rootfs=/path/to/mount.
     props:
       - uid: rootfs
         title: Mounted image root filesystem path
         mql: '"/"'
     groups:
-      - title: Cloud-init configuration
-        filters: asset.platform != empty
-        checks:
-          - uid: IMAGE-CLOUD-001
-            title: Cloud-init package is present in the mounted image
-            impact: 100
-            mql: file(props.rootfs + "/var/lib/dpkg/status").content.contains(/Package:\s+cloud-init/)
-          - uid: IMAGE-CLOUD-002
-            title: NoCloud datasource is configured
-            impact: 100
-            mql: file(props.rootfs + "/etc/cloud/cloud.cfg.d/99-ironstone.cfg").content.contains(/datasource_list.*NoCloud/)
-          - uid: IMAGE-CLOUD-003
-            title: Cloud-init user-data exists with valid configuration
-            impact: 100
-            mql: |
-              file(props.rootfs + "/var/lib/cloud/seed/nocloud/user-data") {
-                exists
-                content.contains(/^#cloud-config/)
-                content.contains(/^users:/)
-                content.contains(/^packages:/)
-              }
-          - uid: IMAGE-CLOUD-004
-            title: Cloud-init meta-data exists
-            impact: 100
-            mql: file(props.rootfs + "/var/lib/cloud/seed/nocloud/meta-data").content.contains("instance-id:")
-          - uid: IMAGE-CLOUD-005
-            title: Cloud-init state is clean
-            impact: 100
-            mql: |
-              file(props.rootfs + "/var/lib/cloud/instance").exists == false && file(props.rootfs + "/var/lib/cloud/instances").exists == false
-      - title: Gold image state
+      - title: Clean first-boot state
         filters: asset.platform != empty
         checks:
           - uid: IMAGE-STATE-001
-            title: Machine ID is cleared
+            title: Machine ID and cloud-init instance state are clean
             impact: 100
-            mql: file(props.rootfs + "/etc/machine-id").exists && file(props.rootfs + "/etc/machine-id").size == 0
+            mql: |
+              file(props.rootfs + "/etc/machine-id").size == 0 &&
+              file(props.rootfs + "/var/lib/cloud/instance").exists == false &&
+              file(props.rootfs + "/var/lib/cloud/instances").exists == false
           - uid: IMAGE-STATE-002
-            title: Hostname is cleared
+            title: Hostname is empty before MAC-derived first boot
             impact: 100
             mql: file(props.rootfs + "/etc/hostname").content.trim == ""
           - uid: IMAGE-STATE-003
-            title: SSH host keys are removed
+            title: SSH host keys are absent
             impact: 100
             mql: |
               file(props.rootfs + "/etc/ssh/ssh_host_rsa_key").exists == false &&
               file(props.rootfs + "/etc/ssh/ssh_host_ecdsa_key").exists == false &&
               file(props.rootfs + "/etc/ssh/ssh_host_ed25519_key").exists == false
-      - title: K3s installation
+          - uid: IMAGE-STATE-004
+            title: First boot only derives host identity
+            impact: 100
+            mql: |
+              file(props.rootfs + "/var/lib/cloud/seed/nocloud/user-data") {
+                exists
+                content.contains("/usr/local/bin/ironstone-init.sh")
+                content.contains("cloud-init-per")
+                content.contains("once")
+                content.contains(/systemctl.*k3s/) == false
+                content.contains(/github.com.*keys/) == false
+              }
+      - title: Fixed administrator access
+        filters: asset.platform != empty
+        checks:
+          - uid: IMAGE-USER-001
+            title: Pi user and approved public key are baked into the image
+            impact: 100
+            mql: |
+              file(props.rootfs + "/etc/passwd").content.contains(/^pi:[^:]*:1000:/) &&
+              file(props.rootfs + "/home/pi/.ssh/authorized_keys").content.trim == "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCLr7NoB34qERAAJNLHKgOy9EJ40smz4F9HhU5d5i8s"
+          - uid: IMAGE-USER-002
+            title: Administrator SSH files have private modes
+            impact: 100
+            mql: command("stat -c '%a' " + props.rootfs + "/home/pi/.ssh/authorized_keys").stdout.trim == "600"
+          - uid: IMAGE-USER-003
+            title: SSH passwords, keyboard-interactive, and root login are disabled
+            impact: 100
+            mql: |
+              file(props.rootfs + "/etc/ssh/sshd_config.d/00-ironstone-hardening.conf") {
+                content.contains(/PasswordAuthentication\s+no/)
+                content.contains(/ChallengeResponseAuthentication\s+no/)
+                content.contains(/KbdInteractiveAuthentication\s+no/)
+                content.contains(/PermitRootLogin\s+no/)
+              }
+          - uid: IMAGE-USER-004
+            title: Pi home ownership and mode are private
+            impact: 100
+            mql: command("stat -c '%u:%g:%a' " + props.rootfs + "/home/pi").stdout.trim == "1000:1000:750"
+      - title: Dormant K3s payload
         filters: asset.platform != empty
         checks:
           - uid: IMAGE-K3S-001
-            title: K3s binary is present and executable
+            title: K3s binary and ARM64 air-gap archive are present
             impact: 100
-            mql: command("test -x " + props.rootfs + "/usr/local/bin/k3s").exitcode == 0
+            mql: |
+              command("test -x " + props.rootfs + "/usr/local/bin/k3s").exitcode == 0 &&
+              file(props.rootfs + "/var/lib/rancher/k3s/agent/images/k3s-airgap-images-arm64.tar").exists
           - uid: IMAGE-K3S-002
-            title: K3s kubectl crictl and ctr symlinks are created
+            title: K3s command symlinks are present
             impact: 100
-            mql: |
-              command("test -L " + props.rootfs + "/usr/local/bin/kubectl -a -L " + props.rootfs + "/usr/local/bin/crictl -a -L " + props.rootfs + "/usr/local/bin/ctr").exitcode == 0
+            mql: command("test -L " + props.rootfs + "/usr/local/bin/kubectl -a -L " + props.rootfs + "/usr/local/bin/crictl -a -L " + props.rootfs + "/usr/local/bin/ctr").exitcode == 0
           - uid: IMAGE-K3S-003
-            title: K3s config template is present
+            title: K3s service exists but is not enabled
             impact: 100
             mql: |
-              file(props.rootfs + "/etc/rancher/k3s/config.yaml.template") {
-                exists
-                content.contains("server:")
-                content.contains("${K3S_VIP}")
-                content.contains("token-file:")
-              }
+              file(props.rootfs + "/etc/systemd/system/k3s.service").exists &&
+              file(props.rootfs + "/etc/systemd/system/k3s.service").content.contains("ConditionPathExists=/etc/rancher/k3s/config.yaml") &&
+              file(props.rootfs + "/etc/systemd/system/k3s.service").content.contains("ConditionPathExists=/etc/rancher/k3s/cluster-token") &&
+              command("test ! -e " + props.rootfs + "/etc/systemd/system/multi-user.target.wants/k3s.service").exitcode == 0
           - uid: IMAGE-K3S-004
-            title: K3s systemd service is configured
+            title: No cluster config or token is baked into the image
             impact: 100
             mql: |
-              file(props.rootfs + "/etc/systemd/system/k3s.service") {
-                exists
-                content.contains("Type=exec")
-                content.contains("k3s server")
-              }
+              file(props.rootfs + "/etc/rancher/k3s/config.yaml").exists == false &&
+              file(props.rootfs + "/etc/rancher/k3s/cluster-token").exists == false &&
+              file(props.rootfs + "/var/lib/rancher/k3s/server/token").exists == false
           - uid: IMAGE-K3S-005
-            title: K3s init service is configured
-            impact: 100
-            mql: file(props.rootfs + "/etc/systemd/system/k3s-init.service").content.contains("k3s-init.sh")
-          - uid: IMAGE-K3S-006
-            title: K3s init script is present
+            title: No fixed K3S_DATA partition is configured
             impact: 100
             mql: |
-              file(props.rootfs + "/usr/local/bin/k3s-init.sh") {
-                exists
-                content.contains(/mount.*nfs/)
-                content.contains("cluster-token")
-              }
-          - uid: IMAGE-K3S-007
-            title: Ironstone config is present
-            impact: 100
-            mql: |
-              file(props.rootfs + "/etc/ironstone/config") {
-                exists
-                content.contains("K3S_VIP=")
-                content.contains("NFS_SERVER=")
-                content.contains("NFS_SHARE=")
-              }
-      - title: System configuration
+              file(props.rootfs + "/etc/cloud/cloud.cfg.d/99-ironstone.cfg").content.contains("K3S_DATA") == false &&
+              file(props.rootfs + "/etc/fstab").content.contains("K3S_DATA") == false
+      - title: Updates and node prerequisites
         filters: asset.platform != empty
         checks:
+          - uid: IMAGE-UPDATE-001
+            title: Unattended upgrades cover Noble and Armbian without automatic reboot
+            impact: 100
+            mql: |
+              file(props.rootfs + "/etc/apt/apt.conf.d/50unattended-upgrades") {
+                content.contains("Ubuntu:noble")
+                content.contains("Ubuntu:noble-updates")
+                content.contains("Ubuntu:noble-security")
+                content.contains("Ubuntu:noble-backports")
+                content.contains("Armbian:noble")
+                content.contains(/Automatic-Reboot\s+"false"/)
+              }
+          - uid: IMAGE-UPDATE-002
+            title: Unattended upgrade timer is activated by a valid unit symlink
+            impact: 100
+            mql: |
+              command("test -L " + props.rootfs + "/etc/systemd/system/timers.target.wants/apt-daily-upgrade.timer").exitcode == 0 &&
+              command("readlink " + props.rootfs + "/etc/systemd/system/timers.target.wants/apt-daily-upgrade.timer").stdout.trim.contains(/^\/(usr\/)?lib\/systemd\/system\/apt-daily-upgrade\.timer$/) &&
+              command("test -f " + props.rootfs + "/lib/systemd/system/apt-daily-upgrade.timer -o -f " + props.rootfs + "/usr/lib/systemd/system/apt-daily-upgrade.timer").exitcode == 0
           - uid: IMAGE-SYS-001
-            title: Kernel modules are configured
+            title: Kubernetes kernel modules and sysctls are configured
             impact: 100
             mql: |
-              file(props.rootfs + "/etc/modules-load.d/k3s.conf") {
-                exists
-                content.contains("overlay")
-                content.contains("br_netfilter")
-              }
+              file(props.rootfs + "/etc/modules-load.d/k3s.conf").content.contains("br_netfilter") &&
+              file(props.rootfs + "/etc/sysctl.d/99-k3s.conf").content.contains(/net\.ipv4\.ip_forward\s*=\s*1/)
           - uid: IMAGE-SYS-002
-            title: Sysctl settings are configured
+            title: Storage packages are installed
             impact: 100
             mql: |
-              file(props.rootfs + "/etc/sysctl.d/99-k3s.conf") {
-                exists
-                content.contains(/net\.ipv4\.ip_forward\s*=\s*1/)
-                content.contains(/net\.bridge\.bridge-nf-call-iptables\s*=\s*1/)
-              }
-          - uid: IMAGE-SYS-003
-            title: SSH hardening is configured
-            impact: 100
-            mql: |
-              file(props.rootfs + "/etc/ssh/sshd_config.d/99-ironstone-hardening.conf") {
-                exists
-                content.contains(/PasswordAuthentication\s+no/)
-                content.contains(/PermitRootLogin\s+no/)
-              }
-          - uid: IMAGE-SYS-004
-            title: NFS client package is present
-            impact: 100
-            mql: file(props.rootfs + "/var/lib/dpkg/status").content.contains(/Package:\s+nfs-common/)
-          - uid: IMAGE-SYS-005
-            title: Ironstone init script is present
-            impact: 100
-            mql: |
-              file(props.rootfs + "/usr/local/bin/ironstone-init.sh") {
-                exists
-                content.contains(/hostnamectl|hostname/)
-              }
+              file(props.rootfs + "/var/lib/dpkg/status").content.contains(/Package:\s+nfs-common/) &&
+              file(props.rootfs + "/var/lib/dpkg/status").content.contains(/Package:\s+open-iscsi/) &&
+              file(props.rootfs + "/var/lib/dpkg/status").content.contains(/Package:\s+multipath-tools/)

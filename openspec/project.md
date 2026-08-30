@@ -10,7 +10,8 @@ operation.
 ## Architecture
 
 - Flux reconciles Kubernetes resources from Git.
-- Ansible and cloud-init provision hosts and bootstrap the cluster.
+- Mise builds and verifies hardened Armbian golden images. Explicit SSH
+  enrolment joins a flashed host to an existing healthy cluster.
 - External Secrets projects secret material from its authoritative secret
   store into Kubernetes.
 - Application databases and other mutable service data require backup and
