@@ -5,9 +5,15 @@ require_relative "../kubernetes/apps/authentication/zitadel/app/reconcile-access
 class RecordingZitadelClient
   attr_reader :calls
 
-  def initialize(policy, provider_converges: true)
+  def initialize(
+    policy,
+    provider_converges: true,
+    live_provider_ids: nil,
+    login_update_delay: 0
+  )
     @calls = []
     @provider = policy.fetch("identityProviders").fetch(0)
+    @live_provider_ids = live_provider_ids || [@provider.fetch("id")]
     @desired_options = @provider.fetch("providerOptions")
     @current_options = @desired_options.merge(
       "isCreationAllowed" => true,
@@ -18,16 +24,28 @@ class RecordingZitadelClient
     @provider_converges = provider_converges
     @provider_updated = false
     @provider_update_pending = false
+    @login_update_delay = login_update_delay
+    @pending_login = nil
   end
 
   def post(path, _body)
     @calls << [:post, path]
-    { "result" => [{ "idpId" => @provider.fetch("id") }] }
+    { "result" => @live_provider_ids.map { |id| { "idpId" => id } } }
   end
 
   def get(path)
     @calls << [:get, path]
-    return { "policy" => @current_login } if path == "/admin/v1/policies/login"
+    if path == "/admin/v1/policies/login"
+      if @pending_login
+        if @login_update_delay.positive?
+          @login_update_delay -= 1
+        else
+          @current_login = @pending_login
+          @pending_login = nil
+        end
+      end
+      return { "policy" => @current_login }
+    end
     return provider_response(@current_options) unless @provider_updated
 
     if @provider_update_pending
@@ -42,7 +60,11 @@ class RecordingZitadelClient
   def put(path, body)
     @calls << [:put, path]
     if path == "/admin/v1/policies/login"
-      @current_login = body
+      if @login_update_delay.zero?
+        @current_login = body
+      else
+        @pending_login = body
+      end
     else
       @provider_updated = true
       @provider_update_pending = true
@@ -112,5 +134,42 @@ class ZitadelAccessPolicyTest < Minitest::Test
       operation == :put && path == "/admin/v1/policies/login"
     end
     refute login_updated
+  end
+
+  def test_rejects_an_unexpected_live_provider_without_writing
+    policy = load_policy(POLICY_PATH)
+    desired_id = policy.fetch("identityProviders").fetch(0).fetch("id")
+    client = RecordingZitadelClient.new(
+      policy,
+      live_provider_ids: [desired_id, "unexpected-provider"]
+    )
+
+    assert_raises(PolicyError) do
+      capture_io do
+        reconcile_policy(policy, client: client, sleeper: ->(_seconds) {})
+      end
+    end
+
+    writes = client.calls.select { |operation, _path| operation == :put }
+    assert_empty writes
+  end
+
+  def test_retries_final_login_policy_verification_until_it_converges
+    policy = load_policy(POLICY_PATH)
+    client = RecordingZitadelClient.new(policy, login_update_delay: 1)
+
+    capture_io do
+      reconcile_policy(policy, client: client, sleeper: ->(_seconds) {})
+    end
+
+    login_path = "/admin/v1/policies/login"
+    login_put = client.calls.index do |operation, path|
+      operation == :put && path == login_path
+    end
+    verification_reads = client.calls[(login_put + 1)..].count do |operation, path|
+      operation == :get && path == login_path
+    end
+
+    assert_operator verification_reads, :>=, 2
   end
 end
