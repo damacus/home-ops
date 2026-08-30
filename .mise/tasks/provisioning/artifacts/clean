@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Remove generated Radxa image artifact files"
+#MISE quiet=true
+#USAGE flag "--dry-run" help="List artifact paths that would be removed"
+set -euo pipefail
+
+args=()
+[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
+exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" artifacts-clean "${args[@]}"

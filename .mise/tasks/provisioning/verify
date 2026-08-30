@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#MISE description="Verify a Radxa image artifact or harmless rootfs fixture"
+#MISE quiet=true
+#USAGE arg "[artifact]" help="Local .img.xz artifact"
+#USAGE flag "--rootfs <path>" help="Inspect a rootfs fixture without Docker"
+#USAGE flag "--raw" help="Emit the verification report as JSON"
+set -euo pipefail
+
+args=()
+[[ -n "${usage_artifact:-}" ]] && args+=("${usage_artifact}")
+[[ -n "${usage_rootfs:-}" ]] && args+=(--rootfs "${usage_rootfs}")
+[[ "${usage_raw:-false}" == "true" ]] && args+=(--raw)
+exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" verify "${args[@]}"

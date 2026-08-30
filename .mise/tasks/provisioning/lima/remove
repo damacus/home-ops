@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Remove the one-time legacy ironstone Lima VM"
+#MISE quiet=true
+#USAGE flag "--dry-run" help="Print the three permitted limactl commands"
+set -euo pipefail
+
+args=()
+[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
+exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" lima-remove "${args[@]}"

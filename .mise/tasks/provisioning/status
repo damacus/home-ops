@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#MISE description="Report cluster nodes or one host's provisioning status"
+#MISE quiet=true
+#USAGE arg "[host]" help="Optional host name or address"
+#USAGE flag "--raw" help="Retain plain command output"
+#USAGE flag "--rtk" help="Compact eligible kubectl output through RTK"
+set -euo pipefail
+
+args=()
+[[ -n "${usage_host:-}" ]] && args+=("${usage_host}")
+[[ "${usage_raw:-false}" == "true" ]] && args+=(--raw)
+[[ "${usage_rtk:-false}" == "true" ]] && args+=(--rtk)
+exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" status "${args[@]}"
