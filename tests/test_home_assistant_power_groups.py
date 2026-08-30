@@ -260,6 +260,30 @@ class PowerGroupConfigTest(unittest.TestCase):
             + "\n",
         )
 
+    def test_render_powercalc_package_creates_fixed_virtual_sensor(self) -> None:
+        module = load_module()
+        config = {
+            "virtual_sensors": [
+                {
+                    "name": "Example measured device",
+                    "unique_id": "example_measured_device_powercalc",
+                    "entity_id": "switch.example_measured_device",
+                    "power": 2.0,
+                    "standby_power": 1.0,
+                    "unavailable_power": 0.0,
+                }
+            ],
+            "room_groups": [],
+            "area_groups": [],
+        }
+
+        rendered = module.render_package(config)
+
+        self.assertIn('    - name: "Example measured device"\n', rendered)
+        self.assertIn("      fixed:\n        power: 2.0\n", rendered)
+        self.assertIn("      standby_power: 1.0\n", rendered)
+        self.assertIn("      unavailable_power: 0.0\n", rendered)
+
     def test_render_powercalc_package_creates_package_managed_room_group(self) -> None:
         module = load_module()
         config = {
@@ -282,6 +306,7 @@ class PowerGroupConfigTest(unittest.TestCase):
                 {
                     "name": "Downstairs light fixtures",
                     "dashboard": True,
+                    "create_utility_meters": False,
                     "force_calculate_group_energy": True,
                     "members": ["Kitchen light fixtures"],
                 }
@@ -300,6 +325,7 @@ class PowerGroupConfigTest(unittest.TestCase):
                     '    - create_group: "Downstairs light fixtures"',
                     '      unique_id: "Downstairs light fixtures"',
                     "      create_energy_sensor: true",
+                    "      create_utility_meters: false",
                     "      force_calculate_group_energy: true",
                     "      entities:",
                     '        - create_group: "Kitchen light fixtures"',
@@ -462,6 +488,33 @@ class PowerGroupConfigTest(unittest.TestCase):
                 "sensor.upstairs_light_fixtures_energy",
                 "sensor.outdoor_lights_energy",
                 "sensor.loft_lights_energy",
+                "sensor.sonos_speakers_energy",
+            ],
+        )
+
+    def test_checked_in_sonos_group_uses_existing_powercalc_sensors(self) -> None:
+        module = load_module()
+        config = module.load_json(CONFIG_PATH)
+        room_groups = {room["name"]: room for room in config["room_groups"]}
+        area_groups = {area["name"]: area for area in config["area_groups"]}
+
+        self.assertEqual(
+            area_groups["Sonos speakers"]["members"],
+            [
+                "Playroom Sonos speaker",
+                "Kitchen Sonos speaker",
+                "Living room Sonos Beam",
+            ],
+        )
+        self.assertEqual(
+            [
+                (room_groups[name]["power_sensor_id"], room_groups[name]["energy_sensor_id"])
+                for name in area_groups["Sonos speakers"]["members"]
+            ],
+            [
+                ("sensor.playroom_power", "sensor.playroom_energy"),
+                ("sensor.kitchen_power", "sensor.kitchen_energy"),
+                ("sensor.sonos_beam_power", "sensor.sonos_beam_energy"),
             ],
         )
 

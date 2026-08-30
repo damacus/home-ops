@@ -17,12 +17,36 @@ def load_json(path: Path) -> dict[str, Any]:
 
 
 def validate_config(config: dict[str, Any]) -> None:
+    virtual_sensors = config.get("virtual_sensors", [])
     room_groups = config.get("room_groups")
     area_groups = config.get("area_groups")
+    if not isinstance(virtual_sensors, list):
+        raise ValueError("virtual_sensors must be a list")
     if not isinstance(room_groups, list):
         raise ValueError("room_groups must be a list")
     if not isinstance(area_groups, list):
         raise ValueError("area_groups must be a list")
+
+    virtual_sensor_ids: set[str] = set()
+    for sensor in virtual_sensors:
+        if not isinstance(sensor, dict):
+            raise ValueError("virtual sensor entries must be objects")
+        name = sensor.get("name")
+        unique_id = sensor.get("unique_id")
+        entity_id = sensor.get("entity_id")
+        if not isinstance(name, str) or not name:
+            raise ValueError("virtual sensor name must be a non-empty string")
+        if not isinstance(unique_id, str) or not unique_id:
+            raise ValueError(f"{name} unique_id must be a non-empty string")
+        if unique_id in virtual_sensor_ids:
+            raise ValueError(f"Duplicate virtual sensor unique_id: {unique_id}")
+        if not isinstance(entity_id, str) or "." not in entity_id:
+            raise ValueError(f"{name} entity_id must be an entity ID")
+        for field in ("power", "standby_power", "unavailable_power"):
+            value = sensor.get(field)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+                raise ValueError(f"{name} {field} must be a non-negative number")
+        virtual_sensor_ids.add(unique_id)
 
     room_names: set[str] = set()
     for room in room_groups:
@@ -64,6 +88,7 @@ def validate_config(config: dict[str, Any]) -> None:
         dashboard = area.get("dashboard", False)
         render = area.get("render", True)
         force_calculate_group_energy = area.get("force_calculate_group_energy", False)
+        create_utility_meters = area.get("create_utility_meters")
         dashboard_energy_sensor_id = area.get("dashboard_energy_sensor_id")
         if not isinstance(area_name, str) or not area_name:
             raise ValueError("area group name must be a non-empty string")
@@ -75,6 +100,8 @@ def validate_config(config: dict[str, Any]) -> None:
             raise ValueError(f"{area_name} render must be a boolean")
         if not isinstance(force_calculate_group_energy, bool):
             raise ValueError(f"{area_name} force_calculate_group_energy must be a boolean")
+        if create_utility_meters is not None and not isinstance(create_utility_meters, bool):
+            raise ValueError(f"{area_name} create_utility_meters must be a boolean")
         if dashboard_energy_sensor_id is not None and (
             not isinstance(dashboard_energy_sensor_id, str)
             or not dashboard_energy_sensor_id.startswith("sensor.")
@@ -118,12 +145,24 @@ def render_package(config: dict[str, Any]) -> str:
         "  create_utility_meters: true",
         "  sensors:",
     ]
+    for sensor in config.get("virtual_sensors", []):
+        lines.append(f"    - name: {yaml_double_quote(sensor['name'])}")
+        lines.append(f"      unique_id: {yaml_double_quote(sensor['unique_id'])}")
+        lines.append(f"      entity_id: {yaml_double_quote(sensor['entity_id'])}")
+        lines.append("      create_energy_sensor: true")
+        lines.append("      fixed:")
+        lines.append(f"        power: {sensor['power']}")
+        lines.append(f"      standby_power: {sensor['standby_power']}")
+        lines.append(f"      unavailable_power: {sensor['unavailable_power']}")
     for area in config["area_groups"]:
         if area.get("render", True) is False:
             continue
         lines.append(f"    - create_group: {yaml_double_quote(area['name'])}")
         lines.append(f"      unique_id: {yaml_double_quote(area['name'])}")
         lines.append("      create_energy_sensor: true")
+        if "create_utility_meters" in area:
+            value = str(area["create_utility_meters"]).lower()
+            lines.append(f"      create_utility_meters: {value}")
         if area.get("force_calculate_group_energy", False):
             lines.append("      force_calculate_group_energy: true")
         lines.append("      entities:")

@@ -177,6 +177,21 @@
       "energy_sensor_id": "sensor.landing_ambiance_2_energy"
     },
     {
+      "name": "Playroom Sonos speaker",
+      "power_sensor_id": "sensor.playroom_power",
+      "energy_sensor_id": "sensor.playroom_energy"
+    },
+    {
+      "name": "Kitchen Sonos speaker",
+      "power_sensor_id": "sensor.kitchen_power",
+      "energy_sensor_id": "sensor.kitchen_energy"
+    },
+    {
+      "name": "Living room Sonos Beam",
+      "power_sensor_id": "sensor.sonos_beam_power",
+      "energy_sensor_id": "sensor.sonos_beam_energy"
+    },
+    {
       "name": "Garden lights",
       "power_sensor_id": "sensor.garden_lights_power",
       "energy_sensor_id": "sensor.garden_lights_energy"
@@ -230,6 +245,16 @@
       "dashboard": true,
       "members": [
         "Loft lights"
+      ]
+    },
+    {
+      "name": "Sonos speakers",
+      "dashboard": true,
+      "create_utility_meters": false,
+      "members": [
+        "Playroom Sonos speaker",
+        "Kitchen Sonos speaker",
+        "Living room Sonos Beam"
       ]
     }
   ]

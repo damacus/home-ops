@@ -18,6 +18,7 @@ sensor and its area parent counts the same child energy twice.
 - Upstairs light fixtures: main bedroom light fixtures, Harrison's bedroom lights, bedroom four lights, and landing lights.
 - Outdoor lights: Garden lights, Porch lights.
 - Loft lights: Loft ambiance.
+- Sonos speakers: Playroom SYMFONISK, Kitchen One SL, and Living room Sonos Beam.
 
 Jack's bedroom is part of upstairs, but it does not currently have a Jack or
 Bedroom 3 PowerCalc energy sensor. Add that room to `Upstairs light fixtures` after a
@@ -31,6 +32,7 @@ Add these as individual devices:
 - `sensor.upstairs_light_fixtures_energy`
 - `sensor.outdoor_lights_energy`
 - `sensor.loft_lights_energy`
+- `sensor.sonos_speakers_energy`
 
 ## UI Steps
 
@@ -49,7 +51,7 @@ Remove `sensor.downstairs_lights_energy_2` and `sensor.upstairs_lights_energy`
 if they are currently configured. Those legacy groups use polluted room
 aggregate history and produce unrealistic totals in the Energy Dashboard.
 
-If verification does not show all four area sensors, complete the UI steps above with
+If verification does not show all five grouped sensors, complete the UI steps above with
 an authenticated Home Assistant user session. The sensors can exist in Home Assistant
 state and PowerCalc storage before they are added to the Energy Dashboard.
 
@@ -63,11 +65,12 @@ kubectl exec -n home-automation home-assistant-0 -- cat /config/.storage/energy 
   | sort
 ```
 
-The output should include the four area sensors listed above:
+The output should include the five grouped sensors listed above:
 
 ```text
 sensor.downstairs_light_fixtures_energy
 sensor.loft_lights_energy
+sensor.sonos_speakers_energy
 sensor.outdoor_lights_energy
 sensor.upstairs_light_fixtures_energy
 ```
