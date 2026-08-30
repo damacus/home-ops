@@ -58,6 +58,10 @@ func (a *App) run(ctx context.Context, command string, args []string) error {
 		return a.runArtifact(ctx, args)
 	case "armbian":
 		return a.runArmbian(ctx, args)
+	case "verify":
+		return a.runVerify(ctx, args)
+	case "flash":
+		return a.runFlash(ctx, args)
 	default:
 		return usageError{message: fmt.Sprintf("unknown command %q", command)}
 	}
