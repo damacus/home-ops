@@ -46,6 +46,7 @@ BUILD_PARAMETERS = {
     "BUILD_DESKTOP": "no",
     "KERNEL_CONFIGURE": "no",
     "INSTALL_HEADERS": "yes",
+    "INCLUDE_HOME_DIR": "yes",
     "ENABLE_EXTENSIONS": "nvme-rescan",
     "COMPRESS_OUTPUTIMAGE": "xz",
     "FIXED_IMAGE_SIZE": "3072",
@@ -881,9 +882,15 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 loop=$(losetup --find --show --partscan /image.img)
+while read -r candidate type device_number; do
+  if [ "$type" = part ] && [ ! -b "$candidate" ]; then
+    mknod -m 0660 "$candidate" b "${device_number%:*}" "${device_number#*:}"
+  fi
+done < <(lsblk -rno PATH,TYPE,MAJ:MIN "$loop")
 mkdir -p /mnt/root
 root=""
 while read -r candidate; do
+  [ "$(blkid -s TYPE -o value "$candidate" || true)" = ext4 ] || continue
   mount -o ro,noload "$candidate" /mnt/root
   mounted=true
   if test -f /mnt/root/etc/os-release && test -x /mnt/root/usr/local/bin/k3s && test -f /mnt/root/var/lib/rancher/k3s/agent/images/k3s-airgap-images-arm64.tar; then
@@ -892,7 +899,7 @@ while read -r candidate; do
   fi
   umount /mnt/root
   mounted=false
-done < <(lsblk -rno PATH,TYPE,FSTYPE "$loop" | awk '$2 == "part" && $3 == "ext4" {print $1}')
+done < <(lsblk -rno PATH,TYPE "$loop" | awk '$2 == "part" {print $1}')
 test -n "$root"
 reported_version=$(chroot /mnt/root /usr/local/bin/k3s --version 2>&1)
 K3S_REPORTED_VERSION="$reported_version" python3 /verifier/provision.py _rootfs-report \
