@@ -28,3 +28,5 @@ For existing automation, both composite tasks also translate the former Task
 `name=value` arguments. `health` accepts `format`, `notify`, `verbose`, `raw`,
 and `timeout`. `morning-check` additionally accepts `edge_smoke`, `log_noise`,
 `skip_http3`, `period`, and `top`. Prefer the canonical flags for new callers.
+An empty legacy value uses the former Task default. For example, `timeout=` is
+45 seconds, `period=` is 1 hour, `top=` is 20, and `edge_smoke=` remains true.

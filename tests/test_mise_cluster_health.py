@@ -251,3 +251,93 @@ class TestMiseClusterHealth(unittest.TestCase):
 
                 self.assertEqual(result.returncode, 1, result.stderr)
                 self.assertTrue(notifications.exists())
+
+    def test_health_empty_legacy_variables_keep_task_defaults(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            tmp_path = Path(directory)
+            bin_dir = tmp_path / "bin"
+            bin_dir.mkdir()
+            calls = tmp_path / "calls"
+            executable(
+                bin_dir / "mise",
+                "#!/usr/bin/env bash\n"
+                "printf '%s\\t' \"$@\" >> \"$CALLS\"\n"
+                "printf '\\n' >> \"$CALLS\"\n",
+            )
+            env = os.environ.copy()
+            env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
+            env["CALLS"] = str(calls)
+
+            result = run(
+                "bash",
+                str(isolated_task(tmp_path, "health")),
+                "format=",
+                "notify=",
+                "verbose=",
+                "raw=",
+                "timeout=",
+                "period=",
+                "top=",
+                "skip_http3=",
+                "include_esphome_canary=",
+                "esphome_ws_path=",
+                "esphome_ws_contains=",
+                "json=",
+                "workers=",
+                "--literal-flag",
+                env=env,
+                cwd=tmp_path,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            expected = [
+                ["run", f"kubernetes:{task}", "--", "--format", "text", "--timeout", "45s", "--period", "1h", "--top", "20", "--literal-flag"]
+                for task in ("health-nodes", "health-kube-vip", "health-cilium", "health-pods", "health-deployments", "cnpg-health", "grafana-alerts")
+            ]
+            self.assertEqual([line.split("\t")[:-1] for line in calls.read_text().splitlines()], expected)
+
+    def test_morning_check_empty_legacy_variables_keep_task_defaults(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            tmp_path = Path(directory)
+            bin_dir = tmp_path / "bin"
+            bin_dir.mkdir()
+            calls = tmp_path / "calls"
+            executable(
+                bin_dir / "mise",
+                "#!/usr/bin/env bash\n"
+                "printf '%s\\t' \"$@\" >> \"$CALLS\"\n"
+                "printf '\\n' >> \"$CALLS\"\n",
+            )
+            env = os.environ.copy()
+            env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
+            env["CALLS"] = str(calls)
+
+            result = run(
+                "bash",
+                str(isolated_task(tmp_path, "morning-check")),
+                "format=",
+                "notify=",
+                "verbose=",
+                "raw=",
+                "timeout=",
+                "edge_smoke=",
+                "log_noise=",
+                "skip_http3=",
+                "period=",
+                "top=",
+                "include_esphome_canary=",
+                "esphome_ws_path=",
+                "esphome_ws_contains=",
+                "json=",
+                "workers=",
+                "--literal-flag",
+                env=env,
+                cwd=tmp_path,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            expected = [
+                ["run", f"kubernetes:{task}", "--", "--format", "text", "--timeout", "45s", "--period", "1h", "--top", "20", "--literal-flag"]
+                for task in ("health", "gitops-health", "external-secrets-health", "service-account-health", "cnpg-backups", "edge-smoke")
+            ]
+            self.assertEqual([line.split("\t")[:-1] for line in calls.read_text().splitlines()], expected)

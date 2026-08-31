@@ -10,6 +10,9 @@ log_noise=false
 child_args=()
 for argument in "$@"; do
   case "$argument" in
+    format=)
+      child_args+=(--format text)
+      ;;
     format=text|format=ndjson)
       child_args+=(--format "${argument#format=}")
       ;;
@@ -32,11 +35,20 @@ for argument in "$@"; do
       ;;
     raw=*)
       ;;
+    timeout=)
+      child_args+=(--timeout 45s)
+      ;;
     timeout=*)
       child_args+=(--timeout "${argument#timeout=}s")
       ;;
+    period=)
+      child_args+=(--period 1h)
+      ;;
     period=*)
       child_args+=(--period "${argument#period=}")
+      ;;
+    top=)
+      child_args+=(--top 20)
       ;;
     top=*)
       child_args+=(--top "${argument#top=}")
@@ -51,13 +63,17 @@ for argument in "$@"; do
       ;;
     include_esphome_canary=*)
       ;;
+    esphome_ws_path=)
+      ;;
     esphome_ws_path=*)
       child_args+=(--esphome-websocket-path "${argument#esphome_ws_path=}")
+      ;;
+    esphome_ws_contains=)
       ;;
     esphome_ws_contains=*)
       child_args+=(--esphome-websocket-contains "${argument#esphome_ws_contains=}")
       ;;
-    edge_smoke=true)
+    edge_smoke=|edge_smoke=true)
       edge_smoke=true
       ;;
     edge_smoke=*)
