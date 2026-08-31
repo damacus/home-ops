@@ -10,4 +10,5 @@ set -euo pipefail
 
 args=("${usage_node}" "${usage_host}")
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
-exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" retire "${args[@]}"
+cd "${MISE_PROJECT_ROOT}"
+exec go run ./cmd/provisioning retire "${args[@]}"

@@ -10,4 +10,5 @@ args=()
 [[ -n "${usage_artifact:-}" ]] && args+=("${usage_artifact}")
 [[ -n "${usage_rootfs:-}" ]] && args+=(--rootfs "${usage_rootfs}")
 [[ "${usage_raw:-false}" == "true" ]] && args+=(--raw)
-exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" verify "${args[@]}"
+cd "${MISE_PROJECT_ROOT}"
+exec go run ./cmd/provisioning verify "${args[@]}"

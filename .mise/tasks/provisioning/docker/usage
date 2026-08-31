@@ -3,4 +3,15 @@
 #MISE quiet=true
 set -euo pipefail
 
-exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" docker-usage
+docker system df -v
+raw_paths=("${HOME}/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw")
+settings="${HOME}/Library/Group Containers/group.com.docker/settings-store.json"
+if [[ -f "${settings}" ]]; then
+  while IFS= read -r path; do
+    [[ "${path}" == */Docker.raw ]] && raw_paths+=("${path}")
+  done < <(jq -r '.. | strings | select(endswith("Docker.raw"))' "${settings}")
+fi
+for path in "${raw_paths[@]}"; do
+  [[ -f "${path}" ]] || continue
+  stat -f '%N: logical=%z bytes physical=%b bytes' "${path}" 2>/dev/null || stat -c '%n: logical=%s bytes physical=%b bytes' "${path}"
+done

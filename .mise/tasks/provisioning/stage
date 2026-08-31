@@ -9,4 +9,24 @@ set -euo pipefail
 
 args=("${usage_artifact}")
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
-exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" stage "${args[@]}"
+cd "${MISE_PROJECT_ROOT}"
+validation="$(go run ./cmd/provisioning artifact validate "${usage_artifact}")"
+image="$(jq -r .image <<<"${validation}")"
+checksum="$(jq -r .checksum <<<"${validation}")"
+manifest="$(jq -r .manifest <<<"${validation}")"
+release_id="$(jq -r .release_id <<<"${validation}")"
+destination="/var/nfs/shared/nfs/provisioning/images/radxa-5b-plus/${release_id}"
+files=("${image}" "${checksum}" "${manifest}")
+if [[ "${usage_dry_run:-false}" == "true" ]]; then
+  jq -n --arg validate "${image}" --argjson copy "$(printf '%s\n' "${files[@]}" | jq -Rsc 'split("\n") | map(select(length > 0))')" --arg destination "${destination}" '{validate:$validate,copy:$copy,destination:$destination}'
+  exit 0
+fi
+mkdir -p -- "$(dirname "${destination}")"
+[[ ! -e "${destination}" ]] || { echo "staged release already exists: ${destination}" >&2; exit 1; }
+temporary="$(mktemp -d "$(dirname "${destination}")/.${release_id}.XXXXXX")"
+cleanup() { rm -rf -- "${temporary}"; }
+trap cleanup EXIT
+for file in "${files[@]}"; do cp -p -- "${file}" "${temporary}/"; done
+go run ./cmd/provisioning artifact validate "${temporary}/$(basename "${image}")" >/dev/null
+mv -- "${temporary}" "${destination}"
+trap - EXIT

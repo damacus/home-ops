@@ -8,4 +8,9 @@ set -euo pipefail
 args=()
 [[ "${usage_verbose:-false}" == "true" ]] && args+=(--verbose)
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
-exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" build "${args[@]}"
+cd "${MISE_PROJECT_ROOT}"
+if [[ "${usage_dry_run:-false}" != "true" ]]; then
+  mise run provisioning:docker:doctor
+  git submodule update --init -- provisioning/armbian-build/armbian-build-repo
+fi
+exec go run ./cmd/provisioning build "${args[@]}"

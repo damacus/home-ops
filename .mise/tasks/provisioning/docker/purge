@@ -8,4 +8,14 @@ set -euo pipefail
 args=()
 [[ "${usage_reclaim:-false}" == "true" ]] && args+=(--reclaim)
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
-exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" docker-purge "${args[@]}"
+cd "${MISE_PROJECT_ROOT}"
+armbian="${MISE_PROJECT_ROOT}/provisioning/armbian-build/armbian-build-repo"
+if [[ "${usage_dry_run:-false}" == "true" ]]; then
+  jq -n --arg compile "${armbian}/compile.sh" --argjson reclaim "${usage_reclaim:-false}" '{before:"docker system df -v",purge:[$compile,"docker-purge"],reclaim:$reclaim,after:"docker system df -v"}'
+  exit 0
+fi
+go run ./cmd/provisioning armbian check docker-purge
+docker system df -v
+(cd "${armbian}" && ./compile.sh docker-purge)
+if [[ "${usage_reclaim:-false}" == "true" ]]; then docker run --rm --privileged --pid=host docker/desktop-reclaim-space; fi
+docker system df -v
