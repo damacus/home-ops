@@ -47,7 +47,9 @@ SEQUENCE = (
 
 
 def run(*command: str, cwd: Path = ROOT, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, cwd=cwd, env=env, text=True, capture_output=True, check=False)
+    contract_env = (os.environ if env is None else env).copy()
+    contract_env.pop("MISE_LOG_LEVEL", None)
+    return subprocess.run(command, cwd=cwd, env=contract_env, text=True, capture_output=True, check=False)
 
 
 def executable(path: Path, content: str) -> None:

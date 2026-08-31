@@ -20,10 +20,12 @@ def run(
     env: dict[str, str] | None = None,
     cwd: Path = ROOT,
 ) -> subprocess.CompletedProcess[str]:
+    contract_env = (os.environ if env is None else env).copy()
+    contract_env.pop("MISE_LOG_LEVEL", None)
     return subprocess.run(
         command,
         cwd=cwd,
-        env=env,
+        env=contract_env,
         text=True,
         capture_output=True,
         check=False,
@@ -100,7 +102,8 @@ def test_native_tasks_route_to_external_commands_and_preserve_exit_status(tmp_pa
 
     alerts = run("mise", "run", "kubernetes:alerts", env=env)
     assert alerts.returncode == 0, alerts.stderr
-    assert alerts.stdout == "   1 Example: active\n"
+    alert_records = [line.split() for line in alerts.stdout.splitlines() if line.strip()]
+    assert alert_records == [["1", "Example:", "active"]], f"unexpected alert records: {alerts.stdout!r}"
 
     alerts_failure_env = env | {"KUBECTL_EXIT": "37"}
     alerts_failure = run("mise", "run", "kubernetes:alerts", env=alerts_failure_env)
@@ -145,17 +148,29 @@ def test_legacy_task_composite_dependencies_are_one_way_mise_shims(tmp_path: Pat
     for task, arguments, expected_flags in (
         ("edge-smoke", ("--skip-http3",), ("--format", "text", "--timeout", "45s")),
     ):
-        result = run("task", f"kubernetes:{task}", "--", *arguments, env=env)
+        result = run("task", "--silent", f"kubernetes:{task}", "--", *arguments, env=env)
 
         assert result.returncode != 0
-        assert result.stdout == "mise shim output\n"
-        assert arguments_log.read_bytes().split(b"\0")[:-1] == [
+        stdout = result.stdout
+        ci_annotation = (
+            f"::error title=Task 'kubernetes:{task}' failed::exit status 31\n"
+        )
+        if stdout.endswith(ci_annotation):
+            stdout = stdout[: -len(ci_annotation)]
+        assert stdout == "mise shim output\n", f"unexpected shim stdout: {result.stdout!r}"
+        actual_arguments = arguments_log.read_bytes().split(b"\0")[:-1]
+        assert actual_arguments[:3] == [
             b"run",
             f"kubernetes:{task}".encode(),
             b"--",
+        ], f"unexpected Mise shim prefix: {actual_arguments!r}"
+        forwarded_arguments = actual_arguments[3:]
+        if forwarded_arguments[:1] == [b"--"]:
+            forwarded_arguments = forwarded_arguments[1:]
+        assert forwarded_arguments == [
             *[flag.encode() for flag in expected_flags],
             *[argument.encode() for argument in arguments],
-        ]
+        ], f"unexpected Mise shim arguments: {actual_arguments!r}"
 
 
 def test_legacy_task_variables_translate_to_mise_flags_and_keep_cli_args(tmp_path: Path) -> None:

@@ -19,6 +19,9 @@ for argument in "$@"; do
 done
 command -v flate >/dev/null || { printf 'Missing flate\n' >&2; exit 1; }
 command -v git >/dev/null || { printf 'Missing git\n' >&2; exit 1; }
+# The task resolves base= to an explicit worktree and passes --path-orig.
+# Do not let Flate also infer --base from the caller's environment.
+unset FLATE_BASE
 api_versions='policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule'
 if [ -n "$path_orig" ]; then
   exec flate --no-progress diff all --api-versions "$api_versions" --path "$path" --path-orig "$path_orig" -o "$output"

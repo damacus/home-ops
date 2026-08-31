@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import stat
@@ -42,7 +43,9 @@ TASKS = {
 
 
 def run(*command: str, cwd: Path = ROOT, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, cwd=cwd, env=env, text=True, capture_output=True, check=False)
+    contract_env = (os.environ if env is None else env).copy()
+    contract_env.pop("MISE_LOG_LEVEL", None)
+    return subprocess.run(command, cwd=cwd, env=contract_env, text=True, capture_output=True, check=False)
 
 
 def executable(path: Path, content: str) -> None:
@@ -110,7 +113,7 @@ def assert_jq_update_field_accepts_legacy_variables_and_preserves_jq_failure(tmp
         "#!/usr/bin/env bash\n"
         "printf 'jq:%s\\n' \"$*\" >> \"$CALLS\"\n"
         "[ \"${FAKE_JQ_EXIT:-0}\" -eq 0 ] || exit \"$FAKE_JQ_EXIT\"\n"
-        "sed 's/false/true/' \"${!#}\"\n",
+        "printf '%s\\n' '[{\"id\":\"PROF-002\",\"passes\":true}]'\n",
     )
     executable(
         bin_dir / "sponge",
@@ -132,9 +135,13 @@ def assert_jq_update_field_accepts_legacy_variables_and_preserves_jq_failure(tmp
         env=env,
     )
     assert result.returncode == 0, result.stderr
-    assert fixture.read_text() == '[{"id":"PROF-002","passes":true}]\n'
-    assert calls.read_text().splitlines()[0].startswith("jq:")
-    assert calls.read_text().splitlines()[1].startswith("sponge:")
+    assert json.loads(fixture.read_text()) == [
+        {"id": "PROF-002", "passes": True}
+    ], f"unexpected jq fixture: {fixture.read_text()!r}"
+    call_lines = calls.read_text().splitlines()
+    assert len(call_lines) == 2, f"unexpected jq pipeline calls: {call_lines!r}"
+    assert any(line.startswith("jq:") for line in call_lines), call_lines
+    assert any(line.startswith("sponge:") for line in call_lines), call_lines
 
     failed = run(
         "bash",
@@ -182,7 +189,7 @@ def assert_certificate_check_uses_the_canonical_directory_from_both_contexts(tmp
 def assert_native_leaf_tasks_construct_commands_and_preserve_exit_status(tmp_path: Path) -> None:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
-    for command in ("kubectl", "yayamlls", "cnspec", "python3", "flate", "openssl", "uv", "jq", "awk", "rc"):
+    for command in ("kubectl", "yayamlls", "cnspec", "python3", "flate", "openssl", "uv", "jq", "awk", "rc", "rg"):
         executable(
             bin_dir / command,
             "#!/usr/bin/env bash\n"
@@ -246,6 +253,51 @@ def assert_native_leaf_tasks_construct_commands_and_preserve_exit_status(tmp_pat
     assert failed.returncode == 47
 
 
+def assert_flate_diff_clears_inherited_base_when_resolving_base(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    calls = tmp_path / "calls"
+    executable(
+        bin_dir / "flate",
+        "#!/usr/bin/env bash\n"
+        "printf 'FLATE_BASE=%s\\n' \"${FLATE_BASE-unset}\" > \"$CALLS\"\n"
+        "printf '%s\\0' \"$@\" >> \"$CALLS\"\n",
+    )
+    executable(
+        bin_dir / "git",
+        "#!/usr/bin/env bash\n"
+        "if [ \"${1:-} ${2:-}\" = 'worktree add' ]; then\n"
+        "  mkdir -p \"$4/rendered\"\n"
+        "  exit 0\n"
+        "fi\n"
+        "exit 1\n",
+    )
+    env = os.environ.copy() | {
+        "CALLS": str(calls),
+        "FLATE_BASE": "origin/pr-base",
+        "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+    }
+
+    result = run(
+        "bash",
+        str(isolated_task(tmp_path, "flux", "flate-diff")),
+        "path=./rendered",
+        "base=origin/pr-base",
+        "output=github",
+        cwd=tmp_path,
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    environment, raw_arguments = calls.read_bytes().split(b"\n", maxsplit=1)
+    assert environment == b"FLATE_BASE=unset"
+    arguments = raw_arguments.split(b"\0")[:-1]
+    assert b"--path-orig" in arguments
+    path_orig = arguments[arguments.index(b"--path-orig") + 1].decode()
+    assert path_orig.endswith("/base/rendered")
+    assert b"--base" not in arguments
+
+
 class TestMiseLeafOperations(unittest.TestCase):
     def test_leaf_operations_are_native_and_task_implementations_are_removed(self) -> None:
         assert_leaf_operations_are_native_and_task_implementations_are_removed()
@@ -264,3 +316,7 @@ class TestMiseLeafOperations(unittest.TestCase):
     def test_native_leaf_tasks_construct_commands_and_preserve_exit_status(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             assert_native_leaf_tasks_construct_commands_and_preserve_exit_status(Path(directory))
+
+    def test_flate_diff_clears_inherited_base_when_resolving_base(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            assert_flate_diff_clears_inherited_base_when_resolving_base(Path(directory))

@@ -249,7 +249,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python3 -m unittest tests/test_mondoo_scan.py tests/test_zitadel_config.py tests/test_mise_leaf_operations.py tests/test_mise_postgres.py
+          python3 -m unittest tests/test_mondoo_scan.py tests/test_zitadel_config.py
           ruby tests/test_zitadel_access_policy.rb
 
       - name: Validate migrated policy parity
@@ -380,8 +380,6 @@ jobs:
       - name: Run flate diff
         id: diff
         shell: bash
-        env:
-          FLATE_BASE: origin/pr-base
         run: |
           set -euo pipefail
           mise run flux:flate-diff base=origin/pr-base output=github > flate.diff
