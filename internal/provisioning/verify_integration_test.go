@@ -95,29 +95,6 @@ func TestVerifyRootFSRejectsArmbianMainConfigRootLoginOverride(t *testing.T) {
 	}
 }
 
-func TestVerifyRootFSAcceptsIdempotentRootLoginPolicy(t *testing.T) {
-	fixture := newVerificationFixture(t)
-	binary := buildProvisioningCommand(t, fixture.root)
-	mainConfig := filepath.Join(fixture.rootfs, "etc/ssh/sshd_config")
-	writeFixtureFile(t, mainConfig, "PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin no\nInclude sshd_config.d/*.conf\n")
-	writeFixtureFile(t, filepath.Join(fixture.rootfs, "etc/ssh/sshd_config.d/00-hardening.conf"), "PermitRootLogin no\n")
-
-	code, stdout, stderr := runProvisioningCommand(t, binary, fixture.root, []string{
-		"verify", "--rootfs", fixture.rootfs, "--manifest", fixture.manifest,
-		"--k3s-version", "k3s version v1.36.3+k3s1 (abcdef)", "--raw",
-	})
-	if code != 0 {
-		t.Fatalf("verify rejected stable root SSH policy: stdout=%s stderr=%s", stdout, stderr)
-	}
-	contents, err := os.ReadFile(mainConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Count(string(contents), "PermitRootLogin no") != 1 {
-		t.Fatalf("stable main config contains duplicate root login directives: %q", contents)
-	}
-}
-
 func TestVerifyRootFSRejectsBakedAgentCredential(t *testing.T) {
 	fixture := newVerificationFixture(t)
 	binary := buildProvisioningCommand(t, fixture.root)

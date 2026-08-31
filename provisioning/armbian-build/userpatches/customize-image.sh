@@ -49,12 +49,9 @@ fi
 # Armbian enables root SSH in the main config during image preparation. That
 # value is read before sshd_config.d includes, so enforce the policy here after
 # the overlay has been copied into the image.
-sshd_config=/etc/ssh/sshd_config
-if [ -f "$sshd_config" ]; then
-    if [ "$(sed -n '1p' "$sshd_config")" != "PermitRootLogin no" ]; then
-        sed -i '1iPermitRootLogin no' "$sshd_config"
-    fi
-fi
+# shellcheck disable=SC1091
+source "$(dirname -- "${BASH_SOURCE[0]}")/ensure-root-ssh-policy.sh"
+ensure_root_ssh_policy /etc/ssh/sshd_config
 
 if ! id -u pi >/dev/null 2>&1; then
     useradd --create-home --uid 1000 --groups adm,sudo --shell /bin/bash pi

@@ -90,6 +90,29 @@ publication was attempted.
   Bash syntax, `jq` ledger validation, and `git diff --check` all pass. Both
   affected ledger entries remain `false`.
 
+## Fix Round 4
+
+- Replaced the verifier-fixture self-check with a behavioural integration test
+  that executes the production SSH-policy helper twice against a temporary
+  config. It confirms the first effective directive is `PermitRootLogin no` and
+  that the directive occurs once.
+- Extracted the policy mutation into
+  `provisioning/armbian-build/userpatches/ensure-root-ssh-policy.sh`; the image
+  customiser calls this exact helper, which accepts the target config path for
+  controlled testing without package, network, chroot, or system operations.
+- Both affected ledger entries remain `false`; no real build or live operation
+  was run.
+
+Validation for this round:
+
+- focused helper and SSH precedence integration tests: PASS;
+- `go test ./... -count=1`: PASS;
+- `go vet ./...`: PASS;
+- `go build ./cmd/...`: PASS;
+- ShellCheck and `bash -n` for all remaining provisioning shell tasks/scripts:
+  PASS;
+- `jq` ledger validation and `git diff --check`: PASS.
+
 ## Fix Round 1
 
 - Corrected the golden-image artifact integrity ledger entry to `passes: false`.
