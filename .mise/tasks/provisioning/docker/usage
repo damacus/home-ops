@@ -8,8 +8,8 @@ raw_paths=("${HOME}/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.
 settings="${HOME}/Library/Group Containers/group.com.docker/settings-store.json"
 if [[ -f "${settings}" ]]; then
   while IFS= read -r path; do
-    [[ "${path}" == */Docker.raw ]] && raw_paths+=("${path}")
-  done < <(jq -r '.. | strings | select(endswith("Docker.raw"))' "${settings}")
+    [[ -n "${path}" ]] && raw_paths+=("${path}")
+  done < <(jq -r '.. | objects | to_entries[] | select(.key | ascii_downcase == "diskimagelocation") | .value | if endswith("Docker.raw") then . else (. + "/Docker.raw") end' "${settings}")
 fi
 for path in "${raw_paths[@]}"; do
   [[ -f "${path}" ]] || continue

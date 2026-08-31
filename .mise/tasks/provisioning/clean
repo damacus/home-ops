@@ -5,9 +5,6 @@
 #USAGE flag "--dry-run" help="List files and scoped data that would be removed"
 set -euo pipefail
 
-args=()
-[[ "${usage_deep:-false}" == "true" ]] && args+=(--deep)
-[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
 root="${MISE_PROJECT_ROOT}/provisioning/armbian-build"
 paths=("${root}/armbian-build-repo/output" "${root}/armbian-build-repo/cache" "${root}/armbian-build-repo/.tmp" "${root}/armbian-build-repo/Dockerfile" "${root}/armbian-build-repo/.dockerignore" "${root}/.staging" "${MISE_PROJECT_ROOT}/provisioning/artifacts")
 if [[ "${usage_dry_run:-false}" == "true" ]]; then
