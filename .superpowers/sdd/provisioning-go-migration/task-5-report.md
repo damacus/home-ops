@@ -81,3 +81,34 @@ cluster mutation, staging, release, push, merge, or publication was attempted.
   live acceptance check.
 - Validation: `.tasks/provisioning.json` parses successfully with `jq`, and
   `git diff --check` passes.
+
+## Fix Round 2
+
+The first rebuilt artifact from commit `48fdc1dc9cf0` exposed a real source
+defect. Its full read-only report failed only `ssh_policy`:
+`PasswordAuthentication=no, KbdInteractiveAuthentication=no,
+PermitRootLogin=yes`. The Armbian pinned source's
+`lib/functions/rootfs/distro-agnostic.sh` rewrites the main
+`/etc/ssh/sshd_config` to `PermitRootLogin yes` during image preparation.
+OpenSSH evaluates the first value and does not let the later included
+`sshd_config.d/00-ironstone-hardening.conf` value override it.
+
+The narrow fix inserts `PermitRootLogin no` as the first line of the main
+config after the overlay is copied in `customize-image.sh`, so it wins over any
+existing directive or included file. The verifier remains unchanged. A new Go
+fixture reproduces main-file `yes` before included `no` and confirms
+verification fails at `ssh_policy`.
+
+Validation after the fix:
+
+- focused precedence and root-login verifier integration tests: PASS;
+- `go test ./... -count=1`: PASS;
+- `go vet ./...`: PASS;
+- `go build ./cmd/...`: PASS;
+- ShellCheck and `bash -n` for changed `customize-image.sh`: PASS;
+- `git diff --check`: PASS.
+
+No second real build was run. The controller must rebuild this commit and
+re-run full artifact verification before either affected ledger entry can be
+marked passed; the existing artifact and live enrolment acceptance boundaries
+remain unchanged.
