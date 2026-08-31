@@ -3,4 +3,13 @@
 #MISE quiet=true
 set -euo pipefail
 
-exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" docker-doctor
+command -v docker >/dev/null || { echo "FAIL cli: docker not found" >&2; exit 1; }
+info="$(docker info --format '{{json .}}')" || { echo "FAIL daemon: Docker daemon unavailable" >&2; exit 1; }
+architecture="$(jq -r '.Architecture // "unknown"' <<<"${info}")"
+memory="$(jq -r '.MemTotal // 0' <<<"${info}")"
+free_kib="$(df -Pk "${HOME}" | awk 'NR == 2 { print $4 }')"
+ok=true
+if [[ "${architecture}" != "arm64" && "${architecture}" != "aarch64" ]]; then echo "FAIL architecture: ${architecture}"; ok=false; else echo "PASS architecture: ${architecture}"; fi
+if (( memory < 8053063680 )); then echo "FAIL memory: ${memory} bytes (minimum 8053063680)"; ok=false; else echo "PASS memory: ${memory} bytes"; fi
+if (( free_kib < 52428800 )); then echo "FAIL host_space: ${free_kib} KiB (minimum 52428800)"; ok=false; else echo "PASS host_space: ${free_kib} KiB"; fi
+[[ "${ok}" == true ]]

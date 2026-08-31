@@ -9,4 +9,13 @@ set -euo pipefail
 
 args=("${usage_artifact}")
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
-exec python3 "${MISE_PROJECT_ROOT}/provisioning/provision.py" release "${args[@]}"
+cd "${MISE_PROJECT_ROOT}"
+validation="$(go run ./cmd/provisioning artifact validate "${usage_artifact}")"
+image="$(jq -r .image <<<"${validation}")"; checksum="$(jq -r .checksum <<<"${validation}")"; manifest="$(jq -r .manifest <<<"${validation}")"; release_id="$(jq -r .release_id <<<"${validation}")"
+files=("${image}" "${checksum}" "${manifest}")
+if [[ "${usage_dry_run:-false}" == "true" ]]; then
+  jq -n --arg validate "${image}" --arg tag "${release_id}" --argjson files "$(printf '%s\n' "${files[@]}" | jq -Rsc 'split("\n") | map(select(length > 0))')" '{validate:$validate,tag:$tag,files:$files}'
+  exit 0
+fi
+command=(gh release create "${release_id}" "${files[@]}" --title "${release_id}" --generate-notes)
+exec "${command[@]}"
