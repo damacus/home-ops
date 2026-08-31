@@ -47,7 +47,7 @@
             "Verify the manifest records the exact K3s binary and air-gap payload hashes",
             "Confirm the verifier rejects any version or security regression"
         ],
-        "passes": true
+        "passes": false
     },
     {
         "category": "lifecycle",
@@ -403,7 +403,7 @@
             "Confirm secret values are redacted from output",
             "Validate task files and the shared Go command with Bash orchestration"
         ],
-        "passes": true
+        "passes": false
     },
     {
         "category": "mise",
