@@ -39,33 +39,7 @@ the golden-image and node lifecycle under `mise run provisioning:*`.
     task k8s:yayamlls
     ```
 
-### 2. Repository Management
-
-* **Configure Repository**: Configure the repository from bootstrap variables (generates secrets, validates config).
-
-    ```bash
-    task configure
-    ```
-
-* **Clean Up**: Remove files no longer needed after cluster bootstrap.
-
-    ```bash
-    task repo:clean
-    ```
-
-* **Reset Configuration**: Reset templated configuration files to their default state.
-
-    ```bash
-    task repo:reset
-    ```
-
-* **Force Reset**: Reset the repository back to HEAD, cleaning all changes.
-
-    ```bash
-    task repo:force-reset
-    ```
-
-### 3. Radxa Provisioning
+### 2. Radxa Provisioning
 
 Provisioning keeps the public operator interface in Mise. The Go command in
 `cmd/provisioning` and `internal/provisioning` owns build planning, artifact

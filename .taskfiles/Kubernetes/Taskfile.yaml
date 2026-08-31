@@ -402,10 +402,6 @@ tasks:
           command: edge-smoke
           include_esphome_canary: "true"
 
-  .reset:
-    internal: true
-    cmd: rm -rf {{.KUBERNETES_DIR}}
-
   alerts:
     desc: Get all alerts from VictoriaMetrics
     silent: true
