@@ -15,7 +15,7 @@ for argument in "$@"; do
     *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;;
   esac
 done
-[ -n "$app" ] || { printf 'Missing app parameter. Usage: task kubernetes:test-app app=<namespace>/<app>\n' >&2; exit 1; }
+[ -n "$app" ] || { printf 'Missing app parameter. Usage: mise run kubernetes:test-app app=<namespace>/<app>\n' >&2; exit 1; }
 command -v python3 >/dev/null || { printf 'Missing Python interpreter\n' >&2; exit 1; }
 command -v cnspec >/dev/null || { printf 'Missing cnspec\n' >&2; exit 1; }
 script="$PWD/scripts/mondoo_scan.py"

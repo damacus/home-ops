@@ -15,10 +15,14 @@ ROOT = Path(__file__).parents[1]
 TASKS = ("log-noise", "check-kube-vip", "alerts", "edge-smoke")
 
 
-def run(*command: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+def run(
+    *command: str,
+    env: dict[str, str] | None = None,
+    cwd: Path = ROOT,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         command,
-        cwd=ROOT,
+        cwd=cwd,
         env=env,
         text=True,
         capture_output=True,
@@ -82,10 +86,13 @@ def test_native_tasks_route_to_external_commands_and_preserve_exit_status(tmp_pa
     env["CLUSTER_HEALTH_EXIT"] = "29"
     env["CLUSTER_HEALTH_GO_BINARY"] = str(bin_dir / "go")
 
-    cache_binary = ROOT / ".cache/bin/cluster-health"
-    original_binary = cache_binary.read_bytes() if cache_binary.exists() else None
-    original_mode = cache_binary.stat().st_mode if original_binary is not None else None
-    cache_binary.unlink(missing_ok=True)
+    task_root = tmp_path / ".mise/tasks/kubernetes"
+    task_root.mkdir(parents=True)
+    for task in ("cluster-health-build", "log-noise", "edge-smoke"):
+        source = ROOT / ".mise/tasks/kubernetes" / task
+        destination = task_root / task
+        destination.write_bytes(source.read_bytes())
+        destination.chmod(source.stat().st_mode)
 
     check_kube_vip = run("mise", "run", "kubernetes:check-kube-vip", env=env)
     assert check_kube_vip.returncode == 0, check_kube_vip.stderr
@@ -99,15 +106,15 @@ def test_native_tasks_route_to_external_commands_and_preserve_exit_status(tmp_pa
     alerts_failure = run("mise", "run", "kubernetes:alerts", env=alerts_failure_env)
     assert alerts_failure.returncode == 37
 
-    build = run("bash", ".mise/tasks/kubernetes/cluster-health-build", env=env)
+    build = run("bash", str(task_root / "cluster-health-build"), env=env, cwd=tmp_path)
     assert build.returncode == 0, build.stderr
 
-    log_noise = run("bash", ".mise/tasks/kubernetes/log-noise", "--period", "24h", "--top", "10", env=env)
+    log_noise = run("bash", str(task_root / "log-noise"), "--period", "24h", "--top", "10", env=env, cwd=tmp_path)
     assert log_noise.returncode == 29, log_noise.stderr
     assert log_noise.stdout == "cluster health output\n"
     assert cluster_health_args.read_bytes().split(b"\0")[:-1] == [b"log-noise", b"--period", b"24h", b"--top", b"10"]
 
-    edge_smoke = run("bash", ".mise/tasks/kubernetes/edge-smoke", "--skip-http3", env=env)
+    edge_smoke = run("bash", str(task_root / "edge-smoke"), "--skip-http3", env=env, cwd=tmp_path)
     assert edge_smoke.returncode == 29
     assert cluster_health_args.read_bytes().split(b"\0")[:-1] == [b"edge-smoke", b"--skip-http3"]
 
@@ -117,12 +124,7 @@ def test_native_tasks_route_to_external_commands_and_preserve_exit_status(tmp_pa
         "kubectl:exec -n monitoring vmalertmanager-vm-0 -- wget -qO- http://localhost:9093/api/v2/alerts",
     ]
 
-    if original_binary is None:
-        cache_binary.unlink(missing_ok=True)
-    else:
-        assert original_mode is not None
-        cache_binary.write_bytes(original_binary)
-        cache_binary.chmod(original_mode)
+    assert (tmp_path / ".cache/bin/cluster-health").is_file()
 
 
 def test_legacy_task_composite_dependencies_are_one_way_mise_shims(tmp_path: Path) -> None:

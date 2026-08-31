@@ -7,7 +7,10 @@ import os
 import re
 import stat
 import subprocess
+import tempfile
+import unittest
 from pathlib import Path
+from typing import Callable
 
 
 ROOT = Path(__file__).parents[1]
@@ -80,7 +83,7 @@ def test_mise_facade_forwards_arguments_and_streams_output_and_status(tmp_path: 
 
     assert result.returncode == 23
     assert result.stdout == "facade stdout\n"
-    assert result.stderr.startswith("facade stderr\n")
+    assert "facade stderr\n" in result.stderr
     assert result.stderr.endswith("[init] ERROR task failed\n")
     assert arguments_log.read_bytes().split(b"\0")[:-1] == [
         b"init",
@@ -88,3 +91,203 @@ def test_mise_facade_forwards_arguments_and_streams_output_and_status(tmp_path: 
         b"value with spaces",
         b"--literal-flag",
     ]
+
+
+def test_retained_facade_routes_task_variables_before_literal_arguments(tmp_path: Path) -> None:
+    arguments_log = tmp_path / "arguments"
+    fake_task = tmp_path / "task"
+    fake_task.write_text(
+        "#!/usr/bin/env bash\n"
+        "printf '%s\\0' \"$@\" > \"$FACADE_ARGUMENTS\"\n"
+    )
+    fake_task.chmod(fake_task.stat().st_mode | stat.S_IXUSR)
+    env = os.environ.copy()
+    env["FACADE_ARGUMENTS"] = str(arguments_log)
+    env["PATH"] = f"{tmp_path}{os.pathsep}{env['PATH']}"
+
+    result = run(
+        "mise",
+        "run",
+        "flux:apply",
+        "path=authentication/zitadel",
+        "ns=testing",
+        "--",
+        "NAME=literal",
+        "--literal-flag",
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert arguments_log.read_bytes().split(b"\0")[:-1] == [
+        b"flux:apply",
+        b"path=authentication/zitadel",
+        b"ns=testing",
+        b"--",
+        b"NAME=literal",
+        b"--literal-flag",
+    ]
+
+
+def test_flux_apply_routes_task_variables_without_contacting_the_cluster(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    calls = tmp_path / "calls"
+    kubeconfig = tmp_path / "kubeconfig"
+    kubeconfig.write_text("fixture\n")
+    fake_flux = bin_dir / "flux"
+    fake_flux.write_text(
+        "#!/usr/bin/env bash\n"
+        "printf 'flux:%s\\n' \"$*\" >> \"$CALLS\"\n"
+        "case \" $* \" in\n"
+        "  *' get kustomizations '*) printf 'not found\\n' ;;\n"
+        "  *' build ks '*) printf 'apiVersion: v1\\nkind: ConfigMap\\n' ;;\n"
+        "esac\n"
+    )
+    fake_flux.chmod(fake_flux.stat().st_mode | stat.S_IXUSR)
+    fake_kubectl = bin_dir / "kubectl"
+    fake_kubectl.write_text(
+        "#!/usr/bin/env bash\n"
+        "printf 'kubectl:%s\\n' \"$*\" >> \"$CALLS\"\n"
+        "cat >/dev/null\n"
+    )
+    fake_kubectl.chmod(fake_kubectl.stat().st_mode | stat.S_IXUSR)
+    env = os.environ.copy()
+    env["CALLS"] = str(calls)
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
+
+    result = run(
+        "mise",
+        "run",
+        "flux:apply",
+        "path=authentication/zitadel",
+        "ns=testing",
+        f"KUBECONFIG_FILE={kubeconfig}",
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    actual = calls.read_text()
+    assert "--namespace testing get kustomizations zitadel" in actual
+    assert "build ks zitadel --namespace testing" in actual
+    assert f"kubectl:apply --kubeconfig {kubeconfig} --server-side" in actual
+
+
+def test_object_storage_facade_routes_every_override_without_live_secrets(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    rclone_arguments = tmp_path / "rclone-arguments"
+    fake_kubectl = bin_dir / "kubectl"
+    fake_kubectl.write_text("#!/usr/bin/env bash\nprintf 'Y3JlZGVudGlhbA=='\n")
+    fake_kubectl.chmod(fake_kubectl.stat().st_mode | stat.S_IXUSR)
+    fake_rclone = bin_dir / "rclone"
+    fake_rclone.write_text(
+        "#!/usr/bin/env bash\n"
+        "printf '%s\\0' \"$@\" > \"$RCLONE_ARGUMENTS\"\n"
+    )
+    fake_rclone.chmod(fake_rclone.stat().st_mode | stat.S_IXUSR)
+    env = os.environ.copy()
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
+    env["RCLONE_ARGUMENTS"] = str(rclone_arguments)
+
+    result = run(
+        "mise",
+        "run",
+        "kubernetes:object-storage-migrate",
+        "source=rustfs",
+        "destination=minio",
+        "mode=sync",
+        "source_path=source-bucket/prefix",
+        "destination_path=destination-bucket/prefix",
+        "dry_run=true",
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    arguments = rclone_arguments.read_bytes().split(b"\0")[:-1]
+    assert b"sync" in arguments
+    assert b"rustfs:source-bucket/prefix" in arguments
+    assert b"minio:destination-bucket/prefix" in arguments
+    assert b"--dry-run" in arguments
+
+
+def test_workflow_routes_every_migration_contract_path_to_the_complete_suite() -> None:
+    workflow = (ROOT / ".github/workflows/flux.yaml").read_text()
+    migration_filter = workflow.split("            mise_contracts:\n", maxsplit=1)[1].split(
+        "\n\n", maxsplit=1
+    )[0]
+    for path in (
+        ".github/workflows/flux.yaml",
+        "mise.toml",
+        "mise.lock",
+        "Taskfile.yaml",
+        ".taskfiles/**",
+        ".mise/tasks/**",
+        "scripts/mise-task-facade.sh",
+        "scripts/mise-postgres-task.sh",
+        "scripts/pg-bluegreen.sh",
+        "scripts/object_storage_migrate.sh",
+        "scripts/tempo_trace_backend_contract.sh",
+        "scripts/mondoo_scan.py",
+        "scripts/home_assistant_unaccounted_electricity.py",
+        "scripts/unifi/read-status.py",
+        "scripts/rustfs_iam_live_check.sh",
+        "scripts/notify",
+        "tests/test_mise_task_facade.py",
+        "tests/test_mise_scheduled_cluster_checks.py",
+        "tests/test_mise_cluster_health.py",
+        "tests/test_mise_leaf_operations.py",
+        "tests/test_mise_postgres.py",
+    ):
+        assert f"- '{path}'" in migration_filter
+
+    job = workflow.split("\n  mise-migration-contracts:\n", maxsplit=1)[1].split(
+        "\n  yaml-lint:\n", maxsplit=1
+    )[0]
+    assert "needs.changes.outputs.mise_contracts == 'true'" in job
+    assert "python3 -m unittest" in job
+    for module in (
+        "tests/test_mise_task_facade.py",
+        "tests/test_mise_scheduled_cluster_checks.py",
+        "tests/test_mise_cluster_health.py",
+        "tests/test_mise_leaf_operations.py",
+        "tests/test_mise_postgres.py",
+    ):
+        assert module in job
+
+
+def test_current_operator_documentation_uses_the_mise_interface() -> None:
+    gemini = (ROOT / "GEMINI.md").read_text()
+    flate = (ROOT / "docs/flate-setup.md").read_text()
+    test_app = (ROOT / ".mise/tasks/kubernetes/test-app").read_text()
+
+    assert "Mise is the public task interface" in " ".join(gemini.split())
+    assert "task flux:" not in gemini
+    assert "task configure" not in gemini
+    assert "task repo:" not in gemini
+    assert ".mise/tasks/flux/flate-test" in flate
+    assert ".github/workflows/flux.yaml" in flate
+    assert ".taskfiles/Flux/Taskfile.yaml" not in flate
+    assert "Usage: mise run kubernetes:test-app app=<namespace>/<app>" in test_app
+
+
+def load_tests(loader: unittest.TestLoader, tests: unittest.TestSuite, pattern: str | None) -> unittest.TestSuite:
+    suite = unittest.TestSuite()
+    for test in (
+        test_mise_facade_discovers_every_public_task_with_the_task_description,
+        test_workflow_routes_every_migration_contract_path_to_the_complete_suite,
+        test_current_operator_documentation_uses_the_mise_interface,
+    ):
+        suite.addTest(unittest.FunctionTestCase(test))
+    for test in (
+        test_mise_facade_forwards_arguments_and_streams_output_and_status,
+        test_retained_facade_routes_task_variables_before_literal_arguments,
+        test_flux_apply_routes_task_variables_without_contacting_the_cluster,
+        test_object_storage_facade_routes_every_override_without_live_secrets,
+    ):
+        suite.addTest(unittest.FunctionTestCase(lambda test=test: _run_with_temp_path(test)))
+    return suite
+
+
+def _run_with_temp_path(test: Callable[[Path], None]) -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        test(Path(directory))

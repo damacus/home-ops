@@ -3,4 +3,4 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "flux:apply" -- "$@"
+exec "$(dirname "$0")/../../../scripts/mise-task-facade.sh" "flux:apply" "$@"

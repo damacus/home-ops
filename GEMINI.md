@@ -4,9 +4,10 @@ This document provides context and common maintenance actions for the `home-ops`
 
 ## Project Overview
 
-This repository manages home infrastructure with Kubernetes and Flux. Taskfile
-drives cluster and repository maintenance. Mise pins the toolchain and exposes
-the golden-image and node lifecycle under `mise run provisioning:*`.
+This repository manages home infrastructure with Kubernetes and Flux. Mise is
+the public task interface. It drives cluster and repository maintenance and
+pins the toolchain. Task remains an internal implementation detail for commands
+that have not yet received a native Mise implementation.
 
 ## Common Maintenance Actions
 
@@ -15,13 +16,13 @@ the golden-image and node lifecycle under `mise run provisioning:*`.
 * **Reconcile Flux**: Force Flux to pull the latest changes from the git repository.
 
     ```bash
-    task flux:reconcile
+    mise run flux:reconcile
     ```
 
 * **Apply Flux Kustomization**: Manually build and apply a specific Flux Kustomization (useful for testing changes without waiting for git sync).
 
     ```bash
-    task flux:apply path=apps/my-app
+    mise run flux:apply path=apps/my-app
     ```
 
   * `path`: Path under `kubernetes/apps` containing the `ks.yaml`.
@@ -44,25 +45,25 @@ the golden-image and node lifecycle under `mise run provisioning:*`.
 * **Configure Repository**: Configure the repository from bootstrap variables (generates secrets, validates config).
 
     ```bash
-    task configure
+    mise run configure
     ```
 
 * **Clean Up**: Remove files no longer needed after cluster bootstrap.
 
     ```bash
-    task repo:clean
+    mise run repository:clean
     ```
 
 * **Reset Configuration**: Reset templated configuration files to their default state.
 
     ```bash
-    task repo:reset
+    mise run repository:reset
     ```
 
 * **Force Reset**: Reset the repository back to HEAD, cleaning all changes.
 
     ```bash
-    task repo:force-reset
+    mise run repository:force-reset
     ```
 
 ### 3. Radxa Provisioning
@@ -129,14 +130,14 @@ boundary. Do not add Python or duplicate lifecycle logic in task files.
 4. Apply the changes manually to test (optional):
 
     ```bash
-    task flux:apply path=<category>/<app-name>
+    mise run flux:apply path=<category>/<app-name>
     ```
 
 5. Commit and push changes.
 6. Reconcile Flux to sync immediately:
 
     ```bash
-    task flux:reconcile
+    mise run flux:reconcile
     ```
 
 ### Troubleshooting Flux Issues
@@ -150,7 +151,7 @@ boundary. Do not add Python or duplicate lifecycle logic in task files.
 2. If a HelmRelease is stuck, try reconciling the cluster kustomization:
 
     ```bash
-    task flux:reconcile
+    mise run flux:reconcile
     ```
 
 3. View logs for a specific pod (standard kubectl):

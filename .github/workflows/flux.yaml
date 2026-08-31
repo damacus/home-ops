@@ -22,6 +22,7 @@ jobs:
       go: ${{ steps.filter.outputs.go }}
       mondoo: ${{ steps.filter.outputs.mondoo }}
       contracts: ${{ steps.filter.outputs.contracts }}
+      mise_contracts: ${{ steps.filter.outputs.mise_contracts }}
     steps:
       - name: Classify changed paths
         id: filter
@@ -97,6 +98,56 @@ jobs:
               - 'tests/test_mise_postgres.py'
               - 'tests/fixtures/tempo-privacy/**'
               - 'tests/mondoo/rustfs-iam.mql.yaml'
+            mise_contracts:
+              - '.github/workflows/flux.yaml'
+              - 'mise.toml'
+              - 'mise.lock'
+              - 'Taskfile.yaml'
+              - '.taskfiles/**'
+              - '.mise/tasks/**'
+              - 'scripts/mise-task-facade.sh'
+              - 'scripts/mise-postgres-task.sh'
+              - 'scripts/pg-bluegreen.sh'
+              - 'scripts/object_storage_migrate.sh'
+              - 'scripts/tempo_trace_backend_contract.sh'
+              - 'scripts/mondoo_scan.py'
+              - 'scripts/home_assistant_unaccounted_electricity.py'
+              - 'scripts/unifi/read-status.py'
+              - 'scripts/rustfs_iam_live_check.sh'
+              - 'scripts/notify'
+              - 'tests/test_mise_task_facade.py'
+              - 'tests/test_mise_scheduled_cluster_checks.py'
+              - 'tests/test_mise_cluster_health.py'
+              - 'tests/test_mise_leaf_operations.py'
+              - 'tests/test_mise_postgres.py'
+
+  mise-migration-contracts:
+    name: Mise Migration Contracts
+    needs: changes
+    if: ${{ needs.changes.outputs.mise_contracts == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.8.15
+          install: false
+          cache: false
+
+      - name: Install Task
+        run: mise install task
+
+      - name: Run complete migration contract suite
+        run: >-
+          python3 -m unittest
+          tests/test_mise_task_facade.py
+          tests/test_mise_scheduled_cluster_checks.py
+          tests/test_mise_cluster_health.py
+          tests/test_mise_leaf_operations.py
+          tests/test_mise_postgres.py
 
   yaml-lint:
     needs: changes

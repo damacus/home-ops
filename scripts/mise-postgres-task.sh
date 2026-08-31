@@ -5,10 +5,20 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 ROOT_DIR="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd)"
 export ROOT_DIR
+readonly ROOT_DIR
 
 for argument in "$@"; do
   if [[ "${argument}" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
-    export "${argument?}"
+    name="${argument%%=*}"
+    case "${name}" in
+      PG_PROFILE|NAMESPACE|APP_DEPLOYMENTS|HELMRELEASE|BLUE_CLUSTER|GREEN_CLUSTER|BLUE_DATABASE|GREEN_DATABASE|BLUE_USER|GREEN_USER|BLUE_APP_SECRET|GREEN_APP_SECRET|PUBLICATION_NAME|SUBSCRIPTION_NAME|STATE_DIR|MIGRATION_MANIFEST_DIR|HELMRELEASE_PATH|PROMETHEUS_URL|CONFIRM_CONTEXT)
+        export "${argument?}"
+        ;;
+      *)
+        printf 'unknown postgres environment assignment: %s\n' "${name}" >&2
+        exit 2
+        ;;
+    esac
   fi
 done
 

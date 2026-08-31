@@ -163,6 +163,20 @@ def assert_task_forwards_subcommand_defaults_and_explicit_environment(tmp_path: 
     }
 
 
+def assert_unknown_environment_assignments_are_rejected(tmp_path: Path) -> None:
+    isolated_tasks(tmp_path)
+    calls = fake_bluegreen(tmp_path)
+    env = os.environ.copy() | {"CALLS": str(calls)}
+
+    for assignment in ("ROOT_DIR=/tmp/escape", "BASH_ENV=/tmp/untrusted"):
+        calls.unlink(missing_ok=True)
+        result = run("mise", "run", "postgres:discover", assignment, cwd=tmp_path, env=env)
+
+        assert result.returncode != 0
+        assert f"unknown postgres environment assignment: {assignment.split('=', maxsplit=1)[0]}" in result.stderr
+        assert not calls.exists()
+
+
 def assert_profile_is_loaded_from_the_preserved_profile_path(tmp_path: Path) -> None:
     (tmp_path / "scripts").mkdir()
     shutil.copy2(ROOT / "scripts/pg-bluegreen.sh", tmp_path / "scripts/pg-bluegreen.sh")
@@ -237,6 +251,10 @@ class TestMisePostgres(unittest.TestCase):
     def test_profile_is_loaded_from_the_preserved_profile_path(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             assert_profile_is_loaded_from_the_preserved_profile_path(Path(directory))
+
+    def test_unknown_environment_assignments_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            assert_unknown_environment_assignments_are_rejected(Path(directory))
 
     def test_all_but_cutover_is_serial_and_stops_on_first_failure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
