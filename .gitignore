@@ -73,5 +73,5 @@ scripts/__pycache__/
 .migration-state/*/*
 !.migration-state/*/.gitkeep
 
-# Local env overrides for the pg-bluegreen Taskfile.
+# Local environment overrides for PostgreSQL blue/green operations.
 .env

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#MISE description="Install Arch workstation dependencies with Paru Or Yay"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+if command -v yay >/dev/null 2>&1; then
+  helper=yay
+elif command -v paru >/dev/null 2>&1; then
+  helper=paru
+else
+  printf 'Missing yay or paru\n' >&2
+  exit 1
+fi
+
+mapfile -t packages < "${repo_root}/Archfile"
+exec "${helper}" -Syu --needed --noconfirm --noprogressbar "${packages[@]}"

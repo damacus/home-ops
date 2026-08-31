@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="Reset templated configuration files"
+#MISE quiet=true
+#MISE raw=true
+#MISE confirm="Delete kubernetes/ and .sops.yaml?"
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+rm -rf "${repo_root}/kubernetes"
+rm -f "${repo_root}/.sops.yaml"

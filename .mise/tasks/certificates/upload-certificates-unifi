@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#MISE description="Upload the certificates to Unifi"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+mise run certificates:download-certificates
+cd "${repo_root}/certificates"
+scp ironstone-casa-tls.crt root:/data/unifi-core/config/unifi-core.crt
+scp ironstone-casa-tls.key root:/data/unifi-core/config/unifi-core.key

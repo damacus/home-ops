@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run repository-local Mondoo/cnspec scans through stable task entrypoints."""
+"""Run repository-local Mondoo/cnspec scans through stable command entrypoints."""
 
 from __future__ import annotations
 

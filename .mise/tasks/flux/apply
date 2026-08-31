@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#MISE description="Apply a Flux Kustomization resource for a cluster"
+#MISE quiet=true
+#USAGE arg "<path>" help="Path under kubernetes/apps containing ks.yaml"
+#USAGE flag "--namespace <namespace>" help="Flux namespace (default: flux-system)"
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+# Variables are supplied by Mise's usage parser.
+# shellcheck disable=SC2154
+path="${usage_path}"
+namespace="${usage_namespace:-flux-system}"
+kustomization_file="${repo_root}/kubernetes/apps/${path}/ks.yaml"
+[[ -f "${kustomization_file}" ]] || { printf 'Missing Flux Kustomization: %s\n' "${kustomization_file}" >&2; exit 1; }
+
+name="$(basename -- "${path}")"
+dry_run=()
+if ! flux --namespace "${namespace}" get kustomizations "${name}" >/dev/null 2>&1; then
+  dry_run=(--dry-run)
+fi
+
+flux build ks "${name}" \
+  --namespace "${namespace}" \
+  --kustomization-file "${kustomization_file}" \
+  --path "${repo_root}/kubernetes/apps/${path}" \
+  "${dry_run[@]}" |
+  kubectl apply --server-side --field-manager=kustomize-controller --filename -

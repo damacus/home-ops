@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#MISE description="Encrypt all Kubernetes SOPS secrets that are not already encrypted"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+sops_config="${repo_root}/.sops.yaml"
+age_file="${SOPS_AGE_KEY_FILE:-${repo_root}/age.key}"
+
+[[ -f "${sops_config}" ]] || { printf 'Missing Sops config file\n' >&2; exit 1; }
+[[ -f "${age_file}" ]] || { printf 'Missing Sops Age key file\n' >&2; exit 1; }
+[[ -d "${repo_root}/kubernetes" ]] || exit 0
+
+while IFS= read -r -d '' file; do
+  if ! grep -q 'ENC\[AES256_GCM' "${file}"; then
+    sops --encrypt --in-place "${file}"
+  fi
+done < <(find "${repo_root}/kubernetes" -type f -name '*.sops.*' -print0)

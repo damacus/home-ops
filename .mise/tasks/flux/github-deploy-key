@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#MISE description="Apply the encrypted Flux GitHub deploy key"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+deploy_key="${repo_root}/kubernetes/bootstrap/flux/github-deploy-key.sops.yaml"
+
+[[ -f "${deploy_key}" ]] || { printf 'Missing GitHub deploy key file: %s\n' "${deploy_key}" >&2; exit 1; }
+kubectl create namespace flux-system --dry-run=client -o yaml | kubectl apply --filename -
+sops --decrypt "${deploy_key}" | kubectl apply --server-side --filename -

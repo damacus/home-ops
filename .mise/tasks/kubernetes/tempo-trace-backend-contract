@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#MISE description="Assert Tempo storage, private networking, Grafana, and staged Med Tracker OTLP wiring"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+script="$PWD/scripts/tempo_trace_backend_contract.sh"
+command -v bash >/dev/null || { printf 'Missing bash\n' >&2; exit 1; }
+command -v yq >/dev/null || { printf 'Missing yq\n' >&2; exit 1; }
+command -v rg >/dev/null || { printf 'Missing rg\n' >&2; exit 1; }
+[ -f "$script" ] || { printf 'Missing Tempo trace backend contract script\n' >&2; exit 1; }
+exec bash "$script" "$PWD"

@@ -8,8 +8,7 @@ This repository, `home-ops`, is a production-grade home infrastructure managemen
 
 - **Kubernetes**: Orchestration layer (k3s distribution).
 - **Flux CD (Flux Operator)**: GitOps tool for continuous delivery and cluster state management.
-- **Mise**: Pinned tooling and the provisioning lifecycle for golden images and nodes.
-- **Taskfile (go-task)**: The automation harness for Kubernetes and repository operations.
+- **Mise**: Pinned tooling and the automation interface for repository, cluster, and provisioning operations.
 - **Cilium**: CNI with Gateway API implementation for ingress/egress.
 - **Armbian and cloud-init**: Reproducible, hardened Radxa golden images.
 - **Mondoo/cnspec**: Compliance and validation testing.
@@ -20,8 +19,7 @@ This repository, `home-ops`, is a production-grade home infrastructure managemen
   - `apps/`: Application-specific manifests, categorized by namespace or purpose.
   - `flux/`: Core Flux configuration and Kustomizations.
 - `provisioning/`: Golden-image build, verification, flashing, and explicit SSH node lifecycle logic.
-- `.mise/tasks/provisioning/`: Mise entry points for image and node operations.
-- `.taskfiles/`: Modular Taskfile definitions.
+- `.mise/tasks/`: Mise entry points for repository, cluster, and provisioning operations.
 - `scripts/`: Support scripts for automation.
 - `.tasks/`: **NEW** Segregated task lists for AI agents to track progress.
 
@@ -30,7 +28,7 @@ This repository, `home-ops`, is a production-grade home infrastructure managemen
 1. **Test-Driven Development (TDD)**: Every production change must be driven by a failing test.
 2. **Conventional Commits**: All commits must follow the `feat:`, `fix:`, `refactor:`, `test:` format.
 3. **Small, Atomic Changes**: Avoid monolithic PRs. Each change should be verifiable.
-4. **Repository Automation**: Prefer `task <command>` for cluster operations and `mise run provisioning:<command>` for host provisioning.
+4. **Repository Automation**: Use `mise run <command>` for repository, cluster, and host provisioning operations.
 5. **Strong Typing**: Use type hints in all languages (Python, Go, etc.) where supported.
 
 ## What We Are Building

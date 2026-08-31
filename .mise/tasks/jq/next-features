@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Show next 10 failing features to work on"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+jq -s '[.[][] | select(.passes == false)] | sort_by(.category) | .[0:10] | .[] | "\(.category): \(.description)"' .tasks/*.json

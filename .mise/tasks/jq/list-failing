@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="List all items with passes=false"
+#MISE quiet=true
+#USAGE arg "<file>" help="Task-list name without the .json suffix"
+set -euo pipefail
+
+# Variable is supplied by Mise's usage parser.
+# shellcheck disable=SC2154
+file="${usage_file}"
+jq -r '.[] | select(.passes == false) | "\(.category): \(.description)"' ".tasks/$file.json"

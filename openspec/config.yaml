@@ -4,9 +4,9 @@ context: |
   home-ops is the production Infrastructure-as-Code repository for a k3s cluster.
   Flux HelmRelease and Kustomization resources under kubernetes/ are the source of truth.
   Reuse existing Grafana, Loki, VictoriaMetrics, RustFS, ExternalSecret, Cilium
-  NetworkPolicy, OCIRepository, and Taskfile patterns. Never commit credentials,
+  NetworkPolicy, OCIRepository, and Mise task patterns. Never commit credentials,
   rendered secrets, health data, or trace payloads. Start from fresh origin/main,
-  use task wrappers for validation, and require live Flux and cluster evidence for
+  use Mise commands for validation, and require live Flux and cluster evidence for
   deployment completion.
 
 rules:
@@ -25,7 +25,7 @@ operations:
   apply:
     guidance:
       - Read AGENTS.md and GEMINI.md before implementation.
-      - Work in a dedicated branch and use task commands for repository verification.
+      - Work in a dedicated branch and use Mise commands for repository verification.
       - Stage production changes through an isolated canary and preserve fail-open application behavior.
   archive:
     guidance:

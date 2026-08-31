@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+#MISE description="Bootstrap Flux into a Kubernetes cluster"
+#MISE quiet=true
+#MISE raw=true
+#MISE confirm="Bootstrap Flux into the current Kubernetes context?"
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+prometheus_operator_version="v0.93.1" # renovate: depName=prometheus-operator/prometheus-operator datasource=github-releases
+prometheus_crds=(podmonitors prometheusrules scrapeconfigs servicemonitors)
+
+for crd in "${prometheus_crds[@]}"; do
+  kubectl apply --server-side --filename "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/${prometheus_operator_version}/example/prometheus-operator-crd/monitoring.coreos.com_${crd}.yaml"
+done
+
+kubectl apply --server-side --kustomize "${repo_root}/kubernetes/bootstrap/flux"
+sops --decrypt "${repo_root}/kubernetes/bootstrap/flux/age-key.secret.sops.yaml" | kubectl apply --server-side --filename -
+sops --decrypt "${repo_root}/kubernetes/bootstrap/flux/github-deploy-key.sops.yaml" | kubectl apply --server-side --filename -
+kubectl apply --server-side --filename "${repo_root}/kubernetes/flux/vars/cluster-settings.yaml"
+kubectl apply --server-side --kustomize "${repo_root}/kubernetes/flux/config"

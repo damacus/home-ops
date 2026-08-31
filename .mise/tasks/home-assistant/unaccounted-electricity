@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#MISE description="Report unaccounted Home Assistant electricity for the last 24 hours"
+#MISE quiet=true
+#USAGE flag "--format <format>" help="Output format (default: human)"
+#USAGE flag "--hours <hours>" help="Reporting window in hours (default: 24)"
+#USAGE flag "--minimum-coverage <ratio>" help="Minimum accepted coverage ratio (default: 0.95)"
+set -euo pipefail
+
+format="${usage_format:-human}"
+hours="${usage_hours:-24}"
+minimum_coverage="${usage_minimum_coverage:-0.95}"
+script=scripts/home_assistant_unaccounted_electricity.py
+[ -f "$script" ] || { printf 'Missing unaccounted electricity script\n' >&2; exit 1; }
+command -v kubectl >/dev/null || { printf 'Missing kubectl\n' >&2; exit 1; }
+kubectl exec -i -n home-automation statefulset/home-assistant -- \
+  python - --format "$format" --hours "$hours" --minimum-coverage "$minimum_coverage" < "$script"

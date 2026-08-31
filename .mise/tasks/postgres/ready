@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Exit 0 only when green is caught up and safe to cut over"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec "$(dirname "$0")/../../../scripts/pg-bluegreen.sh" ready "$@"

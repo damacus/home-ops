@@ -17,9 +17,9 @@ Homelab Kubernetes using Flux.
    ./init.sh
    ```
 2. Review the task lists in `.tasks/` to see current progress and pending items.
-3. Use `task` to run automation:
+3. Use Mise to run automation:
    ```bash
-   task --list
+   mise tasks
    ```
 
 ## 🤝 Credits

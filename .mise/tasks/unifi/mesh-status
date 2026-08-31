@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#MISE description="Read UniFi mesh/backhaul state for the garage camera path"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+script=scripts/unifi/read-status.py
+command -v python3 >/dev/null || { printf 'Missing Python interpreter\n' >&2; exit 1; }
+[ -f "$script" ] || { printf 'Missing UniFi read status script\n' >&2; exit 1; }
+command -v kubectl >/dev/null || { printf 'Missing kubectl\n' >&2; exit 1; }
+exec python3 "$script" "$@"

@@ -3,16 +3,16 @@
 Run the read-only report:
 
 ```console
-task home-assistant:unaccounted-electricity
+mise run home-assistant:unaccounted-electricity
 ```
 
 Get structured output, including the five-minute graph series:
 
 ```console
-task home-assistant:unaccounted-electricity format=json
+mise run home-assistant:unaccounted-electricity --format json
 ```
 
-The task runs the analysis inside the Home Assistant pod. It uses the pod's
+The command runs the analysis inside the Home Assistant pod. It uses the pod's
 existing recorder connection and does not print or store database credentials.
 
 ## Method
@@ -35,7 +35,7 @@ of a 24-hour window.
 8. The spike threshold is the 95th percentile. A spike is reported only when
    two or more consecutive five-minute bins meet that threshold.
 
-The task fails instead of returning a partial result when required entities are
+The command fails instead of returning a partial result when required entities are
 missing, energy statistics do not span the complete window, or residual-demand
 coverage is below 95%.
 

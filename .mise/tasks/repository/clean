@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#MISE description="Clean files and directories no longer needed after cluster bootstrap"
+#MISE quiet=true
+#MISE raw=true
+#MISE confirm="Move bootstrap files into .private and update Renovate configuration?"
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+timestamp="$(date +%H%M%S)"
+
+[[ -d "${repo_root}/bootstrap" ]] || { printf 'Missing bootstrap directory\n' >&2; exit 1; }
+[[ -d "${repo_root}/.private" ]] || { printf 'Missing private directory\n' >&2; exit 1; }
+[[ -f "${repo_root}/.github/renovate.json5" ]] || { printf 'Missing Renovate config file\n' >&2; exit 1; }
+
+rm -rf "${repo_root}/.github/tests" "${repo_root}/.github/workflows/e2e.yaml"
+mv "${repo_root}/bootstrap" "${repo_root}/.private/bootstrap-${timestamp}"
+if [[ -f "${repo_root}/makejinja.toml" ]]; then
+  mv "${repo_root}/makejinja.toml" "${repo_root}/.private/makejinja-${timestamp}.toml"
+fi
+
+if [[ "$(uname -s)" == Darwin ]]; then
+  sed -i '' 's/(..\.j2)\?//g' "${repo_root}/.github/renovate.json5"
+else
+  sed -i 's/(..\.j2)\?//g' "${repo_root}/.github/renovate.json5"
+fi

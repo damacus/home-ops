@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+#MISE description="Update a field in a JSON file by ID"
+#MISE quiet=true
+#USAGE arg "<file>" help="JSON file to update"
+#USAGE arg "<id>" help="Object ID to match"
+#USAGE arg "<field>" help="Field name to update"
+#USAGE arg "<value>" help="New value as JSON"
+set -euo pipefail
+
+# Variables are supplied by Mise's usage parser.
+# shellcheck disable=SC2154
+jq --arg target_id "${usage_id}" --arg field "${usage_field}" --argjson value "${usage_value}" \
+  'map(if .id == $target_id then .[$field] = $value else . end)' "${usage_file}" |
+  sponge "${usage_file}"

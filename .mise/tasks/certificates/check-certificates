@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#MISE description="Check the certificates"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+if [ "$(basename "$PWD")" != certificates ]; then
+  cd certificates
+fi
+openssl x509 -in ironstone-casa-tls.crt -noout -checkend 86400
+openssl rsa -in ironstone-casa-tls.key -noout -check

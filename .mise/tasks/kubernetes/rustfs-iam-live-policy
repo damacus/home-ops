@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#MISE description="Validate live RustFS IAM users and policies with Mondoo cnspec"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+policy="$PWD/tests/mondoo/rustfs-iam-live.mql.yaml"
+script="$PWD/scripts/rustfs_iam_live_check.sh"
+command -v cnspec >/dev/null || { printf 'Missing cnspec\n' >&2; exit 1; }
+command -v rc >/dev/null || { printf 'Missing rc\n' >&2; exit 1; }
+command -v jq >/dev/null || { printf 'Missing jq\n' >&2; exit 1; }
+[ -f "$policy" ] || { printf 'Missing RustFS live IAM policy\n' >&2; exit 1; }
+[ -f "$script" ] || { printf 'Missing RustFS live IAM check script\n' >&2; exit 1; }
+cnspec --auto-update=false policy lint "$policy"
+exec cnspec --auto-update=false scan local --policy-bundle "$policy" --incognito

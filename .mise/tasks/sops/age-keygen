@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="Initialize Age Key for Sops"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+age_file="${SOPS_AGE_KEY_FILE:-${repo_root}/age.key}"
+
+[[ -f "${age_file}" ]] || age-keygen --output "${age_file}"

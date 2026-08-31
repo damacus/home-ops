@@ -285,12 +285,12 @@ For each critical/high issue:
 
 1. Write failing test (if applicable)
 1. Implement the fix
-1. Run tests: `task test`
+1. Run the relevant repository-native Mise validation.
 1. Re-run Brakeman to verify fix: `brakeman --no-pager`
 
 ```fish
 // turbo
-task test
+mise run kubernetes:yayamlls
 ```
 
 ```fish

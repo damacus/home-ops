@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#MISE description="Configure repository from bootstrap vars"
+#MISE quiet=true
+#MISE raw=true
+#MISE confirm="Any conflicting config in kubernetes/ will be overwritten. Continue?"
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." >/dev/null 2>&1 && pwd)"
+makejinja_config="${MAKEJINJA_CONFIG_FILE:-${repo_root}/makejinja.toml}"
+plugin_file="${repo_root}/bootstrap/scripts/plugin.py"
+
+mise run workstation:direnv
+mise run sops:age-keygen
+mise run init
+mise run workstation:venv
+
+[[ -f "${makejinja_config}" ]] || { printf 'Missing Makejinja config file\n' >&2; exit 1; }
+[[ -f "${plugin_file}" ]] || { printf 'Missing Makejinja plugin file\n' >&2; exit 1; }
+"${VIRTUAL_ENV:-${repo_root}/.venv}/bin/makejinja"
+mise run sops:encrypt
+mise run kubernetes:yayamlls

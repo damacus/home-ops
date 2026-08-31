@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Apply the green CNPG cluster manifest and wait for healthy"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec "$(dirname "$0")/../../../scripts/pg-bluegreen.sh" create-green "$@"

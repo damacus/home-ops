@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#MISE description="Reset repo back to HEAD"
+#MISE quiet=true
+#MISE raw=true
+#MISE confirm="Discard all repository changes and untracked files, then pull main?"
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+cd "${repo_root}"
+git reset --hard HEAD
+git clean -f -d
+git pull origin main

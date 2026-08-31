@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Show failing tests grouped by area"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+jq -s '[.[][] | select(.passes == false)] | map(.category) | group_by(.) | map({category: .[0], count: length}) | sort_by(.count) | reverse' .tasks/*.json

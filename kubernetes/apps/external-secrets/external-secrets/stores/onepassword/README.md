@@ -17,5 +17,5 @@ sops --decrypt kubernetes/apps/external-secrets/external-secrets/app/secret.sops
 ```
 
 ```shell
-task sops:encrypt
+mise run sops:encrypt
 ```

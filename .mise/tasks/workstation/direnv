@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Run direnv hooks"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+exec direnv allow "${repo_root}"

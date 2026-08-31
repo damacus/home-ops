@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#MISE description="Run report-only Mondoo posture scan against the current Kubernetes cluster"
+#MISE quiet=true
+#MISE raw=true
+#USAGE flag "--output <format>" help="Mondoo output format"
+#USAGE flag "--report-dir <path>" help="Directory for reports"
+set -euo pipefail
+
+command -v python3 >/dev/null || { printf 'Missing Python interpreter\n' >&2; exit 1; }
+command -v cnspec >/dev/null || { printf 'Missing cnspec\n' >&2; exit 1; }
+script="$PWD/scripts/mondoo_scan.py"
+[ -f "$script" ] || { printf 'Missing Mondoo wrapper\n' >&2; exit 1; }
+args=()
+[ -n "${usage_output:-}" ] && args+=(--output "${usage_output}")
+[ -n "${usage_report_dir:-}" ] && args+=(--report-dir "${usage_report_dir}")
+exec python3 "$script" "${args[@]}" k8s-live

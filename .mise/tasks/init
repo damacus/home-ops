@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+#MISE description="Initialize configuration files"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." >/dev/null 2>&1 && pwd)"
+config_file="${BOOTSTRAP_CONFIG_FILE:-${repo_root}/config.yaml}"
+sample_file="${config_file%.yaml}.sample.yaml"
+
+mkdir -p "${repo_root}/.private"
+if [[ ! -f "${config_file}" ]]; then
+  [[ -f "${sample_file}" ]] || {
+    printf 'Missing bootstrap configuration sample: %s\n' "${sample_file}" >&2
+    exit 1
+  }
+  cp "${sample_file}" "${config_file}"
+fi
+
+printf 'Configuration file: %s\n' "${config_file}"

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+#MISE description="Run composable read-only cluster health checks"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+notify=false
+child_args=()
+for argument in "$@"; do
+  case "$argument" in
+    --notify|--notify=true)
+      notify=true
+      ;;
+    --notify=false)
+      ;;
+    *)
+      child_args+=("$argument")
+      ;;
+  esac
+done
+
+failed=0
+for check in health-nodes health-kube-vip health-cilium health-pods health-deployments cnpg-health grafana-alerts; do
+  if ! mise run "kubernetes:$check" -- "${child_args[@]}"; then
+    failed=1
+  fi
+done
+
+if [ "$failed" -ne 0 ] && [ "$notify" = true ]; then
+  if ! scripts/notify \
+    --status failure \
+    --title "Cluster health: action needed" \
+    --message "One or more cluster health checks failed; see command output for the affected report."; then
+    printf 'send notification: failed\n' >&2
+  fi
+fi
+
+exit "$failed"

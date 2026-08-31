@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="Run a jq query on a JSON file"
+#MISE quiet=true
+#USAGE arg "<file>" help="JSON file to query"
+#USAGE arg "<query>" help="jq query expression"
+set -euo pipefail
+
+# Variables are supplied by Mise's usage parser.
+# shellcheck disable=SC2154
+jq "${usage_query}" "${usage_file}"

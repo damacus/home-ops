@@ -31,9 +31,9 @@ https://oncall-prod-eu-west-0.grafana.net/oncall
 Run the static checks before applying changes:
 
 ```bash
-task kubernetes:yayamlls
-task flux:flate-build path=./kubernetes/apps/monitoring/grafana
-task flux:flate-build path=./kubernetes/apps/monitoring/victoria-metrics
+mise run kubernetes:yayamlls
+mise run flux:flate-build --path ./kubernetes/apps/monitoring/grafana
+mise run flux:flate-build --path ./kubernetes/apps/monitoring/victoria-metrics
 ```
 
 After Flux sync:
@@ -41,7 +41,7 @@ After Flux sync:
 ```bash
 kubectl get secret grafana-oncall-secret -n monitoring
 kubectl get secret alertmanager-secret -n monitoring
-task kubernetes:grafana-alerts
+mise run kubernetes:grafana-alerts
 ```
 
 In Grafana, verify:

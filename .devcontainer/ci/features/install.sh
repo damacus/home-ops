@@ -31,7 +31,7 @@ for installer_path in \
     "cli/cli!!?as=gh" \
     "cloudflare/cloudflared!" \
     "fluxcd/flux2!!?as=flux" \
-    "go-task/task!" \
+    "jdx/mise!!?as=mise" \
     "k0sproject/k0sctl!" \
     "derailed/k9s!" \
     "stern/stern!" \

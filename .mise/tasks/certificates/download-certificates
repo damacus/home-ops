@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#MISE description="Download the certificates from the cluster"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." >/dev/null 2>&1 && pwd)"
+cd "${repo_root}/certificates"
+kubectl get secret -n network ironstone-casa-production-tls -o yaml | yq -r '.data."tls.crt"' | base64 -d > ironstone-casa-tls.crt
+kubectl get secret -n network ironstone-casa-production-tls -o yaml | yq -r '.data."tls.key"' | base64 -d > ironstone-casa-tls.key
+mise run certificates:check-certificates

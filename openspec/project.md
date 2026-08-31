@@ -32,6 +32,6 @@ operation.
 
 ## Verification
 
-Changes must use repository-native validation through `task` where available.
+Changes must use repository-native validation through Mise.
 Infrastructure changes require static validation, a non-destructive plan, drift
 checks, and a documented recovery test before migration is complete.

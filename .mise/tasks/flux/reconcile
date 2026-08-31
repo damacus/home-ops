@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Force update Flux to pull in changes from your Git repository"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+exec flux reconcile --namespace flux-system kustomization cluster --with-source "$@"

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#MISE description="Identify top log-producing namespaces by volume (requires Loki)"
+#MISE quiet=true
+#MISE raw=true
+#USAGE flag "--period <duration>" help="Loki query period (default: 1h)"
+set -euo pipefail
+
+period="${usage_period:-1h}"
+printf '=== Log Volume by Namespace (last %s) ===\n\n' "$period"
+kubectl exec -n monitoring deploy/loki-gateway -- \
+  wget -qO- "http://localhost:8080/loki/api/v1/query?query=sum(count_over_time({namespace=~\".%2B\"}[$period]))%20by%20(namespace)&limit=100" 2>/dev/null |
+  jq -r '.data.result | sort_by(.value[1] | tonumber) | reverse | .[] | "\(.metric.namespace)\t\(.value[1])"' |
+  awk 'BEGIN {printf "%-30s %s\\n", "NAMESPACE", "LOG_COUNT"; printf "%-30s %s\\n", "---------", "---------"} {printf "%-30s %s\\n", $1, $2}'

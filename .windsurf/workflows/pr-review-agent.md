@@ -104,11 +104,11 @@ For each comment requiring action:
 
 1. **Write failing test** (if applicable)
 2. **Implement the fix**
-3. **Run tests:**
+3. **Run the relevant repository-native validation:**
 
 ```fish
 // turbo
-task test
+mise run kubernetes:yayamlls
 ```
 
 4. **Run linter:**

@@ -26,8 +26,8 @@ cat AGENTS.md
 ls -la .tasks/
 
 # 5. Read a specific task list to see pending work
-# Example: task jq:list-failing FILE=.tasks/provisioning.json
-task jq:list-failing FILE=<path_to_json>
+# Example: mise run jq:list-failing provisioning
+mise run jq:list-failing <list-name>
 
 # 6. Read progress notes from previous sessions
 cat claude-progress.txt
@@ -42,14 +42,14 @@ Understanding the `AGENTS.md` is critical - it contains the full infrastructure 
 
 ```fish
 # Get a list of all running pods and their status
-task kubernetes:resources
+mise run kubernetes:resources
 ```
 
 ### STEP 3: RUN VALIDATION (IF APPLICABLE)
 
 ```fish
 # Validate all Kubernetes manifests
-task k8s:kubeconform
+mise run kubernetes:yayamlls
 ```
 
 ### STEP 4: VERIFICATION TEST (CRITICAL!)
@@ -119,7 +119,7 @@ Implement the chosen task thoroughly:
 
 **YOU CAN ONLY MODIFY ONE FIELD: "passes"**
 
-After thorough verification, use the task commands to update the JSON:
+After thorough verification, update the JSON directly:
 
 ```fish
 # Update by index or specific criteria using raw jq (be extremely careful)
@@ -168,24 +168,24 @@ Before context fills up:
 
 ---
 
-## AVAILABLE TASK COMMANDS
+## AVAILABLE MISE COMMANDS
 
-Run `task --list` to see all available commands. Key commands:
+Run `mise tasks` to see all available commands. Key commands:
 
 ### Kubernetes & Flux
 
 ```fish
 # Reconcile Flux
-task flux:reconcile
+mise run flux:reconcile
 
 # Apply specific Kustomization
-task flux:apply path=apps/my-app
+mise run flux:apply apps/my-app
 
 # List cluster resources
-task k8s:resources
+mise run kubernetes:resources
 
 # Validate manifests
-task k8s:kubeconform
+mise run kubernetes:yayamlls
 ```
 
 ### Radxa Provisioning

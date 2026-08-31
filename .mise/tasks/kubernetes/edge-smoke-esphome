@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Run edge smoke checks plus the ESPHome Traefik canary hostname"
+#MISE quiet=true
+#MISE raw=true
+#MISE depends=["kubernetes:cluster-health-build"]
+set -euo pipefail
+exec .cache/bin/cluster-health edge-smoke --include-esphome-canary "$@"

@@ -1,0 +1,15 @@
+age
+cloudflared-bin
+direnv
+flux-bin
+flate-bin
+go-yq
+helm
+helmfile
+jq
+kubectl-bin
+kustomize
+moreutils
+sops
+stern-bin
+yayamlls-bin

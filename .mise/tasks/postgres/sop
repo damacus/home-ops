@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#MISE description="Print the operator runbook"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+cat <<'EOF'
+CNPG PG16 -> PG18 blue/green SOP
+  0. Pick an explicit profile: export PG_PROFILE=<app>
+  1. Land prerequisite manifests/settings for logical replication.
+  2. mise run postgres:discover
+  3. mise run postgres:prepare-blue
+  4. mise run postgres:preflight
+  5. mise run postgres:all-but-cutover
+  6. mise run postgres:monitor             # repeat until ready
+  7. Freeze app writes/deployments
+  8. mise run postgres:ready
+  9. mise run postgres:cutover             # stops writes, validates, waits
+ 10. operator: commit + push the HelmRelease cutover edit and reconcile Flux
+ 11. script resumes, restores replicas, runs postcheck + grafana-postcheck
+ 12. Soak (24-48h)
+ 13. mise run postgres:cleanup
+EOF

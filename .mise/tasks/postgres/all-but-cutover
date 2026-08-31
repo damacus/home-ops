@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="discover -> prepare-blue -> preflight -> create-green -> copy-schema -> publication -> subscription -> monitor"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+script="$(dirname "$0")/../../../scripts/pg-bluegreen.sh"
+for subcommand in discover prepare-blue preflight create-green copy-schema publication subscription monitor; do
+  "${script}" "${subcommand}" "$@"
+done

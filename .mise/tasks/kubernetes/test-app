@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#MISE description="Run Mondoo checks for a Kubernetes application"
+#MISE quiet=true
+#MISE raw=true
+#USAGE arg "<app>" help="Application path under kubernetes/apps"
+#USAGE flag "--output <format>" help="Mondoo output format"
+#USAGE flag "--report-dir <path>" help="Directory for reports"
+set -euo pipefail
+
+command -v python3 >/dev/null || { printf 'Missing Python interpreter\n' >&2; exit 1; }
+command -v cnspec >/dev/null || { printf 'Missing cnspec\n' >&2; exit 1; }
+script="$PWD/scripts/mondoo_scan.py"
+[ -f "$script" ] || { printf 'Missing Mondoo wrapper\n' >&2; exit 1; }
+args=()
+[ -n "${usage_output:-}" ] && args+=(--output "${usage_output}")
+[ -n "${usage_report_dir:-}" ] && args+=(--report-dir "${usage_report_dir}")
+# Variable is supplied by Mise's usage parser.
+# shellcheck disable=SC2154
+exec python3 "$script" "${args[@]}" app --app "${usage_app}"

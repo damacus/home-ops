@@ -42,7 +42,7 @@ yq shell-completion fish > ~/.config/fish/completions/yq.fish
 if ! grep -q "venv /workspaces/" .venv/pyvenv.cfg; then
     rm -rf .venv
 fi
-task workstation:venv
+mise run workstation:venv
 
 # Export the direnv environment variables
-task workstation:direnv
+mise run workstation:direnv

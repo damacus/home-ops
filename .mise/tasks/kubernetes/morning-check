@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#MISE description="Run the recurring morning cluster health bundle from composable subtasks"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+
+notify=false
+edge_smoke=true
+log_noise=false
+child_args=()
+for argument in "$@"; do
+  case "$argument" in
+    --notify|--notify=true)
+      notify=true
+      ;;
+    --notify=false)
+      ;;
+    --edge-smoke)
+      edge_smoke=true
+      ;;
+    --no-edge-smoke)
+      edge_smoke=false
+      ;;
+    --log-noise)
+      log_noise=true
+      ;;
+    --no-log-noise)
+      log_noise=false
+      ;;
+    *)
+      child_args+=("$argument")
+      ;;
+  esac
+done
+
+checks=(health gitops-health external-secrets-health service-account-health cnpg-backups)
+if [ "$edge_smoke" = true ]; then
+  checks+=(edge-smoke)
+fi
+if [ "$log_noise" = true ]; then
+  checks+=(log-noise)
+fi
+
+failed=0
+for check in "${checks[@]}"; do
+  if ! mise run "kubernetes:$check" -- "${child_args[@]}"; then
+    failed=1
+  fi
+done
+
+if [ "$failed" -ne 0 ] && [ "$notify" = true ]; then
+  if ! scripts/notify \
+    --status failure \
+    --title "Cluster health: action needed" \
+    --message "One or more cluster health checks failed; see command output for the affected report."; then
+    printf 'send notification: failed\n' >&2
+  fi
+fi
+
+exit "$failed"

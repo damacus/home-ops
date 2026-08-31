@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Run flate test to validate rendered GitOps resources"
+#MISE quiet=true
+#USAGE flag "--path <path>" help="Kubernetes manifest path (default: ./kubernetes)"
+set -euo pipefail
+
+path="${usage_path:-./kubernetes}"
+command -v flate >/dev/null || { printf 'Missing flate\n' >&2; exit 1; }
+exec flate --no-progress test all --api-versions 'policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule' --path "$path"
