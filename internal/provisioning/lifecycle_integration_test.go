@@ -133,6 +133,32 @@ func TestLifecycleReadinessTimeoutRedactsBoundedLogs(t *testing.T) {
 	}
 }
 
+func TestLifecycleTokenTransferFailureLeavesNoFinalFilesAndRetrySucceeds(t *testing.T) {
+	fixture := newLifecycleFixture(t, "replacement-retry")
+	fixture.setEnv(t, "TOKEN_TRANSFER_FAIL", "true")
+	failed := fixture.runWithInput(t, "replace node-abcdef\n", "enrol", "target.example", "--replace", "--node-ip", "10.0.0.77")
+	if failed.exitCode == 0 || failed.stdout != "" {
+		t.Fatalf("token transfer failure result = exit %d, stdout %q", failed.exitCode, failed.stdout)
+	}
+	if strings.Contains(failed.stderr, lifecycleToken) {
+		t.Fatalf("token transfer failure exposed the server token")
+	}
+	fixture.assertTargetStateAbsent(t, "final-config", "final-token", "staged-config", "staged-token")
+	fixture.assertLogExcludes(t, "enable --now k3s.service")
+
+	fixture.setEnv(t, "TOKEN_TRANSFER_FAIL", "false")
+	retry := fixture.run(t, "enrol", "target.example", "--node-ip", "10.0.0.77")
+	if retry.exitCode != 0 {
+		t.Fatalf("enrol retry exit = %d, stderr = %s", retry.exitCode, retry.stderr)
+	}
+	assertJSONResult(t, retry.stdout, "node", "node-abcdef")
+	fixture.assertTargetStatePresent(t, "final-config", "final-token")
+	log := fixture.log(t)
+	if strings.Count(log, "kubectl delete node node-abcdef") != 1 || strings.Count(log, "enable --now k3s.service") != 1 {
+		t.Fatalf("retry repeated a destructive replacement operation")
+	}
+}
+
 func TestLifecycleRetirementPreflightAndOrder(t *testing.T) {
 	fixture := newLifecycleFixture(t, "waitready")
 	fixture.setEnv(t, "RETIRE_UNIT", "missing")
@@ -146,6 +172,7 @@ func TestLifecycleRetirementPreflightAndOrder(t *testing.T) {
 	fixture.assertLogExcludes(t, "kubectl drain", "delete node", "disable --now")
 
 	fixture = newLifecycleFixture(t, "waitready")
+	fixture.setEnv(t, "RETIRE_NODE_STATE", "present")
 	result := fixture.runWithInput(t, "node-abcdef\n", "retire", "node-abcdef", "target.example")
 	if result.exitCode != 0 {
 		t.Fatalf("retirement exit = %d, stderr = %s", result.exitCode, result.stderr)
@@ -159,6 +186,36 @@ func TestLifecycleRetirementPreflightAndOrder(t *testing.T) {
 	remove := strings.Index(log, "rm -rf /etc/rancher/k3s /var/lib/rancher/k3s")
 	if !strings.Contains(result.stderr, "Type node-abcdef") || identity < 0 || drain < 0 || stop < 0 || deleteNode < 0 || remove < 0 || !(identity < drain && drain < stop && stop < deleteNode && deleteNode < remove) {
 		t.Fatalf("retirement command order did not preserve its safety boundary")
+	}
+}
+
+func TestLifecycleRetirementRetriesCleanupAfterNodeDeletion(t *testing.T) {
+	fixture := newLifecycleFixture(t, "waitready")
+	fixture.setEnv(t, "RETIRE_NODE_STATE", "present")
+	fixture.setEnv(t, "RETIRE_CLEANUP_FAIL", "true")
+	failed := fixture.runWithInput(t, "node-abcdef\n", "retire", "node-abcdef", "target.example")
+	if failed.exitCode == 0 || failed.stdout != "" {
+		t.Fatalf("cleanup failure result = exit %d, stdout %q", failed.exitCode, failed.stdout)
+	}
+	if !strings.Contains(failed.stderr, "cleanup failed") {
+		t.Fatalf("cleanup failure was not reported: %q", failed.stderr)
+	}
+
+	fixture.setEnv(t, "RETIRE_NODE_STATE", "absent")
+	fixture.setEnv(t, "RETIRE_CLEANUP_FAIL", "false")
+	retry := fixture.runWithInput(t, "node-abcdef\n", "retire", "node-abcdef", "target.example")
+	if retry.exitCode != 0 {
+		t.Fatalf("retirement retry exit = %d, stderr = %s", retry.exitCode, retry.stderr)
+	}
+	assertJSONResult(t, retry.stdout, "node", "node-abcdef")
+	log := fixture.log(t)
+	for _, path := range []string{"/etc/rancher/k3s", "/var/lib/rancher/k3s", "/var/lib/kubelet", "/var/lib/cni", "/etc/cni/net.d", "/etc/rancher/node"} {
+		if !strings.Contains(log, path) {
+			t.Fatalf("retirement cleanup did not include %s", path)
+		}
+	}
+	if strings.Count(log, "kubectl drain node-abcdef") != 1 || strings.Count(log, "kubectl delete node node-abcdef") != 1 {
+		t.Fatalf("retirement retry repeated drain or node deletion")
 	}
 }
 
@@ -223,6 +280,7 @@ version: v1.36.3+k3s1
 		"MISE_PROJECT_ROOT=" + root,
 		"PATH=" + binDir + ":" + os.Getenv("PATH"),
 		"CALL_LOG=" + filepath.Join(root, "calls.log"),
+		"TARGET_STATE=" + filepath.Join(root, "target-state"),
 		"NODE_MODE=" + nodeMode,
 		"ROUTE_ADDRESS_PRESENT=true",
 		"LIFECYCLE_TOKEN=" + lifecycleToken,
@@ -283,6 +341,26 @@ func (f *lifecycleFixture) assertLogExcludes(t *testing.T, values ...string) {
 	}
 }
 
+func (f *lifecycleFixture) assertTargetStateAbsent(t *testing.T, names ...string) {
+	t.Helper()
+	for _, name := range names {
+		if _, err := os.Stat(filepath.Join(f.root, "target-state", name)); err == nil {
+			t.Fatalf("target state %s is still present", name)
+		} else if !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+	}
+}
+
+func (f *lifecycleFixture) assertTargetStatePresent(t *testing.T, names ...string) {
+	t.Helper()
+	for _, name := range names {
+		if _, err := os.Stat(filepath.Join(f.root, "target-state", name)); err != nil {
+			t.Fatalf("target state %s is missing: %v", name, err)
+		}
+	}
+}
+
 func assertJSONResult(t *testing.T, output, key, want string) {
 	t.Helper()
 	var result map[string]any
@@ -311,6 +389,10 @@ case "$*" in
   "get nodes -o json") printf '%s\n' '{"items":[{"metadata":{"name":"source","labels":{"node-role.kubernetes.io/control-plane":"","node-role.kubernetes.io/etcd":""}},"status":{"conditions":[{"type":"Ready","status":"True"}],"addresses":[{"type":"InternalIP","address":"10.0.0.10"}]}}]}' ;;
   "config view --minify -o json") printf '%s\n' '{"clusters":[{"cluster":{"server":"https://10.0.0.1:6443"}}]}' ;;
   *"get node node-abcdef"*)
+    if test -n "${RETIRE_NODE_STATE:-}"; then
+      if test "$RETIRE_NODE_STATE" = present; then printf '%s\n' '{"metadata":{"name":"node-abcdef"},"status":{"conditions":[{"type":"Ready","status":"True"}]}}'; fi
+      exit 0
+    fi
     count_file="$CALL_LOG.get-node"
     count=0
     test -f "$count_file" && count=$(cat "$count_file")
@@ -320,6 +402,8 @@ case "$*" in
       existing-ready:*) printf '%s\n' '{"metadata":{"name":"node-abcdef","uid":"old"},"status":{"conditions":[{"type":"Ready","status":"True"}]}}' ;;
       existing-notready:1) printf '%s\n' '{"metadata":{"name":"node-abcdef","uid":"old"},"status":{"conditions":[{"type":"Ready","status":"False"}]}}' ;;
       existing-notready:2|existing-notready:3) printf '%s\n' '{"metadata":{"name":"node-abcdef","labels":{"node-role.kubernetes.io/control-plane":"","node-role.kubernetes.io/etcd":""}},"status":{"conditions":[{"type":"Ready","status":"True"}]}}' ;;
+      replacement-retry:1) printf '%s\n' '{"metadata":{"name":"node-abcdef","uid":"old"},"status":{"conditions":[{"type":"Ready","status":"False"}]}}' ;;
+      replacement-retry:3|replacement-retry:4) printf '%s\n' '{"metadata":{"name":"node-abcdef","labels":{"node-role.kubernetes.io/control-plane":"","node-role.kubernetes.io/etcd":""}},"status":{"conditions":[{"type":"Ready","status":"True"}]}}' ;;
       waitready:2|waitready:3|waitready:4) printf '%s\n' '{"metadata":{"name":"node-abcdef","labels":{"node-role.kubernetes.io/control-plane":"","node-role.kubernetes.io/etcd":""}},"status":{"conditions":[{"type":"Ready","status":"True"}]}}' ;;
     esac ;;
   "delete node node-abcdef") echo 'kubectl progress' ;;
@@ -353,11 +437,21 @@ case "$*" in
     while test "$i" -lt "$size"; do printf x; i=$((i + 1)); done
     printf ' %s expected-log-tail\n' "$LIFECYCLE_TOKEN" ;;
   *"systemctl cat k3s.service"*) test "${RETIRE_UNIT:-present}" != missing ;;
-  *"install -d -m 0700"*) cat >/dev/null; printf 'stdin-redacted\n' >> "$CALL_LOG"; echo 'ssh progress' ;;
-  *"install -m 0600 /dev/stdin /etc/rancher/k3s/cluster-token"*) cat >/dev/null; printf 'stdin-redacted\n' >> "$CALL_LOG" ;;
+  *"mv /etc/rancher/k3s/.enrol-staging/config.yaml"*) mkdir -p "$TARGET_STATE"; touch "$TARGET_STATE/final-config" "$TARGET_STATE/final-token"; rm -f "$TARGET_STATE/staged-config" "$TARGET_STATE/staged-token" ;;
+  *".enrol-staging/config.yaml"*) mkdir -p "$TARGET_STATE"; touch "$TARGET_STATE/staged-config"; cat >/dev/null; echo 'ssh progress' ;;
+  *"install -d -m 0700"*) mkdir -p "$TARGET_STATE"; touch "$TARGET_STATE/final-config"; cat >/dev/null; printf 'stdin-redacted\n' >> "$CALL_LOG"; echo 'ssh progress' ;;
+  *".enrol-staging/cluster-token"*)
+    if test "${TOKEN_TRANSFER_FAIL:-false}" = true; then echo 'token transfer failed' >&2; exit 1; fi
+    mkdir -p "$TARGET_STATE"; touch "$TARGET_STATE/staged-token"; cat >/dev/null ;;
+  *"install -m 0600 /dev/stdin /etc/rancher/k3s/cluster-token"*)
+    if test "${TOKEN_TRANSFER_FAIL:-false}" = true; then echo 'token transfer failed' >&2; exit 1; fi
+    mkdir -p "$TARGET_STATE"; touch "$TARGET_STATE/final-token"; cat >/dev/null ;;
+  *"rm -rf /etc/rancher/k3s/.enrol-staging"*) rm -f "$TARGET_STATE/staged-config" "$TARGET_STATE/staged-token" ;;
   *"systemctl enable --now k3s.service") echo 'ssh progress' ;;
   *"systemctl disable --now k3s.service") echo 'ssh progress' ;;
-  *"rm -rf /etc/rancher/k3s /var/lib/rancher/k3s") echo 'ssh progress' ;;
+  *"rm -rf /etc/rancher/k3s"*)
+    if test "${RETIRE_CLEANUP_FAIL:-false}" = true; then echo 'cleanup failed' >&2; exit 1; fi
+    echo 'ssh progress' ;;
   *) echo "unexpected ssh invocation: $*" >&2; exit 1 ;;
 esac
 `
