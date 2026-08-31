@@ -54,6 +54,7 @@ jobs:
               - 'mondoo/**'
               - 'scripts/mondoo_scan.py'
               - 'tests/test_mondoo_scan.py'
+              - 'tests/test_paperless_v3_config.py'
               - 'tests/test_zitadel_access_policy.rb'
               - 'tests/test_zitadel_config.py'
             contracts:
@@ -173,7 +174,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python3 -m unittest tests/test_mondoo_scan.py tests/test_zitadel_config.py
+          python3 -m unittest tests/test_mondoo_scan.py tests/test_paperless_v3_config.py tests/test_zitadel_config.py
           ruby tests/test_zitadel_access_policy.rb
 
       - name: Validate migrated policy parity

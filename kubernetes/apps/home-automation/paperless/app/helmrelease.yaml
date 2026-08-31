@@ -87,14 +87,16 @@ spec:
                   secretKeyRef:
                     name: paperless-zitadel-oidc
                     key: providers
+              PAPERLESS_ARCHIVE_FILE_GENERATION: always
               PAPERLESS_CONSUMPTION_DIR: /data/nas-mount/incoming
-              PAPERLESS_DATA_DIR: /data/local/data
-              PAPERLESS_DB_TIMEOUT: "30"
-              PAPERLESS_EXPORT_DIR: /data/nas-mount/export
-              PAPERLESS_MEDIA_ROOT: /data/nas-mount/media
-              PAPERLESS_CONSUMER_POLLING: "60"
+              PAPERLESS_CONSUMER_DELETE_DUPLICATES: "true"
+              PAPERLESS_CONSUMER_POLLING_INTERVAL: "60"
               PAPERLESS_CONSUMER_RECURSIVE: "true"
               PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "true"
+              PAPERLESS_DATA_DIR: /data/local/data
+              PAPERLESS_DB_OPTIONS: timeout=30
+              PAPERLESS_EXPORT_DIR: /data/nas-mount/export
+              PAPERLESS_MEDIA_ROOT: /data/nas-mount/media
               PAPERLESS_REDIS_PREFIX: pngx
               PAPERLESS_REDIS: redis://redis-master.database.svc.cluster.local:6379
               PAPERLESS_TIKA_ENABLED: 1
