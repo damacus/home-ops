@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import stat
 import subprocess
 from pathlib import Path
@@ -128,9 +129,9 @@ def test_legacy_task_composite_dependencies_are_one_way_mise_shims(tmp_path: Pat
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["MISE_ARGUMENTS"] = str(arguments_log)
 
-    for task, arguments in (
-        ("edge-smoke", ("--skip-http3",)),
-        ("log-noise", ("--period", "24h")),
+    for task, arguments, expected_flags in (
+        ("edge-smoke", ("--skip-http3",), ("--format", "text", "--timeout", "45s")),
+        ("log-noise", ("--period", "24h"), ("--format", "text", "--timeout", "45s", "--period", "1h", "--top", "20")),
     ):
         result = run("task", f"kubernetes:{task}", "--", *arguments, env=env)
 
@@ -140,5 +141,91 @@ def test_legacy_task_composite_dependencies_are_one_way_mise_shims(tmp_path: Pat
             b"run",
             f"kubernetes:{task}".encode(),
             b"--",
+            *[flag.encode() for flag in expected_flags],
             *[argument.encode() for argument in arguments],
         ]
+
+
+def test_legacy_task_variables_translate_to_mise_flags_and_keep_cli_args(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    arguments_log = tmp_path / "mise-arguments"
+    executable(
+        bin_dir / "mise",
+        "#!/usr/bin/env bash\n"
+        "printf '%s\\t' \"$@\" >> \"$MISE_ARGUMENTS\"\n"
+        "printf '\\n' >> \"$MISE_ARGUMENTS\"\n",
+    )
+    env = os.environ.copy()
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
+    env["MISE_ARGUMENTS"] = str(arguments_log)
+
+    cases = (
+        (
+            "log-noise",
+            ("format=ndjson", "notify=true", "verbose=true", "raw=true", "timeout=12", "period=6h", "top=4"),
+            ("--format", "ndjson", "--notify", "--verbose", "--raw", "--timeout", "12s", "--period", "6h", "--top", "4"),
+        ),
+        (
+            "edge-smoke",
+            ("format=ndjson", "notify=true", "verbose=true", "raw=true", "timeout=12", "skip_http3=true"),
+            ("--format", "ndjson", "--notify", "--verbose", "--raw", "--timeout", "12s", "--skip-http3"),
+        ),
+    )
+    for task, variables, expected_flags in cases:
+        result = run("task", f"kubernetes:{task}", *variables, "--", "--literal-flag", env=env)
+
+        assert result.returncode == 0, result.stderr
+        assert arguments_log.read_text().splitlines()[-1].split("\t")[:-1] == [
+            "run",
+            f"kubernetes:{task}",
+            "--",
+            *expected_flags,
+            "--literal-flag",
+        ]
+
+
+def test_morning_check_variables_reach_migrated_mise_shims_without_external_commands(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    arguments_log = tmp_path / "mise-arguments"
+    task_binary = shutil.which("task")
+    assert task_binary is not None
+    executable(
+        bin_dir / "mise",
+        "#!/usr/bin/env bash\n"
+        "printf '%s\\t' \"$@\" >> \"$MISE_ARGUMENTS\"\n"
+        "printf '\\n' >> \"$MISE_ARGUMENTS\"\n",
+    )
+    executable(
+        bin_dir / "task",
+        "#!/usr/bin/env bash\n"
+        "case \"$1\" in\n"
+        "  kubernetes:edge-smoke|kubernetes:log-noise) exec \"$REAL_TASK\" \"$@\" ;;\n"
+        "  *) exit 0 ;;\n"
+        "esac\n",
+    )
+    executable(bin_dir / "go", "#!/usr/bin/env bash\nexit 0\n")
+    env = os.environ.copy()
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
+    env["MISE_ARGUMENTS"] = str(arguments_log)
+    env["REAL_TASK"] = task_binary
+
+    result = run(
+        task_binary,
+        "kubernetes:morning-check",
+        "format=ndjson",
+        "verbose=true",
+        "raw=true",
+        "timeout=12",
+        "period=6h",
+        "top=4",
+        "skip_http3=true",
+        "log_noise=true",
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    calls = [line.split("\t")[:-1] for line in arguments_log.read_text().splitlines()]
+    assert ["run", "kubernetes:edge-smoke", "--", "--format", "ndjson", "--verbose", "--raw", "--timeout", "12s", "--skip-http3"] in calls
+    assert ["run", "kubernetes:log-noise", "--", "--format", "ndjson", "--verbose", "--raw", "--timeout", "12s", "--period", "6h", "--top", "4"] in calls

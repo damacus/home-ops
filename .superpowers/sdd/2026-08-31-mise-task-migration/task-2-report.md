@@ -111,3 +111,60 @@ cache. Re-running the same read-only command with cache access passed.
 - An unrelated `.serena/project.yml` modification remained unstaged and was
   deliberately left untouched, in line with the preserved Serena side-effect
   boundary.
+
+## Fix round 1: preserve legacy Task variables
+
+### Change
+
+The `kubernetes:log-noise` and `kubernetes:edge-smoke` Task compatibility
+shims now translate their established Task variables before forwarding literal
+`.CLI_ARGS` to Mise. The mappings are:
+
+- Both: `format`, `notify`, `verbose`, `raw`, and `timeout`.
+- `log-noise`: `period` and `top`.
+- `edge-smoke`: `skip_http3`.
+
+`morning-check` continues to call Task names, but its `format`, `verbose`,
+`raw`, `timeout`, `period`, `top`, and `skip_http3` values now reach the
+native Mise tasks. The test uses fake Task, Mise, and Go commands, so it does
+not contact the cluster and cannot recurse into the migrated checks.
+
+### Covering test file
+
+- `tests/test_mise_scheduled_cluster_checks.py`
+
+### RED evidence
+
+```text
+$ pytest -q tests/test_mise_scheduled_cluster_checks.py
+Pytest: 3 passed, 2 failed
+
+- test_legacy_task_variables_translate_to_mise_flags_and_keep_cli_args
+- test_morning_check_variables_reach_migrated_mise_shims_without_external_commands
+```
+
+Before the fix, the fake Mise executable received only the task name and
+literal arguments; Task-variable values were absent.
+
+### GREEN and focused verification
+
+```text
+$ pytest -q tests/test_mise_scheduled_cluster_checks.py tests/test_mise_task_facade.py
+Pytest: 7 passed
+
+$ shellcheck .mise/tasks/kubernetes/cluster-health-build \
+  .mise/tasks/kubernetes/log-noise \
+  .mise/tasks/kubernetes/check-kube-vip \
+  .mise/tasks/kubernetes/alerts \
+  .mise/tasks/kubernetes/edge-smoke
+# exit 0, no output
+
+$ task --dry --verbose kubernetes:log-noise format=ndjson notify=true verbose=true raw=true timeout=12 period=6h top=4 -- --literal-flag
+task: [kubernetes:log-noise] mise run kubernetes:log-noise -- --format ndjson --notify --verbose --raw --timeout 12s --period 6h --top 4 --literal-flag
+
+$ task --dry --verbose kubernetes:edge-smoke format=ndjson notify=true verbose=true raw=true timeout=12 skip_http3=true -- --literal-flag
+task: [kubernetes:edge-smoke] mise run kubernetes:edge-smoke -- --format ndjson --notify --verbose --raw --timeout 12s --skip-http3 --literal-flag
+
+$ git diff --check
+# exit 0, no output
+```

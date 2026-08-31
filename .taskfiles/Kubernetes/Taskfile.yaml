@@ -383,7 +383,22 @@ tasks:
       Examples:
         mise run kubernetes:edge-smoke
         mise run kubernetes:edge-smoke --skip-http3
-    cmd: mise run kubernetes:edge-smoke -- {{.CLI_ARGS}}
+    vars:
+      FORMAT: '{{.format | default "text"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+      VERBOSE: '{{.verbose | default "false"}}'
+      RAW: '{{.raw | default "false"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
+      SKIP_HTTP3: '{{.skip_http3 | default "false"}}'
+    cmd: >-
+      mise run kubernetes:edge-smoke --
+      --format {{.FORMAT}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+      {{if eq .VERBOSE "true"}}--verbose{{end}}
+      {{if eq .RAW "true"}}--raw{{end}}
+      --timeout {{.TIMEOUT}}s
+      {{if eq .SKIP_HTTP3 "true"}}--skip-http3{{end}}
+      {{.CLI_ARGS}}
 
   edge-smoke-esphome:
     desc: Run edge smoke checks plus the ESPHome Traefik canary hostname
@@ -421,7 +436,24 @@ tasks:
         mise run kubernetes:log-noise                         # Top 20 apps, last 1 hour
         mise run kubernetes:log-noise -- --top 10              # Top 10 apps
         mise run kubernetes:log-noise -- --period 24h          # Last 24 hours
-    cmd: mise run kubernetes:log-noise -- {{.CLI_ARGS}}
+    vars:
+      FORMAT: '{{.format | default "text"}}'
+      NOTIFY: '{{.notify | default "false"}}'
+      VERBOSE: '{{.verbose | default "false"}}'
+      RAW: '{{.raw | default "false"}}'
+      TIMEOUT: '{{.timeout | default "45"}}'
+      PERIOD: '{{.period | default "1h"}}'
+      TOP: '{{.top | default "20"}}'
+    cmd: >-
+      mise run kubernetes:log-noise --
+      --format {{.FORMAT}}
+      {{if eq .NOTIFY "true"}}--notify{{end}}
+      {{if eq .VERBOSE "true"}}--verbose{{end}}
+      {{if eq .RAW "true"}}--raw{{end}}
+      --timeout {{.TIMEOUT}}s
+      --period {{.PERIOD}}
+      --top {{.TOP}}
+      {{.CLI_ARGS}}
 
   test-app:
     desc: Run Mondoo checks for a Kubernetes application
