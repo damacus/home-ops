@@ -4,7 +4,9 @@ This document provides context and common maintenance actions for the `home-ops`
 
 ## Project Overview
 
-This repository manages a home operations infrastructure using Kubernetes, Flux, and Ansible. It uses `task` (Taskfile) as the primary entry point for automation and maintenance.
+This repository manages home infrastructure with Kubernetes and Flux. Taskfile
+drives cluster and repository maintenance. Mise pins the toolchain and exposes
+the golden-image and node lifecycle under `mise run provisioning:*`.
 
 ## Common Maintenance Actions
 
@@ -63,30 +65,53 @@ This repository manages a home operations infrastructure using Kubernetes, Flux,
     task repo:force-reset
     ```
 
-### 3. Ansible Operations
+### 3. Radxa Provisioning
 
-* **Run Playbook**: Run a specific Ansible playbook.
+Provisioning keeps the public operator interface in Mise. The Go command in
+`cmd/provisioning` and `internal/provisioning` owns build planning, artifact
+validation, image verification, guarded flashing, and SSH lifecycle safety.
+The file tasks under `.mise/tasks/provisioning/` own composition and the
+straightforward Bash operations such as Docker reporting, scoped cleanup,
+staging, and release invocation. Armbian `compile.sh` remains the final build
+boundary. Do not add Python or duplicate lifecycle logic in task files.
+
+* **Check prerequisites**: Validate Docker Desktop and available disk space.
 
     ```bash
-    task ansible:run playbook=cluster-installation
+    mise run provisioning:docker:doctor
     ```
 
-* **Ping Hosts**: Check connectivity to all Ansible hosts.
+* **Build and verify an image**: Build the hardened, unjoined golden image,
+  then verify its artifact set and boot-critical NVMe support before use.
 
     ```bash
-    task ansible:ping
+    mise run provisioning:build
+    mise run provisioning:verify provisioning/artifacts/<release-id>.img.xz
     ```
 
-* **List Hosts**: List all hosts in the Ansible inventory.
+  Verification must find the executable
+  `etc/initramfs-tools/scripts/local-premount/nvme-rescan` in the rootfs and
+  the same `scripts/local-premount/nvme-rescan` entry in a generated initramfs.
+  The source overlay alone is not evidence that a boot image has the hook.
+
+* **Enrol a host**: Join a flashed host to an existing healthy cluster over
+  SSH. This is an explicit operation; the image never contains a token or
+  cluster address. Enrolment derives the target IPv4 address from its route
+  to the Kubernetes API, validates that the address is assigned to that
+  interface, and writes `node-ip` into the sanitised K3s config. Use
+  `--node-ip <IPv4>` when an explicit assigned address is required. The
+  source node's token is copied over SSH only after all dry-run, identity, and
+  replacement gates pass, and is never printed.
 
     ```bash
-    task ansible:list
+    mise run provisioning:enrol <host> --node-ip <IPv4>
     ```
 
-* **Uptime**: Check uptime of all hosts.
+* **Inspect or retire nodes**:
 
     ```bash
-    task ansible:uptime
+    mise run provisioning:status
+    mise run provisioning:retire <node> <host>
     ```
 
 ## Common Workflows
@@ -137,6 +162,7 @@ This repository manages a home operations infrastructure using Kubernetes, Flux,
 ## Directory Structure Key
 
 * `kubernetes/`: Kubernetes manifests and Flux configuration.
-* `ansible/`: Ansible playbooks and inventory.
 * `.taskfiles/`: Definitions for the `task` CLI.
+* `.mise/tasks/provisioning/`: Mise provisioning entry points.
+* `provisioning/`: Armbian image, artifact, and SSH node lifecycle implementation.
 * `scripts/`: Helper scripts used by tasks.

@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#MISE description="Check Docker Desktop capacity for Armbian builds"
+#MISE quiet=true
+set -euo pipefail
+
+docker_path="$(command -v docker || true)"
+info=''
+daemon_ok=false
+daemon_detail="Docker CLI unavailable"
+if [[ -n "${docker_path}" ]]; then
+  daemon_error="$(mktemp)"
+  if info="$(docker info --format '{{json .}}' 2>"${daemon_error}")"; then
+    daemon_ok=true
+    daemon_detail="Docker daemon reachable"
+  else
+    daemon_detail="$(<"${daemon_error}")"
+    [[ -n "${daemon_detail}" ]] || daemon_detail="Docker daemon unavailable"
+  fi
+  rm -f -- "${daemon_error}"
+fi
+architecture="unknown"
+memory=0
+if [[ "${daemon_ok}" == true ]]; then
+  architecture="$(jq -r '.Architecture // "unknown"' <<<"${info}")"
+  memory="$(jq -r '.MemTotal // 0' <<<"${info}")"
+fi
+free_kib="$(df -Pk "${HOME}" | awk 'NR == 2 { print $4 }')"
+ok=true
+if [[ -n "${docker_path}" ]]; then echo "PASS cli: ${docker_path}"; else echo "FAIL cli: docker not found"; ok=false; fi
+if [[ "${daemon_ok}" == true ]]; then echo "PASS daemon: ${daemon_detail}"; else echo "FAIL daemon: ${daemon_detail}"; ok=false; fi
+if [[ "${architecture}" != "arm64" && "${architecture}" != "aarch64" ]]; then echo "FAIL architecture: ${architecture}"; ok=false; else echo "PASS architecture: ${architecture}"; fi
+if (( memory < 8053063680 )); then echo "FAIL memory: ${memory} bytes (minimum 8053063680)"; ok=false; else echo "PASS memory: ${memory} bytes"; fi
+if (( free_kib < 52428800 )); then echo "FAIL host_space: ${free_kib} KiB (minimum 52428800)"; ok=false; else echo "PASS host_space: ${free_kib} KiB"; fi
+if [[ "${ok}" != true ]]; then echo "Docker preflight failed" >&2; exit 1; fi

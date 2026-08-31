@@ -34,6 +34,8 @@ override.tf.json
 terraform.rc
 
 secret-template.yaml
+.cache/
+.task/
 .venv
 .envrc
 kubeconfig
@@ -51,6 +53,8 @@ provisioning/secrets/
 provisioning/packer/builds/
 provisioning/packer/.packer_cache/
 provisioning/armbian-build/armbian-build-repo/
+provisioning/armbian-build/.staging/
+provisioning/artifacts/
 provisioning/.mypy_cache/
 provisioning/.ruby-lsp/
 

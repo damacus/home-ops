@@ -19,6 +19,7 @@ jobs:
     outputs:
       yaml: ${{ steps.filter.outputs.yaml }}
       kubernetes: ${{ steps.filter.outputs.kubernetes }}
+      go: ${{ steps.filter.outputs.go }}
       mondoo: ${{ steps.filter.outputs.mondoo }}
       contracts: ${{ steps.filter.outputs.contracts }}
     steps:
@@ -35,6 +36,18 @@ jobs:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Flux/**'
               - 'kubernetes/**'
+            go:
+              - '.github/workflows/flux.yaml'
+              - '.taskfiles/Kubernetes/Taskfile.yaml'
+              - 'cmd/cluster-health/**'
+              - 'internal/clusterhealth/**'
+              - 'cmd/provisioning/**'
+              - 'internal/provisioning/**'
+              - '.mise/tasks/provisioning/**'
+              - 'provisioning/**'
+              - 'go.mod'
+              - 'mise.lock'
+              - 'mise.toml'
             mondoo:
               - '.github/workflows/flux.yaml'
               - 'kubernetes/**'
@@ -97,6 +110,37 @@ jobs:
 
       - name: Run yayamlls rendered validation
         run: yayamlls validate --render ./kubernetes
+
+  cluster-health:
+    name: Cluster Health CLI
+    needs: changes
+    if: ${{ needs.changes.outputs.go == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Setup Mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.8.8
+          install: false
+          cache: false
+
+      - name: Test
+        run: go test ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./cmd/...
 
   mondoo:
     name: Mondoo

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#MISE description="Purge only Armbian-owned Docker build data"
+#MISE quiet=true
+#USAGE flag "--reclaim" help="Run the official Docker Desktop space reclaimer after Armbian purge"
+#USAGE flag "--dry-run" help="List the scoped purge operations"
+set -euo pipefail
+
+cd "${MISE_PROJECT_ROOT}"
+armbian="${MISE_PROJECT_ROOT}/provisioning/armbian-build/armbian-build-repo"
+if [[ "${usage_dry_run:-false}" == "true" ]]; then
+  jq -n --arg compile "${armbian}/compile.sh" --argjson reclaim "${usage_reclaim:-false}" '{before:"docker system df -v",purge:[$compile,"docker-purge"],reclaim:$reclaim,after:"docker system df -v"}'
+  exit 0
+fi
+go run ./cmd/provisioning armbian check docker-purge
+docker system df -v
+(cd "${armbian}" && ./compile.sh docker-purge)
+if [[ "${usage_reclaim:-false}" == "true" ]]; then docker run --rm --privileged --pid=host docker/desktop-reclaim-space; fi
+docker system df -v

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#MISE description="Explicitly enrol an unjoined host into the healthy K3s cluster"
+#MISE quiet=true
+#USAGE arg "<host>" help="New host name or address"
+#USAGE flag "--source-node <node>" help="Ready control-plane node to copy shared configuration from"
+#USAGE flag "--node-ip <IPv4>" help="IPv4 address assigned to the target API route interface"
+#USAGE flag "--replace" help="Allow replacement of an existing Kubernetes node name"
+#USAGE flag "--dry-run" help="Perform read-only discovery and print redacted actions"
+set -euo pipefail
+# Variables are supplied by Mise's usage parser.
+# shellcheck disable=SC2154
+
+args=("${usage_host}")
+[[ -n "${usage_source_node:-}" ]] && args+=(--source-node "${usage_source_node}")
+[[ -n "${usage_node_ip:-}" ]] && args+=(--node-ip "${usage_node_ip}")
+[[ "${usage_replace:-false}" == "true" ]] && args+=(--replace)
+[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
+cd "${MISE_PROJECT_ROOT}"
+exec go run ./cmd/provisioning enrol "${args[@]}"

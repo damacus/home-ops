@@ -33,7 +33,6 @@ tasks:
     desc: Reset templated configuration files
     prompt: Reset templated configuration files... continue?
     cmds:
-      - task: :ansible:.reset
       - task: :kubernetes:.reset
       - task: :sops:.reset
 

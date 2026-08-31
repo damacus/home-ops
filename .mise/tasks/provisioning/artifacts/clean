@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+#MISE description="Remove generated Radxa image artifact files"
+#MISE quiet=true
+#USAGE flag "--dry-run" help="List artifact paths that would be removed"
+set -euo pipefail
+
+args=()
+[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
+paths=("${MISE_PROJECT_ROOT}/provisioning/artifacts" "${MISE_PROJECT_ROOT}/provisioning/armbian-build/armbian-build-repo/output/images")
+if [[ "${usage_dry_run:-false}" == "true" ]]; then
+  printf '%s\n' "${paths[@]}" | jq -Rsc '{remove: (split("\n") | map(select(length > 0)))}'
+  exit 0
+fi
+rm -rf -- "${paths[@]}"

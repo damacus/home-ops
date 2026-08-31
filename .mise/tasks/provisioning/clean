@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#MISE description="Remove local Armbian build and image artifacts"
+#MISE quiet=true
+#USAGE flag "--deep" help="Also purge Armbian-owned Docker data"
+#USAGE flag "--dry-run" help="List files and scoped data that would be removed"
+set -euo pipefail
+
+root="${MISE_PROJECT_ROOT}/provisioning/armbian-build"
+paths=("${root}/armbian-build-repo/output" "${root}/armbian-build-repo/cache" "${root}/armbian-build-repo/.tmp" "${root}/armbian-build-repo/Dockerfile" "${root}/armbian-build-repo/.dockerignore" "${root}/.staging" "${MISE_PROJECT_ROOT}/provisioning/artifacts")
+if [[ "${usage_dry_run:-false}" == "true" ]]; then
+  printf '%s\n' "${paths[@]}" | jq -Rsc '{remove: (split("\n") | map(select(length > 0)))}' | jq --argjson deep "${usage_deep:-false}" '. + {deep_armbian_docker_purge: $deep}'
+  exit 0
+fi
+for path in "${paths[@]}"; do
+  [[ "${path}" == "${root}"/* || "${path}" == "${MISE_PROJECT_ROOT}/provisioning/artifacts" ]] || { echo "refusing unscoped path: ${path}" >&2; exit 1; }
+  rm -rf -- "${path}"
+done
+if [[ "${usage_deep:-false}" == "true" ]]; then mise run provisioning:docker:purge; fi

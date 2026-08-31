@@ -22,6 +22,7 @@ spec:
       retries: 3
   values:
     configuration:
+      concurrency: 1
       startTime: "7:00"
       endTime: "12:00"
       period: "10m"
@@ -30,8 +31,6 @@ spec:
       ipFamilyPolicy: preferDualStack
     metrics:
       create: false
-    nodeSelector:
-      node.home.arpa/reboot-allowed: "true"
     resources:
       requests:
         cpu: 15m
