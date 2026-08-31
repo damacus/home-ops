@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#MISE description="Remove the one-time legacy ironstone Lima VM"
+#MISE quiet=true
+#USAGE flag "--dry-run" help="Print the three permitted limactl commands"
+set -euo pipefail
+
+commands=("limactl unprotect ironstone" "limactl delete ironstone" "limactl prune --keep-referred")
+if [[ "${usage_dry_run:-false}" == "true" ]]; then
+  jq -n --argjson commands "$(printf '%s\n' "${commands[@]}" | jq -Rsc 'split("\n") | map(select(length > 0) | split(" "))')" '{confirmation:"ironstone",commands:$commands}'
+  exit 0
+fi
+read -r -p "Type ironstone to remove the legacy Lima VM: " confirmation
+[[ "${confirmation}" == ironstone ]] || { echo "Lima confirmation did not match" >&2; exit 1; }
+limactl unprotect ironstone
+limactl delete ironstone
+limactl prune --keep-referred

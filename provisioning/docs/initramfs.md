@@ -11,15 +11,17 @@ echo 1 > /sys/class/nvme/nvme0/rescan_controller
 exit
 ```
 
-## Permanent Fix (once booted)
+## Permanent Fix
 
-### Option 1: Ansible (recommended)
+New nodes receive the hook from the Radxa golden image. Build and verify that
+image before flashing it:
 
 ```bash
-task ansible:run -- playbooks/cluster-prepare.yaml --limit <node-name>
+mise run provisioning:build
+mise run provisioning:verify provisioning/artifacts/<release-id>.img.xz
 ```
 
-### Option 2: Manual Installation
+For an existing node that cannot yet be replaced, install the hook manually:
 
 ```bash
 sudo tee /etc/initramfs-tools/scripts/local-premount/nvme-rescan << 'EOF'
@@ -47,5 +49,9 @@ sudo update-initramfs -u -k all
 
 The hook survives kernel upgrades via:
 
-- **Existing nodes**: Ansible deploys `/etc/kernel/postinst.d/zz-nvme-rescan`
-- **New nodes**: Hook baked into Armbian image at `provisioning/armbian-build/userpatches/overlay/`
+- **Existing nodes**: the manual installation updates every installed initramfs.
+- **New nodes**: the hook is baked into the Armbian image under
+  `provisioning/armbian-build/userpatches/`, and the image customisation step
+  rebuilds every installed initramfs. `mise run provisioning:verify` checks
+  both the executable rootfs hook and its embedded initramfs entry before the
+  image can be flashed or distributed.

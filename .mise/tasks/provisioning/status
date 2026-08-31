@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+#MISE description="Report cluster nodes or one host's provisioning status"
+#MISE quiet=true
+#USAGE arg "[host]" help="Optional host name or address"
+#USAGE flag "--raw" help="Retain plain command output"
+#USAGE flag "--rtk" help="Compact eligible kubectl output through RTK"
+set -euo pipefail
+
+args=()
+[[ -n "${usage_host:-}" ]] && args+=("${usage_host}")
+[[ "${usage_raw:-false}" == "true" ]] && args+=(--raw)
+[[ "${usage_rtk:-false}" == "true" ]] && args+=(--rtk)
+if [[ -z "${usage_host:-}" ]]; then
+  command=(kubectl get nodes -o wide)
+  [[ "${usage_rtk:-false}" == "true" ]] && command=(rtk "${command[@]}")
+  exec "${command[@]}"
+fi
+checks=("cloud_init:cloud-init status --long" "k3s_version:sudo /usr/local/bin/k3s --version" "k3s_service:systemctl status k3s --no-pager" "updates:systemctl is-enabled apt-daily-upgrade.timer && systemctl is-active apt-daily-upgrade.timer" "disk:df -h /" "reboot_required:if test -e /var/run/reboot-required; then cat /var/run/reboot-required; else echo no; fi")
+failed=false
+report='{}'
+for item in "${checks[@]}"; do
+  name="${item%%:*}"; remote="${item#*:}"
+  if [[ "${usage_raw:-false}" == "true" ]]; then
+    printf '== %s ==\n' "${name}"
+    # shellcheck disable=SC2029
+    ssh "pi@${usage_host}" "${remote}" || failed=true
+    continue
+  fi
+  output_file="$(mktemp)"; error_file="$(mktemp)"
+  set +e
+  # shellcheck disable=SC2029
+  ssh "pi@${usage_host}" "${remote}" >"${output_file}" 2>"${error_file}"
+  rc=$?
+  set -e
+  report="$(jq --arg n "${name}" --arg o "$(<"${output_file}")" --arg e "$(<"${error_file}")" --argjson pass "$([[ ${rc} -eq 0 ]] && echo true || echo false)" '.checks = (.checks // {}) + {($n): {status: (if $pass then "pass" else "fail" end), output: $o, error: $e}}' <<<"${report}")"
+  rm -f -- "${output_file}" "${error_file}"
+  [[ ${rc} -eq 0 ]] || failed=true
+done
+[[ "${usage_raw:-false}" == "true" ]] || jq --arg host "${usage_host}" '. + {host:$host}' <<<"${report}"
+[[ "${failed}" == false ]]

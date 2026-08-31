@@ -12,9 +12,8 @@ export ETCDCTL_API=3
 
 # A helper function to execute etcdctl commands and handle errors
 run_etcdctl() {
-    echo "--> Running: etcdctl $@"
-    etcdctl "$@"
-    if [ $? -ne 0 ]; then
+    echo "--> Running: etcdctl $*"
+    if ! etcdctl "$@"; then
         echo "ERROR: etcdctl command failed on $1. Maintenance halted." >&2
         exit 1
     fi

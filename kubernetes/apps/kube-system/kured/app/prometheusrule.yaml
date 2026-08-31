@@ -18,11 +18,24 @@ spec:
           for: 24h
           labels:
             severity: warning
-        - alert: RebootScheduled
+        - alert: KuredDaemonSetNotReady
           annotations:
-            description: Node Reboot Scheduled
-            summary: Node {{$labels.node}} has been scheduled to reboot
-          expr: kured_reboot_required > 0
-          for: 5m
+            description: >-
+              Kured's desired and ready DaemonSet replica metrics have disagreed,
+              or one of those metrics has been missing, for 15 minutes. Inspect
+              the kube-system/kured DaemonSet and its pods before relying on
+              automated node reboots.
+            summary: Kured DaemonSet is not fully ready
+          expr: |
+            max by (namespace, daemonset) (kube_daemonset_status_desired_number_scheduled{namespace="kube-system", daemonset="kured"}) != max by (namespace, daemonset) (kube_daemonset_status_number_ready{namespace="kube-system", daemonset="kured"})
+            or
+            max by (namespace, daemonset) (kube_daemonset_status_desired_number_scheduled{namespace="kube-system", daemonset="kured"})
+            unless on (namespace, daemonset)
+            max by (namespace, daemonset) (kube_daemonset_status_number_ready{namespace="kube-system", daemonset="kured"})
+            or
+            max by (namespace, daemonset) (kube_daemonset_status_number_ready{namespace="kube-system", daemonset="kured"})
+            unless on (namespace, daemonset)
+            max by (namespace, daemonset) (kube_daemonset_status_desired_number_scheduled{namespace="kube-system", daemonset="kured"})
+          for: 15m
           labels:
             severity: warning

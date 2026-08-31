@@ -12,7 +12,7 @@ if [ -e /sys/class/nvme/nvme0 ] && [ ! -b /dev/nvme0n1 ]; then
     echo "NVMe rescan: Controller found but no namespace, triggering rescan..."
     echo 1 > /sys/class/nvme/nvme0/rescan_controller
     # Wait up to 5 seconds for namespace to appear
-    for i in 1 2 3 4 5; do
+    for _ in 1 2 3 4 5; do
         [ -b /dev/nvme0n1 ] && break
         sleep 1
     done

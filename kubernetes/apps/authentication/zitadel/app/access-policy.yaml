@@ -1,6 +1,22 @@
 ---
 loginPolicy:
+  allowUsernamePassword: true
   allowRegister: false
+  allowExternalIdp: true
+  forceMfa: false
+  passwordlessType: PASSWORDLESS_TYPE_ALLOWED
+  hidePasswordReset: false
+  ignoreUnknownUsernames: true
+  defaultRedirectUri: ""
+  passwordCheckLifetime: 864000s
+  externalLoginCheckLifetime: 864000s
+  mfaInitSkipLifetime: 2592000s
+  secondFactorCheckLifetime: 64800s
+  multiFactorCheckLifetime: 43200s
+  allowDomainDiscovery: false
+  disableLoginWithEmail: false
+  disableLoginWithPhone: true
+  forceMfaLocalOnly: false
 identityProviders:
   - id: "355231265344982063"
     type: google

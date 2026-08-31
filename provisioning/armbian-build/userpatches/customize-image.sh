@@ -1,135 +1,97 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-# =============================================================================
-# Armbian Image Customization Script
-# =============================================================================
-# This script runs during Armbian image build (in chroot).
-# It handles IMAGE-LEVEL tasks only. Per-boot configuration is in cloud-init.
-#
-# What belongs HERE (build-time):
-#   - Installing cloud-init and minimal deps for first boot
-#   - Disabling Armbian-specific features (ZRAM, OOBE)
-#   - Cleaning state for gold image (machine-id, cloud-init, SSH keys)
-#   - Locking root account
-#   - K3s binary installation and airgap images
-#   - Syncing overlay files
-#
-# What belongs in CLOUD-INIT (first boot):
-#   - Package installation
-#   - User creation (pi)
-#   - Locale/timezone configuration
-#   - SSH key fetching
-#   - Service enablement
-#   - K3s config rendering and startup
-# =============================================================================
+export DEBIAN_FRONTEND=noninteractive
 
-echo "=== Armbian Image Customization ==="
-
-# Install only cloud-init and essential boot dependencies
-# All other packages are installed by cloud-init on first boot
-DEBIAN_FRONTEND=noninteractive apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+apt-get update
+apt-get install -y --no-install-recommends \
+    apt-transport-https \
+    ca-certificates \
     cloud-init \
+    conntrack \
     curl \
-    nfs-common
+    gdisk \
+    gnupg \
+    hdparm \
+    htop \
+    iptables \
+    iputils-ping \
+    ipvsadm \
+    libseccomp2 \
+    lm-sensors \
+    locales \
+    multipath-tools \
+    net-tools \
+    nfs-common \
+    nvme-cli \
+    open-iscsi \
+    parted \
+    psmisc \
+    python3 \
+    rsync \
+    smartmontools \
+    socat \
+    unattended-upgrades \
+    unzip \
+    util-linux \
+    vim
 
-# Disable ZRAM/Swap for Kubernetes compatibility (REQ-SYSTEM-005)
-# This MUST be done at image build time, not cloud-init
-echo "Disabling ZRAM/Swap..."
 if dpkg -l | grep -q zram; then
-    DEBIAN_FRONTEND=noninteractive apt-get remove -y --purge armbian-zram-config zram-tools || true
+    apt-get remove -y --purge armbian-zram-config zram-tools || true
 fi
-rm -f /etc/default/armbian-zram-config
-rm -f /etc/default/zramswap
+rm -f /etc/default/armbian-zram-config /etc/default/zramswap
 sed -i '/swap/d' /etc/fstab
 
-# Sync overlay to root
-# This ensures all files injected into userpatches/overlay are moved to their final destinations
 if [ -d /tmp/overlay ]; then
-    echo "Syncing overlay to / ..."
-    rsync -av /tmp/overlay/ /
+    rsync -a /tmp/overlay/ /
 fi
 
-# =============================================================================
-# Gold Image Preparation (clean state for cloning)
-# =============================================================================
+# Armbian enables root SSH in the main config during image preparation. That
+# value is read before sshd_config.d includes, so enforce the policy here after
+# the overlay has been copied into the image.
+bash /usr/local/libexec/ironstone/ensure-root-ssh-policy.sh /etc/ssh/sshd_config
 
-echo "Preparing gold image..."
-
-# Clean Cloud-init state so it runs on first boot
-rm -rf /var/lib/cloud/instance
-rm -rf /var/lib/cloud/instances
-rm -rf /var/lib/cloud/data
-
-# Clean Machine ID (will be regenerated on first boot)
-truncate -s 0 /etc/machine-id
-rm -f /var/lib/dbus/machine-id
-
-# Clean Hostname (cloud-init will set from MAC)
-truncate -s 0 /etc/hostname
-
-# Clean SSH Host Keys (will be regenerated on first boot)
-rm -f /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub
-
-# =============================================================================
-# Security Hardening (image-level)
-# =============================================================================
-
-echo "Applying security hardening..."
-
-# Lock root account - no password, no login
+if ! id -u pi >/dev/null 2>&1; then
+    useradd --create-home --uid 1000 --groups adm,sudo --shell /bin/bash pi
+else
+    usermod --append --groups adm,sudo --shell /bin/bash pi
+fi
+install -d -m 0700 -o pi -g pi /home/pi/.ssh
+chown -R pi:pi /home/pi
+chmod 0750 /home/pi
+chmod 0700 /home/pi/.ssh
+chmod 0600 /home/pi/.ssh/authorized_keys
+chmod 0440 /etc/sudoers.d/pi
+passwd -l pi
 passwd -l root
 
-# Disable Armbian first-boot wizard (OOBE)
+locale-gen en_GB.UTF-8
+update-locale LANG=en_GB.UTF-8
+ln -snf /usr/share/zoneinfo/Europe/London /etc/localtime
+printf '%s\n' 'Europe/London' >/etc/timezone
+
+chmod 0755 /usr/local/bin/ironstone-init.sh /usr/local/bin/k3s
+chown root:root /usr/local/bin/ironstone-init.sh /usr/local/bin/k3s
+ln -sf k3s /usr/local/bin/kubectl
+ln -sf k3s /usr/local/bin/crictl
+ln -sf k3s /usr/local/bin/ctr
+install -d -m 0700 /etc/rancher/k3s
+chmod 0600 /etc/rancher/k3s/registries.yaml
+systemctl disable k3s.service || true
+rm -f /etc/systemd/system/*.wants/k3s.service
+
+systemctl enable apt-daily.timer apt-daily-upgrade.timer
+systemctl enable iscsid multipathd
+
+rm -rf /var/lib/cloud/instance /var/lib/cloud/instances /var/lib/cloud/data
+truncate -s 0 /etc/machine-id
+rm -f /var/lib/dbus/machine-id
+truncate -s 0 /etc/hostname
+rm -f /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub
 rm -f /root/.not_logged_in_yet
 touch /root/.config_done
 
-echo "Re-enabling MOTD..."
-chmod +x /etc/update-motd.d/* 2>/dev/null || true
-
-# =============================================================================
-# K3s Binary and Airgap Images (build-time download)
-# =============================================================================
-
-# Set permissions on overlay files
-chmod +x /usr/local/bin/ironstone-init.sh 2>/dev/null || true
-chmod +x /usr/local/bin/k3s-init.sh 2>/dev/null || true
-chmod +x /usr/local/bin/k3s-node-ip.sh 2>/dev/null || true
-
-# K3s binary setup
-if [ -f /usr/local/bin/k3s ]; then
-    echo "K3s binary present"
-    chmod +x /usr/local/bin/k3s
-    chown root:root /usr/local/bin/k3s
-    ln -sf k3s /usr/local/bin/kubectl
-    ln -sf k3s /usr/local/bin/crictl
-    ln -sf k3s /usr/local/bin/ctr
-else
-    echo "Warning: K3s binary not found in overlay"
-fi
-
-# K3s config directory permissions
-mkdir -p /etc/rancher/k3s
-chmod 0755 /etc/rancher/k3s
-
-# Pre-load K3s Airgap Images
-K3S_VERSION="v1.31.4+k3s1"
-AIRGAP_IMAGE_URL="https://github.com/k3s-io/k3s/releases/download/${K3S_VERSION//+/%2B}/k3s-airgap-images-arm64.tar"
-IMAGES_DIR="/var/lib/rancher/k3s/agent/images"
-
-echo "Downloading K3s airgap images..."
-mkdir -p "$IMAGES_DIR"
-if [ ! -f "$IMAGES_DIR/k3s-airgap-images-arm64.tar" ]; then
-    curl -L -o "$IMAGES_DIR/k3s-airgap-images-arm64.tar" "$AIRGAP_IMAGE_URL"
-fi
-
-# Ensure NVMe rescan hook is executable and rebuild initramfs
-# This hook is required for Crucial P310 drives that don't auto-enumerate
-echo "Setting up NVMe rescan hook..."
-chmod +x /etc/initramfs-tools/scripts/local-premount/nvme-rescan 2>/dev/null || true
-
-echo "Rebuilding initramfs..."
+chmod +x /etc/initramfs-tools/scripts/local-premount/nvme-rescan
 update-initramfs -u -k all
-
-echo "=== Image customization complete ==="
+apt-get clean
+rm -rf /var/lib/apt/lists/*
