@@ -10,6 +10,77 @@ log_noise=false
 child_args=()
 for argument in "$@"; do
   case "$argument" in
+    format=text|format=ndjson)
+      child_args+=(--format "${argument#format=}")
+      ;;
+    format=*)
+      printf 'Unsupported format; use format=text or format=ndjson\n' >&2
+      exit 2
+      ;;
+    notify=true)
+      notify=true
+      ;;
+    notify=*)
+      ;;
+    verbose=true)
+      child_args+=(--verbose)
+      ;;
+    verbose=*)
+      ;;
+    raw=true)
+      child_args+=(--raw)
+      ;;
+    raw=*)
+      ;;
+    timeout=*)
+      child_args+=(--timeout "${argument#timeout=}s")
+      ;;
+    period=*)
+      child_args+=(--period "${argument#period=}")
+      ;;
+    top=*)
+      child_args+=(--top "${argument#top=}")
+      ;;
+    skip_http3=true)
+      child_args+=(--skip-http3)
+      ;;
+    skip_http3=*)
+      ;;
+    include_esphome_canary=true)
+      child_args+=(--include-esphome-canary)
+      ;;
+    include_esphome_canary=*)
+      ;;
+    esphome_ws_path=*)
+      child_args+=(--esphome-websocket-path "${argument#esphome_ws_path=}")
+      ;;
+    esphome_ws_contains=*)
+      child_args+=(--esphome-websocket-contains "${argument#esphome_ws_contains=}")
+      ;;
+    edge_smoke=true)
+      edge_smoke=true
+      ;;
+    edge_smoke=*)
+      edge_smoke=false
+      ;;
+    log_noise=true)
+      log_noise=true
+      ;;
+    log_noise=*)
+      log_noise=false
+      ;;
+    json=true)
+      printf 'json=true was removed; use format=ndjson\n' >&2
+      exit 2
+      ;;
+    json=*)
+      ;;
+    workers=*)
+      if [ -n "${argument#workers=}" ]; then
+        printf 'workers= was removed; Mise now composes checks deterministically\n' >&2
+        exit 2
+      fi
+      ;;
     --notify|--notify=true)
       notify=true
       ;;
@@ -49,10 +120,12 @@ for check in "${checks[@]}"; do
 done
 
 if [ "$failed" -ne 0 ] && [ "$notify" = true ]; then
-  scripts/notify \
+  if ! scripts/notify \
     --status failure \
     --title "Cluster health: action needed" \
-    --message "One or more cluster health checks failed; see task output for the affected report."
+    --message "One or more cluster health checks failed; see task output for the affected report."; then
+    printf 'send notification: failed\n' >&2
+  fi
 fi
 
 exit "$failed"

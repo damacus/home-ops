@@ -23,3 +23,8 @@ accepts `--esphome-websocket-path` and `--esphome-websocket-contains`.
 any child fails, and send one aggregate notification when passed `--notify`.
 `morning-check` includes edge smoke by default. Use `--no-edge-smoke` to skip
 it, or `--log-noise` to include diagnostic log volume.
+
+For existing automation, both composite tasks also translate the former Task
+`name=value` arguments. `health` accepts `format`, `notify`, `verbose`, `raw`,
+and `timeout`. `morning-check` additionally accepts `edge_smoke`, `log_noise`,
+`skip_http3`, `period`, and `top`. Prefer the canonical flags for new callers.
