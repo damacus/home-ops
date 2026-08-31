@@ -156,7 +156,8 @@ Validation for this round:
   The existing artifact has the known effective `PermitRootLogin=yes` finding,
   and at that point full read-only verification remained blocked by Docker
   access. The later controller build and verification confirmed this was a
-  source ordering defect; the post-fix artifact check remains outstanding.
+  source ordering defect; the post-fix artifact check subsequently passed as
+  recorded in Fix Round 6.
 - Corrected the Mise provisioning command contract ledger entry to `passes: false`.
   Its required live enrolment dry-run was blocked by Kubernetes API access; the
   controlled Go enrolment coverage remains green, but that does not satisfy the
