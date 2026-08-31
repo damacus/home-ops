@@ -2,5 +2,6 @@
 #MISE description="Run baseline HTTP and WebSocket smoke checks for the Traefik edge"
 #MISE quiet=true
 #MISE raw=true
+#MISE depends=["kubernetes:cluster-health-build"]
 set -euo pipefail
-exec task "kubernetes:edge-smoke" -- "$@"
+exec .cache/bin/cluster-health edge-smoke "$@"

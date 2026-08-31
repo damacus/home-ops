@@ -3,4 +3,8 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "kubernetes:alerts" -- "$@"
+kubectl exec -n monitoring vmalertmanager-vm-0 -- wget -qO- 'http://localhost:9093/api/v2/alerts' 2>/dev/null |
+  jq -r '.[] | "\(.labels.alertname): \(.status.state)"' |
+  sort |
+  uniq -c |
+  sort -rn

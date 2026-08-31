@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#MISE description="Build the cached cluster-health checker"
+#MISE hide=true
+#MISE sources=["go.mod", "cmd/cluster-health/**/*.go", "internal/clusterhealth/**/*.go"]
+#MISE outputs=[".cache/bin/cluster-health"]
+set -euo pipefail
+
+go_binary="${CLUSTER_HEALTH_GO_BINARY:-go}"
+if ! command -v "$go_binary" >/dev/null; then
+  echo "Missing Go toolchain; run mise install" >&2
+  exit 1
+fi
+
+mkdir -p .cache/bin
+"$go_binary" build -trimpath -o .cache/bin/cluster-health ./cmd/cluster-health

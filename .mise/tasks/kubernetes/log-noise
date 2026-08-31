@@ -2,5 +2,6 @@
 #MISE description="Identify top log-producing applications by volume (requires Loki)"
 #MISE quiet=true
 #MISE raw=true
+#MISE depends=["kubernetes:cluster-health-build"]
 set -euo pipefail
-exec task "kubernetes:log-noise" -- "$@"
+exec .cache/bin/cluster-health log-noise "$@"

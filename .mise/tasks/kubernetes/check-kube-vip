@@ -3,4 +3,4 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "kubernetes:check-kube-vip" -- "$@"
+exec kubectl get pods -n kube-system -l app.kubernetes.io/name=kube-vip -o wide "$@"

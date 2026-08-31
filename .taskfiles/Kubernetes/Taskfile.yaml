@@ -34,8 +34,9 @@ tasks:
     desc: Check all kube-vip pods
     silent: true
     summary: |
-      Shows kube-vip placement and readiness directly from Kubernetes.
-    cmd: kubectl get pods -n kube-system -l app.kubernetes.io/name=kube-vip -o wide
+      Compatibility shim for Mise. Shows kube-vip placement and readiness
+      directly from Kubernetes.
+    cmd: mise run kubernetes:check-kube-vip -- {{.CLI_ARGS}}
 
   .cluster-health-options:
     internal: true
@@ -380,11 +381,9 @@ tasks:
       informational and only run when the local curl build supports them.
 
       Examples:
-        task kubernetes:edge-smoke
-        task kubernetes:edge-smoke skip_http3=true
-    cmds:
-      - task: .cluster-health-report
-        vars: { command: edge-smoke }
+        mise run kubernetes:edge-smoke
+        mise run kubernetes:edge-smoke --skip-http3
+    cmd: mise run kubernetes:edge-smoke -- {{.CLI_ARGS}}
 
   edge-smoke-esphome:
     desc: Run edge smoke checks plus the ESPHome Traefik canary hostname
@@ -409,8 +408,7 @@ tasks:
   alerts:
     desc: Get all alerts from VictoriaMetrics
     silent: true
-    cmd: |
-      kubectl exec -n monitoring vmalertmanager-vm-0 -- wget -qO- 'http://localhost:9093/api/v2/alerts' 2>/dev/null | jq -r '.[] | "\(.labels.alertname): \(.status.state)"' | sort | uniq -c | sort -rn
+    cmd: mise run kubernetes:alerts -- {{.CLI_ARGS}}
 
   log-noise:
     desc: Identify top log-producing applications by volume (requires Loki)
@@ -420,12 +418,10 @@ tasks:
       to show every selected application and log count.
 
       Examples:
-        task kubernetes:log-noise              # Top 20 apps, last 1 hour
-        task kubernetes:log-noise top=10       # Top 10 apps
-        task kubernetes:log-noise period=24h   # Last 24 hours
-    cmds:
-      - task: .cluster-health-report
-        vars: { command: log-noise }
+        mise run kubernetes:log-noise                         # Top 20 apps, last 1 hour
+        mise run kubernetes:log-noise -- --top 10              # Top 10 apps
+        mise run kubernetes:log-noise -- --period 24h          # Last 24 hours
+    cmd: mise run kubernetes:log-noise -- {{.CLI_ARGS}}
 
   test-app:
     desc: Run Mondoo checks for a Kubernetes application
