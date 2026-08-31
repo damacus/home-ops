@@ -65,11 +65,29 @@ policies:
               command("systemctl is-active apt-daily-upgrade.timer").exitcode == 0 &&
               file("/etc/apt/apt.conf.d/50unattended-upgrades").content.contains(/Automatic-Reboot\s+"false"/)
           - uid: NODE-STORAGE-001
-            title: iSCSI and multipath services are enabled
+            title: iSCSI and multipath services are enabled and running
             impact: 100
             mql: |
-              services.any(name == "iscsid" && enabled == true) &&
-              services.any(name == "multipathd" && enabled == true)
+              services.any(name == "iscsid" && enabled == true && running == true) &&
+              services.any(name == "multipathd" && enabled == true && running == true)
+          - uid: NODE-PKG-001
+            title: Required Kubernetes and Longhorn packages are installed
+            impact: 100
+            mql: |
+              packages.map(name).containsAll([
+                "cloud-init",
+                "conntrack",
+                "curl",
+                "htop",
+                "iptables",
+                "ipvsadm",
+                "multipath-tools",
+                "nfs-common",
+                "nvme-cli",
+                "open-iscsi",
+                "unattended-upgrades",
+                "vim",
+              ])
       - title: Explicit K3s enrolment
         filters: asset.platform == "linux"
         checks:
