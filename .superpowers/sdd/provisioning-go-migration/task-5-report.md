@@ -22,7 +22,9 @@
   `provisioning/**`; CI now builds `go build ./cmd/...`.
 - Updated the relevant `.tasks/provisioning.json` wording from the removed
   Python implementation to the Go command and Bash orchestration. No blocked
-  build, hardware, or live lifecycle item was marked passed.
+  hardware or live lifecycle item was marked passed; the artifact contract was
+  marked passed only after the controller's final artifact verification in Fix
+  Round 6.
 
 ## Acceptance checks
 
@@ -37,38 +39,46 @@
 | Non-mutating build, flash, retire, stage, release, clean, purge, reclaim, Lima, and artifact-clean dry-runs with `jq` JSON checks | PASS |
 | `git diff --check` | PASS |
 | `task kubernetes:yayamlls` | PASS |
-| `mise run provisioning:docker:doctor` | PASS in the controller environment outside the sandbox (`aarch64`, 8.32 GB memory, 284531892 KiB host space); the earlier local sandbox attempt was blocked by Docker daemon socket permissions. |
+| `mise run provisioning:docker:doctor` | PASS in the controller environment outside the sandbox (`aarch64`, 8.32 GB memory, 280115420 KiB host space at final build start); the earlier local sandbox attempt was blocked by Docker daemon socket permissions. |
 | `mise run provisioning:docker:usage` | BLOCKED: Docker daemon socket permission denied. |
 | `mise run provisioning:build -- --dry-run` | PASS: resolved K3s `v1.36.3+k3s1`, ARM64 vendor/Noble plan, and `nvme-rescan` extension without network or Docker changes. |
-| `mise run provisioning:enrol example.invalid --node-ip 192.0.2.10 --dry-run` | BLOCKED: Kubernetes API network access denied before discovery; no token read. |
-| `mise run provisioning:status` | BLOCKED: Kubernetes API network access denied. |
+| `mise run provisioning:enrol 192.168.1.233 --dry-run` | BLOCKED at target SSH authentication: `sign_and_send_pubkey ... from agent: communication with agent failed`; no mutation or token read. This is an SSH-agent environment boundary, not a code pass or failure. |
+| `mise run provisioning:status` | PASS outside the sandbox: all three nodes Ready on `v1.36.3+k3s1`. |
 
 ## Existing artifact and real-build gate
 
-The existing artifact set at
+The prior artifact set at
 `/Users/damacus/.codex/worktrees/8c25/home-ops/.cache/radxa-build-3023c88/provisioning/artifacts/radxa-5b-plus-20260830-fa5068e61675.img.xz`
 passed artifact-set validation through the stage/release dry-run plans, which
-resolved its image, checksum, and manifest. The controller subsequently ran
-Docker doctor successfully (`aarch64`, 8.32 GB memory, 284531892 KiB host
-space), built commit `48fdc1dc9cf0` successfully in 3:37, and produced
-`/Users/damacus/.codex/worktrees/8c25/home-ops/.cache/radxa-go-build-worktree/provisioning/artifacts/radxa-5b-plus-20260831-48fdc1dc9cf0.img.xz`.
-Full read-only verification of that artifact failed only at effective
-`PermitRootLogin=yes`; all other strengthened checks passed. This confirmed a
-source defect in the build ordering, now fixed in Fix Round 2. A post-fix
-rebuild and verification remain outstanding.
+resolved its image, checksum, and manifest. Its known effective
+`PermitRootLogin=yes` finding remains historical evidence for the source
+ordering defect fixed in Fix Round 2. The controller then ran Docker doctor
+successfully (`aarch64`, 8.32 GB memory, 280115420 KiB host space at final
+build start) and built approved commit `8ecdf4ccdc5f` successfully in 3:21,
+including `nvme-rescan` installation and customization. It produced
+`/Users/damacus/.codex/worktrees/8c25/home-ops/.cache/radxa-go-build-worktree/provisioning/artifacts/radxa-5b-plus-20260831-8ecdf4ccdc5f.img.xz`.
 
-The initial local Docker and Kubernetes checks were sandbox-blocked; Docker is
-no longer the current blocker for the source fix because the controller has
-completed a successful build. No purge, cleanup, Lima operation, flash,
-enrolment, retirement, cluster mutation, staging, release, push, merge, or
-publication was attempted.
+Full read-only verification of the final artifact passed every check:
+effective SSH policy was `PasswordAuthentication=no`,
+`KbdInteractiveAuthentication=no`, `PermitRootLogin=no`; K3s
+`v1.36.3+k3s1`, payload hashes, immutable cluster state, locked accounts,
+dormant K3s, packages, unattended upgrades, compact rootfs, and the NVMe hook
+embedded in initramfs all passed. This artifact satisfies the golden-image
+integrity contract.
+
+The controller also confirmed all three nodes Ready with K3s
+`v1.36.3+k3s1`. The live enrolment dry-run reached target SSH but stopped at
+`sign_and_send_pubkey ... from agent: communication with agent failed`; it did
+not read a token or mutate state. No flash, retirement, cluster mutation,
+staging, release, push, merge, or publication was attempted.
 
 ## Limitations and self-review
 
-- The controller's successful build does not replace post-fix artifact
-  verification or live lifecycle checks.
-- Kubernetes API access remains an environmental blocker for the live enrolment
-  dry-run; that check has not yet been retried after the controller build.
+- The final artifact is fully verified read-only and satisfies the golden-image
+  integrity boundary; hardware flashing and enrolment remain unverified.
+- The live enrolment dry-run is blocked at SSH-agent authentication. This is an
+  environmental boundary, not evidence that the enrolment code passed or
+  failed.
 - The final diff was manually checked for stale Python dispatch. No absence or
   source-scan test was added, and no Python provisioning entrypoint remains in
   the current runtime paths.
@@ -180,7 +190,25 @@ Validation after the fix:
 - ShellCheck and `bash -n` for changed `customize-image.sh`: PASS;
 - `git diff --check`: PASS.
 
-No second real build was run. The controller must rebuild this commit and
-re-run full artifact verification before either affected ledger entry can be
-marked passed; the existing artifact and live enrolment acceptance boundaries
-remain unchanged.
+At that stage no second real build was run. Fix Round 6 records the
+controller's successful rebuild and full artifact verification; the live
+enrolment acceptance boundary remains unresolved.
+
+## Fix Round 6
+
+- Updated the current acceptance evidence with the controller's successful
+  Docker doctor and real Armbian build from approved commit `8ecdf4ccdc5f`.
+- Recorded the final artifact's full read-only verification: all SSH, K3s,
+  payload, immutable-state, account, package, unattended-upgrade, compact
+  rootfs, and NVMe initramfs checks passed.
+- Recorded `provisioning:status` passing outside the sandbox for all three
+  Ready nodes on `v1.36.3+k3s1`.
+- Recorded the enrolment dry-run boundary accurately: target SSH authentication
+  stopped at `sign_and_send_pubkey ... from agent: communication with agent
+  failed`; no token was read and no mutation occurred. The Mise command
+  contract therefore remains unpassed.
+- Set only the golden-image artifact integrity ledger entry to `passes: true`.
+  The broader Mise provisioning command contract remains `passes: false` until
+  the enrolment dry-run completes.
+- Validation: `.tasks/provisioning.json` parses successfully with `jq`, and
+  `git diff --check` passes.

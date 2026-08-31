@@ -47,7 +47,7 @@
             "Verify the manifest records the exact K3s binary and air-gap payload hashes",
             "Confirm the verifier rejects any version or security regression"
         ],
-        "passes": false
+        "passes": true
     },
     {
         "category": "lifecycle",
