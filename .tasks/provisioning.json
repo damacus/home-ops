@@ -401,7 +401,7 @@
             "Check each command accepts its documented help and arguments",
             "Exercise non-mutating build, flash, enrol, retire, stage, release, and cleanup dry runs",
             "Confirm secret values are redacted from output",
-            "Validate task files and shared Python implementation"
+            "Validate task files and the shared Go command with Bash orchestration"
         ],
         "passes": true
     },

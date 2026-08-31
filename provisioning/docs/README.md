@@ -5,6 +5,13 @@ the current verified K3s ARM64 binary and air-gap archive but contains no API
 address, server token, rendered K3s config, or node identity. The K3s systemd
 unit exists and remains disabled until explicit enrolment.
 
+Mise remains the operator-facing interface. Go under `cmd/provisioning` and
+`internal/provisioning` owns the safety-critical planning, validation,
+verification, flashing, and SSH lifecycle operations. The file tasks under
+`.mise/tasks/provisioning/` compose those commands and handle simple Bash
+orchestration such as Docker diagnostics, scoped cleanup, staging, and release
+publishing.
+
 ## Build inputs
 
 - The Armbian framework is the pinned git submodule at
@@ -50,7 +57,9 @@ there. The container returns only the structured report; it does not copy
 - clean machine and cloud-init identity;
 - dormant K3s with no config or token;
 - no `K3S_DATA` input; and
-- a private kubeconfig if one exists.
+- a private kubeconfig if one exists;
+- the executable NVMe rootfs hook and its matching entry in the generated
+  initramfs.
 
 `--rootfs <directory> --raw` supplies an already available rootfs without
 mounting an image or contacting Docker. It runs the same image-state checks;
@@ -59,3 +68,14 @@ real artifact set.
 
 The operator workflow and manual zero-cluster recovery prerequisites are in
 the parent [`README.md`](../README.md).
+
+## Enrolment addressing
+
+Enrolment retains the token-based SSH workflow, but the token is not read until
+the source node, target identity, and any replacement confirmation have passed.
+The target address defaults to the IPv4 source selected by its route to the
+Kubernetes API. The command verifies that this address is assigned to that
+interface and writes it as `node-ip` in the sanitised K3s configuration. Use
+`mise run provisioning:enrol <host> --node-ip <IPv4>` when an explicit assigned
+address is needed. Dry-runs and rejected replacements do not read the server
+token.

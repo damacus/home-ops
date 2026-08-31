@@ -52,6 +52,27 @@ func TestVerifyRootFSIntegrationRejectsSecurityRegression(t *testing.T) {
 	}
 }
 
+func TestVerifyRootFSRejectsRootLoginRegression(t *testing.T) {
+	fixture := newVerificationFixture(t)
+	binary := buildProvisioningCommand(t, fixture.root)
+	writeFixtureFile(t, filepath.Join(fixture.rootfs, "etc/ssh/sshd_config.d/00-hardening.conf"), "PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin yes\n")
+
+	code, stdout, stderr := runProvisioningCommand(t, binary, fixture.root, []string{
+		"verify", "--rootfs", fixture.rootfs, "--manifest", fixture.manifest,
+		"--k3s-version", "k3s version v1.36.3+k3s1 (abcdef)", "--raw",
+	})
+	if code == 0 {
+		t.Fatalf("verify accepted root SSH login: stdout=%s stderr=%s", stdout, stderr)
+	}
+	var report verificationReport
+	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+		t.Fatalf("root login regression report JSON: %v", err)
+	}
+	if report.Checks["ssh_policy"].Status != "fail" {
+		t.Fatalf("SSH policy did not fail for PermitRootLogin yes: %#v", report.Checks["ssh_policy"])
+	}
+}
+
 func TestVerifyRootFSRejectsBakedAgentCredential(t *testing.T) {
 	fixture := newVerificationFixture(t)
 	binary := buildProvisioningCommand(t, fixture.root)

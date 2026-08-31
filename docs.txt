@@ -18,10 +18,10 @@ Current authorities
 
 Verify these before relying on anything in this historical guide:
 
-* provisioning/provision.py currently orchestrates the image and node
-  lifecycle. It is large and should be decomposed rather than copied into task
-  files or rewritten wholesale as shell.
-* .mise/tasks/provisioning/ contains the operator entry points.
+* cmd/provisioning/ exposes the provisioning commands and
+  internal/provisioning/ owns their structured, safety-critical logic.
+* .mise/tasks/provisioning/ contains the stable operator entry points and the
+  small Bash orchestration boundaries.
 * provisioning/armbian-build/userpatches/ contains the files and hooks injected
   into the image.
 * provisioning/armbian-build/armbian-build-repo is the pinned Armbian
@@ -36,12 +36,14 @@ Build shape
 
 The current path is:
 
-    Mise file task -> provisioning controller -> Armbian compile.sh -> Docker
+    Mise file task -> Go provisioning command -> Armbian compile.sh -> Docker
 
 Armbian is a large Bash build system, so the final shell boundary is expected.
-Keep Mise as the command interface and keep complicated orchestration in a
-structured, testable program. Do not hide lifecycle logic in layers of Bash
-wrappers.
+Keep Mise as the command interface. Go owns build planning, artifact
+validation, image verification, guarded flashing, and SSH lifecycle safety;
+Mise/Bash owns command composition, Docker reporting, scoped cleanup, status,
+staging, and release invocation. Do not hide lifecycle logic in layers of Bash
+wrappers or reintroduce a second provisioning implementation.
 
 Armbian build facts and traps
 -----------------------------
@@ -95,8 +97,9 @@ needs this initramfs hook:
 
 The Armbian nvme-rescan extension installs the hook and customize-image.sh
 rebuilds every installed initramfs. Verification must check both the executable
-rootfs file and the matching entry inside the built initramfs. Checking only the
-source overlay is not proof that the boot image contains it.
+rootfs file and the matching `scripts/local-premount/nvme-rescan` entry inside
+the built initramfs. Checking only the source overlay is not proof that the
+boot image contains it.
 
 An older Ansible kernel post-install script only warned if the hook was absent;
 it did not rebuild the initramfs. Do not restore it and claim it provides
@@ -139,8 +142,10 @@ The old k3s-node-ip.sh selected the address used by the default route. Removing
 it from the reusable image was reasonable, but enrolment still needs an
 equivalent target-specific guarantee. Do not depend silently on K3s address
 autodetection on a multi-interface host. Derive and validate the route to the
-Kubernetes API address, write node-ip during enrolment, and retain an explicit
-override.
+Kubernetes API address, confirm the selected address is assigned to that route
+interface, write `node-ip` during enrolment, and retain an explicit
+`--node-ip <IPv4>` override. The source node's token remains an explicit
+enrolment input; dry-runs and rejected replacements must not read or print it.
 
 Verification boundary
 ---------------------
@@ -168,4 +173,5 @@ expanded in "Provisioning update" (#2666). It was deleted during the Ansible
 replacement because parts were stale. That deletion also removed the useful
 record of why the build has unusual checks and hooks. This rewritten version
 keeps the operational history without preserving obsolete instructions as
-current truth.
+current truth. The current workflow is the Go/Mise/Bash composition described
+above; the old Python controller and Ansible paths are historical context only.

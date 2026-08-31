@@ -128,15 +128,13 @@ sudo sed -i "s/rootdev=UUID=.*/rootdev=UUID=$NVME_UUID/" /boot/armbianEnv.txt
   - Kernel scans for block devices before NVMe is fully ready
   - Base nvme.ko module missing from initramfs prevents early boot detection
 
-### Solution
+### Superseded timing hypothesis
 
-**Immediate**: Manual rescan after boot: `echo 1 | sudo tee /sys/class/nvme/nvme0/rescan_controller`
-
-**Permanent Fix**:
-
-- Add `rootdelay=10` to `/boot/armbianEnv.txt` for timing margin
-- NVMe driver is built into kernel (`CONFIG_BLK_DEV_NVME=y`), no module needed
-- The 10-second delay allows PCIe/NVMe to fully initialize before root mount
+The initial investigation treated this as a timing issue and proposed
+`rootdelay=10` in `/boot/armbianEnv.txt`. That did not fix the affected
+Crucial P310 drive: the controller appeared, but its namespace still needed a
+manual rescan. The NVMe driver is built into this kernel
+(`CONFIG_BLK_DEV_NVME=y`), so adding loadable modules was not the durable fix.
 
 **Why modules aren't needed**:
 
@@ -194,6 +192,11 @@ After installing the `nvme-rescan` script and rebuilding initramfs:
 4. Copied updated initramfs to NVMe partition
 5. Updated `/boot/armbianEnv.txt` to use NVMe UUID
 6. Rebooted - **SUCCESS**
+
+New images install the hook through the `nvme-rescan` Armbian extension;
+`customize-image.sh` rebuilds every installed initramfs. The Go verifier checks
+both the executable rootfs hook and the embedded initramfs entry before an
+artifact is accepted.
 
 ## Affected Hardware
 

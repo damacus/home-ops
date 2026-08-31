@@ -50,5 +50,8 @@ sudo update-initramfs -u -k all
 The hook survives kernel upgrades via:
 
 - **Existing nodes**: the manual installation updates every installed initramfs.
-- **New nodes**: the hook and post-install refresh script are baked into the
-  Armbian image under `provisioning/armbian-build/userpatches/`.
+- **New nodes**: the hook is baked into the Armbian image under
+  `provisioning/armbian-build/userpatches/`, and the image customisation step
+  rebuilds every installed initramfs. `mise run provisioning:verify` checks
+  both the executable rootfs hook and its embedded initramfs entry before the
+  image can be flashed or distributed.
