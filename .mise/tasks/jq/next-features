@@ -3,4 +3,5 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "jq:next-features" -- "$@"
+
+jq -s '[.[][] | select(.passes == false)] | sort_by(.category) | .[0:10] | .[] | "\(.category): \(.description)"' .tasks/*.json

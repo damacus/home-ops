@@ -30,13 +30,13 @@ the golden-image and node lifecycle under `mise run provisioning:*`.
 * **Gather Cluster Resources**: List common resources (Nodes, GitRepositories, Kustomizations, HelmReleases, etc.) for debugging.
 
     ```bash
-    task k8s:resources
+    mise run kubernetes:resources
     ```
 
 * **Validate Manifests**: Run `yayamlls` against the Kubernetes manifests and rendered Flux output.
 
     ```bash
-    task k8s:yayamlls
+    mise run kubernetes:yayamlls
     ```
 
 ### 2. Repository Management
@@ -123,7 +123,7 @@ boundary. Do not add Python or duplicate lifecycle logic in task files.
 3. Validate the manifests:
 
     ```bash
-    task k8s:yayamlls
+    mise run kubernetes:yayamlls
     ```
 
 4. Apply the changes manually to test (optional):
@@ -144,7 +144,7 @@ boundary. Do not add Python or duplicate lifecycle logic in task files.
 1. Check the status of Flux resources:
 
     ```bash
-    task k8s:resources
+    mise run kubernetes:resources
     ```
 
 2. If a HelmRelease is stuck, try reconciling the cluster kustomization:

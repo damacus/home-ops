@@ -2,33 +2,7 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
 
-vars:
-  MONDOO_SCAN_SCRIPT: "{{.SCRIPTS_DIR}}/mondoo_scan.py"
-  RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
-  RUSTFS_IAM_LIVE_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam-live.mql.yaml"
-  FORGEJO_POLICY: "{{.ROOT_DIR}}/tests/mondoo/forgejo.mql.yaml"
-  RUSTFS_IAM_LIVE_CHECK_SCRIPT: "{{.SCRIPTS_DIR}}/rustfs_iam_live_check.sh"
-  TEMPO_TRACE_BACKEND_CONTRACT: "{{.SCRIPTS_DIR}}/tempo_trace_backend_contract.sh"
-
 tasks:
-  resources:
-    desc: Gather common resources in your cluster, useful when asking for support
-    silent: true
-    cmds:
-      - for: { var: resource }
-        cmd: 'kubectl get {{.ITEM}} {{.CLI_ARGS | default "-A"}}'
-    vars:
-      resource: >-
-        nodes
-        gitrepositories
-        kustomizations
-        helmrepositories
-        helmreleases
-        certificates
-        certificaterequests
-        ingresses
-        pods
-
   check-kube-vip:
     desc: Check all kube-vip pods
     silent: true
@@ -36,56 +10,6 @@ tasks:
       Compatibility shim for Mise. Shows kube-vip placement and readiness
       directly from Kubernetes.
     cmd: mise run kubernetes:check-kube-vip -- {{.CLI_ARGS}}
-
-  yayamlls:
-    desc: Validate Kubernetes manifests with yayamlls and rendered Flux output
-    cmd: yayamlls validate --render {{.KUBERNETES_DIR}}
-    preconditions:
-      - { msg: "Missing yayamlls", sh: "command -v yayamlls >/dev/null" }
-
-  rustfs-iam-policy:
-    desc: Validate RustFS per-app IAM policy with Mondoo cnspec
-    cmds:
-      - cnspec --auto-update=false policy lint {{.RUSTFS_IAM_POLICY}}
-      - cnspec --auto-update=false scan local --policy-bundle {{.RUSTFS_IAM_POLICY}} --incognito
-    preconditions:
-      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
-      - { msg: "Missing RustFS IAM policy", sh: "test -f {{.RUSTFS_IAM_POLICY}}" }
-
-  forgejo-policy:
-    desc: Validate the Forgejo v16 and production-hardening manifest contract
-    cmds:
-      - cnspec --auto-update=false policy lint {{.FORGEJO_POLICY}}
-      - cnspec --auto-update=false scan local --policy-bundle {{.FORGEJO_POLICY}} --incognito --risk-threshold 1
-    preconditions:
-      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
-      - { msg: "Missing Forgejo policy", sh: "test -f {{.FORGEJO_POLICY}}" }
-
-  rustfs-iam-live-policy:
-    desc: Validate live RustFS IAM users and policies with Mondoo cnspec
-    summary: |
-      Requires a configured rc alias named "rustfs" with RustFS admin
-      credentials. This is intentionally not part of CI because it checks live
-      cluster state.
-    cmds:
-      - cnspec --auto-update=false policy lint {{.RUSTFS_IAM_LIVE_POLICY}}
-      - cnspec --auto-update=false scan local --policy-bundle {{.RUSTFS_IAM_LIVE_POLICY}} --incognito
-    preconditions:
-      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
-      - { msg: "Missing rc", sh: "command -v rc >/dev/null" }
-      - { msg: "Missing jq", sh: "command -v jq >/dev/null" }
-      - { msg: "Missing RustFS live IAM policy", sh: "test -f {{.RUSTFS_IAM_LIVE_POLICY}}" }
-      - { msg: "Missing RustFS live IAM check script", sh: "test -f {{.RUSTFS_IAM_LIVE_CHECK_SCRIPT}}" }
-
-  tempo-trace-backend-contract:
-    desc: Assert Tempo storage, private networking, Grafana, and staged Med Tracker OTLP wiring
-    silent: true
-    cmd: bash {{.TEMPO_TRACE_BACKEND_CONTRACT}} {{.ROOT_DIR}}
-    preconditions:
-      - { msg: "Missing bash", sh: "command -v bash >/dev/null" }
-      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
-      - { msg: "Missing rg", sh: "command -v rg >/dev/null" }
-      - { msg: "Missing Tempo trace backend contract script", sh: "test -f {{.TEMPO_TRACE_BACKEND_CONTRACT}}" }
 
   object-storage-migrate:
     desc: Copy or sync objects between MinIO and RustFS with local rclone
@@ -155,90 +79,3 @@ tasks:
     desc: Get all alerts from VictoriaMetrics
     silent: true
     cmd: mise run kubernetes:alerts -- {{.CLI_ARGS}}
-
-  test-app:
-    desc: Run Mondoo checks for a Kubernetes application
-    summary: |
-      Runs the migrated application checks with cnspec and local Mondoo
-      policy bundles.
-
-      Examples:
-        task kubernetes:test-app app=authentication/zitadel
-        task kubernetes:test-app app=monitoring/grafana
-        task kubernetes:test-app app=home-automation/paperless
-        task kubernetes:test-app app=home/mealie
-    cmd: >-
-      {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
-      {{if .output}}--output {{.output}}{{end}}
-      {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
-      app --app {{.app}}
-    preconditions:
-      - msg: "Missing app parameter. Usage: task kubernetes:test-app app=<namespace>/<app>"
-        sh: test -n "{{.app}}"
-      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
-      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
-      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
-
-  mondoo-manifests:
-    desc: Run Mondoo checks against rendered Flux Kubernetes manifests
-    summary: |
-      Renders Flux output through the local Flux path, runs the repository
-      custom Kubernetes policy as a failing gate, and optionally collects
-      built-in Mondoo posture output as report-only.
-
-      Examples:
-        task kubernetes:mondoo-manifests
-        task kubernetes:mondoo-manifests path=./kubernetes output=junit report_dir=mondoo-reports
-    vars:
-      PATH_ARG: '{{.path | default "./kubernetes"}}'
-      INCLUDE_POSTURE: '{{.include_posture | default "true"}}'
-    cmd: >-
-      {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
-      {{if .output}}--output {{.output}}{{end}}
-      {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
-      k8s-manifests --path {{.PATH_ARG}}
-      {{if eq .INCLUDE_POSTURE "true"}}--include-posture{{end}}
-    preconditions:
-      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
-      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
-      - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
-      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
-
-  mondoo-live:
-    desc: Run report-only Mondoo posture scan against the current Kubernetes cluster
-    summary: |
-      Uses the current kubeconfig and cnspec's built-in Kubernetes posture
-      policies. This is intentionally report-only during the migration.
-
-      Examples:
-        task kubernetes:mondoo-live
-        task kubernetes:mondoo-live output=junit report_dir=mondoo-reports
-    cmd: >-
-      {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
-      {{if .output}}--output {{.output}}{{end}}
-      {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
-      k8s-live
-    preconditions:
-      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
-      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
-      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
-
-  log-noise-by-namespace:
-    desc: Identify top log-producing namespaces by volume (requires Loki)
-    summary: |
-      Queries Loki to find which namespaces are generating the most logs.
-      Useful for identifying noisy namespaces that may need investigation.
-
-      Examples:
-        task kubernetes:log-noise-by-namespace              # Last 1 hour
-        task kubernetes:log-noise-by-namespace -- --period=6h  # Last 6 hours
-    silent: true
-    vars:
-      PERIOD: '{{.PERIOD | default "1h"}}'
-    cmd: |
-      echo "=== Log Volume by Namespace (last {{.PERIOD}}) ==="
-      echo ""
-      kubectl exec -n monitoring deploy/loki-gateway -- \
-        wget -qO- "http://localhost:8080/loki/api/v1/query?query=sum(count_over_time({namespace=~\".%2B\"}[{{.PERIOD}}]))%20by%20(namespace)&limit=100" 2>/dev/null \
-        | jq -r '.data.result | sort_by(.value[1] | tonumber) | reverse | .[] | "\(.metric.namespace)\t\(.value[1])"' \
-        | awk 'BEGIN {printf "%-30s %s\n", "NAMESPACE", "LOG_COUNT"; printf "%-30s %s\n", "---------", "---------"} {printf "%-30s %s\n", $1, $2}'

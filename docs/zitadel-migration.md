@@ -87,13 +87,13 @@ Test OIDC authentication for each application:
 
 ```bash
 # Test Grafana OIDC
-task kubernetes:test-app app=monitoring/grafana
+mise run kubernetes:test-app app=monitoring/grafana
 
 # Test Paperless OIDC
-task kubernetes:test-app app=home-automation/paperless
+mise run kubernetes:test-app app=home-automation/paperless
 
 # Test Mealie OIDC
-task kubernetes:test-app app=home/mealie
+mise run kubernetes:test-app app=home/mealie
 ```
 
 ### 6. Test Login Flows

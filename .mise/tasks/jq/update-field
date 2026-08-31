@@ -3,4 +3,26 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "jq:update-field" -- "$@"
+
+file=
+id=
+field=
+value=
+for argument in "$@"; do
+  case "$argument" in
+    FILE=*) file="${argument#FILE=}" ;;
+    ID=*) id="${argument#ID=}" ;;
+    FIELD=*) field="${argument#FIELD=}" ;;
+    VALUE=*) value="${argument#VALUE=}" ;;
+    *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;;
+  esac
+done
+for required in file id field value; do
+  if [ -z "${!required}" ]; then
+    printf 'Missing required argument: %s\n' "${required^^}" >&2
+    exit 1
+  fi
+done
+jq --arg target_id "$id" --arg field "$field" --argjson value "$value" \
+  'map(if .id == $target_id then .[$field] = $value else . end)' "$file" |
+  sponge "$file"

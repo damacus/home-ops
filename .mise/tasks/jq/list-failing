@@ -3,4 +3,8 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "jq:list-failing" -- "$@"
+
+file=
+for argument in "$@"; do case "$argument" in FILE=*) file="${argument#FILE=}" ;; *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;; esac; done
+[ -n "$file" ] || { printf 'FILE is required\n' >&2; exit 1; }
+jq -r '.[] | select(.passes == false) | "\(.category): \(.description)"' ".tasks/$file.json"

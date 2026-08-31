@@ -3,4 +3,19 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "kubernetes:log-noise-by-namespace" -- "$@"
+
+period=1h
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    PERIOD=*) period="${1#PERIOD=}" ;;
+    --period=*) period="${1#--period=}" ;;
+    --period) shift; period="${1:?--period requires a value}" ;;
+    *) printf 'Unknown argument: %s\n' "$1" >&2; exit 2 ;;
+  esac
+  shift
+done
+printf '=== Log Volume by Namespace (last %s) ===\n\n' "$period"
+kubectl exec -n monitoring deploy/loki-gateway -- \
+  wget -qO- "http://localhost:8080/loki/api/v1/query?query=sum(count_over_time({namespace=~\".%2B\"}[$period]))%20by%20(namespace)&limit=100" 2>/dev/null |
+  jq -r '.data.result | sort_by(.value[1] | tonumber) | reverse | .[] | "\(.metric.namespace)\t\(.value[1])"' |
+  awk 'BEGIN {printf "%-30s %s\\n", "NAMESPACE", "LOG_COUNT"; printf "%-30s %s\\n", "---------", "---------"} {printf "%-30s %s\\n", $1, $2}'

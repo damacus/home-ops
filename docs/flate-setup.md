@@ -6,16 +6,16 @@ This repository uses [flate](https://github.com/home-operations/flate) to render
 
 ### Task Commands
 
-- `task flux:flate-test`: validate all Kustomizations and HelmReleases render successfully.
-- `task flux:flate-build`: build rendered Flux resources locally.
-- `task flux:flate-diff`: diff rendered resources against a baseline checkout or supplied baseline path.
+- `mise run flux:flate-test`: validate all Kustomizations and HelmReleases render successfully.
+- `mise run flux:flate-build`: build rendered Flux resources locally.
+- `mise run flux:flate-diff`: diff rendered resources against a baseline checkout or supplied baseline path.
 
 ### Validation
 
 `yayamlls` performs schema validation over the raw and rendered Kubernetes manifests:
 
 ```bash
-task kubernetes:yayamlls
+mise run kubernetes:yayamlls
 ```
 
 ## Usage
@@ -23,25 +23,25 @@ task kubernetes:yayamlls
 Run the full flate test:
 
 ```bash
-task flux:flate-test
+mise run flux:flate-test
 ```
 
 Build a specific path:
 
 ```bash
-task flux:flate-build path=./kubernetes/apps/network
+mise run flux:flate-build path=./kubernetes/apps/network
 ```
 
 Diff against `origin/main`:
 
 ```bash
-task flux:flate-diff
+mise run flux:flate-diff
 ```
 
 Diff against an existing baseline checkout:
 
 ```bash
-task flux:flate-diff path_orig=./default/kubernetes
+mise run flux:flate-diff path_orig=./default/kubernetes
 ```
 
 ## What It Tests

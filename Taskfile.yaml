@@ -66,8 +66,9 @@ tasks:
   configure:
     desc: Configure repository from bootstrap vars
     prompt: Any conflicting config in the root kubernetes directory will be overwritten... continue?
-    deps: ["workstation:direnv", "workstation:venv", "sops:age-keygen", "init"]
+    deps: ["workstation:direnv", "sops:age-keygen", "init"]
     cmds:
+      - mise run workstation:venv
       - task: .template
       - task: sops:encrypt
       - task: .validate
@@ -93,4 +94,4 @@ tasks:
   .validate:
     internal: true
     cmds:
-      - task: kubernetes:yayamlls
+      - mise run kubernetes:yayamlls

@@ -3,4 +3,7 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "certificates:check-certificates" -- "$@"
+
+cd certificates
+openssl x509 -in ironstone-casa-tls.crt -noout -checkend 86400
+openssl rsa -in ironstone-casa-tls.key -noout -check

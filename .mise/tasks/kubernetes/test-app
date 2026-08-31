@@ -3,4 +3,24 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "kubernetes:test-app" -- "$@"
+
+app=
+output=
+report_dir=
+for argument in "$@"; do
+  case "$argument" in
+    app=*) app="${argument#app=}" ;;
+    output=*) output="${argument#output=}" ;;
+    report_dir=*) report_dir="${argument#report_dir=}" ;;
+    *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;;
+  esac
+done
+[ -n "$app" ] || { printf 'Missing app parameter. Usage: task kubernetes:test-app app=<namespace>/<app>\n' >&2; exit 1; }
+command -v python3 >/dev/null || { printf 'Missing Python interpreter\n' >&2; exit 1; }
+command -v cnspec >/dev/null || { printf 'Missing cnspec\n' >&2; exit 1; }
+script="$PWD/scripts/mondoo_scan.py"
+[ -f "$script" ] || { printf 'Missing Mondoo wrapper\n' >&2; exit 1; }
+args=()
+[ -n "$output" ] && args+=(--output "$output")
+[ -n "$report_dir" ] && args+=(--report-dir "$report_dir")
+exec python3 "$script" "${args[@]}" app --app "$app"

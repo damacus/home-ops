@@ -2,5 +2,12 @@
 #MISE description="Set up virtual environment"
 #MISE quiet=true
 #MISE raw=true
+#MISE sources=["requirements.txt"]
+#MISE outputs=[".venv/pyvenv.cfg"]
 set -euo pipefail
-exec task "workstation:venv" -- "$@"
+
+virtual_env="${VIRTUAL_ENV:-$PWD/.venv}"
+requirements_file="${PIP_REQUIREMENTS_FILE:-$PWD/requirements.txt}"
+[ -f "$requirements_file" ] || { printf 'Missing Pip requirements file\n' >&2; exit 1; }
+uv venv --allow-existing "$virtual_env"
+VIRTUAL_ENV="$virtual_env" uv pip sync "$requirements_file"

@@ -3,4 +3,9 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "kubernetes:forgejo-policy" -- "$@"
+
+policy="$PWD/tests/mondoo/forgejo.mql.yaml"
+command -v cnspec >/dev/null || { printf 'Missing cnspec\n' >&2; exit 1; }
+[ -f "$policy" ] || { printf 'Missing Forgejo policy\n' >&2; exit 1; }
+cnspec --auto-update=false policy lint "$policy"
+exec cnspec --auto-update=false scan local --policy-bundle "$policy" --incognito --risk-threshold 1

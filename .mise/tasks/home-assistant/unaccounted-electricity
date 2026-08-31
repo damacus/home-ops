@@ -3,4 +3,20 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "home-assistant:unaccounted-electricity" -- "$@"
+
+format=human
+hours=24
+minimum_coverage=0.95
+for argument in "$@"; do
+  case "$argument" in
+    format=*) format="${argument#format=}" ;;
+    hours=*) hours="${argument#hours=}" ;;
+    minimum_coverage=*) minimum_coverage="${argument#minimum_coverage=}" ;;
+    *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;;
+  esac
+done
+script=scripts/home_assistant_unaccounted_electricity.py
+[ -f "$script" ] || { printf 'Missing unaccounted electricity script\n' >&2; exit 1; }
+command -v kubectl >/dev/null || { printf 'Missing kubectl\n' >&2; exit 1; }
+kubectl exec -i -n home-automation statefulset/home-assistant -- \
+  python - --format "$format" --hours "$hours" --minimum-coverage "$minimum_coverage" < "$script"

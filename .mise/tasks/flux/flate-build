@@ -3,4 +3,8 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "flux:flate-build" -- "$@"
+
+path=./kubernetes
+for argument in "$@"; do case "$argument" in path=*) path="${argument#path=}" ;; *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;; esac; done
+command -v flate >/dev/null || { printf 'Missing flate\n' >&2; exit 1; }
+exec flate --no-progress build all --api-versions 'policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule' --path "$path"

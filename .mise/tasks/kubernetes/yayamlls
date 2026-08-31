@@ -3,4 +3,6 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "kubernetes:yayamlls" -- "$@"
+
+command -v yayamlls >/dev/null || { printf 'Missing yayamlls\n' >&2; exit 1; }
+exec yayamlls validate --render "$PWD/kubernetes"

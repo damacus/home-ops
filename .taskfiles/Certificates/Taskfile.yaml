@@ -12,14 +12,7 @@ tasks:
     cmds:
       - cmd: kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq -r '.data."tls.crt"' | base64 -d > ironstone-casa-tls.crt
       - cmd: kubectl get secrets -n network ironstone-casa-production-tls -o yaml | yq -r '.data."tls.key"' | base64 -d > ironstone-casa-tls.key
-      - task: check-certificates
-
-  check-certificates:
-    desc: Check the certificates
-    dir: "{{.CERTS_DIR}}"
-    cmds:
-      - cmd: openssl x509 -in ironstone-casa-tls.crt -noout -checkend 86400
-      - cmd: openssl rsa -in ironstone-casa-tls.key -noout -check
+      - cmd: mise run certificates:check-certificates
 
   generate-unifi-keystore:
     desc: Generate the Unifi keystore
@@ -30,7 +23,6 @@ tasks:
     desc: Upload the certificates to Unifi
     deps:
       - download-certificates
-      - check-certificates
     dir: "{{.CERTS_DIR}}"
     cmds:
       - cmd: scp ironstone-casa-tls.crt root:/data/unifi-core/config/unifi-core.crt

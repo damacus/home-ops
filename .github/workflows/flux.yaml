@@ -109,8 +109,15 @@ jobs:
         with:
           token: ${{ github.token }}
 
+      - name: Setup Mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.8.15
+          install: false
+          cache: false
+
       - name: Run yayamlls rendered validation
-        run: yayamlls validate --render ./kubernetes
+        run: mise run kubernetes:yayamlls
 
   cluster-health:
     name: Cluster Health CLI
@@ -174,7 +181,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python3 -m unittest tests/test_mondoo_scan.py tests/test_zitadel_config.py
+          python3 -m unittest tests/test_mondoo_scan.py tests/test_zitadel_config.py tests/test_mise_leaf_operations.py
           ruby tests/test_zitadel_access_policy.rb
 
       - name: Validate migrated policy parity
@@ -212,10 +219,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Setup Task
-        uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52 # v3.0.0
+      - name: Setup Mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
-          repo-token: ${{ github.token }}
+          version: 2026.8.15
+          install: false
+          cache: false
 
       - name: Setup Workflow Tools
         run: |
@@ -225,10 +234,10 @@ jobs:
           cnspec providers install os
 
       - name: Run RustFS IAM policy
-        run: task k8s:rustfs-iam-policy
+        run: mise run kubernetes:rustfs-iam-policy
 
       - name: Run Tempo trace backend contract
-        run: task k8s:tempo-trace-backend-contract
+        run: mise run kubernetes:tempo-trace-backend-contract
 
   flate-test:
     name: Flate Test
@@ -249,13 +258,17 @@ jobs:
           token: ${{ github.token }}
           cache: "true"
 
+      - name: Setup Mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.8.15
+          install: false
+          cache: false
+
       - name: Run flate test
         env:
           FLATE_BASE: ""
-        run: >-
-          flate --no-progress test all
-          --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule"
-          --path ./kubernetes
+        run: mise run flux:flate-test
 
   flate-diff:
     name: Flate Diff
@@ -278,6 +291,13 @@ jobs:
           token: ${{ github.token }}
           cache: "true"
 
+      - name: Setup Mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: 2026.8.15
+          install: false
+          cache: false
+
       - name: Fetch PR Base
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -293,10 +313,7 @@ jobs:
           FLATE_BASE: origin/pr-base
         run: |
           set -euo pipefail
-          flate --no-progress diff all \
-            --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" \
-            --path ./kubernetes \
-            -o github > flate.diff
+          mise run flux:flate-diff base=origin/pr-base output=github > flate.diff
           if [[ -s flate.diff ]]; then
             {
               echo '`````diff'

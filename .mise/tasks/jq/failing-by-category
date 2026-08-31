@@ -3,4 +3,5 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "jq:failing-by-category" -- "$@"
+
+jq -s '[.[][] | select(.passes == false)] | group_by(.category) | map({category: .[0].category, count: length}) | sort_by(.count) | reverse' .tasks/*.json

@@ -3,4 +3,9 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "kubernetes:resources" -- "$@"
+
+args=("$@")
+[ "${#args[@]}" -gt 0 ] || args=(-A)
+for resource in nodes gitrepositories kustomizations helmrepositories helmreleases certificates certificaterequests ingresses pods; do
+  kubectl get "$resource" "${args[@]}"
+done

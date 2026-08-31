@@ -3,13 +3,13 @@
 Run the read-only report:
 
 ```console
-task home-assistant:unaccounted-electricity
+mise run home-assistant:unaccounted-electricity
 ```
 
 Get structured output, including the five-minute graph series:
 
 ```console
-task home-assistant:unaccounted-electricity format=json
+mise run home-assistant:unaccounted-electricity format=json
 ```
 
 The task runs the analysis inside the Home Assistant pod. It uses the pod's

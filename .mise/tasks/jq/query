@@ -3,4 +3,15 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "jq:query" -- "$@"
+
+file=
+query=
+for argument in "$@"; do
+  case "$argument" in
+    FILE=*) file="${argument#FILE=}" ;;
+    QUERY=*) query="${argument#QUERY=}" ;;
+    *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;;
+  esac
+done
+[ -n "$file" ] && [ -n "$query" ] || { printf 'FILE and QUERY are required\n' >&2; exit 1; }
+jq "$query" "$file"

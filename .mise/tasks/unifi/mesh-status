@@ -3,4 +3,27 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "unifi:mesh-status" -- "$@"
+
+json=false
+no_ping=false
+devices='U6-LR,U6-Mesh,U6 Pro,USW-Lite-8-PoE'
+watch_ips='U6-LR=192.168.1.155,U6-Mesh=192.168.1.109,USW-Lite-8-PoE=192.168.1.38,Garage=192.168.1.168'
+client_macs='70:a7:41:5f:13:d9'
+for argument in "$@"; do
+  case "$argument" in
+    json=*) json="${argument#json=}" ;;
+    no_ping=*) no_ping="${argument#no_ping=}" ;;
+    devices=*) devices="${argument#devices=}" ;;
+    watch_ips=*) watch_ips="${argument#watch_ips=}" ;;
+    client_macs=*) client_macs="${argument#client_macs=}" ;;
+    *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;;
+  esac
+done
+script=scripts/unifi/read-status.py
+command -v python3 >/dev/null || { printf 'Missing Python interpreter\n' >&2; exit 1; }
+[ -f "$script" ] || { printf 'Missing UniFi read status script\n' >&2; exit 1; }
+command -v kubectl >/dev/null || { printf 'Missing kubectl\n' >&2; exit 1; }
+args=(--devices "$devices" --watch-ips "$watch_ips" --client-macs "$client_macs")
+[ "$json" = true ] && args+=(--json)
+[ "$no_ping" = true ] && args+=(--no-ping)
+exec python3 "$script" "${args[@]}"
