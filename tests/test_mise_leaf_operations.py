@@ -79,9 +79,48 @@ def assert_leaf_operations_are_native_and_task_implementations_are_removed() -> 
     assert '#MISE outputs=[".venv/pyvenv.cfg"]' in venv
 
 
+def assert_tempo_contract_and_ci_filters_use_native_mise_tasks() -> None:
+    contract = (ROOT / "scripts/tempo_trace_backend_contract.sh").read_text()
+    workflow = (ROOT / ".github/workflows/flux.yaml").read_text()
+
+    assert 'mise run kubernetes:tempo-trace-backend-contract' in contract
+    assert 'task k8s:tempo-trace-backend-contract' not in contract
+    for path in (
+        ".mise/tasks/flux/**",
+        ".mise/tasks/kubernetes/yayamlls",
+        ".mise/tasks/kubernetes/mondoo-manifests",
+        ".mise/tasks/kubernetes/mondoo-live",
+        ".mise/tasks/kubernetes/rustfs-iam-policy",
+        ".mise/tasks/kubernetes/rustfs-iam-live-policy",
+        ".mise/tasks/kubernetes/forgejo-policy",
+        ".mise/tasks/kubernetes/tempo-trace-backend-contract",
+        "tests/test_mise_leaf_operations.py",
+    ):
+        assert f"- '{path}'" in workflow
+
+
 def assert_jq_update_field_accepts_legacy_variables_and_preserves_jq_failure(tmp_path: Path) -> None:
     fixture = tmp_path / "tasks.json"
     fixture.write_text('[{"id":"PROF-002","passes":false}]\n')
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    calls = tmp_path / "calls"
+    executable(
+        bin_dir / "jq",
+        "#!/usr/bin/env bash\n"
+        "printf 'jq:%s\\n' \"$*\" >> \"$CALLS\"\n"
+        "[ \"${FAKE_JQ_EXIT:-0}\" -eq 0 ] || exit \"$FAKE_JQ_EXIT\"\n"
+        "sed 's/false/true/' \"${!#}\"\n",
+    )
+    executable(
+        bin_dir / "sponge",
+        "#!/usr/bin/env bash\n"
+        "printf 'sponge:%s\\n' \"$*\" >> \"$CALLS\"\n"
+        "cat > \"$1\"\n",
+    )
+    env = os.environ.copy()
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
+    env["CALLS"] = str(calls)
     result = run(
         "bash",
         str(isolated_task(tmp_path, "jq", "update-field")),
@@ -90,15 +129,59 @@ def assert_jq_update_field_accepts_legacy_variables_and_preserves_jq_failure(tmp
         "FIELD=passes",
         "VALUE=true",
         cwd=tmp_path,
+        env=env,
     )
     assert result.returncode == 0, result.stderr
-    assert fixture.read_text() == '[\n  {\n    "id": "PROF-002",\n    "passes": true\n  }\n]\n'
+    assert fixture.read_text() == '[{"id":"PROF-002","passes":true}]\n'
+    assert calls.read_text().splitlines()[0].startswith("jq:")
+    assert calls.read_text().splitlines()[1].startswith("sponge:")
+
+    failed = run(
+        "bash",
+        str(isolated_task(tmp_path, "jq", "update-field")),
+        f"FILE={fixture}",
+        "ID=PROF-002",
+        "FIELD=passes",
+        "VALUE=true",
+        cwd=tmp_path,
+        env=env | {"FAKE_JQ_EXIT": "19"},
+    )
+    assert failed.returncode == 19
+
+
+def assert_certificate_check_uses_the_canonical_directory_from_both_contexts(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    calls = tmp_path / "calls"
+    executable(
+        bin_dir / "openssl",
+        "#!/usr/bin/env bash\n"
+        "printf '%s\\n' \"$PWD:$*\" >> \"$CALLS\"\n",
+    )
+    certificates = tmp_path / "certificates"
+    certificates.mkdir()
+    (certificates / "ironstone-casa-tls.crt").write_text("certificate\n")
+    (certificates / "ironstone-casa-tls.key").write_text("key\n")
+    env = os.environ.copy()
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
+    env["CALLS"] = str(calls)
+    task = isolated_task(tmp_path, "certificates", "check-certificates")
+    for cwd in (tmp_path, certificates):
+        result = run("bash", str(task), cwd=cwd, env=env)
+        assert result.returncode == 0, result.stderr
+    canonical_directory = certificates.resolve()
+    actual = calls.read_text().splitlines()
+    assert actual == [
+        f"{canonical_directory}:x509 -in ironstone-casa-tls.crt -noout -checkend 86400",
+        f"{canonical_directory}:rsa -in ironstone-casa-tls.key -noout -check",
+        f"{canonical_directory}:x509 -in ironstone-casa-tls.crt -noout -checkend 86400",
+        f"{canonical_directory}:rsa -in ironstone-casa-tls.key -noout -check",
+    ], actual
 
 
 def assert_native_leaf_tasks_construct_commands_and_preserve_exit_status(tmp_path: Path) -> None:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
-    calls = tmp_path / "calls"
     for command in ("kubectl", "yayamlls", "cnspec", "python3", "flate", "openssl", "uv", "jq", "awk", "rc"):
         executable(
             bin_dir / command,
@@ -127,7 +210,6 @@ def assert_native_leaf_tasks_construct_commands_and_preserve_exit_status(tmp_pat
     (tmp_path / "requirements.txt").write_text("")
     env = os.environ.copy()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
-    env["CALLS"] = str(calls)
 
     cases = (
         ("flux", "flate-test", ("path=./rendered",), "flate:--no-progress test all"),
@@ -149,11 +231,18 @@ def assert_native_leaf_tasks_construct_commands_and_preserve_exit_status(tmp_pat
         ("workstation", "venv", (), "uv:venv --allow-existing"),
     )
     for namespace, task, arguments, expected in cases:
-        result = run("bash", str(isolated_task(tmp_path, namespace, task)), *arguments, cwd=tmp_path, env=env)
+        calls = tmp_path / f"calls-{namespace}-{task}"
+        result = run(
+            "bash",
+            str(isolated_task(tmp_path, namespace, task)),
+            *arguments,
+            cwd=tmp_path,
+            env=env | {"CALLS": str(calls)},
+        )
         assert result.returncode == 0, result.stderr
         assert expected in calls.read_text()
 
-    failed = run("bash", str(isolated_task(tmp_path, "flux", "flate-test")), cwd=tmp_path, env=env | {"FAKE_EXIT": "47"})
+    failed = run("bash", str(isolated_task(tmp_path, "flux", "flate-test")), cwd=tmp_path, env=env | {"FAKE_EXIT": "47", "CALLS": str(tmp_path / "calls-failed")})
     assert failed.returncode == 47
 
 
@@ -161,9 +250,16 @@ class TestMiseLeafOperations(unittest.TestCase):
     def test_leaf_operations_are_native_and_task_implementations_are_removed(self) -> None:
         assert_leaf_operations_are_native_and_task_implementations_are_removed()
 
+    def test_tempo_contract_and_ci_filters_use_native_mise_tasks(self) -> None:
+        assert_tempo_contract_and_ci_filters_use_native_mise_tasks()
+
     def test_jq_update_field_accepts_legacy_variables_and_preserves_jq_failure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             assert_jq_update_field_accepts_legacy_variables_and_preserves_jq_failure(Path(directory))
+
+    def test_certificate_check_uses_the_canonical_directory_from_both_contexts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            assert_certificate_check_uses_the_canonical_directory_from_both_contexts(Path(directory))
 
     def test_native_leaf_tasks_construct_commands_and_preserve_exit_status(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

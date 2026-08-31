@@ -4,6 +4,8 @@
 #MISE raw=true
 set -euo pipefail
 
-cd certificates
+if [ "$(basename "$PWD")" != certificates ]; then
+  cd certificates
+fi
 openssl x509 -in ironstone-casa-tls.crt -noout -checkend 86400
 openssl rsa -in ironstone-casa-tls.key -noout -check

@@ -35,6 +35,10 @@ jobs:
             kubernetes:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Flux/**'
+              - '.mise/tasks/flux/**'
+              - '.mise/tasks/kubernetes/yayamlls'
+              - '.mise/tasks/kubernetes/mondoo-manifests'
+              - 'tests/test_mise_leaf_operations.py'
               - 'kubernetes/**'
             go:
               - '.github/workflows/flux.yaml'
@@ -51,6 +55,9 @@ jobs:
               - 'mise.toml'
             mondoo:
               - '.github/workflows/flux.yaml'
+              - '.mise/tasks/kubernetes/mondoo-manifests'
+              - '.mise/tasks/kubernetes/mondoo-live'
+              - 'tests/test_mise_leaf_operations.py'
               - 'kubernetes/**'
               - 'mondoo/**'
               - 'scripts/mondoo_scan.py'
@@ -60,6 +67,11 @@ jobs:
             contracts:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Kubernetes/Taskfile.yaml'
+              - '.mise/tasks/kubernetes/rustfs-iam-policy'
+              - '.mise/tasks/kubernetes/rustfs-iam-live-policy'
+              - '.mise/tasks/kubernetes/forgejo-policy'
+              - '.mise/tasks/kubernetes/tempo-trace-backend-contract'
+              - 'tests/test_mise_leaf_operations.py'
               - 'kubernetes/apps/authentication/zitadel-db/**'
               - 'kubernetes/apps/dev/forgejo-db/**'
               - 'kubernetes/apps/home-automation/home-assistant-db/**'

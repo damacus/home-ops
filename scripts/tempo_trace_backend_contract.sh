@@ -70,6 +70,7 @@ assert_yq '.kind == "OCIRepository" and .metadata.name == "tempo" and .spec.url 
 assert_yq '.kind == "HelmRelease" and .metadata.name == "tempo" and .spec.chartRef.kind == "OCIRepository" and .spec.chartRef.name == "tempo"' "$tempo_app/helmrelease.yaml"
 assert_yq '(.spec.values.tempo.receivers | length) == 1 and (.spec.values.tempo.receivers | has("otlp")) and (.spec.values.tempo.receivers.otlp.protocols | length) == 1 and .spec.values.tempo.receivers.otlp.protocols.http.endpoint == "0.0.0.0:4318" and .spec.values.tempo.server.http_listen_port == 3200 and .spec.values.tempo.retention == "336h"' "$tempo_app/helmrelease.yaml"
 assert_yq '.spec.values.tempo.storage.trace.backend == "s3" and .spec.values.tempo.storage.trace.s3.bucket == "tempo-traces" and .spec.values.tempo.storage.trace.wal.path == "/var/tempo/wal"' "$tempo_app/helmrelease.yaml"
+# shellcheck disable=SC2016 # The literal SOPS template variables are contractual.
 assert_yq '.spec.values.tempo.storage.trace.s3.access_key == "$${RUSTFS_TEMPO_ACCESS_KEY}" and .spec.values.tempo.storage.trace.s3.secret_key == "$${RUSTFS_TEMPO_SECRET_KEY}"' "$tempo_app/helmrelease.yaml"
 assert_yq '.spec.values.persistence.enabled == true and .spec.values.persistence.enableStatefulSetAutoDeletePVC == false and .spec.values.persistence.storageClassName == "longhorn" and (.spec.values.persistence.accessModes | length) == 1 and .spec.values.persistence.accessModes[0] == "ReadWriteOnce" and .spec.values.persistence.size == "10Gi"' "$tempo_app/helmrelease.yaml"
 assert_yq '.spec.values.service.type == "ClusterIP" and .spec.values.podAnnotations."reloader.stakater.com/auto" == "true" and .spec.values.serviceAccount.automountServiceAccountToken == false' "$tempo_app/helmrelease.yaml"
@@ -114,6 +115,7 @@ fi
 assert_yq '.spec.values.datasources."datasources.yaml".datasources[] | select(.name == "Tempo" and .type == "tempo" and .uid == "tempo" and .url == "http://tempo.monitoring.svc.cluster.local:3200" and .isDefault == false)' "$grafana_release"
 assert_yq '.spec.values.datasources."datasources.yaml".datasources[] | select(.name == "Prometheus" and .uid == "prometheus" and .isDefault == true)' "$grafana_release"
 assert_yq '.spec.values.datasources."datasources.yaml".datasources[] | select(.uid == "tempo" and .jsonData.streamingEnabled.search == true and .jsonData.tracesToLogsV2.datasourceUid == "loki" and .jsonData.tracesToLogsV2.filterByTraceID == true and (.jsonData.tracesToLogsV2.tags | length) == 1 and .jsonData.tracesToLogsV2.tags[0].key == "host.name" and .jsonData.tracesToLogsV2.tags[0].value == "pod")' "$grafana_release"
+# shellcheck disable=SC2016 # The literal Grafana template variable is contractual.
 assert_yq '.spec.values.datasources."datasources.yaml".datasources[] | select(.uid == "loki" and (.jsonData.derivedFields[] | select(.name == "trace.id" and (.matcherRegex | contains("\\\\")) and (.matcherRegex | contains("trace\\.id")) and (.matcherRegex | contains("[0-9a-f]{32}")) and .datasourceUid == "tempo" and .url == "$$$${__value.raw}")))' "$grafana_release"
 
 assert_yq '.spec.target.template.data.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT == "http://tempo.monitoring.svc.cluster.local:4318/v1/traces" and (.spec.target.template.data | has("OTEL_EXPORTER_OTLP_ENDPOINT") | not)' "$canary_external_secret"
@@ -125,7 +127,7 @@ assert_yq '(.spec.values.persistence | tojson | test("puma\\.rb") | not)' "$cana
 assert_yq 'explode(.) | .spec.values.controllers."med-tracker-canary".initContainers.migrate.image.repository == "ghcr.io/damacus/med-tracker" and .spec.values.controllers."med-tracker-canary".containers.app.image.repository == "ghcr.io/damacus/med-tracker" and .spec.values.controllers.worker.initContainers.migrate.image.repository == "ghcr.io/damacus/med-tracker" and .spec.values.controllers.worker.containers.worker.image.repository == "ghcr.io/damacus/med-tracker" and .spec.values.controllers.reset.containers.app.image.repository == "ghcr.io/damacus/med-tracker"' "$canary_release"
 assert_yq '.spec.values.controllers."med-tracker".containers.app.env.OTEL_TRACES_EXPORTER == "none" and (.spec.values.controllers."med-tracker".containers.app.env | has("OTEL_EXPORTER_OTLP_ENDPOINT") | not)' "$production_release"
 assert_yq '.spec.wait == true and (([.spec.dependsOn[].name] | sort | join(",")) == "med-tracker-canary-db,tempo")' "$canary_kustomization"
-assert_match 'task k8s:tempo-trace-backend-contract' "$flux_workflow"
+assert_match 'mise run kubernetes:tempo-trace-backend-contract' "$flux_workflow"
 "$privacy_check" "$privacy_fixtures/safe-trace.json" "$privacy_fixtures/safe-loki.json" >/dev/null
 if "$privacy_check" "$privacy_fixtures/unsafe-trace.json" "$privacy_fixtures/safe-loki.json" >/dev/null 2>&1; then
   echo "Tempo privacy check accepted prohibited synthetic values" >&2
