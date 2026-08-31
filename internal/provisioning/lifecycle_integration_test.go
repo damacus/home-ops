@@ -99,6 +99,16 @@ func TestLifecycleRejectsExplicitNodeIPOutsideRouteInterface(t *testing.T) {
 	fixture.assertLogExcludes(t, "cat /var/lib/rancher/k3s/server/token", "delete node", "install -m 0600")
 }
 
+func TestLifecycleAcceptsAssignedExplicitNodeIPWithoutRoutePreferredSource(t *testing.T) {
+	fixture := newLifecycleFixture(t, "waitready")
+	fixture.setEnv(t, "ROUTE_NO_PREFSRC", "true")
+	result := fixture.run(t, "enrol", "target.example", "--node-ip", "10.0.0.77", "--dry-run")
+	if result.exitCode != 0 {
+		t.Fatalf("explicit route result = exit %d, stderr %q", result.exitCode, result.stderr)
+	}
+	assertJSONResult(t, result.stdout, "node_ip", "10.0.0.77")
+}
+
 func TestLifecycleRejectsRouteSourceMissingFromInterface(t *testing.T) {
 	fixture := newLifecycleFixture(t, "waitready")
 	fixture.setEnv(t, "ROUTE_ADDRESS_PRESENT", "false")
@@ -330,7 +340,8 @@ case "$*" in
   *"systemctl is-enabled k3s.service"*) echo disabled ;;
   *"systemctl is-active k3s.service"*) echo inactive ;;
   *"sudo test ! -e /etc/rancher/k3s/config.yaml"*) : ;;
-  *"ip -j route get "*) echo '[{"dev":"eth0","prefsrc":"10.0.0.44"}]' ;;
+  *"ip -j route get "*)
+    if test "${ROUTE_NO_PREFSRC:-false}" = true; then echo '[{"dev":"eth0"}]'; else echo '[{"dev":"eth0","prefsrc":"10.0.0.44"}]'; fi ;;
   *"ip -j addr show dev eth0"*)
     if test "$ROUTE_ADDRESS_PRESENT" = true; then echo '[{"ifname":"eth0","addr_info":[{"family":"inet","local":"10.0.0.44"},{"family":"inet","local":"10.0.0.77"}]}]'; else echo '[{"ifname":"eth0","addr_info":[]}]'; fi ;;
   *"cat /etc/rancher/k3s/config.yaml") echo 'write-kubeconfig-mode: 0644' ;;

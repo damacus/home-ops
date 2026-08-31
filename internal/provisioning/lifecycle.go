@@ -395,8 +395,8 @@ func (a *App) resolveNodeIP(ctx context.Context, host, endpoint, override string
 		return "", fmt.Errorf("parse route to Kubernetes API endpoint")
 	}
 	route := routes[0]
-	if route.Device == "" || !isIPv4(route.PreferredSource) {
-		return "", fmt.Errorf("route to Kubernetes API endpoint lacks an IPv4 device and preferred source")
+	if route.Device == "" {
+		return "", fmt.Errorf("route to Kubernetes API endpoint lacks a device")
 	}
 	addressesOutput, err := a.sshOutput(ctx, host, "ip -j addr show dev "+route.Device)
 	if err != nil {
@@ -414,6 +414,8 @@ func (a *App) resolveNodeIP(ctx context.Context, host, endpoint, override string
 	selected := route.PreferredSource
 	if hasOverride {
 		selected = override
+	} else if !isIPv4(selected) {
+		return "", fmt.Errorf("route to Kubernetes API endpoint lacks an IPv4 preferred source")
 	}
 	for _, networkInterface := range interfaces {
 		for _, address := range networkInterface.AddressInfo {
