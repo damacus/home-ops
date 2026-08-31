@@ -58,6 +58,15 @@ type lifecyclePlan struct {
 	Token          string         `json:"token"`
 }
 
+type lifecycleCommandResult struct {
+	Node       string   `json:"node"`
+	Host       string   `json:"host"`
+	SourceNode string   `json:"source_node,omitempty"`
+	NodeIP     string   `json:"node_ip,omitempty"`
+	Actions    []string `json:"actions"`
+	Token      string   `json:"token,omitempty"`
+}
+
 func (a *App) runEnrol(ctx context.Context, args []string) error {
 	sourceNode, _, err := takeValue(&args, "--source-node")
 	if err != nil {
@@ -132,15 +141,12 @@ func (a *App) runEnrol(ctx context.Context, args []string) error {
 	if !strings.Contains(targetVersion, version) {
 		return fmt.Errorf("target K3s version does not match %s", version)
 	}
-	if !hasNodeIP {
-		endpoint, endpointErr := a.currentAPIEndpoint(ctx)
-		if endpointErr != nil {
-			return endpointErr
-		}
-		nodeIP, err = a.deriveNodeIP(ctx, targetHost, endpoint)
-		if err != nil {
-			return err
-		}
+	endpoint, err := a.currentAPIEndpoint(ctx)
+	if err != nil {
+		return err
+	}
+	if nodeIP, err = a.resolveNodeIP(ctx, targetHost, endpoint, nodeIP, hasNodeIP); err != nil {
+		return err
 	}
 	plan := lifecyclePlan{
 		SourceNode:     source.Metadata.Name,
@@ -163,9 +169,6 @@ func (a *App) runEnrol(ctx context.Context, args []string) error {
 		return writeJSON(a.exec.stdout, plan)
 	}
 	if existing != nil {
-		if err := writeJSON(a.exec.stdout, map[string]any{"existing_node": nodeState(*existing)}); err != nil {
-			return err
-		}
 		confirmation := "replace " + targetName
 		if err := a.requireConfirmation(confirmation, "to delete the NotReady node"); err != nil {
 			return err
@@ -175,10 +178,6 @@ func (a *App) runEnrol(ctx context.Context, args []string) error {
 	sourceConfig, err := a.sshOutput(ctx, sourceHost, "sudo cat /etc/rancher/k3s/config.yaml")
 	if err != nil {
 		return fmt.Errorf("could not read source K3s config")
-	}
-	endpoint, err := a.currentAPIEndpoint(ctx)
-	if err != nil {
-		return err
 	}
 	config, err := a.sanitiseK3sConfig(ctx, sourceConfig, endpoint, nodeIP)
 	if err != nil {
@@ -192,7 +191,7 @@ func (a *App) runEnrol(ctx context.Context, args []string) error {
 		return fmt.Errorf("source node returned an empty K3s token")
 	}
 	if existing != nil {
-		if err := a.exec.run(ctx, a.paths.repo, nil, "kubectl", "delete", "node", targetName); err != nil {
+		if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "kubectl", "delete", "node", targetName); err != nil {
 			return err
 		}
 	}
@@ -202,10 +201,20 @@ func (a *App) runEnrol(ctx context.Context, args []string) error {
 	if err := a.installTargetToken(ctx, targetHost, token); err != nil {
 		return redactLifecycleError(err, token)
 	}
-	if err := a.exec.run(ctx, a.paths.repo, nil, "ssh", "pi@"+targetHost, "sudo systemctl enable --now k3s.service"); err != nil {
+	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "ssh", "pi@"+targetHost, "sudo systemctl enable --now k3s.service"); err != nil {
 		return err
 	}
-	return a.waitForEnrolledNode(ctx, targetName, targetHost, token, readyTimeout)
+	if err := a.waitForEnrolledNode(ctx, targetName, targetHost, token, readyTimeout); err != nil {
+		return err
+	}
+	return writeJSON(a.exec.stdout, lifecycleCommandResult{
+		Node:       targetName,
+		Host:       targetHost,
+		SourceNode: source.Metadata.Name,
+		NodeIP:     nodeIP,
+		Actions:    plan.Actions,
+		Token:      "<redacted>",
+	})
 }
 
 func (a *App) runRetire(ctx context.Context, args []string) error {
@@ -243,16 +252,29 @@ func (a *App) runRetire(ctx context.Context, args []string) error {
 	if err := a.requireConfirmation(node, "to retire it"); err != nil {
 		return err
 	}
-	if err := a.exec.run(ctx, a.paths.repo, nil, "kubectl", "drain", node, "--ignore-daemonsets", "--delete-emptydir-data"); err != nil {
+	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "kubectl", "drain", node, "--ignore-daemonsets", "--delete-emptydir-data"); err != nil {
 		return err
 	}
-	if err := a.exec.run(ctx, a.paths.repo, nil, "ssh", "pi@"+host, "sudo systemctl disable --now k3s.service"); err != nil {
+	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "ssh", "pi@"+host, "sudo systemctl disable --now k3s.service"); err != nil {
 		return err
 	}
-	if err := a.exec.run(ctx, a.paths.repo, nil, "kubectl", "delete", "node", node); err != nil {
+	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "kubectl", "delete", "node", node); err != nil {
 		return err
 	}
-	return a.exec.run(ctx, a.paths.repo, nil, "ssh", "pi@"+host, "sudo rm -rf /etc/rancher/k3s /var/lib/rancher/k3s")
+	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "ssh", "pi@"+host, "sudo rm -rf /etc/rancher/k3s /var/lib/rancher/k3s"); err != nil {
+		return err
+	}
+	return writeJSON(a.exec.stdout, lifecycleCommandResult{
+		Node: node,
+		Host: host,
+		Actions: []string{
+			"preflight target identity, sudo, and k3s",
+			"kubectl drain",
+			"disable and stop k3s",
+			"kubectl delete node",
+			"remove K3s config and state",
+		},
+	})
 }
 
 func (a *App) enrolTargetPreflight(ctx context.Context, host string) error {
@@ -356,7 +378,7 @@ func (a *App) currentAPIEndpoint(ctx context.Context) (string, error) {
 	return config.Clusters[0].Cluster.Server, nil
 }
 
-func (a *App) deriveNodeIP(ctx context.Context, host, endpoint string) (string, error) {
+func (a *App) resolveNodeIP(ctx context.Context, host, endpoint, override string, hasOverride bool) (string, error) {
 	parsed, err := url.Parse(endpoint)
 	if err != nil || parsed.Hostname() == "" {
 		return "", fmt.Errorf("invalid Kubernetes API endpoint %q", endpoint)
@@ -389,12 +411,18 @@ func (a *App) deriveNodeIP(ctx context.Context, host, endpoint string) (string, 
 	if err := json.Unmarshal([]byte(addressesOutput), &interfaces); err != nil || len(interfaces) == 0 {
 		return "", fmt.Errorf("parse addresses for interface %s", route.Device)
 	}
-	for _, address := range interfaces[0].AddressInfo {
-		if address.Family == "inet" && address.Local == route.PreferredSource {
-			return route.PreferredSource, nil
+	selected := route.PreferredSource
+	if hasOverride {
+		selected = override
+	}
+	for _, networkInterface := range interfaces {
+		for _, address := range networkInterface.AddressInfo {
+			if address.Family == "inet" && address.Local == selected {
+				return selected, nil
+			}
 		}
 	}
-	return "", fmt.Errorf("route preferred source %s is not assigned to interface %s", route.PreferredSource, route.Device)
+	return "", fmt.Errorf("node IP %s is not assigned to interface %s", selected, route.Device)
 }
 
 func (a *App) sanitiseK3sConfig(ctx context.Context, source, endpoint, nodeIP string) (string, error) {
@@ -414,7 +442,7 @@ func (a *App) sanitiseK3sConfig(ctx context.Context, source, endpoint, nodeIP st
 }
 
 func (a *App) installTargetConfig(ctx context.Context, host, config string) error {
-	return a.exec.run(ctx, a.paths.repo, strings.NewReader(config), "ssh", "pi@"+host, "sudo install -d -m 0700 /etc/rancher/k3s && sudo install -m 0600 /dev/stdin /etc/rancher/k3s/config.yaml")
+	return a.exec.runToStderr(ctx, a.paths.repo, strings.NewReader(config), "ssh", "pi@"+host, "sudo install -d -m 0700 /etc/rancher/k3s && sudo install -m 0600 /dev/stdin /etc/rancher/k3s/config.yaml")
 }
 
 func (a *App) installTargetToken(ctx context.Context, host, token string) error {
