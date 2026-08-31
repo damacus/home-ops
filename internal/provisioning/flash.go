@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
 
@@ -72,7 +71,7 @@ func (a *App) runFlash(ctx context.Context, args []string) error {
 	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "sync"); err != nil {
 		return err
 	}
-	if runtime.GOOS == "darwin" {
+	if a.platform() == "darwin" {
 		if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "diskutil", "eject", target.Device); err != nil {
 			return err
 		}
@@ -112,13 +111,13 @@ func (a *App) streamImageToDevice(ctx context.Context, image, device string) err
 }
 
 func (a *App) inspectFlashDevice(ctx context.Context, device string) (flashTarget, error) {
-	switch runtime.GOOS {
+	switch a.platform() {
 	case "linux":
 		return a.inspectLinuxDevice(ctx, device)
 	case "darwin":
 		return a.inspectDarwinDevice(ctx, device)
 	default:
-		return flashTarget{}, fmt.Errorf("flashing is unsupported on %s", runtime.GOOS)
+		return flashTarget{}, fmt.Errorf("flashing is unsupported on %s", a.platform())
 	}
 }
 
@@ -131,7 +130,7 @@ func ensureBlockDevice(device string) error {
 }
 
 func (a *App) inspectLinuxDevice(ctx context.Context, device string) (flashTarget, error) {
-	if err := ensureBlockDevice(device); err != nil {
+	if err := a.deviceValidator(device); err != nil {
 		return flashTarget{}, err
 	}
 	output, err := a.exec.output(ctx, a.paths.repo, nil, "lsblk", "--json", "--bytes", "--paths", "--output", "PATH,TYPE,SIZE,MODEL,MOUNTPOINTS", device)
@@ -195,7 +194,7 @@ func (d linuxBlockDevice) mountedValues() []string {
 }
 
 func (a *App) inspectDarwinDevice(ctx context.Context, device string) (flashTarget, error) {
-	if err := ensureBlockDevice(device); err != nil {
+	if err := a.deviceValidator(device); err != nil {
 		return flashTarget{}, err
 	}
 	info, err := a.diskutilJSON(ctx, "info", device)

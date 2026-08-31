@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -19,15 +20,19 @@ func (e usageError) Error() string { return e.message }
 
 // App owns the structured, safety-critical provisioning operations.
 type App struct {
-	paths paths
-	exec  executor
+	paths           paths
+	exec            executor
+	deviceValidator func(string) error
+	platform        func() string
 }
 
 // New returns a provisioning application rooted at the home-ops checkout.
 func New(root string, stdin io.Reader, stdout, stderr io.Writer) *App {
 	return &App{
-		paths: newPaths(root),
-		exec:  executor{stdin: stdin, stdout: stdout, stderr: stderr},
+		paths:           newPaths(root),
+		exec:            executor{stdin: stdin, stdout: stdout, stderr: stderr},
+		deviceValidator: ensureBlockDevice,
+		platform:        func() string { return runtime.GOOS },
 	}
 }
 

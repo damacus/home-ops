@@ -157,38 +157,32 @@ func verifyRootFS(rootfs string, manifest *Manifest, reportedVersion string) (ve
 		checks["pi_home"] = failed(fmt.Sprintf("pi home mode=%#o, want 0750", homeMode))
 	}
 
-	password := effectiveSSHDValue(rootfs, "PasswordAuthentication")
-	keyboard := effectiveSSHDValue(rootfs, "KbdInteractiveAuthentication")
-	rootLogin := effectiveSSHDValue(rootfs, "PermitRootLogin")
+	password, sshErr := effectiveSSHDValue(rootfs, "PasswordAuthentication")
+	keyboard, keyboardErr := effectiveSSHDValue(rootfs, "KbdInteractiveAuthentication")
+	rootLogin, rootLoginErr := effectiveSSHDValue(rootfs, "PermitRootLogin")
 	sshDetail := fmt.Sprintf("PasswordAuthentication=%s, KbdInteractiveAuthentication=%s, PermitRootLogin=%s", password, keyboard, rootLogin)
-	if password == "no" && keyboard == "no" && rootLogin == "no" {
+	if sshErr != nil || keyboardErr != nil || rootLoginErr != nil {
+		checks["ssh_policy"] = failed("invalid SSH include: " + firstError(sshErr, keyboardErr, rootLoginErr).Error())
+	} else if password == "no" && keyboard == "no" && rootLogin == "no" {
 		checks["ssh_policy"] = passed(sshDetail)
 	} else {
 		checks["ssh_policy"] = failed(sshDetail)
 	}
 
-	periodic := readFiles(root("etc", "apt", "apt.conf.d", "20auto-upgrades"))
-	unattended := readFiles(root("etc", "apt", "apt.conf.d", "50unattended-upgrades"))
-	origins := []string{"Ubuntu:noble", "Ubuntu:noble-updates", "Ubuntu:noble-security", "Ubuntu:noble-backports", "Armbian:noble"}
-	upgradeOK := strings.Contains(periodic, `APT::Periodic::Unattended-Upgrade "1"`) &&
-		allContained(unattended, origins) && strings.Contains(unattended, `Automatic-Reboot "false"`) &&
-		validTimerActivation(rootfs) && !kernelPackagesBlacklisted(unattended)
+	upgradeOK := unattendedUpgradePolicy(rootfs) && validTimerActivation(rootfs)
 	if upgradeOK {
 		checks["unattended_upgrades"] = passed("all Noble and Armbian origins enabled; timer active")
 	} else {
 		checks["unattended_upgrades"] = failed("all Noble and Armbian origins enabled; timer active")
 	}
 
-	clusterPaths := []string{
-		root("etc", "rancher", "k3s", "config.yaml"),
-		root("etc", "rancher", "k3s", "cluster-token"),
-		root("var", "lib", "rancher", "k3s", "server", "token"),
-		root("var", "lib", "rancher", "k3s", "server", "db"),
-	}
-	if !anyExists(clusterPaths) {
-		checks["cluster_state"] = passed("no cluster config, token, or server state is baked")
+	clusterState, clusterErr := unexpectedClusterState(rootfs)
+	if clusterErr != nil {
+		checks["cluster_state"] = failed("inspect cluster state: " + clusterErr.Error())
+	} else if len(clusterState) == 0 {
+		checks["cluster_state"] = passed("only immutable K3s payload inputs are baked")
 	} else {
-		checks["cluster_state"] = failed("no cluster config, token, or server state is baked")
+		checks["cluster_state"] = failed("unexpected cluster state: " + strings.Join(clusterState, ", "))
 	}
 	kubeMode := fileMode(root("etc", "rancher", "k3s", "k3s.yaml"))
 	if kubeMode == 0 || kubeMode == 0o600 {
@@ -282,18 +276,28 @@ func verifyRootFS(rootfs string, manifest *Manifest, reportedVersion string) (ve
 	return verificationReport{Status: status, Checks: checks}, nil
 }
 
-func effectiveSSHDValue(rootfs, key string) string {
+func effectiveSSHDValue(rootfs, key string) (string, error) {
+	canonicalRoot, err := filepath.EvalSymlinks(rootfs)
+	if err != nil {
+		return "", fmt.Errorf("resolve rootfs: %w", err)
+	}
 	value := ""
-	var parse func(string)
-	parse = func(path string) {
+	var parse func(string) error
+	parse = func(path string) error {
 		if value != "" {
-			return
+			return nil
 		}
-		file, err := os.Open(path)
+		resolved, err := filepath.EvalSymlinks(path)
 		if err != nil {
-			return
+			return err
 		}
-		defer file.Close()
+		if !insideRoot(canonicalRoot, resolved) {
+			return fmt.Errorf("configuration escapes rootfs: %s", path)
+		}
+		file, err := os.Open(resolved)
+		if err != nil {
+			return err
+		}
 		inMatch := false
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
@@ -311,23 +315,77 @@ func effectiveSSHDValue(rootfs, key string) string {
 			}
 			if strings.EqualFold(fields[0], "Include") && !inMatch {
 				for _, pattern := range fields[1:] {
-					pattern = strings.TrimPrefix(pattern, "/")
-					matches, _ := filepath.Glob(filepath.Join(rootfs, pattern))
+					matches, includeErr := sshIncludeMatches(canonicalRoot, pattern)
+					if includeErr != nil {
+						_ = file.Close()
+						return includeErr
+					}
 					sort.Strings(matches)
 					for _, match := range matches {
-						parse(match)
+						if err := parse(match); err != nil {
+							_ = file.Close()
+							return err
+						}
 					}
 				}
 				continue
 			}
 			if !inMatch && len(fields) > 1 && strings.EqualFold(fields[0], key) {
 				value = strings.ToLower(fields[1])
-				return
+				break
 			}
 		}
+		if err := scanner.Err(); err != nil {
+			_ = file.Close()
+			return err
+		}
+		return file.Close()
 	}
-	parse(filepath.Join(rootfs, "etc", "ssh", "sshd_config"))
-	return value
+	if err := parse(filepath.Join(canonicalRoot, "etc", "ssh", "sshd_config")); err != nil {
+		return "", err
+	}
+	return value, nil
+}
+
+func sshIncludeMatches(rootfs, pattern string) ([]string, error) {
+	var candidate string
+	if filepath.IsAbs(pattern) {
+		candidate = filepath.Join(rootfs, strings.TrimPrefix(pattern, string(filepath.Separator)))
+	} else {
+		candidate = filepath.Join(rootfs, "etc", "ssh", pattern)
+	}
+	if !insideRoot(rootfs, candidate) {
+		return nil, fmt.Errorf("include escapes rootfs: %s", pattern)
+	}
+	matches, err := filepath.Glob(candidate)
+	if err != nil {
+		return nil, err
+	}
+	for index, match := range matches {
+		resolved, err := filepath.EvalSymlinks(match)
+		if err != nil {
+			return nil, err
+		}
+		if !insideRoot(rootfs, resolved) {
+			return nil, fmt.Errorf("include escapes rootfs: %s", pattern)
+		}
+		matches[index] = resolved
+	}
+	return matches, nil
+}
+
+func insideRoot(rootfs, path string) bool {
+	relative, err := filepath.Rel(rootfs, filepath.Clean(path))
+	return err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) && !filepath.IsAbs(relative)
+}
+
+func firstError(errors ...error) error {
+	for _, err := range errors {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func validTimerActivation(rootfs string) bool {
@@ -351,6 +409,142 @@ func validTimerActivation(rootfs string) bool {
 		}
 	}
 	return false
+}
+
+func unattendedUpgradePolicy(rootfs string) bool {
+	configuration, err := readAPTConfiguration(rootfs)
+	if err != nil {
+		return false
+	}
+	periodic := aptSetting(configuration, "APT::Periodic::Unattended-Upgrade")
+	reboot := aptSetting(configuration, "Unattended-Upgrade::Automatic-Reboot")
+	origins := aptBlockValues(configuration, "Unattended-Upgrade::Allowed-Origins")
+	blacklist := aptBlockValues(configuration, "Unattended-Upgrade::Package-Blacklist")
+	requiredOrigins := []string{"Ubuntu:noble", "Ubuntu:noble-updates", "Ubuntu:noble-security", "Ubuntu:noble-backports", "Armbian:noble"}
+	if periodic != "1" || reboot != "false" || !allContainedValues(origins, requiredOrigins) {
+		return false
+	}
+	for _, value := range blacklist {
+		if regexp.MustCompile(`(?i)(linux-image|linux-dtb|linux-u-boot|armbian-firmware)`).MatchString(value) {
+			return false
+		}
+	}
+	return true
+}
+
+func readAPTConfiguration(rootfs string) (string, error) {
+	paths := []string{filepath.Join(rootfs, "etc", "apt", "apt.conf")}
+	fragments, err := filepath.Glob(filepath.Join(rootfs, "etc", "apt", "apt.conf.d", "*"))
+	if err != nil {
+		return "", err
+	}
+	sort.Strings(fragments)
+	paths = append(paths, fragments...)
+	var configuration strings.Builder
+	for _, path := range paths {
+		if !regularFile(path) {
+			continue
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return "", err
+		}
+		configuration.WriteString(stripAPTComments(string(data)))
+		configuration.WriteByte('\n')
+	}
+	return configuration.String(), nil
+}
+
+func stripAPTComments(configuration string) string {
+	blockComments := regexp.MustCompile(`(?s)/\*.*?\*/`).ReplaceAllString(configuration, "")
+	lines := strings.Split(blockComments, "\n")
+	for index, line := range lines {
+		cut := len(line)
+		for _, marker := range []string{"//", "#"} {
+			if offset := strings.Index(line, marker); offset >= 0 && offset < cut {
+				cut = offset
+			}
+		}
+		lines[index] = line[:cut]
+	}
+	return strings.Join(lines, "\n")
+}
+
+func aptSetting(configuration, name string) string {
+	pattern := regexp.MustCompile(`(?m)^\s*` + regexp.QuoteMeta(name) + `\s+"?([^";\s]+)"?\s*;`)
+	matches := pattern.FindAllStringSubmatch(configuration, -1)
+	if len(matches) == 0 {
+		return ""
+	}
+	return strings.ToLower(matches[len(matches)-1][1])
+}
+
+func aptBlockValues(configuration, name string) []string {
+	pattern := regexp.MustCompile(`(?s)` + regexp.QuoteMeta(name) + `\s*\{(.*?)\};`)
+	valuePattern := regexp.MustCompile(`"([^"]+)"\s*;`)
+	values := []string{}
+	for _, block := range pattern.FindAllStringSubmatch(configuration, -1) {
+		for _, value := range valuePattern.FindAllStringSubmatch(block[1], -1) {
+			values = append(values, value[1])
+		}
+	}
+	return values
+}
+
+func allContainedValues(values, wanted []string) bool {
+	available := map[string]bool{}
+	for _, value := range values {
+		available[value] = true
+	}
+	for _, value := range wanted {
+		if !available[value] {
+			return false
+		}
+	}
+	return true
+}
+
+func unexpectedClusterState(rootfs string) ([]string, error) {
+	roots := []string{
+		filepath.Join(rootfs, "etc", "rancher", "k3s"),
+		filepath.Join(rootfs, "var", "lib", "rancher", "k3s"),
+		filepath.Join(rootfs, "var", "lib", "kubelet"),
+		filepath.Join(rootfs, "var", "lib", "cni"),
+		filepath.Join(rootfs, "etc", "cni", "net.d"),
+		filepath.Join(rootfs, "etc", "rancher", "node"),
+	}
+	allowed := map[string]bool{
+		"etc/rancher/k3s/registries.yaml":                              true,
+		"var/lib/rancher/k3s/agent/images/k3s-airgap-images-arm64.tar": true,
+	}
+	unexpected := []string{}
+	for _, stateRoot := range roots {
+		if !pathExists(stateRoot) {
+			continue
+		}
+		err := filepath.WalkDir(stateRoot, func(path string, entry os.DirEntry, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
+			}
+			if entry.IsDir() {
+				return nil
+			}
+			relative, err := filepath.Rel(rootfs, path)
+			if err != nil {
+				return err
+			}
+			relative = filepath.ToSlash(relative)
+			if !allowed[relative] {
+				unexpected = append(unexpected, relative)
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	sort.Strings(unexpected)
+	return unexpected, nil
 }
 
 func initramfsIncludesHook(rootfs string) (bool, string) {
@@ -483,32 +677,6 @@ func readFiles(paths ...string) string {
 		}
 	}
 	return strings.Join(contents, "\n")
-}
-
-func allContained(input string, values []string) bool {
-	for _, value := range values {
-		if !strings.Contains(input, value) {
-			return false
-		}
-	}
-	return true
-}
-
-func kernelPackagesBlacklisted(input string) bool {
-	blacklist := input
-	if index := strings.Index(blacklist, "Package-Blacklist"); index >= 0 {
-		blacklist = blacklist[index:]
-	}
-	return regexp.MustCompile(`(?i)(linux-image|linux-dtb|linux-u-boot|armbian-firmware)`).MatchString(blacklist)
-}
-
-func anyExists(paths []string) bool {
-	for _, path := range paths {
-		if pathExists(path) {
-			return true
-		}
-	}
-	return false
 }
 
 func missingPackages(status string, wanted []string) []string {
