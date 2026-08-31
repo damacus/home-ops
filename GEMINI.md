@@ -67,6 +67,14 @@ the golden-image and node lifecycle under `mise run provisioning:*`.
 
 ### 3. Radxa Provisioning
 
+Provisioning keeps the public operator interface in Mise. The Go command in
+`cmd/provisioning` and `internal/provisioning` owns build planning, artifact
+validation, image verification, guarded flashing, and SSH lifecycle safety.
+The file tasks under `.mise/tasks/provisioning/` own composition and the
+straightforward Bash operations such as Docker reporting, scoped cleanup,
+staging, and release invocation. Armbian `compile.sh` remains the final build
+boundary. Do not add Python or duplicate lifecycle logic in task files.
+
 * **Check prerequisites**: Validate Docker Desktop and available disk space.
 
     ```bash
@@ -74,19 +82,29 @@ the golden-image and node lifecycle under `mise run provisioning:*`.
     ```
 
 * **Build and verify an image**: Build the hardened, unjoined golden image,
-  then verify its artifact set before use.
+  then verify its artifact set and boot-critical NVMe support before use.
 
     ```bash
     mise run provisioning:build
     mise run provisioning:verify provisioning/artifacts/<release-id>.img.xz
     ```
 
+  Verification must find the executable
+  `etc/initramfs-tools/scripts/local-premount/nvme-rescan` in the rootfs and
+  the same `scripts/local-premount/nvme-rescan` entry in a generated initramfs.
+  The source overlay alone is not evidence that a boot image has the hook.
+
 * **Enrol a host**: Join a flashed host to an existing healthy cluster over
   SSH. This is an explicit operation; the image never contains a token or
-  cluster address.
+  cluster address. Enrolment derives the target IPv4 address from its route
+  to the Kubernetes API, validates that the address is assigned to that
+  interface, and writes `node-ip` into the sanitised K3s config. Use
+  `--node-ip <IPv4>` when an explicit assigned address is required. The
+  source node's token is copied over SSH only after all dry-run, identity, and
+  replacement gates pass, and is never printed.
 
     ```bash
-    mise run provisioning:enrol <host>
+    mise run provisioning:enrol <host> --node-ip <IPv4>
     ```
 
 * **Inspect or retire nodes**:

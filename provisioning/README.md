@@ -5,6 +5,13 @@ This directory builds a hardened, unjoined Armbian image for the Radxa Rock
 start K3s. Joining a host is a separate, explicit SSH operation against an
 existing healthy cluster.
 
+Mise is the stable operator interface. The Go command exposed by
+`cmd/provisioning` and implemented under `internal/provisioning` owns the
+safety-critical build, artifact, verification, flashing, and lifecycle logic.
+Mise file tasks compose that command and retain the simple Bash boundaries for
+Docker diagnostics, scoped cleanup, status, staging, and release operations.
+Armbian's pinned `compile.sh` remains the final image-build boundary.
+
 ## Bootstrap
 
 Install the pinned repository tools and initialise the pinned Armbian
@@ -69,6 +76,12 @@ rejects the disk containing `/` and any disk with mounted child partitions,
 checks capacity, reports size and model, and requires the exact validated
 device path to be typed before writing.
 
+The verifier also checks the NVMe workaround in the image itself. The
+executable rootfs hook at
+`/etc/initramfs-tools/scripts/local-premount/nvme-rescan` must be present and
+the same hook must be embedded in the generated initramfs. Checking only the
+Armbian overlay is insufficient.
+
 ## Host lifecycle
 
 After first boot, cloud-init sets the hostname from the first usable Ethernet
@@ -80,12 +93,16 @@ dormant.
 Enrolment requires a healthy existing cluster and a Ready control-plane source
 node. It copies the shared K3s settings and server token over SSH without
 printing the token, removes source-node values, writes the target files with
-mode `0600`, and only then enables K3s:
+mode `0600`, and only then enables K3s. By default it derives the target IPv4
+address from the route to the Kubernetes API, confirms that address is
+assigned to the route interface, and writes it as `node-ip`. Supply
+`--node-ip <IPv4>` to select a specific assigned address explicitly:
 
 ```console
 mise run provisioning:enrol <host> --dry-run
 mise run provisioning:enrol <host>
 mise run provisioning:enrol <host> --source-node <ready-control-plane>
+mise run provisioning:enrol <host> --node-ip <IPv4>
 ```
 
 Use `--replace` only when replacing a Kubernetes node with the same hostname.

@@ -41,6 +41,10 @@ jobs:
               - '.taskfiles/Kubernetes/Taskfile.yaml'
               - 'cmd/cluster-health/**'
               - 'internal/clusterhealth/**'
+              - 'cmd/provisioning/**'
+              - 'internal/provisioning/**'
+              - '.mise/tasks/provisioning/**'
+              - 'provisioning/**'
               - 'go.mod'
               - 'mise.lock'
               - 'mise.toml'
@@ -129,7 +133,7 @@ jobs:
         run: go vet ./...
 
       - name: Build
-        run: go build ./cmd/cluster-health
+        run: go build ./cmd/...
 
   mondoo:
     name: Mondoo
