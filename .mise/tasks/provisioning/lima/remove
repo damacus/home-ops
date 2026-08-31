@@ -4,8 +4,6 @@
 #USAGE flag "--dry-run" help="Print the three permitted limactl commands"
 set -euo pipefail
 
-args=()
-[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
 commands=("limactl unprotect ironstone" "limactl delete ironstone" "limactl prune --keep-referred")
 if [[ "${usage_dry_run:-false}" == "true" ]]; then
   jq -n --argjson commands "$(printf '%s\n' "${commands[@]}" | jq -Rsc 'split("\n") | map(select(length > 0) | split(" "))')" '{confirmation:"ironstone",commands:$commands}'

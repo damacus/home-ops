@@ -5,9 +5,6 @@
 #USAGE flag "--dry-run" help="List the scoped purge operations"
 set -euo pipefail
 
-args=()
-[[ "${usage_reclaim:-false}" == "true" ]] && args+=(--reclaim)
-[[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
 cd "${MISE_PROJECT_ROOT}"
 armbian="${MISE_PROJECT_ROOT}/provisioning/armbian-build/armbian-build-repo"
 if [[ "${usage_dry_run:-false}" == "true" ]]; then

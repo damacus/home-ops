@@ -40,3 +40,26 @@ Docker doctor, host status, and successful stage/release mutation were not run a
 ## Self-review
 
 Public flags, usage arguments, descriptions, and `quiet=true` remain unchanged. Arrays and quoted expansions are used for command arguments and artifact members. The remaining Python module is outside Task 4 removal scope; Task 5 owns its deletion after the behavioural migration review.
+
+## Fix Round 1
+
+### RED
+
+Review identified that Docker doctor exited before emitting the complete five-check report when the CLI or daemon was unavailable, and Docker usage only accepted file-valued `Docker.raw` settings. Three unused argument arrays also obscured the Bash task interfaces.
+
+### GREEN
+
+Docker doctor now accumulates `cli`, `daemon`, `architecture`, `memory`, and `host_space` results, prints all five fields on both success and failure, and emits the final failure diagnostic on stderr. Docker usage now preserves `diskImageLocation` keys while resolving both direct `Docker.raw` values and directory values to `Docker.raw`. Unused arrays were removed from clean, Docker purge, and Lima removal.
+
+### Fix checks
+
+- `pytest -q tests/test_provisioning_bash_tasks.py`: 3 passed, including successful and failing doctor output contracts plus direct and relocated Docker.raw fixtures.
+- `shellcheck` on every provisioning task: passed.
+- `bash -n` on every provisioning task: passed.
+- `mise tasks ls`: all 14 provisioning tasks parsed with public names intact.
+- Build, Docker purge, and Lima dry-runs through Mise with `jq` assertions: passed.
+- `go test ./...`: passed.
+- `go vet ./...`: passed.
+- `git diff --check`: passed.
+
+No live Docker, configuration, cleanup, purge, Lima, staging, release, or other destructive operation was run.
