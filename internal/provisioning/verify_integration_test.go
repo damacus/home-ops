@@ -52,6 +52,68 @@ func TestVerifyRootFSIntegrationRejectsSecurityRegression(t *testing.T) {
 	}
 }
 
+func TestVerifyRootFSRejectsBakedAgentCredential(t *testing.T) {
+	fixture := newVerificationFixture(t)
+	binary := buildProvisioningCommand(t, fixture.root)
+	credential := filepath.Join(fixture.rootfs, "var/lib/rancher/k3s/agent/client-kubelet.crt")
+	writeFixtureFile(t, credential, "node credential\n")
+
+	code, stdout, stderr := runProvisioningCommand(t, binary, fixture.root, []string{
+		"verify", "--rootfs", fixture.rootfs, "--manifest", fixture.manifest,
+		"--k3s-version", "k3s version v1.36.3+k3s1 (abcdef)", "--raw",
+	})
+	if code == 0 {
+		t.Fatalf("verify accepted baked agent credential: stdout=%s stderr=%s", stdout, stderr)
+	}
+	var report verificationReport
+	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+		t.Fatalf("credential regression report JSON: %v", err)
+	}
+	if report.Checks["cluster_state"].Status != "fail" {
+		t.Fatalf("cluster state did not fail: %#v", report.Checks["cluster_state"])
+	}
+}
+
+func TestVerifyRootFSRejectsInactiveAptSettingsAndEscapingSSHInclude(t *testing.T) {
+	fixture := newVerificationFixture(t)
+	binary := buildProvisioningCommand(t, fixture.root)
+	writeFixtureFile(t, filepath.Join(fixture.rootfs, "etc/apt/apt.conf.d/20auto-upgrades"), "# APT::Periodic::Unattended-Upgrade \"1\";\n")
+	writeFixtureFile(t, filepath.Join(fixture.rootfs, "etc/apt/apt.conf.d/50unattended-upgrades"), "// Ubuntu:noble\n// Ubuntu:noble-updates\n// Ubuntu:noble-security\n// Ubuntu:noble-backports\n// Armbian:noble\n// Automatic-Reboot \"false\"\n")
+
+	code, stdout, stderr := runProvisioningCommand(t, binary, fixture.root, []string{
+		"verify", "--rootfs", fixture.rootfs, "--manifest", fixture.manifest,
+		"--k3s-version", "k3s version v1.36.3+k3s1 (abcdef)", "--raw",
+	})
+	if code == 0 {
+		t.Fatalf("verify accepted commented unattended-upgrade settings: stdout=%s stderr=%s", stdout, stderr)
+	}
+	var report verificationReport
+	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+		t.Fatalf("inactive apt report JSON: %v", err)
+	}
+	if report.Checks["unattended_upgrades"].Status != "fail" {
+		t.Fatalf("unattended upgrades did not fail: %#v", report.Checks["unattended_upgrades"])
+	}
+
+	writeFixtureFile(t, filepath.Join(fixture.rootfs, "etc/apt/apt.conf.d/20auto-upgrades"), "APT::Periodic::Unattended-Upgrade \"1\";\n")
+	writeFixtureFile(t, filepath.Join(fixture.rootfs, "etc/apt/apt.conf.d/50unattended-upgrades"), "Unattended-Upgrade::Allowed-Origins {\n\"Ubuntu:noble\";\n\"Ubuntu:noble-updates\";\n\"Ubuntu:noble-security\";\n\"Ubuntu:noble-backports\";\n\"Armbian:noble\";\n};\nUnattended-Upgrade::Automatic-Reboot \"false\";\n")
+	writeFixtureFile(t, filepath.Join(fixture.root, "outside.conf"), "PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin no\n")
+	writeFixtureFile(t, filepath.Join(fixture.rootfs, "etc/ssh/sshd_config"), "Include /../outside.conf\n")
+	code, stdout, stderr = runProvisioningCommand(t, binary, fixture.root, []string{
+		"verify", "--rootfs", fixture.rootfs, "--manifest", fixture.manifest,
+		"--k3s-version", "k3s version v1.36.3+k3s1 (abcdef)", "--raw",
+	})
+	if code == 0 {
+		t.Fatalf("verify accepted SSH include escaping rootfs: stdout=%s stderr=%s", stdout, stderr)
+	}
+	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+		t.Fatalf("escaping include report JSON: %v", err)
+	}
+	if report.Checks["ssh_policy"].Status != "fail" {
+		t.Fatalf("ssh policy did not fail escaping include: %#v", report.Checks["ssh_policy"])
+	}
+}
+
 func buildProvisioningCommand(t *testing.T, destination string) string {
 	t.Helper()
 	repo, err := filepath.Abs(filepath.Join("..", ".."))
@@ -138,6 +200,114 @@ func TestFlashStreamUsesControlledWriter(t *testing.T) {
 	}
 }
 
+func TestFlashLinuxGuardsRejectUnsafeTargetsBeforeWriting(t *testing.T) {
+	root := t.TempDir()
+	bin := t.TempDir()
+	writeFixtureFile(t, filepath.Join(bin, "lsblk"), `#!/bin/sh
+case "$*" in
+  *--inverse*)
+    if [ "$FLASH_SCENARIO" = live ]; then printf '%s\n' /dev/fixture; else printf '%s\n' /dev/live-root; fi
+    ;;
+  *)
+    if [ "$FLASH_SCENARIO" = mounted ]; then
+      printf '%s\n' '{"blockdevices":[{"path":"/dev/fixture","type":"disk","size":100,"model":"fixture","children":[{"path":"/dev/fixturep1","type":"part","mountpoints":["/mnt/fixture"]}]}]}'
+    else
+      printf '%s\n' '{"blockdevices":[{"path":"/dev/fixture","type":"disk","size":100,"model":"fixture","mountpoints":[]}]}'
+    fi
+    ;;
+esac
+`)
+	writeFixtureFile(t, filepath.Join(bin, "findmnt"), "#!/bin/sh\nprintf '%s\\n' /dev/live-root\n")
+	for _, program := range []string{"lsblk", "findmnt"} {
+		if err := os.Chmod(filepath.Join(bin, program), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	app := New(root, strings.NewReader(""), io.Discard, io.Discard)
+	app.deviceValidator = func(string) error { return nil }
+
+	t.Setenv("FLASH_SCENARIO", "mounted")
+	if _, err := app.inspectLinuxDevice(t.Context(), "/dev/fixture"); err == nil || !strings.Contains(err.Error(), "mounted filesystems") {
+		t.Fatalf("mounted child rejection = %v", err)
+	}
+	t.Setenv("FLASH_SCENARIO", "live")
+	if _, err := app.inspectLinuxDevice(t.Context(), "/dev/fixture"); err == nil || !strings.Contains(err.Error(), "live root") {
+		t.Fatalf("live-root rejection = %v", err)
+	}
+}
+
+func TestFlashLinuxCapacityAndConfirmationStopBeforeWrite(t *testing.T) {
+	fixture := newBuildFixture(t, false)
+	server := k3sPayloadServer(t)
+	defer server.Close()
+	withBuildEnvironment(t, server.URL)
+	var buildOut, buildErr bytes.Buffer
+	if code := RunCLI(fixture.root, []string{"build"}, strings.NewReader(""), &buildOut, &buildErr); code != 0 {
+		t.Fatalf("build fixture artifact: code=%d stderr=%s", code, buildErr.String())
+	}
+	image := strings.TrimSpace(buildOut.String())
+	bin := t.TempDir()
+	writeFixtureFile(t, filepath.Join(bin, "lsblk"), `#!/bin/sh
+case "$*" in
+  *--inverse*) printf '%s\n' /dev/live-root ;;
+  *) printf '%s\n' '{"blockdevices":[{"path":"/dev/fixture","type":"disk","size":100,"model":"fixture","mountpoints":[]}]}' ;;
+esac
+`)
+	writeFixtureFile(t, filepath.Join(bin, "findmnt"), "#!/bin/sh\nprintf '%s\\n' /dev/live-root\n")
+	writeFixtureFile(t, filepath.Join(bin, "xz"), "#!/bin/sh\nif [ \"$1\" = --robot ]; then printf 'totals\\t1\\t1\\t1\\t%s\\n' \"$FLASH_IMAGE_SIZE\"; exit 0; fi\necho unexpected xz invocation >&2\nexit 99\n")
+	for _, program := range []string{"lsblk", "findmnt", "xz"} {
+		if err := os.Chmod(filepath.Join(bin, program), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+
+	t.Setenv("FLASH_IMAGE_SIZE", "101")
+	capacityApp := New(fixture.root, strings.NewReader(""), io.Discard, io.Discard)
+	capacityApp.deviceValidator = func(string) error { return nil }
+	capacityApp.platform = func() string { return "linux" }
+	if err := capacityApp.runFlash(t.Context(), []string{image, "/dev/fixture"}); err == nil || !strings.Contains(err.Error(), "target capacity") {
+		t.Fatalf("capacity rejection = %v", err)
+	}
+
+	t.Setenv("FLASH_IMAGE_SIZE", "99")
+	confirmationApp := New(fixture.root, strings.NewReader("/dev/not-fixture\n"), io.Discard, io.Discard)
+	confirmationApp.deviceValidator = func(string) error { return nil }
+	confirmationApp.platform = func() string { return "linux" }
+	if err := confirmationApp.runFlash(t.Context(), []string{image, "/dev/fixture"}); err == nil || !strings.Contains(err.Error(), "confirmation") {
+		t.Fatalf("confirmation rejection = %v", err)
+	}
+}
+
+func TestFlashDarwinGuardParsesPlistFixture(t *testing.T) {
+	root := t.TempDir()
+	bin := t.TempDir()
+	writeFixtureFile(t, filepath.Join(bin, "diskutil"), `#!/bin/sh
+case "$*" in
+  "info -plist /dev/disk9") printf '%s\n' '{"Whole":true,"DeviceIdentifier":"disk9","TotalSize":1024,"MediaName":"fixture"}' ;;
+  "info -plist /") printf '%s\n' '{"ParentWholeDisk":"disk0","DeviceIdentifier":"disk1"}' ;;
+  "apfs list -plist") printf '%s\n' '{"Containers":[{"ContainerReference":"disk1","Volumes":[{"DeviceIdentifier":"disk1","MountPoint":"/"}],"PhysicalStores":[{"DeviceIdentifier":"disk0s2"}]}]}' ;;
+  "info -plist /dev/disk0s2") printf '%s\n' '{"ParentWholeDisk":"disk0"}' ;;
+  "list -plist /dev/disk9") printf '%s\n' '{"AllDisksAndPartitions":[{"DeviceIdentifier":"disk9","Partitions":[{"DeviceIdentifier":"disk9s1"}]}]}' ;;
+  "info -plist /dev/disk9s1") printf '%s\n' '{"MountPoint":"/Volumes/fixture"}' ;;
+  *) echo "unexpected diskutil invocation: $*" >&2; exit 2 ;;
+esac
+`)
+	writeFixtureFile(t, filepath.Join(bin, "plutil"), "#!/bin/sh\ncat\n")
+	for _, program := range []string{"diskutil", "plutil"} {
+		if err := os.Chmod(filepath.Join(bin, program), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	app := New(root, strings.NewReader(""), io.Discard, io.Discard)
+	app.deviceValidator = func(string) error { return nil }
+	if _, err := app.inspectDarwinDevice(t.Context(), "/dev/disk9"); err == nil || !strings.Contains(err.Error(), "mounted filesystems") {
+		t.Fatalf("Darwin mounted child rejection = %v", err)
+	}
+}
+
 type verificationFixture struct {
 	root     string
 	rootfs   string
@@ -153,7 +323,7 @@ func newVerificationFixture(t *testing.T) verificationFixture {
 	writeFixtureFile(t, filepath.Join(rootfs, "etc/os-release"), "NAME=Ubuntu\n")
 	writeFixtureFile(t, filepath.Join(rootfs, "etc/passwd"), "root:x:0:0:root:/root:/bin/bash\npi:x:1000:1000:pi:/home/pi:/bin/bash\n")
 	writeFixtureFile(t, filepath.Join(rootfs, "etc/shadow"), "root:!:1:2:3:4:5:6:\npi:!:1:2:3:4:5:6:\n")
-	writeFixtureFile(t, filepath.Join(rootfs, "etc/ssh/sshd_config"), "Include /etc/ssh/sshd_config.d/*.conf\n")
+	writeFixtureFile(t, filepath.Join(rootfs, "etc/ssh/sshd_config"), "Include sshd_config.d/*.conf\n")
 	writeFixtureFile(t, filepath.Join(rootfs, "etc/ssh/sshd_config.d/00-hardening.conf"), "PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin no\n")
 	writeFixtureFile(t, filepath.Join(rootfs, "home/pi/.ssh/authorized_keys"), PublicKey+"\n")
 	for _, path := range []string{
@@ -171,7 +341,7 @@ func newVerificationFixture(t *testing.T) verificationFixture {
 		t.Fatal(err)
 	}
 	writeFixtureFile(t, filepath.Join(rootfs, "etc/apt/apt.conf.d/20auto-upgrades"), "APT::Periodic::Unattended-Upgrade \"1\";\n")
-	writeFixtureFile(t, filepath.Join(rootfs, "etc/apt/apt.conf.d/50unattended-upgrades"), "Ubuntu:noble\nUbuntu:noble-updates\nUbuntu:noble-security\nUbuntu:noble-backports\nArmbian:noble\nAutomatic-Reboot \"false\"\n")
+	writeFixtureFile(t, filepath.Join(rootfs, "etc/apt/apt.conf.d/50unattended-upgrades"), "Unattended-Upgrade::Allowed-Origins {\n\"Ubuntu:noble\";\n\"Ubuntu:noble-updates\";\n\"Ubuntu:noble-security\";\n\"Ubuntu:noble-backports\";\n\"Armbian:noble\";\n};\nUnattended-Upgrade::Automatic-Reboot \"false\";\n")
 	writeFixtureFile(t, filepath.Join(rootfs, "lib/systemd/system/apt-daily-upgrade.timer"), "[Timer]\n")
 	if err := os.MkdirAll(filepath.Join(rootfs, "etc/systemd/system/timers.target.wants"), 0o755); err != nil {
 		t.Fatal(err)
