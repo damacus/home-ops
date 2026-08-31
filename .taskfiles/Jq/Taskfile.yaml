@@ -21,6 +21,8 @@ tasks:
             Boolean/numeric values are passed directly, e.g., VALUE=true or VALUE=42
     requires:
       vars: [FILE, ID, FIELD, VALUE]
+    preconditions:
+      - { msg: "Missing JSON file: {{.FILE}}", sh: 'test -f "{{.FILE}}"' }
     cmds:
       - |
         jq --arg targetId "{{ .ID }}" --argjson value {{ .VALUE }} 'map(if .id == $targetId then .{{ .FIELD }} = $value else . end)' "{{ .FILE }}" | sponge "{{ .FILE }}"
@@ -42,6 +44,8 @@ tasks:
         task jq:query FILE=features/security.json QUERY='.[] | select(.category == "functional") | .id'
     requires:
       vars: [FILE, QUERY]
+    preconditions:
+      - { msg: "Missing JSON file: {{.FILE}}", sh: 'test -f "{{.FILE}}"' }
     cmds:
       - |
         jq '{{ .QUERY }}' "{{ .FILE }}"
@@ -53,12 +57,14 @@ tasks:
       Lists descriptions of all items where passes is false.
 
       Usage:
-        task jq:list-failing FILE=security
+        task jq:list-failing FILE=.tasks/security.json
     requires:
       vars: [FILE]
+    preconditions:
+      - { msg: "Missing JSON file: {{.FILE}}", sh: 'test -f "{{.FILE}}"' }
     cmds:
       - |
-        jq -r '.[] | select(.passes == false) | "\(.category): \(.description)"' ".tasks/{{ .FILE }}.json"
+        jq -r '.[] | select(.passes == false) | "\(.category): \(.description)"' "{{.FILE}}"
 
   failing-by-area:
     silent: true
