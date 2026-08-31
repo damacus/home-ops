@@ -4,7 +4,7 @@
 # operator reconciles this into a real PostgreSQL PUBLICATION named
 # `n8n_green_pub` on the blue primary.
 #
-# Applied by `task postgres:publication`. Removed at cleanup.
+# Applied by `mise run postgres:publication`. Removed at cleanup.
 apiVersion: postgresql.cnpg.io/v1
 kind: Publication
 metadata:

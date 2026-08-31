@@ -67,6 +67,8 @@ jobs:
             contracts:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Kubernetes/Taskfile.yaml'
+              - '.taskfiles/Postgres/profiles/**'
+              - '.mise/tasks/postgres/**'
               - '.mise/tasks/kubernetes/rustfs-iam-policy'
               - '.mise/tasks/kubernetes/rustfs-iam-live-policy'
               - '.mise/tasks/kubernetes/forgejo-policy'
@@ -90,6 +92,9 @@ jobs:
               - 'kubernetes/apps/storage/rustfs*/**'
               - 'scripts/tempo_privacy_check.sh'
               - 'scripts/tempo_trace_backend_contract.sh'
+              - 'scripts/mise-postgres-task.sh'
+              - 'scripts/pg-bluegreen.sh'
+              - 'tests/test_mise_postgres.py'
               - 'tests/fixtures/tempo-privacy/**'
               - 'tests/mondoo/rustfs-iam.mql.yaml'
 
@@ -193,7 +198,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python3 -m unittest tests/test_mondoo_scan.py tests/test_zitadel_config.py tests/test_mise_leaf_operations.py
+          python3 -m unittest tests/test_mondoo_scan.py tests/test_zitadel_config.py tests/test_mise_leaf_operations.py tests/test_mise_postgres.py
           ruby tests/test_zitadel_access_policy.rb
 
       - name: Validate migrated policy parity

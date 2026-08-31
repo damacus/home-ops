@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # pg-bluegreen.sh — orchestrator for CNPG PG16 -> PG18 blue/green migrations.
 #
-# Invoked by .taskfiles/Postgres/Taskfile.yaml. Each subcommand is idempotent.
+# Invoked by native `mise run postgres:*` tasks. Each subcommand is idempotent.
 # Required tools on PATH: kubectl, flux, helm, yq, jq, base64, awk, sed.
 #
 # Configuration: all knobs come from environment variables (set by the
-# Taskfile or loaded from .env at repo root). See .env.sample for the full
+# Mise task or loaded from .env at repo root). See .env.sample for the full
 # list and defaults.
 set -Eeuo pipefail
 shopt -s inherit_errexit
@@ -768,7 +768,7 @@ cmd_subscription() {
     sleep 3
   done
   if [[ -z "${lsn}" || "${lsn}" == "0/0" ]]; then
-    warn "subscription not yet streaming. Inspect with: task postgres:monitor"
+    warn "subscription not yet streaming. Inspect with: mise run postgres:monitor"
   else
     ok "subscription streaming. received_lsn=${lsn}"
   fi
@@ -1080,7 +1080,7 @@ Then:
 
 Once the cutover edit is reconciled, re-run:
 
-  task postgres:cutover PG_PROFILE=${PG_PROFILE:-<profile>} CONFIRM_CONTEXT=true   # resumes from ${state_file}, restores replicas, runs postcheck + grafana-postcheck
+  mise run postgres:cutover PG_PROFILE=${PG_PROFILE:-<profile>} CONFIRM_CONTEXT=true   # resumes from ${state_file}, restores replicas, runs postcheck + grafana-postcheck
 
 To wake this script without re-running the full task, create the file:
 
@@ -1315,7 +1315,7 @@ ${RED}WARNING: any writes accepted on green since cutover are NOT
 replicated back to blue. Rollback will lose those writes.${RESET}
 
 Required:
-  ACCEPT_DATA_LOSS=true task postgres:rollback
+  ACCEPT_DATA_LOSS=true mise run postgres:rollback
 
 Manual steps to perform from another shell:
   1. git revert <cutover-sha>

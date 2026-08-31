@@ -3,4 +3,4 @@
 #MISE quiet=true
 #MISE raw=true
 set -euo pipefail
-exec task "postgres:cutover" -- "$@"
+exec "$(dirname "$0")/../../../scripts/mise-postgres-task.sh" cutover "$@"

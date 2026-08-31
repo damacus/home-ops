@@ -3,7 +3,7 @@
 #
 # This file is committed for audit and review, but is intentionally NOT
 # referenced from kubernetes/apps/home-automation/n8n-db/app/kustomization.yaml.
-# It is applied imperatively by `task postgres:create-green` (which calls
+# It is applied imperatively by `mise run postgres:create-green` (which calls
 # scripts/pg-bluegreen.sh create-green) and torn down again at cleanup time.
 #
 # After the migration completes and blue is decommissioned, the green cluster
