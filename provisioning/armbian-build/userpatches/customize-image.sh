@@ -51,7 +51,9 @@ fi
 # the overlay has been copied into the image.
 sshd_config=/etc/ssh/sshd_config
 if [ -f "$sshd_config" ]; then
-    sed -i '1iPermitRootLogin no' "$sshd_config"
+    if [ "$(sed -n '1p' "$sshd_config")" != "PermitRootLogin no" ]; then
+        sed -i '1iPermitRootLogin no' "$sshd_config"
+    fi
 fi
 
 if ! id -u pi >/dev/null 2>&1; then
