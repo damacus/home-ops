@@ -2,5 +2,6 @@
 #MISE description="Report Kubernetes node readiness"
 #MISE quiet=true
 #MISE raw=true
+#MISE depends=["kubernetes:cluster-health-build"]
 set -euo pipefail
-exec task "kubernetes:health-nodes" -- "$@"
+exec .cache/bin/cluster-health nodes "$@"

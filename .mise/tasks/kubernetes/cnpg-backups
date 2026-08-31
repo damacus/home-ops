@@ -2,5 +2,6 @@
 #MISE description="Check CNPG backup freshness, resources, and WAL archiving status"
 #MISE quiet=true
 #MISE raw=true
+#MISE depends=["kubernetes:cluster-health-build"]
 set -euo pipefail
-exec task "kubernetes:cnpg-backups" -- "$@"
+exec .cache/bin/cluster-health cnpg-backups "$@"

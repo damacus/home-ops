@@ -2,5 +2,6 @@
 #MISE description="Check unsuspended Flux sources and releases are Ready"
 #MISE quiet=true
 #MISE raw=true
+#MISE depends=["kubernetes:cluster-health-build"]
 set -euo pipefail
-exec task "kubernetes:gitops-health" -- "$@"
+exec .cache/bin/cluster-health gitops-health "$@"

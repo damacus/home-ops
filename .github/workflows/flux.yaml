@@ -41,6 +41,7 @@ jobs:
               - '.taskfiles/Kubernetes/Taskfile.yaml'
               - 'cmd/cluster-health/**'
               - 'internal/clusterhealth/**'
+              - '.mise/tasks/kubernetes/**'
               - 'cmd/provisioning/**'
               - 'internal/provisioning/**'
               - '.mise/tasks/provisioning/**'

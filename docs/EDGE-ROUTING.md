@@ -58,6 +58,6 @@ Direct appliance DNS aliases outside the HTTP edge: `drive.ironstone.casa` and `
 ## Validation Workflow
 
 - `mise run kubernetes:edge-smoke` validates the baseline Traefik edge.
-- `task kubernetes:edge-smoke-esphome` adds the ESPHome Traefik canary hostname and can enforce a known websocket path via `esphome_ws_path=...`.
+- `mise run kubernetes:edge-smoke-esphome -- --esphome-websocket-path /ws` adds the ESPHome Traefik canary hostname and can enforce a known WebSocket path.
 - HTTP/3 checks are informational; lack of local client support should not block a rollout.
 - Home Assistant keeps the existing `wss://home-assistant.ironstone.casa/api/websocket` regression check as the canary for long-lived WebSocket behavior.

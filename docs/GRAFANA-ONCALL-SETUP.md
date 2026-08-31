@@ -41,7 +41,7 @@ After Flux sync:
 ```bash
 kubectl get secret grafana-oncall-secret -n monitoring
 kubectl get secret alertmanager-secret -n monitoring
-task kubernetes:grafana-alerts
+mise run kubernetes:grafana-alerts
 ```
 
 In Grafana, verify:

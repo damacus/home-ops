@@ -2,5 +2,6 @@
 #MISE description="Report deployment availability"
 #MISE quiet=true
 #MISE raw=true
+#MISE depends=["kubernetes:cluster-health-build"]
 set -euo pipefail
-exec task "kubernetes:health-deployments" -- "$@"
+exec .cache/bin/cluster-health deployments "$@"

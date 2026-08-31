@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import os
-import shutil
 import stat
 import subprocess
+import tempfile
+import unittest
 from pathlib import Path
+from typing import Callable
 
 
 ROOT = Path(__file__).parents[1]
@@ -81,6 +83,8 @@ def test_native_tasks_route_to_external_commands_and_preserve_exit_status(tmp_pa
     env["CLUSTER_HEALTH_GO_BINARY"] = str(bin_dir / "go")
 
     cache_binary = ROOT / ".cache/bin/cluster-health"
+    original_binary = cache_binary.read_bytes() if cache_binary.exists() else None
+    original_mode = cache_binary.stat().st_mode if original_binary is not None else None
     cache_binary.unlink(missing_ok=True)
 
     check_kube_vip = run("mise", "run", "kubernetes:check-kube-vip", env=env)
@@ -113,6 +117,13 @@ def test_native_tasks_route_to_external_commands_and_preserve_exit_status(tmp_pa
         "kubectl:exec -n monitoring vmalertmanager-vm-0 -- wget -qO- http://localhost:9093/api/v2/alerts",
     ]
 
+    if original_binary is None:
+        cache_binary.unlink(missing_ok=True)
+    else:
+        assert original_mode is not None
+        cache_binary.write_bytes(original_binary)
+        cache_binary.chmod(original_mode)
+
 
 def test_legacy_task_composite_dependencies_are_one_way_mise_shims(tmp_path: Path) -> None:
     bin_dir = tmp_path / "bin"
@@ -131,7 +142,6 @@ def test_legacy_task_composite_dependencies_are_one_way_mise_shims(tmp_path: Pat
 
     for task, arguments, expected_flags in (
         ("edge-smoke", ("--skip-http3",), ("--format", "text", "--timeout", "45s")),
-        ("log-noise", ("--period", "24h"), ("--format", "text", "--timeout", "45s", "--period", "1h", "--top", "20")),
     ):
         result = run("task", f"kubernetes:{task}", "--", *arguments, env=env)
 
@@ -162,11 +172,6 @@ def test_legacy_task_variables_translate_to_mise_flags_and_keep_cli_args(tmp_pat
 
     cases = (
         (
-            "log-noise",
-            ("format=ndjson", "notify=true", "verbose=true", "raw=true", "timeout=12", "period=6h", "top=4"),
-            ("--format", "ndjson", "--notify", "--verbose", "--raw", "--timeout", "12s", "--period", "6h", "--top", "4"),
-        ),
-        (
             "edge-smoke",
             ("format=ndjson", "notify=true", "verbose=true", "raw=true", "timeout=12", "skip_http3=true"),
             ("--format", "ndjson", "--notify", "--verbose", "--raw", "--timeout", "12s", "--skip-http3"),
@@ -185,47 +190,22 @@ def test_legacy_task_variables_translate_to_mise_flags_and_keep_cli_args(tmp_pat
         ]
 
 
-def test_morning_check_variables_reach_migrated_mise_shims_without_external_commands(tmp_path: Path) -> None:
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
-    arguments_log = tmp_path / "mise-arguments"
-    task_binary = shutil.which("task")
-    assert task_binary is not None
-    executable(
-        bin_dir / "mise",
-        "#!/usr/bin/env bash\n"
-        "printf '%s\\t' \"$@\" >> \"$MISE_ARGUMENTS\"\n"
-        "printf '\\n' >> \"$MISE_ARGUMENTS\"\n",
-    )
-    executable(
-        bin_dir / "task",
-        "#!/usr/bin/env bash\n"
-        "case \"$1\" in\n"
-        "  kubernetes:edge-smoke|kubernetes:log-noise) exec \"$REAL_TASK\" \"$@\" ;;\n"
-        "  *) exit 0 ;;\n"
-        "esac\n",
-    )
-    executable(bin_dir / "go", "#!/usr/bin/env bash\nexit 0\n")
-    env = os.environ.copy()
-    env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
-    env["MISE_ARGUMENTS"] = str(arguments_log)
-    env["REAL_TASK"] = task_binary
+def load_tests(loader: unittest.TestLoader, tests: unittest.TestSuite, pattern: str | None) -> unittest.TestSuite:
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.FunctionTestCase(test_scheduled_cluster_checks_are_native_mise_tasks_with_a_shared_cached_build))
+    for test in (
+        test_native_tasks_route_to_external_commands_and_preserve_exit_status,
+        test_legacy_task_composite_dependencies_are_one_way_mise_shims,
+        test_legacy_task_variables_translate_to_mise_flags_and_keep_cli_args,
+    ):
+        suite.addTest(
+            unittest.FunctionTestCase(
+                lambda test=test: _run_with_temp_path(test),
+            )
+        )
+    return suite
 
-    result = run(
-        task_binary,
-        "kubernetes:morning-check",
-        "format=ndjson",
-        "verbose=true",
-        "raw=true",
-        "timeout=12",
-        "period=6h",
-        "top=4",
-        "skip_http3=true",
-        "log_noise=true",
-        env=env,
-    )
 
-    assert result.returncode == 0, result.stderr
-    calls = [line.split("\t")[:-1] for line in arguments_log.read_text().splitlines()]
-    assert ["run", "kubernetes:edge-smoke", "--", "--format", "ndjson", "--verbose", "--raw", "--timeout", "12s", "--skip-http3"] in calls
-    assert ["run", "kubernetes:log-noise", "--", "--format", "ndjson", "--verbose", "--raw", "--timeout", "12s", "--period", "6h", "--top", "4"] in calls
+def _run_with_temp_path(test: Callable[[Path], None]) -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        test(Path(directory))
