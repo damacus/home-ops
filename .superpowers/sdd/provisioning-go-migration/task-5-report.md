@@ -97,9 +97,10 @@ publication was attempted.
   config. It confirms the first effective directive is `PermitRootLogin no` and
   that the directive occurs once.
 - Extracted the policy mutation into
-  `provisioning/armbian-build/userpatches/ensure-root-ssh-policy.sh`; the image
-  customiser calls this exact helper, which accepts the target config path for
-  controlled testing without package, network, chroot, or system operations.
+  `provisioning/armbian-build/userpatches/overlay/usr/local/libexec/ironstone/ensure-root-ssh-policy.sh`;
+  the image customiser calls this exact helper, which accepts the target config
+  path for controlled testing without package, network, chroot, or system
+  operations.
 - Both affected ledger entries remain `false`; no real build or live operation
   was run.
 
@@ -112,6 +113,32 @@ Validation for this round:
 - ShellCheck and `bash -n` for all remaining provisioning shell tasks/scripts:
   PASS;
 - `jq` ledger validation and `git diff --check`: PASS.
+
+## Fix Round 5
+
+- Corrected the Armbian packaging boundary exposed by the controller's
+  post-fix build from `9ab98d47`: top-level userpatch files are not copied
+  beside `/tmp/customize-image.sh`, producing
+  `/tmp/customize-image.sh: line 53: /tmp/ensure-root-ssh-policy.sh: No such file or directory`.
+- Moved the helper into the real overlay at
+  `/usr/local/libexec/ironstone/ensure-root-ssh-policy.sh`, which is copied by
+  the existing `/tmp/overlay` rsync before the customiser invokes it.
+- Reworked the behavioural test to stage the complete repository overlay into
+  a temporary rootfs, invoke the helper at that staged production path twice,
+  and verify one first `PermitRootLogin no` directive. The test therefore
+  covers helper availability and idempotency at the packaging boundary.
+- Both affected ledger entries remain `false`; no real build or live operation
+  was run.
+
+Validation for this round:
+
+- focused staged-overlay helper and SSH precedence integration tests: PASS;
+- `go test ./... -count=1`: PASS;
+- `go vet ./...`: PASS;
+- `go build ./cmd/...`: PASS;
+- ShellCheck and `bash -n` for all remaining provisioning shell tasks/scripts:
+  PASS;
+- `git diff --check` and `jq` ledger validation: PASS.
 
 ## Fix Round 1
 
