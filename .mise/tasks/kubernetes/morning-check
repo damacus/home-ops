@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Run the recurring morning cluster health bundle from composable subtasks"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "kubernetes:morning-check" -- "$@"

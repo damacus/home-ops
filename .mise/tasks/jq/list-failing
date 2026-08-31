@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="List all items with passes=false"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "jq:list-failing" -- "$@"

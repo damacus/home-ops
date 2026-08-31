@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Report unaccounted Home Assistant electricity for the last 24 hours"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "home-assistant:unaccounted-electricity" -- "$@"

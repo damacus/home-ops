@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Copy or sync objects between MinIO and RustFS with local rclone"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "kubernetes:object-storage-migrate" -- "$@"

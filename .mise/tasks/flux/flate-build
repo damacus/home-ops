@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Build Flux resources locally with flate"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "flux:flate-build" -- "$@"

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Run Mondoo checks against rendered Flux Kubernetes manifests"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "kubernetes:mondoo-manifests" -- "$@"

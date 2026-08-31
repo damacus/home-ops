@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Run Mondoo checks for a Kubernetes application"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "kubernetes:test-app" -- "$@"

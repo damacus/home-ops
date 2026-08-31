@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Get all alerts from VictoriaMetrics"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "kubernetes:alerts" -- "$@"

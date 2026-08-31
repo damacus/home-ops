@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Run a jq query on a JSON file"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "jq:query" -- "$@"

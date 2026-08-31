@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Download the certificates from the cluster"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "certificates:download-certificates" -- "$@"

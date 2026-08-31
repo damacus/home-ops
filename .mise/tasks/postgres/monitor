@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Print pub/sub status + replication lag (one-shot)"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "postgres:monitor" -- "$@"

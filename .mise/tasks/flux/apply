@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Apply a Flux Kustomization resource for a cluster"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "flux:apply" -- "$@"

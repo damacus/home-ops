@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Validate live RustFS IAM users and policies with Mondoo cnspec"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "kubernetes:rustfs-iam-live-policy" -- "$@"

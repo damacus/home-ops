@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Run direnv hooks"
+#MISE quiet=true
+#MISE raw=true
+set -euo pipefail
+exec task "workstation:direnv" -- "$@"
