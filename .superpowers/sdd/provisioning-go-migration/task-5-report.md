@@ -69,3 +69,15 @@ cluster mutation, staging, release, push, merge, or publication was attempted.
   the current runtime paths.
 - The current Go verifier checks the executable rootfs NVMe hook and a generated
   initramfs entry. The docs now describe that exact boundary.
+
+## Fix Round 1
+
+- Corrected the golden-image artifact integrity ledger entry to `passes: false`.
+  The existing artifact has the known effective `PermitRootLogin=yes` finding,
+  and full read-only verification remains blocked by Docker access.
+- Corrected the Mise provisioning command contract ledger entry to `passes: false`.
+  Its required live enrolment dry-run was blocked by Kubernetes API access; the
+  controlled Go enrolment coverage remains green, but that does not satisfy the
+  live acceptance check.
+- Validation: `.tasks/provisioning.json` parses successfully with `jq`, and
+  `git diff --check` passes.
