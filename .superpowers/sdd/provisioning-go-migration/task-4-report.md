@@ -63,3 +63,26 @@ Docker doctor now accumulates `cli`, `daemon`, `architecture`, `memory`, and `ho
 - `git diff --check`: passed.
 
 No live Docker, configuration, cleanup, purge, Lima, staging, release, or other destructive operation was run.
+
+## Fix Round 2
+
+### RED
+
+Review found Docker doctor discarded `docker info` stderr and used the generic daemon-unavailable message even when the Docker CLI was absent. The usage fixture also did not cover a configured `diskImageLocation` that directly named `Docker.raw`.
+
+### GREEN
+
+Doctor now reports `Docker CLI unavailable` when no CLI exists, preserves the daemon command diagnostic when the CLI is present but unreachable, and still emits all five checks before the final non-zero result. The controlled usage fixture now covers default, relocated-directory, and direct configured `Docker.raw` paths.
+
+### Fix checks
+
+- `pytest -q tests/test_provisioning_bash_tasks.py`: 4 passed.
+- `shellcheck` on every provisioning task: passed.
+- `bash -n` on every provisioning task: passed.
+- `mise tasks ls`: all 14 provisioning tasks parsed.
+- Build, clean, Docker purge, and Lima dry-runs through Mise with JSON assertions: passed.
+- `go test ./...`: passed.
+- `go vet ./...`: passed.
+- `git diff --check`: passed.
+
+No live Docker or destructive operation was run.

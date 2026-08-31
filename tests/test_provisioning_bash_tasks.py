@@ -46,6 +46,18 @@ def test_docker_doctor_success_reports_all_checks(tmp_path: Path) -> None:
     assert all(f"PASS {field}:" in result.stdout for field in ("cli", "daemon", "architecture", "memory", "host_space"))
 
 
+def test_docker_doctor_preserves_daemon_diagnostic(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    write_executable(bin_dir / "docker", "#!/bin/sh\necho 'socket permission denied' >&2\nexit 1\n")
+    write_executable(bin_dir / "df", "#!/bin/sh\nprintf 'Filesystem 1024-blocks Used Available Capacity Mounted on\\n/dev 1 1 1 99%% /\\n'\n")
+    environment = {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}", "HOME": str(tmp_path)}
+    result = subprocess.run([str(DOCTOR)], env=environment, capture_output=True, text=True)
+    assert result.returncode != 0
+    assert "FAIL daemon: socket permission denied" in result.stdout
+    assert all(f" {field}:" in result.stdout for field in ("cli", "daemon", "architecture", "memory", "host_space"))
+
+
 def test_docker_usage_reports_direct_and_relocated_raw_files(tmp_path: Path) -> None:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
@@ -57,11 +69,23 @@ def test_docker_usage_reports_direct_and_relocated_raw_files(tmp_path: Path) -> 
     relocated_dir.mkdir()
     relocated = relocated_dir / "Docker.raw"
     relocated.write_bytes(b"relocated")
+    configured_direct = tmp_path / "configured" / "Docker.raw"
+    configured_direct.parent.mkdir(parents=True)
+    configured_direct.write_bytes(b"configured-direct")
     settings = tmp_path / "Library/Group Containers/group.com.docker/settings-store.json"
     settings.parent.mkdir(parents=True)
-    settings.write_text(json.dumps({"diskImageLocation": str(relocated_dir)}), encoding="utf-8")
+    settings.write_text(
+        json.dumps(
+            {
+                "diskImageLocation": str(relocated_dir),
+                "nested": {"diskImageLocation": str(configured_direct)},
+            }
+        ),
+        encoding="utf-8",
+    )
     environment = {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}", "HOME": str(tmp_path)}
     result = subprocess.run([str(USAGE)], env=environment, capture_output=True, text=True)
     assert result.returncode == 0
     assert str(direct) in result.stdout
     assert str(relocated) in result.stdout
+    assert str(configured_direct) in result.stdout
