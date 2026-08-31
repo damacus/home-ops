@@ -13,9 +13,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).parents[1]
-TASK_NAMES = (
-    "default",
-    "sop",
+DIRECT_TASKS = (
     "discover",
     "show-active",
     "preflight",
@@ -34,8 +32,8 @@ TASK_NAMES = (
     "grafana-postcheck",
     "rollback",
     "cleanup",
-    "all-but-cutover",
 )
+TASK_NAMES = ("default", "sop", *DIRECT_TASKS, "all-but-cutover")
 SEQUENCE = (
     "discover",
     "prepare-blue",
@@ -85,6 +83,41 @@ def assert_postgres_tasks_are_native_and_task_implementation_is_removed() -> Non
     )
     assert "taskfile: .taskfiles/Postgres/Taskfile.yaml" not in root_taskfile
     assert not (ROOT / ".taskfiles/Postgres/Taskfile.yaml").exists()
+
+
+def assert_workflow_runs_postgres_contracts_for_every_postgres_path() -> None:
+    workflow = (ROOT / ".github/workflows/flux.yaml").read_text()
+    contracts_filter = workflow.split("            contracts:\n", maxsplit=1)[1].split(
+        "\n\n", maxsplit=1
+    )[0]
+    postgres_paths = (
+        ".mise/tasks/postgres/**",
+        "scripts/mise-postgres-task.sh",
+        ".taskfiles/Postgres/profiles/**",
+        "scripts/pg-bluegreen.sh",
+        "tests/test_mise_postgres.py",
+    )
+    for path in postgres_paths:
+        assert f"- '{path}'" in contracts_filter
+
+    contract_job = workflow.split("\n  rustfs-iam-policy:\n", maxsplit=1)[1].split(
+        "\n  flate-test:\n", maxsplit=1
+    )[0]
+    assert "needs.changes.outputs.contracts == 'true'" in contract_job
+    assert "python3 -m unittest tests/test_mise_postgres.py" in contract_job
+
+
+def assert_direct_task_forwards_its_subcommand(
+    tmp_path: Path,
+    task: str,
+    calls: Path,
+    env: dict[str, str],
+) -> None:
+    calls.unlink(missing_ok=True)
+    result = run("mise", "run", f"postgres:{task}", cwd=tmp_path, env=env)
+
+    assert result.returncode == 0, result.stderr
+    assert [json.loads(line)["argv"] for line in calls.read_text().splitlines()] == [[task]]
 
 
 def assert_task_forwards_subcommand_defaults_and_explicit_environment(tmp_path: Path) -> None:
@@ -183,6 +216,19 @@ def assert_sop_uses_canonical_mise_commands() -> None:
 class TestMisePostgres(unittest.TestCase):
     def test_postgres_tasks_are_native_and_task_implementation_is_removed(self) -> None:
         assert_postgres_tasks_are_native_and_task_implementation_is_removed()
+
+    def test_workflow_runs_postgres_contracts_for_every_postgres_path(self) -> None:
+        assert_workflow_runs_postgres_contracts_for_every_postgres_path()
+
+    def test_every_direct_task_forwards_its_own_subcommand(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            tmp_path = Path(directory)
+            isolated_tasks(tmp_path)
+            calls = fake_bluegreen(tmp_path)
+            env = os.environ.copy() | {"CALLS": str(calls)}
+            for task in DIRECT_TASKS:
+                with self.subTest(task=task):
+                    assert_direct_task_forwards_its_subcommand(tmp_path, task, calls, env)
 
     def test_task_forwards_subcommand_defaults_and_explicit_environment(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

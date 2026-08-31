@@ -243,6 +243,9 @@ jobs:
           install: false
           cache: false
 
+      - name: Run PostgreSQL task contracts
+        run: python3 -m unittest tests/test_mise_postgres.py
+
       - name: Setup Workflow Tools
         run: |
           bash -c "$(curl -sSL https://install.mondoo.com/sh)"
