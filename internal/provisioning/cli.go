@@ -67,6 +67,10 @@ func (a *App) run(ctx context.Context, command string, args []string) error {
 		return a.runVerify(ctx, args)
 	case "flash":
 		return a.runFlash(ctx, args)
+	case "enrol":
+		return a.runEnrol(ctx, args)
+	case "retire":
+		return a.runRetire(ctx, args)
 	default:
 		return usageError{message: fmt.Sprintf("unknown command %q", command)}
 	}

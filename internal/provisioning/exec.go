@@ -52,6 +52,26 @@ func (e executor) runToStderr(
 	return nil
 }
 
+// runSecret deliberately discards remote output. A peer receiving a credential
+// must not be able to echo it into this command's stdout or stderr.
+func (e executor) runSecret(
+	ctx context.Context,
+	dir string,
+	stdin io.Reader,
+	name string,
+	args ...string,
+) error {
+	command := exec.CommandContext(ctx, name, args...)
+	command.Dir = dir
+	command.Stdin = stdin
+	command.Stdout = io.Discard
+	command.Stderr = io.Discard
+	if err := command.Run(); err != nil {
+		return fmt.Errorf("%s failed while transferring secret: %w", name, err)
+	}
+	return nil
+}
+
 func (e executor) output(
 	ctx context.Context,
 	dir string,
