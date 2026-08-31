@@ -162,6 +162,25 @@ func TestServiceAccountsIgnoreCompletedPods(t *testing.T) {
 	}
 }
 
+func TestPodsReportFullFailureCountWithCappedDetails(t *testing.T) {
+	items := make([]any, 0, 35)
+	for index := 0; index < 35; index++ {
+		items = append(items, map[string]any{
+			"metadata": map[string]any{"namespace": "home", "name": fmt.Sprintf("pod-%02d", index)},
+			"status":   map[string]any{"phase": "Pending"},
+		})
+	}
+	result := fixedChecker(map[string]CommandOutput{
+		kubectlGetKey("pods"): jsonOutput(map[string]any{"items": items}),
+	}).Pods(context.Background())
+	if result.Status != StatusFail || result.Summary != "35 active pods not ready" {
+		t.Fatalf("unexpected pod failure summary: %#v", result)
+	}
+	if len(result.Details) != 30 || !strings.Contains(result.Details[29], "pod-29") {
+		t.Fatalf("pod failure details were not capped at 30: %#v", result.Details)
+	}
+}
+
 func TestExternalSecretsReportSyncFailures(t *testing.T) {
 	responses := map[string]CommandOutput{
 		kubectlGetKey("externalsecret"): jsonOutput(map[string]any{"items": []any{

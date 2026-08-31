@@ -110,14 +110,15 @@ func (c *Checker) Pods(ctx context.Context) Result {
 		}
 		bad = append(bad, fmt.Sprintf("%s/%s: %s", item.Metadata.Namespace, item.Metadata.Name, reason))
 	}
-	if len(bad) > 30 {
+	failureCount := len(bad)
+	if failureCount > 30 {
 		bad = bad[:30]
 	}
 	return NewResult(
 		"pods",
-		len(bad) > 0,
+		failureCount > 0,
 		"all active pods ready",
-		fmt.Sprintf("%d active pods not ready", len(bad)),
+		fmt.Sprintf("%d active pods not ready", failureCount),
 		bad,
 	)
 }

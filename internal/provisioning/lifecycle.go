@@ -17,7 +17,17 @@ import (
 const (
 	clusterTokenPath = "/var/lib/rancher/k3s/server/token"
 	targetTokenPath  = "/etc/rancher/k3s/cluster-token"
+	enrolStagePath   = "/etc/rancher/k3s/.enrol-staging"
 )
+
+var retiredClusterStatePaths = []string{
+	"/etc/rancher/k3s",
+	"/var/lib/rancher/k3s",
+	"/var/lib/kubelet",
+	"/var/lib/cni",
+	"/etc/cni/net.d",
+	"/etc/rancher/node",
+}
 
 var bakedNodeName = regexp.MustCompile(`^node-[a-f0-9]{6}$`)
 
@@ -195,10 +205,7 @@ func (a *App) runEnrol(ctx context.Context, args []string) error {
 			return err
 		}
 	}
-	if err := a.installTargetConfig(ctx, targetHost, config); err != nil {
-		return err
-	}
-	if err := a.installTargetToken(ctx, targetHost, token); err != nil {
+	if err := a.stageTargetEnrolFiles(ctx, targetHost, config, token); err != nil {
 		return redactLifecycleError(err, token)
 	}
 	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "ssh", "pi@"+targetHost, "sudo systemctl enable --now k3s.service"); err != nil {
@@ -252,16 +259,24 @@ func (a *App) runRetire(ctx context.Context, args []string) error {
 	if err := a.requireConfirmation(node, "to retire it"); err != nil {
 		return err
 	}
-	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "kubectl", "drain", node, "--ignore-daemonsets", "--delete-emptydir-data"); err != nil {
+	existing, err := a.existingNode(ctx, node)
+	if err != nil {
 		return err
+	}
+	if existing != nil {
+		if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "kubectl", "drain", node, "--ignore-daemonsets", "--delete-emptydir-data"); err != nil {
+			return err
+		}
 	}
 	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "ssh", "pi@"+host, "sudo systemctl disable --now k3s.service"); err != nil {
 		return err
 	}
-	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "kubectl", "delete", "node", node); err != nil {
-		return err
+	if existing != nil {
+		if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "kubectl", "delete", "node", node); err != nil {
+			return err
+		}
 	}
-	if err := a.exec.runToStderr(ctx, a.paths.repo, nil, "ssh", "pi@"+host, "sudo rm -rf /etc/rancher/k3s /var/lib/rancher/k3s"); err != nil {
+	if err := a.removeRetiredClusterState(ctx, host); err != nil {
 		return err
 	}
 	return writeJSON(a.exec.stdout, lifecycleCommandResult{
@@ -443,12 +458,48 @@ func (a *App) sanitiseK3sConfig(ctx context.Context, source, endpoint, nodeIP st
 	return config + "\n", nil
 }
 
-func (a *App) installTargetConfig(ctx context.Context, host, config string) error {
-	return a.exec.runToStderr(ctx, a.paths.repo, strings.NewReader(config), "ssh", "pi@"+host, "sudo install -d -m 0700 /etc/rancher/k3s && sudo install -m 0600 /dev/stdin /etc/rancher/k3s/config.yaml")
+func (a *App) stageTargetEnrolFiles(ctx context.Context, host, config, token string) error {
+	if err := a.prepareTargetEnrolStage(ctx, host); err != nil {
+		return err
+	}
+	if err := a.installTargetConfig(ctx, host, config, enrolStagePath+"/config.yaml"); err != nil {
+		return a.clearTargetEnrolStageAfterError(ctx, host, err)
+	}
+	if err := a.installTargetToken(ctx, host, token, enrolStagePath+"/cluster-token"); err != nil {
+		return a.clearTargetEnrolStageAfterError(ctx, host, err)
+	}
+	if err := a.promoteTargetEnrolStage(ctx, host); err != nil {
+		return a.clearTargetEnrolStageAfterError(ctx, host, err)
+	}
+	return nil
 }
 
-func (a *App) installTargetToken(ctx context.Context, host, token string) error {
-	return a.exec.runSecret(ctx, a.paths.repo, strings.NewReader(token+"\n"), "ssh", "pi@"+host, "sudo install -m 0600 /dev/stdin /etc/rancher/k3s/cluster-token")
+func (a *App) prepareTargetEnrolStage(ctx context.Context, host string) error {
+	return a.exec.runToStderr(ctx, a.paths.repo, nil, "ssh", "pi@"+host, "sudo install -d -m 0700 "+enrolStagePath+" && sudo rm -f "+enrolStagePath+"/config.yaml "+enrolStagePath+"/cluster-token")
+}
+
+func (a *App) installTargetConfig(ctx context.Context, host, config, destination string) error {
+	return a.exec.runToStderr(ctx, a.paths.repo, strings.NewReader(config), "ssh", "pi@"+host, "sudo install -m 0600 /dev/stdin "+destination)
+}
+
+func (a *App) installTargetToken(ctx context.Context, host, token, destination string) error {
+	return a.exec.runSecret(ctx, a.paths.repo, strings.NewReader(token+"\n"), "ssh", "pi@"+host, "sudo install -m 0600 /dev/stdin "+destination)
+}
+
+func (a *App) promoteTargetEnrolStage(ctx context.Context, host string) error {
+	command := "sudo sh -c 'if mv " + enrolStagePath + "/config.yaml /etc/rancher/k3s/config.yaml && mv " + enrolStagePath + "/cluster-token /etc/rancher/k3s/cluster-token && rmdir " + enrolStagePath + "; then exit 0; fi; rm -f /etc/rancher/k3s/config.yaml /etc/rancher/k3s/cluster-token; rm -rf " + enrolStagePath + "; exit 1'"
+	return a.exec.runToStderr(ctx, a.paths.repo, nil, "ssh", "pi@"+host, command)
+}
+
+func (a *App) clearTargetEnrolStageAfterError(ctx context.Context, host string, operationErr error) error {
+	if cleanupErr := a.exec.runToStderr(ctx, a.paths.repo, nil, "ssh", "pi@"+host, "sudo rm -rf "+enrolStagePath); cleanupErr != nil {
+		return fmt.Errorf("%w; clear enrolment staging: %v", operationErr, cleanupErr)
+	}
+	return operationErr
+}
+
+func (a *App) removeRetiredClusterState(ctx context.Context, host string) error {
+	return a.exec.runToStderr(ctx, a.paths.repo, nil, "ssh", "pi@"+host, "sudo rm -rf "+strings.Join(retiredClusterStatePaths, " "))
 }
 
 func (a *App) waitForEnrolledNode(ctx context.Context, name, host, token string, timeout time.Duration) error {
