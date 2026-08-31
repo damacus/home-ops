@@ -43,12 +43,18 @@ func TestLifecycleRejectedReplacementNeverReadsToken(t *testing.T) {
 	if withoutOverride.exitCode == 0 || !strings.Contains(withoutOverride.stderr, "pass --replace explicitly") {
 		t.Fatalf("replacement without override result = exit %d, stderr %q", withoutOverride.exitCode, withoutOverride.stderr)
 	}
+	if withoutOverride.stdout != "" {
+		t.Fatalf("rejected replacement emitted a result document")
+	}
 	fixture.assertLogExcludes(t, "cat /var/lib/rancher/k3s/server/token", "delete node")
 
 	fixture = newLifecycleFixture(t, "existing-notready")
 	wrongConfirmation := fixture.runWithInput(t, "replace another-node\n", "enrol", "target.example", "--replace", "--node-ip", "10.0.0.77")
 	if wrongConfirmation.exitCode == 0 || !strings.Contains(wrongConfirmation.stderr, "confirmation did not match") {
 		t.Fatalf("replacement with wrong confirmation result = exit %d, stderr %q", wrongConfirmation.exitCode, wrongConfirmation.stderr)
+	}
+	if wrongConfirmation.stdout != "" {
+		t.Fatalf("unconfirmed replacement emitted a result document")
 	}
 	fixture.assertLogExcludes(t, "cat /var/lib/rancher/k3s/server/token", "delete node")
 }
@@ -72,6 +78,7 @@ func TestLifecycleReplacementConfirmsBeforeTokenAndDeletion(t *testing.T) {
 	if strings.Contains(result.stdout, lifecycleToken) || strings.Contains(result.stderr, lifecycleToken) {
 		t.Fatalf("replacement output exposed the server token")
 	}
+	assertJSONResult(t, result.stdout, "node", "node-abcdef")
 	log := fixture.log(t)
 	token := strings.Index(log, "server/token")
 	deleteNode := strings.Index(log, "delete node node-abcdef")
@@ -81,6 +88,15 @@ func TestLifecycleReplacementConfirmsBeforeTokenAndDeletion(t *testing.T) {
 	if !strings.Contains(log, "10.0.0.77") {
 		t.Fatalf("explicit node IP was not passed to source-config sanitisation")
 	}
+}
+
+func TestLifecycleRejectsExplicitNodeIPOutsideRouteInterface(t *testing.T) {
+	fixture := newLifecycleFixture(t, "waitready")
+	result := fixture.run(t, "enrol", "target.example", "--node-ip", "10.0.0.78", "--dry-run")
+	if result.exitCode == 0 || !strings.Contains(result.stderr, "node IP 10.0.0.78 is not assigned to interface eth0") {
+		t.Fatalf("explicit route validation result = exit %d, stderr %q", result.exitCode, result.stderr)
+	}
+	fixture.assertLogExcludes(t, "cat /var/lib/rancher/k3s/server/token", "delete node", "install -m 0600")
 }
 
 func TestLifecycleRejectsRouteSourceMissingFromInterface(t *testing.T) {
@@ -94,12 +110,16 @@ func TestLifecycleRejectsRouteSourceMissingFromInterface(t *testing.T) {
 
 func TestLifecycleReadinessTimeoutRedactsBoundedLogs(t *testing.T) {
 	fixture := newLifecycleFixture(t, "never-ready")
+	fixture.setEnv(t, "JOURNAL_SIZE", "9000")
 	result := fixture.run(t, "enrol", "target.example", "--node-ip", "10.0.0.77", "--ready-timeout", "0s")
 	if result.exitCode == 0 || !strings.Contains(result.stderr, "bounded k3s logs") {
 		t.Fatalf("timeout result = exit %d, stderr %q", result.exitCode, result.stderr)
 	}
 	if strings.Contains(result.stderr, lifecycleToken) || !strings.Contains(result.stderr, "<redacted>") {
 		t.Fatalf("timeout logs did not redact the server token")
+	}
+	if len(result.stderr) > 8400 || !strings.Contains(result.stderr, "expected-log-tail") {
+		t.Fatalf("timeout diagnostics did not retain a bounded log tail")
 	}
 }
 
@@ -110,6 +130,9 @@ func TestLifecycleRetirementPreflightAndOrder(t *testing.T) {
 	if refused.exitCode == 0 || !strings.Contains(refused.stderr, "k3s.service") {
 		t.Fatalf("retirement preflight result = exit %d, stderr %q", refused.exitCode, refused.stderr)
 	}
+	if refused.stdout != "" {
+		t.Fatalf("rejected retirement emitted a result document")
+	}
 	fixture.assertLogExcludes(t, "kubectl drain", "delete node", "disable --now")
 
 	fixture = newLifecycleFixture(t, "waitready")
@@ -117,6 +140,7 @@ func TestLifecycleRetirementPreflightAndOrder(t *testing.T) {
 	if result.exitCode != 0 {
 		t.Fatalf("retirement exit = %d, stderr = %s", result.exitCode, result.stderr)
 	}
+	assertJSONResult(t, result.stdout, "node", "node-abcdef")
 	log := fixture.log(t)
 	identity := strings.Index(log, "hostname -s")
 	drain := strings.Index(log, "kubectl drain node-abcdef")
@@ -126,6 +150,22 @@ func TestLifecycleRetirementPreflightAndOrder(t *testing.T) {
 	if !strings.Contains(result.stderr, "Type node-abcdef") || identity < 0 || drain < 0 || stop < 0 || deleteNode < 0 || remove < 0 || !(identity < drain && drain < stop && stop < deleteNode && deleteNode < remove) {
 		t.Fatalf("retirement command order did not preserve its safety boundary")
 	}
+}
+
+func TestMiseEnrolDryRunForwardsNodeIPToGoCommand(t *testing.T) {
+	fixture := newLifecycleFixture(t, "waitready")
+	fixture.setEnv(t, "MISE_PROJECT_ROOT", moduleRoot(t))
+	command := exec.Command("mise", "run", "provisioning:enrol", "--", "target.example", "--node-ip", "10.0.0.77", "--dry-run")
+	command.Dir = moduleRoot(t)
+	command.Env = append(os.Environ(), fixture.env...)
+	var stdout, stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	if err := command.Run(); err != nil {
+		t.Fatalf("mise enrol dry-run: %v, stderr = %s", err, stderr.String())
+	}
+	assertJSONResult(t, stdout.String(), "node_ip", "10.0.0.77")
+	fixture.assertLogExcludes(t, "cat /var/lib/rancher/k3s/server/token", "delete node", "install -m 0600")
 }
 
 type lifecycleFixture struct {
@@ -233,6 +273,17 @@ func (f *lifecycleFixture) assertLogExcludes(t *testing.T, values ...string) {
 	}
 }
 
+func assertJSONResult(t *testing.T, output, key, want string) {
+	t.Helper()
+	var result map[string]any
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Fatalf("successful stdout was not one JSON result: %v", err)
+	}
+	if got := result[key]; got != want {
+		t.Fatalf("JSON result %s = %#v, want %q", key, got, want)
+	}
+}
+
 func moduleRoot(t *testing.T) string {
 	t.Helper()
 	root, err := FindRoot(".")
@@ -261,8 +312,8 @@ case "$*" in
       existing-notready:2|existing-notready:3) printf '%s\n' '{"metadata":{"name":"node-abcdef","labels":{"node-role.kubernetes.io/control-plane":"","node-role.kubernetes.io/etcd":""}},"status":{"conditions":[{"type":"Ready","status":"True"}]}}' ;;
       waitready:2|waitready:3|waitready:4) printf '%s\n' '{"metadata":{"name":"node-abcdef","labels":{"node-role.kubernetes.io/control-plane":"","node-role.kubernetes.io/etcd":""}},"status":{"conditions":[{"type":"Ready","status":"True"}]}}' ;;
     esac ;;
-  "delete node node-abcdef") : ;;
-  "drain node-abcdef --ignore-daemonsets --delete-emptydir-data") : ;;
+  "delete node node-abcdef") echo 'kubectl progress' ;;
+  "drain node-abcdef --ignore-daemonsets --delete-emptydir-data") echo 'kubectl progress' ;;
   *) echo "unexpected kubectl invocation: $*" >&2; exit 1 ;;
 esac
 `
@@ -279,18 +330,23 @@ case "$*" in
   *"systemctl is-enabled k3s.service"*) echo disabled ;;
   *"systemctl is-active k3s.service"*) echo inactive ;;
   *"sudo test ! -e /etc/rancher/k3s/config.yaml"*) : ;;
-  *"ip -j route get 10.0.0.1") echo '[{"dev":"eth0","prefsrc":"10.0.0.44"}]' ;;
+  *"ip -j route get "*) echo '[{"dev":"eth0","prefsrc":"10.0.0.44"}]' ;;
   *"ip -j addr show dev eth0"*)
-    if test "$ROUTE_ADDRESS_PRESENT" = true; then echo '[{"ifname":"eth0","addr_info":[{"family":"inet","local":"10.0.0.44"}]}]'; else echo '[{"ifname":"eth0","addr_info":[]}]'; fi ;;
+    if test "$ROUTE_ADDRESS_PRESENT" = true; then echo '[{"ifname":"eth0","addr_info":[{"family":"inet","local":"10.0.0.44"},{"family":"inet","local":"10.0.0.77"}]}]'; else echo '[{"ifname":"eth0","addr_info":[]}]'; fi ;;
   *"cat /etc/rancher/k3s/config.yaml") echo 'write-kubeconfig-mode: 0644' ;;
   *"cat /var/lib/rancher/k3s/server/token") echo "$LIFECYCLE_TOKEN" ;;
-  *"journalctl -u k3s.service"*) printf 'log prefix %s log suffix\n' "$LIFECYCLE_TOKEN" ;;
+  *"journalctl -u k3s.service"*)
+    size="${JOURNAL_SIZE:-0}"
+    i=0
+    printf 'log prefix '
+    while test "$i" -lt "$size"; do printf x; i=$((i + 1)); done
+    printf ' %s expected-log-tail\n' "$LIFECYCLE_TOKEN" ;;
   *"systemctl cat k3s.service"*) test "${RETIRE_UNIT:-present}" != missing ;;
-  *"install -d -m 0700"*) cat >/dev/null; printf 'stdin-redacted\n' >> "$CALL_LOG" ;;
+  *"install -d -m 0700"*) cat >/dev/null; printf 'stdin-redacted\n' >> "$CALL_LOG"; echo 'ssh progress' ;;
   *"install -m 0600 /dev/stdin /etc/rancher/k3s/cluster-token"*) cat >/dev/null; printf 'stdin-redacted\n' >> "$CALL_LOG" ;;
-  *"systemctl enable --now k3s.service") : ;;
-  *"systemctl disable --now k3s.service") : ;;
-  *"rm -rf /etc/rancher/k3s /var/lib/rancher/k3s") : ;;
+  *"systemctl enable --now k3s.service") echo 'ssh progress' ;;
+  *"systemctl disable --now k3s.service") echo 'ssh progress' ;;
+  *"rm -rf /etc/rancher/k3s /var/lib/rancher/k3s") echo 'ssh progress' ;;
   *) echo "unexpected ssh invocation: $*" >&2; exit 1 ;;
 esac
 `
