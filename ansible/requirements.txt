@@ -125,7 +125,7 @@ urllib3==2.7.0
     #   requests
 wcmatch==11.0.1
     # via ansible-lint
-websocket-client==1.9.0
+websocket-client==1.9.1
     # via kubernetes
 yamllint==1.38.0
     # via ansible-lint
