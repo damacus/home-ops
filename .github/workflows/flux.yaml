@@ -90,7 +90,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup yayamlls
-        uses: home-operations/yayamlls/action@0.2.0
+        uses: home-operations/yayamlls/action@0.3.0
         with:
           token: ${{ github.token }}
 
