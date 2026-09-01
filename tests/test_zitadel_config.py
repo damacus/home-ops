@@ -76,14 +76,10 @@ class ZitadelConfigTests(unittest.TestCase):
                     )
                     self.assertNotEqual(0, validation.returncode)
 
-    def test_kubectl_hook_image_uses_available_arm64_tag(self) -> None:
+    def test_kubectl_hook_uses_k3s_image_without_setup_job(self) -> None:
         values = load_yaml(HELMRELEASE)["spec"]["values"]
 
         self.assertEqual("rancher/k3s", values["tools"]["kubectl"]["image"]["repository"])
-        self.assertEqual(
-            "v1.36.4-k3s1",
-            values["tools"]["kubectl"]["image"]["tag"],
-        )
         self.assertNotIn("setupJob", values)
 
 

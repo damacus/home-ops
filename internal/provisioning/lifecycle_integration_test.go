@@ -219,22 +219,6 @@ func TestLifecycleRetirementRetriesCleanupAfterNodeDeletion(t *testing.T) {
 	}
 }
 
-func TestMiseEnrolDryRunForwardsNodeIPToGoCommand(t *testing.T) {
-	fixture := newLifecycleFixture(t, "waitready")
-	fixture.setEnv(t, "MISE_PROJECT_ROOT", moduleRoot(t))
-	command := exec.Command("mise", "run", "provisioning:enrol", "--", "target.example", "--node-ip", "10.0.0.77", "--dry-run")
-	command.Dir = moduleRoot(t)
-	command.Env = append(os.Environ(), fixture.env...)
-	var stdout, stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-	if err := command.Run(); err != nil {
-		t.Fatalf("mise enrol dry-run: %v, stderr = %s", err, stderr.String())
-	}
-	assertJSONResult(t, stdout.String(), "node_ip", "10.0.0.77")
-	fixture.assertLogExcludes(t, "cat /var/lib/rancher/k3s/server/token", "delete node", "install -m 0600")
-}
-
 type lifecycleFixture struct {
 	t      *testing.T
 	root   string

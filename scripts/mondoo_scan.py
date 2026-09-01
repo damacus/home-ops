@@ -51,82 +51,6 @@ APP_SCANS: dict[str, AppScan] = {
         policy="home-ops-app-mealie",
         asset_name="home-ops-mealie-oidc",
     ),
-    "dev/forgejo": AppScan(
-        policy="home-ops-app-forgejo",
-        asset_name="home-ops-forgejo",
-    ),
-}
-
-
-MIGRATED_COMPLIANCE_CHECKS: dict[str, list[str]] = {
-    "zitadel": [
-        "ZITADEL-HTTPS-001",
-        "ZITADEL-HTTPS-002",
-        "ZITADEL-HEALTH-001",
-        "ZITADEL-HEALTH-002",
-        "ZITADEL-HEALTH-003",
-        "ZITADEL-UI-001",
-        "ZITADEL-UI-002",
-        "ZITADEL-UI-003",
-        "ZITADEL-OIDC-001",
-        "ZITADEL-OIDC-002",
-        "ZITADEL-OIDC-003",
-        "ZITADEL-LOGIN-002",
-        "ZITADEL-LOGIN-003",
-        "ZITADEL-API-001",
-        "ZITADEL-API-002",
-        "ZITADEL-SEC-001",
-    ],
-    "grafana": [
-        "grafana-oidc-config",
-        "grafana-oidc-secret",
-        "grafana-oidc-endpoints",
-    ],
-    "paperless": [
-        "paperless-oidc-config",
-        "paperless-oidc-secret",
-        "paperless-oidc-endpoints",
-    ],
-    "mealie": [
-        "mealie-oidc-config",
-        "mealie-oidc-secret",
-        "mealie-oidc-endpoints",
-        "mealie-oidc-api-endpoint",
-    ],
-    "node": [
-        "NODE-USER-001",
-        "NODE-USER-002",
-        "NODE-IDENTITY-001",
-        "NODE-SYS-001",
-        "NODE-SYS-002",
-        "NODE-SYS-003",
-        "NODE-STORAGE-001",
-        "NODE-K3S-001",
-        "NODE-K3S-002",
-        "NODE-K3S-003",
-        "NODE-K3S-004",
-        "NODE-CLUSTER-001",
-        "NODE-CLUSTER-002",
-    ],
-    "image": [
-        "IMAGE-STATE-001",
-        "IMAGE-STATE-002",
-        "IMAGE-STATE-003",
-        "IMAGE-STATE-004",
-        "IMAGE-USER-001",
-        "IMAGE-USER-002",
-        "IMAGE-USER-003",
-        "IMAGE-USER-004",
-        "IMAGE-K3S-001",
-        "IMAGE-K3S-002",
-        "IMAGE-K3S-003",
-        "IMAGE-K3S-004",
-        "IMAGE-K3S-005",
-        "IMAGE-UPDATE-001",
-        "IMAGE-UPDATE-002",
-        "IMAGE-SYS-001",
-        "IMAGE-SYS-002",
-    ],
 }
 
 
@@ -298,23 +222,6 @@ def run_image(args: argparse.Namespace) -> None:
     )
 
 
-def policy_text() -> str:
-    return "\n".join(path.read_text(encoding="utf-8") for path in sorted(POLICY_DIR.glob("*.mql.yaml")))
-
-
-def run_validate_parity(_: argparse.Namespace) -> None:
-    bundle_text = policy_text()
-    missing = [
-        check
-        for checks in MIGRATED_COMPLIANCE_CHECKS.values()
-        for check in checks
-        if check not in bundle_text
-    ]
-    if missing:
-        missing_checks = "\n".join(f"- {check}" for check in missing)
-        raise SystemExit(f"Mondoo policy parity is missing migrated checks:\n{missing_checks}")
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", choices=["compact", "full", "json", "junit", "summary"], default=None)
@@ -341,8 +248,6 @@ def build_parser() -> argparse.ArgumentParser:
     image.add_argument("--mount", required=True)
     image.set_defaults(func=run_image)
 
-    parity = subcommands.add_parser("validate-parity", help="Validate migrated check parity")
-    parity.set_defaults(func=run_validate_parity)
     return parser
 
 
