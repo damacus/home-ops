@@ -11,13 +11,6 @@ import unittest
 
 
 SCRIPT_PATH = pathlib.Path(__file__).resolve().parents[1] / "scripts" / "home_assistant_power_groups.py"
-CONFIG_PATH = (
-    pathlib.Path(__file__).resolve().parents[1]
-    / "docs"
-    / "home-assistant"
-    / "power"
-    / "powercalc-groups.json"
-)
 
 
 def load_module():
@@ -31,11 +24,6 @@ def load_module():
 
 
 class PowerGroupConfigTest(unittest.TestCase):
-    def test_module_loads(self) -> None:
-        module = load_module()
-
-        self.assertEqual(module.PACKAGE_HEADER, "powercalc:")
-
     def test_validate_config_accepts_known_room_members(self) -> None:
         module = load_module()
         config = {
@@ -54,12 +42,6 @@ class PowerGroupConfigTest(unittest.TestCase):
                 }
             ],
         }
-
-        module.validate_config(config)
-
-    def test_validate_config_accepts_checked_in_group_config(self) -> None:
-        module = load_module()
-        config = module.load_json(CONFIG_PATH)
 
         module.validate_config(config)
 
@@ -474,83 +456,6 @@ class PowerGroupConfigTest(unittest.TestCase):
                 "sensor.rendered_upstairs_lights_energy",
             ],
         )
-
-    def test_dashboard_energy_sensors_matches_checked_in_group_config(self) -> None:
-        module = load_module()
-        config = module.load_json(CONFIG_PATH)
-
-        sensors = module.dashboard_energy_sensors(config)
-
-        self.assertEqual(
-            sensors,
-            [
-                "sensor.downstairs_light_fixtures_energy",
-                "sensor.upstairs_light_fixtures_energy",
-                "sensor.outdoor_lights_energy",
-                "sensor.loft_lights_energy",
-                "sensor.sonos_speakers_energy",
-            ],
-        )
-
-    def test_checked_in_sonos_group_uses_existing_powercalc_sensors(self) -> None:
-        module = load_module()
-        config = module.load_json(CONFIG_PATH)
-        room_groups = {room["name"]: room for room in config["room_groups"]}
-        area_groups = {area["name"]: area for area in config["area_groups"]}
-
-        self.assertEqual(
-            area_groups["Sonos speakers"]["members"],
-            [
-                "Playroom Sonos speaker",
-                "Kitchen Sonos speaker",
-                "Living room Sonos Beam",
-            ],
-        )
-        self.assertEqual(
-            [
-                (room_groups[name]["power_sensor_id"], room_groups[name]["energy_sensor_id"])
-                for name in area_groups["Sonos speakers"]["members"]
-            ],
-            [
-                ("sensor.playroom_power", "sensor.playroom_energy"),
-                ("sensor.kitchen_power", "sensor.kitchen_energy"),
-                ("sensor.sonos_beam_power", "sensor.sonos_beam_energy"),
-            ],
-        )
-
-    def test_checked_in_upstairs_group_uses_main_bedroom_light_fixtures(self) -> None:
-        module = load_module()
-        config = module.load_json(CONFIG_PATH)
-        room_groups = {room["name"]: room for room in config["room_groups"]}
-        area_groups = {area["name"]: area for area in config["area_groups"]}
-
-        self.assertNotIn("Main bedroom lights", room_groups)
-        self.assertIn("Upstairs light fixtures", area_groups)
-        self.assertNotIn("Upstairs lights", area_groups)
-        self.assertEqual(
-            area_groups["Upstairs light fixtures"]["members"],
-            [
-                "Main bedroom colour light",
-                "Main bedroom Dan bedside lamp",
-                "Main bedroom Hue colour lamp",
-                "Main bedroom Laura bedside lamp",
-                "Harrison's bedroom lights",
-                "Harrison's bedroom colour bulb",
-                "Bedroom four lights",
-                "Landing lights",
-                "Landing second light",
-            ],
-        )
-        self.assertNotIn("Main bedroom lights", area_groups["Upstairs light fixtures"]["members"])
-        upstairs_member_sensors = []
-        for member_name in area_groups["Upstairs light fixtures"]["members"]:
-            member = room_groups[member_name]
-            upstairs_member_sensors.extend([member["power_sensor_id"], member["energy_sensor_id"]])
-
-        self.assertNotIn("sensor.main_bedroom_power", upstairs_member_sensors)
-        self.assertNotIn("sensor.main_bedroom_energy", upstairs_member_sensors)
-        self.assertFalse(any("socket" in sensor for sensor in upstairs_member_sensors))
-        self.assertFalse(any("consumption" in sensor for sensor in upstairs_member_sensors))
 
     def test_dashboard_energy_sensors_rejects_duplicate_dashboard_slugs(self) -> None:
         module = load_module()

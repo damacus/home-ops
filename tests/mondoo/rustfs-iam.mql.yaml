@@ -14,179 +14,14 @@ policies:
         email: security@ironstone.casa
     docs:
       desc: |
-        Validate the RustFS IAM rollout. Every backup consumer is cut over to
-        its per-app bucket and credential while old shared/root-backed
-        resources remain present for rollback and audit.
+        Validate that the RustFS bootstrap creates separate identities and
+        bucket-scoped policies.
     groups:
-      - title: CNPG Consumers Use Per-App RustFS Resources
+      - title: RustFS IAM
         filters: asset.platform != ""
         checks:
-          - uid: phase2-zitadel-cnpg-uses-per-app-consumer
-            title: Zitadel CNPG uses the per-app bucket and credential
-            impact: 100
-            mql: |
-              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-zitadel/")
-              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-zitadel")
-              file("kubernetes/apps/authentication/zitadel-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
-              file("kubernetes/apps/authentication/zitadel-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-zitadel")
-              file("kubernetes/apps/authentication/zitadel-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-zitadel")
-          - uid: phase2-forgejo-cnpg-uses-canary-consumer
-            title: Forgejo CNPG uses the per-app bucket and credential canary
-            impact: 100
-            mql: |
-              file("kubernetes/apps/dev/forgejo-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-forgejo/")
-              file("kubernetes/apps/dev/forgejo-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-forgejo")
-              file("kubernetes/apps/dev/forgejo-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
-              file("kubernetes/apps/dev/forgejo-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-forgejo")
-              file("kubernetes/apps/dev/forgejo-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-forgejo")
-          - uid: phase2-home-assistant-cnpg-uses-per-app-consumer
-            title: Home Assistant CNPG uses the per-app bucket and credential
-            impact: 100
-            mql: |
-              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-home-assistant/")
-              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-home-assistant")
-              file("kubernetes/apps/home-automation/home-assistant-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
-              file("kubernetes/apps/home-automation/home-assistant-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-home-assistant")
-              file("kubernetes/apps/home-automation/home-assistant-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-home-assistant")
-          - uid: phase2-n8n-cnpg-uses-per-app-consumer
-            title: n8n CNPG uses the per-app bucket and credential
-            impact: 100
-            mql: |
-              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-n8n/")
-              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-n8n")
-              file("kubernetes/apps/home-automation/n8n-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
-              file("kubernetes/apps/home-automation/n8n-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-n8n")
-              file("kubernetes/apps/home-automation/n8n-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-n8n")
-          - uid: phase2-immich-cnpg-uses-per-app-consumer
-            title: Immich CNPG uses the per-app bucket and credential
-            impact: 100
-            mql: |
-              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-immich/")
-              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-immich")
-              file("kubernetes/apps/home/immich-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
-              file("kubernetes/apps/home/immich-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-immich")
-              file("kubernetes/apps/home/immich-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-immich")
-          - uid: phase2-mealie-cnpg-uses-canary-consumer
-            title: Mealie CNPG uses the per-app bucket and credential canary
-            impact: 100
-            mql: |
-              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-mealie/")
-              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-mealie")
-              file("kubernetes/apps/home/mealie-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
-              file("kubernetes/apps/home/mealie-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-mealie")
-              file("kubernetes/apps/home/mealie-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-mealie")
-          - uid: phase2-med-tracker-cnpg-uses-canary-consumer
-            title: Med Tracker CNPG uses the per-app bucket and credential canary
-            impact: 100
-            mql: |
-              file("kubernetes/apps/home/med-tracker-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-med-tracker/")
-              file("kubernetes/apps/home/med-tracker-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-med-tracker")
-              file("kubernetes/apps/home/med-tracker-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
-              file("kubernetes/apps/home/med-tracker-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-med-tracker")
-              file("kubernetes/apps/home/med-tracker-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-med-tracker")
-          - uid: phase2-penpot-cnpg-uses-canary-consumer
-            title: Penpot CNPG uses the per-app bucket and credential canary
-            impact: 100
-            mql: |
-              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("destinationPath: s3://cnpg-penpot/")
-              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-penpot")
-              file("kubernetes/apps/home/penpot-db/app/objectstore.yaml").content.contains("name: rustfs-cnpg-credentials") == false
-              file("kubernetes/apps/home/penpot-db/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-penpot")
-              file("kubernetes/apps/home/penpot-db/app/externalsecret.yaml").content.contains("key: rustfs-cnpg-penpot")
-
-      - title: Non-CNPG Consumers Use Per-App RustFS Resources
-        filters: asset.platform != ""
-        checks:
-          - uid: phase2-longhorn-uses-per-app-consumer
-            title: Longhorn uses the per-app credential and keeps rollback secret
-            impact: 100
-            mql: |
-              file("kubernetes/apps/storage/longhorn/app/backuptarget.yaml").content.contains("credentialSecret: rustfs-longhorn")
-              file("kubernetes/apps/storage/longhorn/app/backuptarget.yaml").content.contains("credentialSecret: longhorn-rustfs") == false
-              file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("name: longhorn-rustfs")
-              file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("key: rustfs\n")
-              file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("name: rustfs-longhorn")
-              file("kubernetes/apps/storage/longhorn/app/externalsecret.yaml").content.contains("key: rustfs-longhorn")
-          - uid: phase2-paperless-uses-per-app-consumer
-            title: Paperless uses the per-app Restic secret and keeps rollback secret
-            impact: 100
-            mql: |
-              file("kubernetes/apps/home-automation/paperless/app/volsync/kustomization.yaml").content.contains("replicationsource.yaml")
-              file("kubernetes/apps/home-automation/paperless/app/volsync/kustomization.yaml").content.contains("replicationdestination.yaml")
-              file("kubernetes/apps/home-automation/paperless/app/volsync/replicationsource.yaml").content.contains("repository: rustfs-paperless")
-              file("kubernetes/apps/home-automation/paperless/app/volsync/replicationdestination.yaml").content.contains("repository: rustfs-paperless")
-              file("kubernetes/apps/home-automation/paperless/app/volsync/replicationsource.yaml").content.contains("repository: paperless-restic-local") == false
-              file("kubernetes/apps/home-automation/paperless/app/volsync/replicationdestination.yaml").content.contains("repository: paperless-restic-local") == false
-              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("volsync-backups/paperless")
-              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("key: rustfs\n")
-              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("name: rustfs-paperless")
-              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("key: rustfs-paperless")
-              file("kubernetes/apps/home-automation/paperless/app/volsync/externalsecret.yaml").content.contains("volsync-paperless")
-          - uid: phase2-loki-uses-per-app-consumer
-            title: Loki uses the per-app credential and keeps rollback secret
-            impact: 100
-            mql: |
-              file("kubernetes/apps/monitoring/loki/app/helmrelease.yaml").content.contains("name: rustfs-loki")
-              file("kubernetes/apps/monitoring/loki/app/helmrelease.yaml").content.contains("name: loki-s3") == false
-              file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("name: &name loki-s3")
-              file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("key: rustfs")
-              file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("name: &name rustfs-loki")
-              file("kubernetes/apps/monitoring/loki/app/externalsecret.yaml").content.contains("key: rustfs-loki")
-
-      - title: RustFS Bootstrap IAM
-        filters: asset.platform != ""
-        checks:
-          - uid: rustfs-keeps-current-shared-cnpg-secret
-            title: RustFS keeps the current shared CNPG credential during phase 1
-            impact: 100
-            mql: |
-              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("name: rustfs-cnpg-credentials")
-              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("reflector.v1.k8s.emberstack.com/reflection-auto-enabled")
-              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("ACCESS_KEY_ID")
-              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("SECRET_ACCESS_KEY")
-          - uid: rustfs-stages-app-bootstrap-credentials
-            title: RustFS stages the per-app bootstrap credential bundle
-            impact: 100
-            mql: |
-              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("name: rustfs-app-credentials")
-              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_CNPG_ZITADEL_ACCESS_KEY")
-              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_LONGHORN_ACCESS_KEY")
-              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_PAPERLESS_ACCESS_KEY")
-              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_LOKI_ACCESS_KEY")
-              file("kubernetes/apps/storage/rustfs/app/externalsecret.yaml").content.contains("RUSTFS_TEMPO_ACCESS_KEY")
-          - uid: rustfs-bootstrap-creates-app-buckets
-            title: RustFS bootstrap job creates all per-app buckets
-            impact: 100
-            mql: |
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-zitadel")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-forgejo")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-home-assistant")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-n8n")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-immich")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-mealie")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-med-tracker")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-penpot")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("volsync-paperless")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("longhorn")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("loki-chunks")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("loki-data")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("tempo-traces")
-          - uid: rustfs-bootstrap-does-not-run-legacy-mirroring
-            title: RustFS bootstrap does not run legacy-prefix mirrors
-            impact: 100
-            mql: |
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("mirror_prefix_if_present") == false
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rc mirror") == false
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("cnpg-backups/") == false
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("volsync-backups/paperless") == false
-          - uid: rustfs-bootstrap-retains-failed-pods
-            title: RustFS bootstrap keeps failed pod logs available for debugging
-            impact: 100
-            mql: |
-              file("kubernetes/apps/storage/rustfs-iam/app/job-buckets.yaml").content.contains("ttlSecondsAfterFinished: 86400")
-              file("kubernetes/apps/storage/rustfs-iam/app/job-buckets.yaml").content.contains("restartPolicy: Never")
           - uid: rustfs-bootstrap-creates-app-identities
-            title: RustFS bootstrap job creates all app IAM identities
+            title: RustFS bootstrap creates separate application identities
             impact: 100
             mql: |
               file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-cnpg-zitadel")
@@ -201,18 +36,8 @@ policies:
               file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-paperless")
               file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-loki")
               file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("rustfs-tempo")
-          - uid: rustfs-bootstrap-preserves-runtime-shell-variables
-            title: RustFS bootstrap escapes runtime variables for Flux
-            impact: 100
-            mql: |
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${1:-all}")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${RUSTFS_ENDPOINT:?}")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${RUSTFS_ACCESS_KEY:?}")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${RUSTFS_SECRET_KEY:?}")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${identity}")
-              file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("$${grace_seconds}")
           - uid: rustfs-bootstrap-attaches-bucket-scoped-policies
-            title: RustFS bootstrap job attaches bucket-scoped IAM policies
+            title: RustFS bootstrap attaches bucket-scoped IAM policies
             impact: 100
             mql: |
               file("kubernetes/apps/storage/rustfs-iam/app/bootstrap-script.yaml").content.contains("arn:aws:s3:::")

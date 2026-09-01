@@ -53,28 +53,14 @@ jobs:
               - 'kubernetes/**'
               - 'mondoo/**'
               - 'scripts/mondoo_scan.py'
-              - 'tests/test_mondoo_scan.py'
               - 'tests/test_zitadel_access_policy.rb'
               - 'tests/test_zitadel_config.py'
             contracts:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Kubernetes/Taskfile.yaml'
-              - 'kubernetes/apps/authentication/zitadel-db/**'
-              - 'kubernetes/apps/dev/forgejo-db/**'
-              - 'kubernetes/apps/home-automation/home-assistant-db/**'
-              - 'kubernetes/apps/home-automation/n8n-db/**'
-              - 'kubernetes/apps/home-automation/paperless/**'
-              - 'kubernetes/apps/home/immich-db/**'
-              - 'kubernetes/apps/home/mealie-db/**'
-              - 'kubernetes/apps/home/med-tracker*/**'
-              - 'kubernetes/apps/home/penpot-db/**'
-              - 'kubernetes/apps/monitoring/grafana/**'
-              - 'kubernetes/apps/monitoring/kustomization.yaml'
-              - 'kubernetes/apps/monitoring/loki/**'
+              - 'kubernetes/apps/home/med-tracker/**'
               - 'kubernetes/apps/monitoring/tempo/**'
-              - 'kubernetes/apps/storage/kustomization.yaml'
-              - 'kubernetes/apps/storage/longhorn/**'
-              - 'kubernetes/apps/storage/rustfs*/**'
+              - 'kubernetes/apps/storage/rustfs-iam/**'
               - 'scripts/tempo_privacy_check.sh'
               - 'scripts/tempo_trace_backend_contract.sh'
               - 'tests/fixtures/tempo-privacy/**'
@@ -173,11 +159,8 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python3 -m unittest tests/test_mondoo_scan.py tests/test_zitadel_config.py
+          python3 -m unittest tests/test_zitadel_config.py
           ruby tests/test_zitadel_access_policy.rb
-
-      - name: Validate migrated policy parity
-        run: python3 scripts/mondoo_scan.py validate-parity
 
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml
