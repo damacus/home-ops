@@ -67,7 +67,7 @@ spec:
           app:
             image:
               repository: ghcr.io/paperless-ngx/paperless-ngx
-              tag: 2.20.15@sha256:6c86cad803970ea782683a8e80e7403444c5bf3cf70de63b4d3c8e87500db92f
+              tag: 3.1.1@sha256:73a1d0bcc5b50cb501f084da795722aa5e2988c6bc9b26ca1ae493a57a490c06
             env:
               PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
               PAPERLESS_SECRET_KEY:
@@ -87,14 +87,16 @@ spec:
                   secretKeyRef:
                     name: paperless-zitadel-oidc
                     key: providers
+              PAPERLESS_ARCHIVE_FILE_GENERATION: always
               PAPERLESS_CONSUMPTION_DIR: /data/nas-mount/incoming
-              PAPERLESS_DATA_DIR: /data/local/data
-              PAPERLESS_DB_TIMEOUT: "30"
-              PAPERLESS_EXPORT_DIR: /data/nas-mount/export
-              PAPERLESS_MEDIA_ROOT: /data/nas-mount/media
-              PAPERLESS_CONSUMER_POLLING: "60"
+              PAPERLESS_CONSUMER_DELETE_DUPLICATES: "true"
+              PAPERLESS_CONSUMER_POLLING_INTERVAL: "60"
               PAPERLESS_CONSUMER_RECURSIVE: "true"
               PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "true"
+              PAPERLESS_DATA_DIR: /data/local/data
+              PAPERLESS_DB_OPTIONS: timeout=30
+              PAPERLESS_EXPORT_DIR: /data/nas-mount/export
+              PAPERLESS_MEDIA_ROOT: /data/nas-mount/media
               PAPERLESS_REDIS_PREFIX: pngx
               PAPERLESS_REDIS: redis://redis-master.database.svc.cluster.local:6379
               PAPERLESS_TIKA_ENABLED: 1
