@@ -12,12 +12,12 @@ Homelab Kubernetes using Flux.
 
 ## 🚀 Getting Started
 
-1. Initialize the development environment:
+1. Install the pinned command-line tools:
    ```bash
-   ./init.sh
+   mise install
    ```
 2. Review the task lists in `.tasks/` to see current progress and pending items.
-3. Use `task` to run automation:
+3. List the repository automation:
    ```bash
    task --list
    ```
