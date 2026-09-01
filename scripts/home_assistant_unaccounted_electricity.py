@@ -8,7 +8,7 @@ import os
 import statistics
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Sequence
 
 
@@ -55,6 +55,7 @@ ACCOUNTED_POWER_ENTITIES = [
     "sensor.rack_switch_power",
     "sensor.office_switch_current_consumption",
     "sensor.unnamed_p110m_current_consumption_2",
+    "sensor.string_lights_current_consumption",
     "sensor.outdoor_lights_power",
     "sensor.downstairs_light_fixtures_power",
     "sensor.upstairs_light_fixtures_power",
@@ -259,7 +260,7 @@ def analysis_summary(
 
 
 def iso_timestamp(timestamp: float) -> str:
-    return datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.fromtimestamp(timestamp, tz=UTC).isoformat().replace("+00:00", "Z")
 
 
 def database_url() -> str:

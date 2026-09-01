@@ -46,6 +46,5 @@ The Energy dashboard device list is a checked-in snapshot. Update
 `scripts/home_assistant_unaccounted_electricity.py` when the dashboard changes.
 
 Unaccounted demand includes genuinely unmetered loads, modelled standby errors,
-meter precision, accounted energy sensors without live power history, and
-remaining timing differences. A reported spike is a reason to correlate entity
-state changes; it does not identify a device by itself.
+meter precision, and remaining timing differences. A reported spike is a reason
+to correlate entity state changes; it does not identify a device by itself.
