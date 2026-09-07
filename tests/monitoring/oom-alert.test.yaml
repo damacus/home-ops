@@ -1,0 +1,36 @@
+rule_files:
+  - oom-rules.yaml
+evaluation_interval: 1m
+tests:
+  - name: OOM identifies the workload without exporter labels
+    interval: 1m
+    input_series:
+      - series: 'kube_pod_container_status_restarts_total{namespace="home",pod="med-tracker-worker-123",container="worker",job="kube-state-metrics",service="victoria-metrics-kube-state-metrics",instance="10.69.4.77:8080",endpoint="http"}'
+        values: '0+0x9 1+0x10'
+      - series: 'kube_pod_container_status_last_terminated_reason{namespace="home",pod="med-tracker-worker-123",container="worker",reason="OOMKilled",job="kube-state-metrics",service="victoria-metrics-kube-state-metrics",instance="10.69.4.77:8080",endpoint="http"}'
+        values: '1+0x20'
+    alert_rule_test:
+      - eval_time: 11m
+        alertname: OOMKilled
+        exp_alerts:
+          - exp_labels:
+              namespace: home
+              pod: med-tracker-worker-123
+              container: worker
+              severity: critical
+            exp_annotations:
+              summary: Container worker in pod home/med-tracker-worker-123 has been OOMKilled 1 times in the last 10 minutes.
+      - eval_time: 20m
+        alertname: OOMKilled
+        exp_alerts: []
+  - name: ordinary restart does not become an OOM
+    interval: 1m
+    input_series:
+      - series: 'kube_pod_container_status_restarts_total{namespace="home",pod="med-tracker-worker-123",container="worker",job="kube-state-metrics"}'
+        values: '0+0x9 1+0x10'
+      - series: 'kube_pod_container_status_last_terminated_reason{namespace="home",pod="med-tracker-worker-123",container="worker",reason="OOMKilled",job="kube-state-metrics"}'
+        values: '0+0x20'
+    alert_rule_test:
+      - eval_time: 11m
+        alertname: OOMKilled
+        exp_alerts: []
