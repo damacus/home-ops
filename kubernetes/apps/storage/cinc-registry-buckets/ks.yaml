@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cinc-registry-buckets
+  namespace: flux-system
+spec:
+  targetNamespace: storage
+  dependsOn:
+  - name: rustfs-iam
+  - name: external-secrets-stores
+  path: "./kubernetes/apps/storage/cinc-registry-buckets/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 15m

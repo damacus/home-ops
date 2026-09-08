@@ -1,0 +1,14 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: cinc-registry
+  namespace: dev
+spec:
+  schedule: 0 20 0 * * *
+  backupOwnerReference: self
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+  cluster:
+    name: cinc-registry

@@ -1,0 +1,193 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cinc-registry
+  namespace: dev
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.1.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      labels:
+        app.kubernetes.io/part-of: cinc-registry
+    controllers:
+      api:
+        type: deployment
+        replicas: 1
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        containers:
+          app:
+            image:
+              repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
+              tag: fa4e9796@sha256:d65139ce62432bde934268dbce94ac889b1100c9e3643af8f782d665c607ebe8
+            args:
+            - serve
+            envFrom:
+            - configMapRef:
+                name: cinc-registry
+            - secretRef:
+                name: cinc-registry-runtime
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: "/healthz"
+                    port: 8080
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: "/readyz"
+                    port: 8080
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+            env:
+              GOMEMLIMIT: 400MiB
+      worker:
+        type: deployment
+        replicas: 1
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        containers:
+          app:
+            image:
+              repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
+              tag: fa4e9796@sha256:d65139ce62432bde934268dbce94ac889b1100c9e3643af8f782d665c607ebe8
+            args:
+            - worker
+            envFrom:
+            - configMapRef:
+                name: cinc-registry
+            - secretRef:
+                name: cinc-registry-runtime
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 256Mi
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: "/healthz"
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: "/readyz"
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+      gateway:
+        type: deployment
+        replicas: 1
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        containers:
+          app:
+            image:
+              repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
+              tag: fa4e9796@sha256:d65139ce62432bde934268dbce94ac889b1100c9e3643af8f782d665c607ebe8
+            args:
+            - artifact-gateway
+            envFrom:
+            - configMapRef:
+                name: cinc-registry-gateway
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 128Mi
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: "/healthz"
+                    port: 8082
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: "/readyz"
+                    port: 8082
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+    service:
+      api:
+        controller: api
+        type: ClusterIP
+        ports:
+          http:
+            port: 8080
+      gateway:
+        controller: gateway
+        type: ClusterIP
+        ports:
+          http:
+            port: 8082

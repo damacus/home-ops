@@ -1,0 +1,45 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cinc-registry
+  namespace: dev
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:18@sha256:899d3ed526b659d77935dde0e6bf2d69dbbf17d3d8c6486ca8cfd04bd3c18533
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  enableSuperuserAccess: false
+  managed:
+    roles:
+    - name: cinc_sm_runtime
+      ensure: present
+      login: true
+      superuser: false
+      bypassrls: false
+      passwordSecret:
+        name: cinc-registry-db-runtime
+  bootstrap:
+    initdb:
+      database: cinc_supermarket
+      owner: cinc_sm_owner
+      secret:
+        name: cinc-registry-db-owner
+      postInitApplicationSQL:
+      - CREATE ROLE cinc_sm_runtime LOGIN NOSUPERUSER NOBYPASSRLS
+  storage:
+    size: 10Gi
+    storageClass: openebs-hostpath
+  monitoring:
+    enablePodMonitor: true
+  plugins:
+  - name: barman-cloud.cloudnative-pg.io
+    isWALArchiver: true
+    parameters:
+      barmanObjectName: cinc-registry-rustfs
+      serverName: cinc-registry
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 1Gi

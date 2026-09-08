@@ -11,3 +11,4 @@ resources:
   - ./minio/ks.yaml
   - ./rustfs/ks.yaml
   - ./rustfs-iam/ks.yaml
+  - ./cinc-registry-buckets/ks.yaml

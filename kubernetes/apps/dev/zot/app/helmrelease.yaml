@@ -1,0 +1,100 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: zot
+  namespace: dev
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.1.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      nodeSelector:
+        kubernetes.io/arch: arm64
+    controllers:
+      main:
+        type: deployment
+        replicas: 1
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        containers:
+          app:
+            image:
+              repository: ghcr.io/project-zot/zot-linux-arm64
+              tag: v2.1.21@sha256:0270db3550faf4de3b4a1c6e2fe0a638abbf588769f673d2a4bb0bccaaaa50e8
+            args:
+            - serve
+            - "/etc/zot/config.json"
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+            probes:
+              liveness:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: 5000
+              readiness:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: 5000
+    service:
+      main:
+        controller: main
+        type: ClusterIP
+        ports:
+          http:
+            port: 5000
+    persistence:
+      config:
+        type: secret
+        name: zot-config
+        globalMounts:
+        - path: "/etc/zot"
+          readOnly: true
+      data:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        storageClass: openebs-hostpath
+        globalMounts:
+        - path: "/var/lib/zot"
+      tmp:
+        type: emptyDir
+        globalMounts:
+        - path: "/tmp"

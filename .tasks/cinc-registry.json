@@ -1,0 +1,14 @@
+[
+  {
+    "category": "kubernetes",
+    "description": "Run Cinc Registry and separate Zot in dev with PostgreSQL 18 and a five-cookbook import",
+    "steps": [
+      "Validate app-template rendering and installed Kubernetes/CRD schemas",
+      "Provision dedicated 1Password credentials and RustFS buckets",
+      "Reconcile CNPG, Zot, bootstrap, API, worker and artifact gateway",
+      "Verify the five-cookbook import, digest-checked downloads and backup",
+      "Verify repeat imports do not create duplicate versions"
+    ],
+    "passes": false
+  }
+]

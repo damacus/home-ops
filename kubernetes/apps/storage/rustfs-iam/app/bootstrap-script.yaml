@@ -220,6 +220,13 @@ data:
       reconcile_user "rustfs-loki" "$RUSTFS_LOKI_ACCESS_KEY" "$RUSTFS_LOKI_SECRET_KEY"
     }
 
+    if [ "$scope" = "cinc-registry" ]; then
+      provision_single_bucket_identity "rustfs-cinc-registry-oci" "$RUSTFS_CINC_OCI_ACCESS_KEY" "$RUSTFS_CINC_OCI_SECRET_KEY" "cinc-registry-oci"
+      provision_single_bucket_identity "rustfs-cinc-registry-artifacts" "$RUSTFS_CINC_ARTIFACTS_ACCESS_KEY" "$RUSTFS_CINC_ARTIFACTS_SECRET_KEY" "cinc-registry-artifacts"
+      provision_single_bucket_identity "rustfs-cnpg-cinc-registry" "$RUSTFS_CINC_BACKUP_ACCESS_KEY" "$RUSTFS_CINC_BACKUP_SECRET_KEY" "cnpg-cinc-registry"
+      exit 0
+    fi
+
     if [ "$scope" = "tempo" ]; then
       provision_tempo_identity
       exit 0
