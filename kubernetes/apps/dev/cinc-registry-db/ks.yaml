@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cinc-registry-db
+  namespace: flux-system
+spec:
+  targetNamespace: dev
+  path: "./kubernetes/apps/dev/cinc-registry-db/app"
+  prune: true
+  wait: true
+  dependsOn:
+  - name: cloudnative-pg
+  - name: external-secrets-stores
+  - name: openebs
+  - name: rustfs
+  - name: cinc-registry-buckets
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m

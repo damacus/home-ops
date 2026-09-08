@@ -7,3 +7,6 @@ resources:
   - ./forgejo/ks.yaml
   - ./konflate/ks.yaml
   - ./namespace.yaml
+  - ./cinc-registry-db/ks.yaml
+  - ./zot/ks.yaml
+  - ./cinc-registry/ks.yaml

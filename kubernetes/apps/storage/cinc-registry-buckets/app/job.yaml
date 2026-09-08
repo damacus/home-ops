@@ -1,0 +1,56 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cinc-registry-buckets-v1
+  namespace: storage
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: rc
+        image: rustfs/rc:v0.1.31@sha256:f3dc331f76b14a852a1dc0bffc80509cc41424eaa9ea0306d9584edc211dcad6
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        env:
+        - name: RUSTFS_ENDPOINT
+          value: http://rustfs.storage.svc.cluster.local:9000
+        - name: HOME
+          value: "/tmp"
+        envFrom:
+        - secretRef:
+            name: rustfs-credentials
+        - secretRef:
+            name: rustfs-cinc-registry
+        command:
+        - "/bin/sh"
+        - "/scripts/bootstrap.sh"
+        - cinc-registry
+        volumeMounts:
+        - name: tmp
+          mountPath: "/tmp"
+        - name: bootstrap-script
+          mountPath: "/scripts"
+          readOnly: true
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: bootstrap-script
+        configMap:
+          name: rustfs-iam-bootstrap
+          defaultMode: 365
+  activeDeadlineSeconds: 600

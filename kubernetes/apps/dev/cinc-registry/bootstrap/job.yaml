@@ -1,0 +1,72 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cinc-registry-bootstrap-fa4e9796
+  namespace: dev
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: cinc-registry
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: generate-universe
+        image: registry.gitlab.com/cinc-project/distribution/cinc-supermarket:fa4e9796@sha256:d65139ce62432bde934268dbce94ac889b1100c9e3643af8f782d665c607ebe8
+        args:
+        - generate-universe
+        envFrom:
+        - configMapRef:
+            name: cinc-registry
+        - secretRef:
+            name: cinc-registry-runtime
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+      initContainers:
+      - name: migrate
+        image: registry.gitlab.com/cinc-project/distribution/cinc-supermarket:fa4e9796@sha256:d65139ce62432bde934268dbce94ac889b1100c9e3643af8f782d665c607ebe8
+        args:
+        - migrate
+        env:
+        - name: CINC_SM_ARTIFACT_STORE_ENABLED
+          value: 'false'
+        - name: CINC_SM_OBJECT_STORE_ENABLED
+          value: 'false'
+        envFrom:
+        - configMapRef:
+            name: cinc-registry
+        - secretRef:
+            name: cinc-registry-migrate
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 512Mi

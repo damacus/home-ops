@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: zot
+  namespace: flux-system
+spec:
+  targetNamespace: dev
+  path: "./kubernetes/apps/dev/zot/app"
+  prune: true
+  wait: true
+  dependsOn:
+  - name: external-secrets-stores
+  - name: rustfs
+  - name: openebs
+  - name: cinc-registry-buckets
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
