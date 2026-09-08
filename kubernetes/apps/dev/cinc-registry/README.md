@@ -105,16 +105,9 @@ before attempting an application image rollback.
 ## Local checks
 
 ```sh
-python3 -m unittest discover -s tests -p test_cinc_registry_config.py
-python3 scripts/cinc_registry_pg18_smoke.py
 kubectl kustomize kubernetes/apps/dev
 kubectl kustomize kubernetes/apps/storage
 ```
-
-The Docker smoke check reads the pinned images from these manifests, creates a
-disposable database without publishing host ports, verifies migrations, universe
-generation and runtime privilege restrictions, then removes its containers and
-network. Docker must be running and able to pull the images.
 
 Render both releases with app-template 5.1.0 and validate the output with
 `kubeconform -strict -summary`. Server-side dry-run the rendered workloads and each
