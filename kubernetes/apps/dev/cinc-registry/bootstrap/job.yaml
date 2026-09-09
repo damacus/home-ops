@@ -2,10 +2,10 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: cinc-registry-bootstrap-fa4e9796
+  name: cinc-registry-bootstrap-fa4e9796-v2
   namespace: dev
 spec:
-  backoffLimit: 0
+  backoffLimit: 4
   activeDeadlineSeconds: 600
   template:
     metadata:
