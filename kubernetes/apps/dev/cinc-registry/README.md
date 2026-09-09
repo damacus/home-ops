@@ -60,7 +60,7 @@ Flux orders the work as follows:
 
 1. Provision buckets and IAM users, then reconcile CNPG and Zot.
 2. Reconcile Cinc configuration and ExternalSecrets.
-3. Run `cinc-registry-bootstrap-fa4e9796`: migrate using the owner account in
+3. Run the versioned `cinc-registry-bootstrap` Job: migrate using the owner account in
    an init container, then generate an initial universe with the runtime account.
    Artifact delivery is disabled only for the migration process because it has
    no artifact credentials and does not access artifact storage.

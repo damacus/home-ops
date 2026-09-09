@@ -12,6 +12,7 @@ spec:
     spec:
       backoffLimit: 4
       activeDeadlineSeconds: 300
+      ttlSecondsAfterFinished: 86400
       template:
         spec:
           automountServiceAccountToken: false
