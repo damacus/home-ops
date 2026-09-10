@@ -23,7 +23,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: home-ops-image-automation
-  suspend: true
+  suspend: false
   update:
     path: ./kubernetes/apps/home/med-tracker-canary/app
     strategy: Setters
