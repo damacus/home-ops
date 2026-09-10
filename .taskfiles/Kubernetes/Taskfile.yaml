@@ -8,6 +8,7 @@ vars:
   RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
   RUSTFS_IAM_LIVE_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam-live.mql.yaml"
   RUSTFS_IAM_LIVE_CHECK_SCRIPT: "{{.SCRIPTS_DIR}}/rustfs_iam_live_check.sh"
+  MED_TRACKER_PRODUCTION_OIDC_CONTRACT: "{{.SCRIPTS_DIR}}/med_tracker_production_oidc_contract.sh"
   TEMPO_TRACE_BACKEND_CONTRACT: "{{.SCRIPTS_DIR}}/tempo_trace_backend_contract.sh"
 
 tasks:
@@ -328,6 +329,15 @@ tasks:
       - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
       - { msg: "Missing rg", sh: "command -v rg >/dev/null" }
       - { msg: "Missing Tempo trace backend contract script", sh: "test -f {{.TEMPO_TRACE_BACKEND_CONTRACT}}" }
+
+  med-tracker-production-oidc-contract:
+    desc: Validate production MedTracker native OIDC client configuration
+    silent: true
+    cmd: bash {{.MED_TRACKER_PRODUCTION_OIDC_CONTRACT}} {{.ROOT_DIR}}
+    preconditions:
+      - { msg: "Missing bash", sh: "command -v bash >/dev/null" }
+      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
+      - { msg: "Missing MedTracker production OIDC contract script", sh: "test -f {{.MED_TRACKER_PRODUCTION_OIDC_CONTRACT}}" }
 
   object-storage-migrate:
     desc: Copy or sync objects between MinIO and RustFS with local rclone
