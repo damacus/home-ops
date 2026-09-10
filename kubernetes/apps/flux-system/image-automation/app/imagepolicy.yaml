@@ -1,0 +1,17 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: med-tracker-beta
+  labels:
+    image.toolkit.fluxcd.io/automation: med-tracker-canary
+spec:
+  digestReflectionPolicy: Always
+  filterTags:
+    pattern: ^beta$
+  imageRepositoryRef:
+    name: med-tracker-beta
+  interval: 1m
+  policy:
+    alphabetical:
+      order: asc
