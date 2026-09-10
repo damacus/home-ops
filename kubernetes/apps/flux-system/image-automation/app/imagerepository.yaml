@@ -1,0 +1,10 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: med-tracker-beta
+spec:
+  image: ghcr.io/damacus/med-tracker
+  interval: 1m
+  secretRef:
+    name: ghcr-credentials

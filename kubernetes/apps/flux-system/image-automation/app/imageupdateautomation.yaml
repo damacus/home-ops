@@ -1,0 +1,29 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: med-tracker-canary
+spec:
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        email: dan.webb@damacus.io
+        name: Dan Webb
+      messageTemplate: |
+        chore(med-tracker): update canary beta digest
+    push:
+      branch: main
+  interval: 1m
+  policySelector:
+    matchLabels:
+      image.toolkit.fluxcd.io/automation: med-tracker-canary
+  sourceRef:
+    kind: GitRepository
+    name: home-ops-image-automation
+  suspend: true
+  update:
+    path: ./kubernetes/apps/home/med-tracker-canary/app
+    strategy: Setters
