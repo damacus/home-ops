@@ -10,4 +10,5 @@ resources:
   - ./echo-server/ks.yaml
   - ./external-dns/ks.yaml
   - ./external-services/ks.yaml
+  - ./gateway-api-crds/ks.yaml
   - ./traefik/ks.yaml

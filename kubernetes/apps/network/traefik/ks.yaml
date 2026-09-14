@@ -10,6 +10,7 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
+    - name: gateway-api-crds
     - name: certificates
   path: ./kubernetes/apps/network/traefik/app
   prune: true
