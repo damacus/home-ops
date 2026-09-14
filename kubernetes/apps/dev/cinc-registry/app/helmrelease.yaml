@@ -43,7 +43,7 @@ spec:
           app:
             image:
               repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
-              tag: fa4e9796@sha256:d65139ce62432bde934268dbce94ac889b1100c9e3643af8f782d665c607ebe8
+              tag: 9980c147@sha256:07ead472588a3774960d4ee7f2b94e57db79392894c547452983a322337224a6
             args:
             - serve
             envFrom:
@@ -93,7 +93,7 @@ spec:
           app:
             image:
               repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
-              tag: fa4e9796@sha256:d65139ce62432bde934268dbce94ac889b1100c9e3643af8f782d665c607ebe8
+              tag: 9980c147@sha256:07ead472588a3774960d4ee7f2b94e57db79392894c547452983a322337224a6
             args:
             - worker
             envFrom:
@@ -141,7 +141,7 @@ spec:
           app:
             image:
               repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
-              tag: fa4e9796@sha256:d65139ce62432bde934268dbce94ac889b1100c9e3643af8f782d665c607ebe8
+              tag: 9980c147@sha256:07ead472588a3774960d4ee7f2b94e57db79392894c547452983a322337224a6
             args:
             - artifact-gateway
             envFrom:
