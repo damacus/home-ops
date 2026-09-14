@@ -50,6 +50,8 @@ spec:
             image:
               repository: &repository ghcr.io/damacus/med-tracker
               tag: &tag beta
+              digest: &digest sha256:41d783a8f0a2fdf5fb33569131c5f51ddc53bc868f7f6660a37cfce90e8b8ead # {"$imagepolicy": "flux-system:med-tracker-beta:digest"}
+              pullPolicy: &pullPolicy Always
             command: ["bin/rails", "db:prepare"]
             envFrom:
               - secretRef:
@@ -65,6 +67,8 @@ spec:
             image:
               repository: *repository
               tag: *tag
+              digest: *digest
+              pullPolicy: *pullPolicy
 
             envFrom: &appEnvFrom
               - secretRef:
@@ -145,6 +149,8 @@ spec:
             image:
               repository: *repository
               tag: *tag
+              digest: *digest
+              pullPolicy: *pullPolicy
             command: ["bin/rails", "db:prepare"]
             envFrom:
               - secretRef:
@@ -160,6 +166,8 @@ spec:
             image:
               repository: *repository
               tag: *tag
+              digest: *digest
+              pullPolicy: *pullPolicy
             command: ["bin/jobs"]
             args: ["--mode", "async"]
             envFrom: *appEnvFrom
@@ -195,6 +203,8 @@ spec:
             image:
               repository: *repository
               tag: *tag
+              digest: *digest
+              pullPolicy: *pullPolicy
             command: ["/bin/sh", "/app/bin/canary-reset"]
             envFrom:
               - secretRef:

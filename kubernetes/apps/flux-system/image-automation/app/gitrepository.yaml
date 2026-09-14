@@ -1,0 +1,13 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: home-ops-image-automation
+spec:
+  interval: 1m
+  provider: github
+  ref:
+    branch: main
+  secretRef:
+    name: patchbotmcbotface-github-app
+  url: https://github.com/damacus/home-ops.git
