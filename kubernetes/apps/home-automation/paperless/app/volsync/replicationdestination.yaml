@@ -2,22 +2,23 @@
 apiVersion: volsync.backube/v1alpha1
 kind: ReplicationDestination
 metadata:
-  name: paperless-data-hdd
+  name: paperless-localdata-restore
   namespace: home-automation
 spec:
+  paused: true
   trigger:
     manual: restore-once
   restic:
     repository: rustfs-paperless
-    destinationPVC: paperless-data-hdd
+    destinationPVC: paperless-localdata-restore
     copyMethod: Direct
-    storageClassName: nfs-csi-unas
+    storageClassName: longhorn
     accessModes:
       - ReadWriteOnce
-    capacity: 100Gi
+    capacity: 6Gi
     cacheCapacity: 1Gi
     cacheStorageClassName: openebs-hostpath
     moverSecurityContext:
-      runAsUser: 1000
-      runAsGroup: 1000
-      fsGroup: 1000
+      runAsUser: 1030
+      runAsGroup: 1030
+      fsGroup: 1030
