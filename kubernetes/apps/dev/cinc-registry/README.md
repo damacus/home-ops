@@ -2,7 +2,8 @@
 
 Runs in `dev`: one API, one worker, one artifact gateway, a separate Zot
 app-template release, and a dedicated two-instance PostgreSQL 18 CNPG cluster.
-All Cinc workloads use the same digest-pinned `fa4e9796` image. Zot uses 2.1.21
+The API, worker, gateway and bootstrap use digest-pinned `9980c147`.
+The completed trial import retains its original image. Zot uses 2.1.21
 for ARM64, pinned by digest. PostgreSQL 18 is also digest-pinned.
 
 The pinned Cinc image is anonymously pullable; no GitLab pull credential is needed.
