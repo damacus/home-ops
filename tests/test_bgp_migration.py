@@ -55,6 +55,34 @@ class BGPMigrationTest(unittest.TestCase):
         for block in blocks:
             self.assertEqual(ipaddress.ip_address(block["start"]).version, 4)
 
+    def test_existing_services_request_unique_bgp_addresses(self) -> None:
+        expected = {"esphome": 227, "mosquitto": 229, "wyoming-piper": 231,
+                    "wyoming-whisper": 232, "matter-server": 234,
+                    "wyoming-openwakeword": 235, "forgejo": 236, "traefik": 238}
+        seen: set[str] = set()
+        bgp = self.resource("CiliumLoadBalancerIPPool", "lb-pool")["spec"]["serviceSelector"]
+        l2 = self.resource("CiliumL2AnnouncementPolicy")["spec"]["serviceSelector"]
+        for path in (ROOT / "kubernetes/apps").rglob("*.yaml"):
+            if (path.name.lower() != "helmrelease.yaml" or path.parent.parent.name not in
+                    {"esphome", "mosquitto", "piper", "whisper", "matter", "wakeword", "forgejo", "traefik"}):
+                continue
+            hr = json.loads(subprocess.check_output(["yq", "-o=json", ".", str(path)], text=True))
+            name = hr["metadata"]["name"]
+            if name not in expected:
+                continue
+            with self.subTest(service=name):
+                service = hr["spec"]["values"]["service"]
+                if name != "traefik":
+                    service = service["ssh" if name == "forgejo" else "app"]
+                self.assertTrue(selected(bgp, service.get("labels", {})))
+                self.assertFalse(selected(l2, service.get("labels", {})))
+                self.assertEqual(service["annotations"]["lbipam.cilium.io/ips"],
+                                 f"192.168.3.{expected[name]}")
+                self.assertNotIn("loadBalancerIP", service)
+                self.assertNotIn("io.cilium/lb-ipam-ips", service["annotations"])
+                seen.add(name)
+        self.assertEqual(seen, set(expected))
+
     def test_peer_requires_authentication(self) -> None:
         spec = self.resource("CiliumBGPPeerConfig")["spec"]
         self.assertEqual(spec.get("authSecretRef"), "cilium-bgp-auth")

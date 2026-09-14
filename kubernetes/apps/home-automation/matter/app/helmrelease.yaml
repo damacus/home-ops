@@ -109,9 +109,11 @@ spec:
       app:
         controller: *app
         type: LoadBalancer
+        labels:
+          network.ironstone.casa/advertisement: bgp
         externalTrafficPolicy: Cluster
         annotations:
-          io.cilium/lb-ipam-ips: "192.168.1.234"
+          lbipam.cilium.io/ips: "192.168.3.234"
         ports:
           api:
             enabled: true
