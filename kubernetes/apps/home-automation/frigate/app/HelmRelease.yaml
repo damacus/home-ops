@@ -40,7 +40,7 @@ spec:
           app:
             image:
               repository: ghcr.io/blakeblackshear/frigate
-              tag: 0.17.2-rk@sha256:548e2286497e85660249d5270ed47bf0ce3a3ecbe0aff9654ae1c58193a138b6
+              tag: 0.18.0-rk@sha256:06f72cee07ddcdba52c7dc8c4ce5d954e51cbc49b655bfdd31bcf0892bdad2eb
             env:
               TZ: Europe/London
             probes:
