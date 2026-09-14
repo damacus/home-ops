@@ -1,0 +1,27 @@
+FROM data.forgejo.org/forgejo/runner:12 AS forgejo-runner
+
+FROM quay.io/buildah/stable:v1.40.1
+
+RUN dnf install -y \
+      bash \
+      ca-certificates \
+      fuse-overlayfs \
+      git \
+      nodejs \
+      npm \
+      shadow-utils \
+      slirp4netns \
+    && dnf clean all \
+    && useradd --create-home --home-dir /home/runner --shell /bin/bash runner
+
+COPY --from=forgejo-runner /bin/forgejo-runner /usr/local/bin/forgejo-runner
+
+ENV HOME=/home/runner
+ENV STORAGE_DRIVER=vfs
+ENV BUILDAH_ISOLATION=chroot
+
+WORKDIR /home/runner
+USER runner
+
+ENTRYPOINT ["/usr/local/bin/forgejo-runner"]
+CMD ["daemon", "--config", "/config/runner-config.yml"]

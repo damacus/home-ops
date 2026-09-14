@@ -1,0 +1,150 @@
+---
+policies:
+  - uid: home-ops-forgejo-runner-buildah
+    name: Forgejo Buildah Runner
+    version: 1.0.0
+    scoring_system: highest impact
+    tags:
+      mondoo.com/category: security
+      mondoo.com/platform: local
+    authors:
+      - name: Dan Webb
+        email: dan.webb@damacus.io
+    docs:
+      desc: |
+        Validates that the Forgejo runner uses Buildah without DIND,
+        Docker socket mounts, or privileged execution.
+    groups:
+      - title: Forgejo runner GitOps manifests
+        filters:
+          - mql: asset.family.contains("unix")
+        checks:
+          - uid: forgejo-runner-dev-kustomization
+          - uid: forgejo-runner-flux-kustomization
+          - uid: forgejo-runner-secret-config
+          - uid: forgejo-runner-buildah-deployment
+          - uid: forgejo-runner-buildah-safety
+          - uid: forgejo-runner-image-definition
+          - uid: forgejo-runner-image-publish-workflow
+    require:
+      - provider: os
+
+queries:
+  - uid: forgejo-runner-dev-kustomization
+    title: Dev namespace must include the Forgejo runner app
+    mql: |
+      dev = file("kubernetes/apps/dev/kustomization.yaml")
+      dev.exists
+      dev.content.contains("./forgejo-runner/ks.yaml")
+    docs:
+      desc: The dev app bundle must include the runner Flux Kustomization.
+
+  - uid: forgejo-runner-flux-kustomization
+    title: Forgejo runner Flux Kustomization must target dev
+    mql: |
+      ks = file("kubernetes/apps/dev/forgejo-runner/ks.yaml")
+      ks.exists
+      ks.content.contains("name: forgejo-runner")
+      ks.content.contains("namespace: flux-system")
+      ks.content.contains("targetNamespace: dev")
+      ks.content.contains("path: ./kubernetes/apps/dev/forgejo-runner/app")
+      ks.content.contains("name: external-secrets-stores")
+      ks.content.contains("name: forgejo")
+      ks.content.contains("wait: true")
+    docs:
+      desc: The runner must reconcile after Forgejo and External Secrets.
+
+  - uid: forgejo-runner-secret-config
+    title: Forgejo runner secret must render host-mode config
+    mql: |
+      secret = file("kubernetes/apps/dev/forgejo-runner/app/externalsecret.yaml")
+      secret.exists
+      secret.content.contains("kind: ExternalSecret")
+      secret.content.contains("name: forgejo-runner")
+      secret.content.contains("name: onepassword-connect")
+      secret.content.contains("key: forgejo-runner")
+      secret.content.contains("runner-config.yml")
+      secret.content.contains("http://forgejo-http.dev.svc.cluster.local:3000/")
+      secret.content.contains("capacity: 1")
+      secret.content.contains("self-hosted:host")
+      secret.content.contains("linux-arm64:host")
+      secret.content.contains("buildah:host")
+      secret.content.contains("docker://") == false
+    docs:
+      desc: The runner must use host labels and avoid Docker label backends.
+
+  - uid: forgejo-runner-buildah-deployment
+    title: Forgejo runner deployment must use the Buildah runner image
+    mql: |
+      deployment = file("kubernetes/apps/dev/forgejo-runner/app/deployment.yaml")
+      deployment.exists
+      deployment.content.contains("kind: Deployment")
+      deployment.content.contains("name: forgejo-runner-buildah")
+      deployment.content.contains("replicas: 1")
+      deployment.content.contains("image: ghcr.io/damacus/forgejo-runner-buildah:0.1.0")
+      deployment.content.contains("forgejo-runner daemon --config /config/runner-config.yml")
+      deployment.content.contains("STORAGE_DRIVER")
+      deployment.content.contains("vfs")
+      deployment.content.contains("BUILDAH_ISOLATION")
+      deployment.content.contains("chroot")
+      deployment.content.contains("cpu: 100m")
+      deployment.content.contains("memory: 256Mi")
+      deployment.content.contains("cpu: 2000m")
+      deployment.content.contains("memory: 2Gi")
+    docs:
+      desc: The runner pod must be small at rest and able to burst during builds.
+
+  - uid: forgejo-runner-buildah-safety
+    title: Forgejo runner must not use DIND, Docker sockets, or privileged mode
+    mql: |
+      deployment = file("kubernetes/apps/dev/forgejo-runner/app/deployment.yaml")
+      deployment.exists
+      deployment.content.contains("privileged: true") == false
+      deployment.content.contains("docker:dind") == false
+      deployment.content.contains("docker:28-dind") == false
+      deployment.content.contains("/var/run/docker.sock") == false
+      deployment.content.contains("hostPath") == false
+      deployment.content.contains("allowPrivilegeEscalation: false")
+      deployment.content.contains("readOnlyRootFilesystem: true")
+      deployment.content.contains("runAsNonRoot: true")
+      deployment.content.contains("type: Unconfined")
+    docs:
+      desc: The runner avoids Docker daemon and socket patterns, but Buildah requires unconfined seccomp for user namespaces.
+
+  - uid: forgejo-runner-image-definition
+    title: Buildah runner image definition must install expected tools
+    mql: |
+      image = file("containers/forgejo-runner-buildah/Containerfile")
+      image.exists
+      image.content.contains("quay.io/buildah/stable")
+      image.content.contains("data.forgejo.org/forgejo/runner")
+      image.content.contains("buildah")
+      image.content.contains("git")
+      image.content.contains("nodejs")
+      image.content.contains("npm")
+      image.content.contains("fuse-overlayfs")
+      image.content.contains("slirp4netns")
+      image.content.contains("STORAGE_DRIVER=vfs")
+      image.content.contains("BUILDAH_ISOLATION=chroot")
+      image.content.contains("USER runner")
+    docs:
+      desc: The custom image must include Forgejo Runner plus Buildah and workflow tools.
+
+  - uid: forgejo-runner-image-publish-workflow
+    title: Buildah runner image must have a GHCR publish workflow
+    mql: |
+      workflow = file(".github/workflows/forgejo-runner-buildah.yaml")
+      workflow.exists
+      workflow.content.contains("name: Forgejo Runner Buildah Image")
+      workflow.content.contains("packages: write")
+      workflow.content.contains("actions/checkout@v6.0.3")
+      workflow.content.contains("docker/setup-qemu-action@v4.1.0")
+      workflow.content.contains("docker/setup-buildx-action@v4.1.0")
+      workflow.content.contains("docker/login-action@v4.2.0")
+      workflow.content.contains("docker/build-push-action@v7.2.0")
+      workflow.content.contains("context: containers/forgejo-runner-buildah")
+      workflow.content.contains("file: containers/forgejo-runner-buildah/Containerfile")
+      workflow.content.contains("platforms: linux/arm64")
+      workflow.content.contains("ghcr.io/damacus/forgejo-runner-buildah:0.1.0")
+    docs:
+      desc: The custom image must be published by CI because cluster rollout depends on GHCR availability.

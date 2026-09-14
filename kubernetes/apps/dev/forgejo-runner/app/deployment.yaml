@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo-runner-buildah
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: forgejo-runner-buildah
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: forgejo-runner-buildah
+      annotations:
+        reloader.stakater.com/auto: "true"
+    spec:
+      serviceAccountName: forgejo-runner-buildah
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: Unconfined
+      containers:
+        - name: runner
+          image: ghcr.io/damacus/forgejo-runner-buildah:0.1.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -ec
+          args:
+            - |
+              mkdir -p /tmp/run /home/runner/work
+              forgejo-runner daemon --config /config/runner-config.yml
+          env:
+            - name: HOME
+              value: /home/runner
+            - name: STORAGE_DRIVER
+              value: vfs
+            - name: BUILDAH_ISOLATION
+              value: chroot
+            - name: XDG_RUNTIME_DIR
+              value: /tmp/run
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: home
+              mountPath: /home/runner
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          secret:
+            secretName: forgejo-runner
+            defaultMode: 0440
+        - name: home
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
