@@ -107,8 +107,9 @@ published by [pipeline 2845958985](https://gitlab.com/cinc-project/distribution/
 For fully automatic image updates, upstream must publish an ordered version or
 moving `main` image tag; a moving tag must still be pinned by digest here.
 
-Refresh the Cinc tag and digest in the HelmRelease and bootstrap Job together. Rename
-the bootstrap Job with the new short SHA so migrations run before the upgraded
+Refresh the Cinc tag and digest in the HelmRelease and bootstrap Job together.
+Update the build identifier in `CINC_SM_SYNC_USER_AGENT` in the shared ConfigMap.
+Rename the bootstrap Job with the new short SHA so migrations run before the upgraded
 application. Keep the completed trial Job's name stable unless a new import is
 intentional. The bootstrap Kustomization can replace immutable Jobs; the import
 Kustomization deliberately cannot silently replace a completed Job on image edits.

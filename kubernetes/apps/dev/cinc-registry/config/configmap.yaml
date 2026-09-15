@@ -26,7 +26,7 @@ data:
   CINC_SM_CI_TRUSTED_PUBLISHING: 'false'
   CINC_SM_WORKER_HTTP_ADDR: ":8081"
   CINC_SM_SYNC_RATE_PER_SEC: '2'
-  CINC_SM_SYNC_USER_AGENT: cinc-supermarket-ingester/fa4e9796 (+https://gitlab.com/cinc-project/distribution/cinc-supermarket)
+  CINC_SM_SYNC_USER_AGENT: cinc-supermarket-ingester/1a08e438 (+https://gitlab.com/cinc-project/distribution/cinc-supermarket)
 ---
 apiVersion: v1
 kind: ConfigMap
