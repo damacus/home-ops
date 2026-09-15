@@ -11,7 +11,44 @@
     "github>damacus/renovate-config:packageRules.json5",
     "github>damacus/renovate-config:autoMergeSelect.json5",
   ],
+  customManagers: [
+    {
+      customType: "regex",
+      managerFilePatterns: ["/^kubernetes/apps/dev/cinc-registry/README\\.md$/"],
+      matchStrings: [
+        "Upstream source watch: `(?<currentValue>main)@(?<currentDigest>[a-f0-9]{40})`",
+      ],
+      depNameTemplate: "https://gitlab.com/cinc-project/distribution/cinc-supermarket.git",
+      datasourceTemplate: "git-refs",
+      versioningTemplate: "git",
+    },
+  ],
   packageRules: [
+    {
+      description: "Watch CINC Supermarket main until upstream publishes ordered image tags",
+      matchDatasources: ["git-refs"],
+      matchPackageNames: ["https://gitlab.com/cinc-project/distribution/cinc-supermarket.git"],
+      sourceUrl: "https://gitlab.com/cinc-project/distribution/cinc-supermarket",
+      enabled: true,
+      automerge: false,
+      groupName: "CINC Supermarket source",
+      prBodyNotes: [
+        "This is an upstream source notification, not a deployable image update. Verify the successful GitLab main pipeline and published multi-arch image, then update the API, worker, gateway and bootstrap tag/digest together and rename the bootstrap Job. Keep the completed trial import unchanged. See kubernetes/apps/dev/cinc-registry/README.md.",
+      ],
+    },
+    {
+      description: "Keep CINC Supermarket image changes coordinated and manually reviewed",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["registry.gitlab.com/cinc-project/distribution/cinc-supermarket"],
+      sourceUrl: "https://gitlab.com/cinc-project/distribution/cinc-supermarket",
+      groupName: "CINC Supermarket images",
+      automerge: false,
+    },
+    {
+      description: "Preserve the completed CINC trial import",
+      matchFileNames: ["kubernetes/apps/dev/cinc-registry/import/job.yaml"],
+      enabled: false,
+    },
     {
       description: "Group and auto-merge non-major Penpot container updates",
       groupName: "penpot containers",
