@@ -4,6 +4,9 @@ kind: Job
 metadata:
   name: cinc-registry-buckets-v1
   namespace: storage
+  annotations:
+    # Re-run the idempotent provisioner when its immutable pod template changes.
+    kustomize.toolkit.fluxcd.io/force: enabled
 spec:
   backoffLimit: 4
   template:

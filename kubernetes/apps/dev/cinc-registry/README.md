@@ -2,7 +2,7 @@
 
 Runs in `dev`: one API, one worker, one artifact gateway, a separate Zot
 app-template release, and a dedicated two-instance PostgreSQL 18 CNPG cluster.
-The API, worker, gateway and bootstrap use digest-pinned `9980c147`.
+The API, worker, gateway and bootstrap use digest-pinned `1a08e438`.
 The completed trial import retains its original image. Zot uses 2.1.21
 for ARM64, pinned by digest. PostgreSQL 18 is also digest-pinned.
 
@@ -89,11 +89,42 @@ The five-cookbook starter list is not the full Sous-Chefs dependency closure.
 
 ## Updates and recovery
 
-Refresh the Cinc tag and digest in the HelmRelease and bootstrap Job together. Rename
-the bootstrap Job with the new short SHA so migrations run before the upgraded
+Upstream source watch: `main@1a08e4387be5e6f0cc8bc6187a5e0b64374494be`
+
+Renovate watches the upstream Git ref above and opens a manually reviewed source
+notification. It does not change the deployed image from that notification.
+Upstream currently publishes only short commit-SHA image tags, with no releases,
+ordered version tags or moving `main` tag. Renovate's Docker versioning cannot
+order commit hashes; switching to `gitlab-releases` would find no candidates.
+The Docker package rule supplies the source URL and groups image digest changes.
+The completed import Job is excluded from Renovate.
+
+For each source notification, check the successful default-branch pipeline and
+resolve its published tag to a multi-architecture digest with ARM64 support.
+Do not assume the branch tip has finished publishing. The current image is
+`registry.gitlab.com/cinc-project/distribution/cinc-supermarket:1a08e438@sha256:7c01ead95b20a47d4b452c4c46bc36fbbb1af994323ac50bde6d1f66b7ba96d8`,
+published by [pipeline 2845958985](https://gitlab.com/cinc-project/distribution/cinc-supermarket/-/pipelines/2845958985).
+For fully automatic image updates, upstream must publish an ordered version or
+moving `main` image tag; a moving tag must still be pinned by digest here.
+
+Refresh the Cinc tag and digest in the HelmRelease and bootstrap Job together.
+Update the build identifier in `CINC_SM_SYNC_USER_AGENT` in the shared ConfigMap.
+Rename the bootstrap Job with the new short SHA so migrations run before the upgraded
 application. Keep the completed trial Job's name stable unless a new import is
 intentional. The bootstrap Kustomization can replace immutable Jobs; the import
 Kustomization deliberately cannot silently replace a completed Job on image edits.
+
+Merge approval is rollout approval: Flux can automatically run provisioning and
+migrations after merge. A forced reconciliation is a separate live operation.
+Before approving, inspect the source changes and database migrations, then check
+the application and bootstrap use the same candidate. This update from the live
+`fa4e9796` to `1a08e438` adds no migration files.
+
+The bucket provisioner has a resource-level Flux force annotation so an image
+update can replace its immutable Job template. Its `cinc-registry` scope reruns
+only the three Cinc bucket identities. Without replacement, a completed Job with
+an older image blocks the database, configuration, bootstrap and application
+Kustomizations even while the existing application remains healthy.
 
 CNPG uses 10 GiB `openebs-hostpath` storage per instance, continuous WAL archiving,
 and a daily backup with 30-day retention. Zot uses a 1 GiB local PVC for its working
