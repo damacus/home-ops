@@ -6,7 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: dev
-  path: "./kubernetes/apps/dev/cinc-registry/config"
+  path: "./kubernetes/apps/dev/supermarket/config"
   prune: true
   wait: true
   dependsOn:
@@ -26,7 +26,7 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: dev
-  path: "./kubernetes/apps/dev/cinc-registry/bootstrap"
+  path: "./kubernetes/apps/dev/supermarket/bootstrap"
   prune: true
   wait: true
   dependsOn:
@@ -46,7 +46,7 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: dev
-  path: "./kubernetes/apps/dev/cinc-registry/app"
+  path: "./kubernetes/apps/dev/supermarket/app"
   prune: true
   wait: true
   dependsOn:
@@ -67,7 +67,7 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: dev
-  path: "./kubernetes/apps/dev/cinc-registry/import"
+  path: "./kubernetes/apps/dev/supermarket/import"
   prune: true
   wait: true
   dependsOn:

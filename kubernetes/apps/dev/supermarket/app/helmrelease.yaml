@@ -2,7 +2,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: cinc-registry
+  name: supermarket
   namespace: dev
 spec:
   interval: 30m
@@ -32,7 +32,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       labels:
-        app.kubernetes.io/part-of: cinc-registry
+        app.kubernetes.io/part-of: supermarket
     controllers:
       api:
         type: deployment
@@ -48,9 +48,9 @@ spec:
             - serve
             envFrom:
             - configMapRef:
-                name: cinc-registry
+                name: supermarket
             - secretRef:
-                name: cinc-registry-runtime
+                name: supermarket-runtime
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -98,9 +98,9 @@ spec:
             - worker
             envFrom:
             - configMapRef:
-                name: cinc-registry
+                name: supermarket
             - secretRef:
-                name: cinc-registry-runtime
+                name: supermarket-runtime
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -146,7 +146,7 @@ spec:
             - artifact-gateway
             envFrom:
             - configMapRef:
-                name: cinc-registry-gateway
+                name: supermarket-gateway
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true

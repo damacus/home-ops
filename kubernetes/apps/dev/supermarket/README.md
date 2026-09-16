@@ -1,4 +1,4 @@
-# Local Cinc Registry
+# CINC Supermarket
 
 Runs in `dev`: one API, one worker, one artifact gateway, a separate Zot
 app-template release, and a dedicated two-instance PostgreSQL 18 CNPG cluster.
@@ -10,7 +10,7 @@ The pinned Cinc image is anonymously pullable; no GitLab pull credential is need
 
 The internal routes follow the existing Traefik Gateway configuration:
 
-- API and browse UI: `https://cinc-registry.ironstone.casa`
+- API and browse UI: `https://supermarket.ironstone.casa`
 - Download gateway: `https://cinc-artifacts.ironstone.casa`
 - Zot: `zot.dev.svc.cluster.local:5000`, ClusterIP only, bearer authenticated.
 
@@ -61,20 +61,21 @@ Flux orders the work as follows:
 
 1. Provision buckets and IAM users, then reconcile CNPG and Zot.
 2. Reconcile Cinc configuration and ExternalSecrets.
-3. Run the versioned `cinc-registry-bootstrap` Job: migrate using the owner account in
+3. Run the versioned `supermarket-bootstrap` Job: migrate using the owner account in
    an init container, then generate an initial universe with the runtime account.
    Artifact delivery is disabled only for the migration process because it has
    no artifact credentials and does not access artifact storage.
 4. Install the Cinc app-template release and wait for API/worker/gateway probes.
-5. Run `cinc-registry-import-trial-fa4e9796` once. It imports the image's embedded
-   five-cookbook set: nginx, yum, apt, logrotate and cron. It has a two-hour
-   deadline, a 1 GiB memory limit and no automatic retries or scheduled sync.
+5. Retain the completed `cinc-registry-import-trial-fa4e9796` Job. It imported
+   the embedded five-cookbook set: nginx, yum, apt, logrotate and cron. No new
+   import is part of this rename.
 
 Jobs have no TTL, so successful reconciliation does not repeatedly recreate
-them. Do not delete the completed import Job unless intentionally repeating the
-import. Flux will recreate a deleted managed Job. After inspecting a failed
-import's logs and correcting the cause, deleting that Job explicitly retries it.
-The ingester checks existing versions; verify the second run imports no duplicates.
+them. Do not delete the completed import Job: Flux would recreate its historical
+template, which references the old application configuration. For a new import,
+prepare a new Job with the current configuration and an explicitly reviewed
+cookbook selection. The ingester checks existing versions; verify a new run
+imports no duplicates.
 
 Check Job completion, all three Deployment readiness conditions, CNPG readiness,
 and the first successful scheduled backup. Check both HTTPRoutes are accepted.
@@ -88,6 +89,30 @@ No publish, data deletion or legacy ownership transfer is part of this trial.
 The five-cookbook starter list is not the full Sous-Chefs dependency closure.
 
 ## Updates and recovery
+
+### Application rename
+
+The application HelmRelease, generated Deployments and Services, ConfigMaps,
+runtime Secrets and bootstrap Job use `supermarket`. The public hostname is
+`supermarket.ironstone.casa`; Zot uses this hostname for its token endpoint and
+the matching `supermarket` token service. The artifact hostname remains
+`cinc-artifacts.ironstone.casa`.
+
+Existing PostgreSQL, bucket and secret-provider identities retain their
+`cinc-registry` names so this rename continues using the existing data.
+Flux Kustomization names also remain stable to retain their resource inventories;
+their paths now point to `kubernetes/apps/dev/supermarket`.
+The completed trial import is historical and retains its original immutable
+template. Do not rerun it; a new import needs a new Job using the current
+`supermarket` ConfigMap and `supermarket-runtime` Secret.
+
+On rollout, Flux replaces the old application HelmRelease with `supermarket`.
+This can interrupt service while the new Deployments become ready. Zot permits
+both old and new pod labels during the transition. Check the new hostname,
+token endpoint and artifact download after rollout. A database or bucket rename
+requires a separate data migration; do not replace those identifiers in place.
+
+### Image updates
 
 Upstream source watch: `main@1a08e4387be5e6f0cc8bc6187a5e0b64374494be`
 

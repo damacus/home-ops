@@ -14,7 +14,7 @@
   customManagers: [
     {
       customType: "regex",
-      managerFilePatterns: ["/^kubernetes/apps/dev/cinc-registry/README\\.md$/"],
+      managerFilePatterns: ["/^kubernetes/apps/dev/supermarket/README\\.md$/"],
       matchStrings: [
         "Upstream source watch: `(?<currentValue>main)@(?<currentDigest>[a-f0-9]{40})`",
       ],
@@ -33,7 +33,7 @@
       automerge: false,
       groupName: "CINC Supermarket source",
       prBodyNotes: [
-        "This is an upstream source notification, not a deployable image update. Verify the successful GitLab main pipeline and published multi-arch image, then update the API, worker, gateway and bootstrap tag/digest together and rename the bootstrap Job. Keep the completed trial import unchanged. See kubernetes/apps/dev/cinc-registry/README.md.",
+        "This is an upstream source notification, not a deployable image update. Verify the successful GitLab main pipeline and published multi-arch image, then update the API, worker, gateway and bootstrap tag/digest together and rename the bootstrap Job. Keep the completed trial import unchanged. See kubernetes/apps/dev/supermarket/README.md.",
       ],
     },
     {
@@ -46,7 +46,7 @@
     },
     {
       description: "Preserve the completed CINC trial import",
-      matchFileNames: ["kubernetes/apps/dev/cinc-registry/import/job.yaml"],
+      matchFileNames: ["kubernetes/apps/dev/supermarket/import/job.yaml"],
       enabled: false,
     },
     {

@@ -17,4 +17,8 @@ spec:
     from:
     - podSelector:
         matchLabels:
+          app.kubernetes.io/part-of: supermarket
+    # Permit the existing workload while Flux replaces it during the rename.
+    - podSelector:
+        matchLabels:
           app.kubernetes.io/part-of: cinc-registry

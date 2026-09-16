@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: cinc-registry-bootstrap-1a08e438
+  name: supermarket-bootstrap-1a08e438
   namespace: dev
 spec:
   backoffLimit: 4
@@ -10,7 +10,7 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/part-of: cinc-registry
+        app.kubernetes.io/part-of: supermarket
     spec:
       restartPolicy: Never
       automountServiceAccountToken: false
@@ -28,9 +28,9 @@ spec:
         - generate-universe
         envFrom:
         - configMapRef:
-            name: cinc-registry
+            name: supermarket
         - secretRef:
-            name: cinc-registry-runtime
+            name: supermarket-runtime
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -55,9 +55,9 @@ spec:
           value: 'false'
         envFrom:
         - configMapRef:
-            name: cinc-registry
+            name: supermarket
         - secretRef:
-            name: cinc-registry-migrate
+            name: supermarket-migrate
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
