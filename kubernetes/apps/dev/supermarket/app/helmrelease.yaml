@@ -2,7 +2,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: cinc-registry
+  name: supermarket
   namespace: dev
 spec:
   interval: 30m
@@ -32,7 +32,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       labels:
-        app.kubernetes.io/part-of: cinc-registry
+        app.kubernetes.io/part-of: supermarket
     controllers:
       api:
         type: deployment
@@ -43,14 +43,14 @@ spec:
           app:
             image:
               repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
-              tag: 9980c147@sha256:07ead472588a3774960d4ee7f2b94e57db79392894c547452983a322337224a6
+              tag: 1a08e438@sha256:7c01ead95b20a47d4b452c4c46bc36fbbb1af994323ac50bde6d1f66b7ba96d8
             args:
             - serve
             envFrom:
             - configMapRef:
-                name: cinc-registry
+                name: supermarket
             - secretRef:
-                name: cinc-registry-runtime
+                name: supermarket-runtime
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -93,14 +93,14 @@ spec:
           app:
             image:
               repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
-              tag: 9980c147@sha256:07ead472588a3774960d4ee7f2b94e57db79392894c547452983a322337224a6
+              tag: 1a08e438@sha256:7c01ead95b20a47d4b452c4c46bc36fbbb1af994323ac50bde6d1f66b7ba96d8
             args:
             - worker
             envFrom:
             - configMapRef:
-                name: cinc-registry
+                name: supermarket
             - secretRef:
-                name: cinc-registry-runtime
+                name: supermarket-runtime
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -141,12 +141,12 @@ spec:
           app:
             image:
               repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
-              tag: 9980c147@sha256:07ead472588a3774960d4ee7f2b94e57db79392894c547452983a322337224a6
+              tag: 1a08e438@sha256:7c01ead95b20a47d4b452c4c46bc36fbbb1af994323ac50bde6d1f66b7ba96d8
             args:
             - artifact-gateway
             envFrom:
             - configMapRef:
-                name: cinc-registry-gateway
+                name: supermarket-gateway
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true

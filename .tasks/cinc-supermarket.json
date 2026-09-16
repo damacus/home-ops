@@ -1,0 +1,24 @@
+[
+  {
+    "category": "updates",
+    "description": "Prepare the verified CINC Supermarket 1a08e438 image and upstream source tracking",
+    "steps": [
+      "Verify the successful GitLab main pipeline, registry digest and ARM64 manifest",
+      "Keep API, worker, gateway and bootstrap images identical; preserve the completed import",
+      "Verify Renovate extraction and update lookup from the previous source commit",
+      "Validate rendered manifests and the Renovate configuration"
+    ],
+    "passes": true
+  },
+  {
+    "category": "rollout",
+    "description": "Approve and verify the CINC Supermarket update in the cluster",
+    "steps": [
+      "Obtain merge approval, which permits automatic Flux provisioning and migrations",
+      "Verify bucket provisioning, database, configuration and bootstrap dependencies become Ready",
+      "Verify API, worker and gateway run the approved digest",
+      "Check the nginx package page and download an artifact"
+    ],
+    "passes": false
+  }
+]
