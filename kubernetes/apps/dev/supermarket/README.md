@@ -114,7 +114,7 @@ requires a separate data migration; do not replace those identifiers in place.
 
 ### Image updates
 
-Upstream source watch: `main@1a08e4387be5e6f0cc8bc6187a5e0b64374494be`
+Upstream source watch: `main@cf64f975c64f8c64c79c1a150c481feaf1358697`
 
 Renovate watches the upstream Git ref above and opens a manually reviewed source
 notification. It does not change the deployed image from that notification.
