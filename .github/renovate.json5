@@ -87,6 +87,7 @@
     {
       description: "Auto-merge non-major updates for selected home-ops assets",
       matchPackageNames: [
+        "jdx/mise",
         "ghcr.io/coder/code-server",
         "ghcr.io/cloudnative-pg/postgresql",
         "ghcr.io/home-operations/home-assistant",
