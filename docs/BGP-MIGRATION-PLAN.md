@@ -1,291 +1,141 @@
-# BGP Migration Plan: kube-vip + Cilium
-
-## Goal
-
-Migrate from ARP-based kube-vip to BGP mode so that:
-1. **No UniFi config changes needed when adding/removing nodes** (dynamic peering)
-2. **Works with DHCP node IPs** (nodes don't need static IPs)
-3. **Faster failover** (BGP withdrawal vs ARP cache timeout)
-4. **Single VIP advertised via BGP** (192.168.1.220)
-
----
-
-## Current State
-
-### UniFi Router BGP Config (`scripts/unifi/bgp.cfg`)
-```
-router bgp 65000
-  neighbor 192.168.1.220 peer-group home-kubernetes  # ← Problem: static IP
-```
-
-### kube-vip (`kubernetes/apps/kube-system/kube-vip/app/daemonset.yaml`)
-- Mode: **ARP** (`vip_arp: "true"`)
-- VIP: `192.168.1.220`
-- Leader election via Kubernetes lease
-
-### Cilium BGP (`kubernetes/apps/kube-system/cilium/config/bgp.yaml`)
-- Already configured for service LoadBalancer IPs
-- Peers with UniFi at `192.168.1.254` (AS 65000)
-- Local ASN: 65020
-- LB Pool: `192.168.3.0/24`
-
----
-
-## Problem with Current UniFi Config
-
-The UniFi config has:
-```
-neighbor 192.168.1.220 peer-group home-kubernetes
-```
-
-This peers with the **VIP**, not the nodes. Since nodes have DHCP IPs, you can't list them statically.
-
----
-
-## Solution: BGP Dynamic Neighbors (listen range)
-
-UniFi/FRR supports **dynamic BGP neighbors** using `bgp listen range`. This allows any IP in a CIDR to establish a BGP session without being explicitly configured.
-
-### New UniFi BGP Config
-
-```
-router bgp 65000
-  bgp router-id 192.168.1.254
-  no bgp ebgp-requires-policy
-
-  neighbor home-kubernetes peer-group
-  neighbor home-kubernetes remote-as 65020
-  neighbor home-kubernetes activate
-  neighbor home-kubernetes capability extended-nexthop
-  neighbor home-kubernetes soft-reconfiguration inbound
-
-  # Dynamic neighbors - any IP in 192.168.1.0/24 can peer
-  bgp listen range 192.168.1.0/24 peer-group home-kubernetes
-
-  address-family ipv4 unicast
-    neighbor home-kubernetes next-hop-self
-  exit-address-family
-```
-
-**Key change**: `bgp listen range 192.168.1.0/24 peer-group home-kubernetes`
-
-This means:
-- Any node with a DHCP IP in `192.168.1.0/24` can establish BGP
-- No config changes when nodes are added/removed
-- No static IP requirements
-
----
-
-## Implementation Steps
-
-### Phase 1: Verify Cilium BGP is Working
-
-```bash
-# Check Cilium BGP status on each node
-kubectl exec -n kube-system cilium-<pod> -- cilium-dbg bgp peers
-
-# Verify routes are being advertised
-kubectl exec -n kube-system cilium-<pod> -- cilium-dbg bgp routes advertised ipv4 unicast
-```
-
-Expected: Cilium should already be peering with 192.168.1.254 for service LB IPs.
-
-### Phase 2: Update UniFi BGP Config
-
-1. SSH to UniFi router
-2. Enter FRR shell: `vtysh`
-3. Apply new config:
-
-```
-configure terminal
-router bgp 65000
-  no neighbor 192.168.1.220 peer-group home-kubernetes
-  bgp listen range 192.168.1.0/24 peer-group home-kubernetes
-  bgp listen limit 10
-end
-write memory
-```
-
-4. Verify peers:
-```
-show bgp summary
-show bgp neighbors
-```
-
-### Phase 3: Enable kube-vip BGP Mode
-
-Update `kubernetes/apps/kube-system/kube-vip/app/daemonset.yaml`:
-
-```yaml
-env:
-  - name: address
-    value: "192.168.1.220"
-  # Disable ARP mode
-  - name: vip_arp
-    value: "false"
-  # Enable BGP mode
-  - name: bgp_enable
-    value: "true"
-  - name: bgp_routerid
-    valueFrom:
-      fieldRef:
-        fieldPath: status.podIP  # Use node IP as router ID
-  - name: bgp_as
-    value: "65020"  # Same AS as Cilium
-  - name: bgp_peeraddress
-    value: "192.168.1.254"
-  - name: bgp_peeras
-    value: "65000"
-  - name: bgp_peers
-    value: "192.168.1.254:65000::false"  # peer:AS:password:multihop
-  # Keep other settings
-  - name: port
-    value: "6443"
-  - name: cp_enable
-    value: "true"
-  - name: cp_namespace
-    value: kube-system
-  - name: vip_leaderelection
-    value: "true"
-  - name: vip_leasename
-    value: plndr-cp-lock
-```
-
-### Phase 4: Test Failover
-
-1. Identify current kube-vip leader:
-   ```bash
-   kubectl get lease -n kube-system plndr-cp-lock -o yaml
-   ```
-
-2. Delete the leader pod:
-   ```bash
-   kubectl delete pod -n kube-system kube-vip-<leader-pod>
-   ```
-
-3. Watch BGP route withdrawal/advertisement:
-   ```bash
-   # On UniFi
-   watch -n1 'vtysh -c "show bgp ipv4 unicast 192.168.1.220"'
-   ```
-
-4. Verify API server remains accessible:
-   ```bash
-   kubectl get nodes
-   ```
-
-### Phase 5: Verify No Static IP Dependency
-
-1. Reboot a node (let it get new DHCP IP if lease expires)
-2. Verify BGP session re-establishes
-3. Verify VIP failover still works
-
----
-
-## Rollback Plan
-
-If BGP mode fails:
-
-1. Revert kube-vip to ARP mode:
-   ```yaml
-   - name: vip_arp
-     value: "true"
-   - name: bgp_enable
-     value: "false"
-   ```
-
-2. Revert UniFi config:
-   ```
-   configure terminal
-   router bgp 65000
-     no bgp listen range 192.168.1.0/24 peer-group home-kubernetes
-     neighbor 192.168.1.220 peer-group home-kubernetes
-   end
-   write memory
-   ```
-
----
-
-## Architecture After Migration
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    UniFi Router (AS 65000)                  │
-│                      192.168.1.254                          │
-│                                                             │
-│  bgp listen range 192.168.1.0/24 peer-group home-kubernetes │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              │ eBGP (AS 65000 ↔ AS 65020)
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-        ▼                     ▼                     ▼
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│  node-0b06a7  │     │  node-0b06df  │     │  node-0b0715  │
-│ 192.168.1.233 │     │ 192.168.1.27  │     │ 192.168.1.186 │
-│   (DHCP)      │     │   (DHCP)      │     │   (DHCP)      │
-│               │     │               │     │               │
-│ ┌───────────┐ │     │ ┌───────────┐ │     │ ┌───────────┐ │
-│ │ kube-vip  │ │     │ │ kube-vip  │ │     │ │ kube-vip  │ │
-│ │  (BGP)    │ │     │ │  (BGP)    │ │     │ │  (BGP)    │ │
-│ └───────────┘ │     │ └───────────┘ │     │ └───────────┘ │
-│ ┌───────────┐ │     │ ┌───────────┐ │     │ ┌───────────┐ │
-│ │  Cilium   │ │     │ │  Cilium   │ │     │ │  Cilium   │ │
-│ │  (BGP)    │ │     │ │  (BGP)    │ │     │ │  (BGP)    │ │
-│ └───────────┘ │     │ └───────────┘ │     │ └───────────┘ │
-└───────────────┘     └───────────────┘     └───────────────┘
-
-Advertised Routes:
-- 192.168.1.220/32 (Control Plane VIP) - only from leader
-- 192.168.3.x/32 (Service LB IPs) - from all nodes via Cilium
-```
-
----
-
-## Considerations
-
-### ASN Sharing
-Both kube-vip and Cilium will use AS 65020. This is fine - they're both on the same nodes and advertising different prefixes.
-
-### BGP Session Limits
-`bgp listen limit 10` caps dynamic peers. Adjust if you add more nodes.
-
-### Security
-Dynamic BGP neighbors accept connections from any IP in the range. Your network should be trusted. For additional security, consider:
-- MD5 authentication (add password to peer-group)
-- Prefix filtering on UniFi side
-
-### Monitoring
-Add BGP session monitoring:
-```bash
-# Prometheus metrics from kube-vip
-curl http://<node-ip>:2112/metrics | grep bgp
-```
-
----
-
-## Files to Modify
-
-1. **`scripts/unifi/bgp.cfg`** - Update with dynamic neighbor config
-2. **`kubernetes/apps/kube-system/kube-vip/app/daemonset.yaml`** - Switch to BGP mode
-
----
-
-## Estimated Time
-
-- Phase 1 (Verify): 5 minutes
-- Phase 2 (UniFi): 10 minutes
-- Phase 3 (kube-vip): 15 minutes
-- Phase 4 (Test): 15 minutes
-- Phase 5 (Verify DHCP): 10 minutes
-
-**Total: ~1 hour** (with buffer for troubleshooting)
-
----
-
-## References
-
-- [kube-vip BGP documentation](https://kube-vip.io/docs/usage/bgp/)
-- [Cilium BGP Control Plane](https://docs.cilium.io/en/stable/network/bgp-control-plane/)
-- [FRR Dynamic Neighbors](https://docs.frrouting.org/en/latest/bgp.html#dynamic-neighbors)
+# Cilium service BGP rollout
+
+## Design
+
+Cilium allocates opt-in LoadBalancer services from 192.168.3.2–192.168.3.254.
+UniFi learns their individual /32 routes via authenticated BGP from the nodes.
+The nodes retain their DHCP addresses on 192.168.1.0/24. UniFi is ASN 65000;
+Cilium is ASN 65020. Dynamic peers accommodate node address changes.
+
+Services labelled `network.ironstone.casa/advertisement: bgp` use the BGP pool
+and advertisements. Unlabelled services retain the L2 pool and policy for compatibility and
+rollback. This PR opts all eight existing LoadBalancer services into BGP;
+their address changes are listed below. kube-vip remains in ARP mode at
+192.168.1.220 and does not participate in these BGP sessions.
+
+The Kubernetes VLAN remains VLAN 2, with gateway 192.168.3.1/24. DHCP,
+auto-scale, IPv6 prefix delegation and router advertisements were disabled
+and read back on 2026-09-14. Other network objects were verified unchanged.
+Keeping the connected /24 does not prevent more-specific BGP /32 routes from
+winning; the gateway address is excluded from allocation and import.
+
+## Router and authentication
+
+`scripts/unifi/bgp.cfg` is a template, not an upload-ready credential file.
+Save the rendered upload as a `.conf` text file; UniFi rejects `.cfg`.
+Render `BGP_PASSWORD` using the `password` key of the dedicated
+`kube-system/cilium-bgp-auth` Secret. Never commit or print the rendered file.
+Keep a copy in a protected password store for cluster disaster recovery.
+
+The router accepts authenticated peers from 192.168.1.0/24, with a maximum
+of ten peers, and imports only service /32 routes. It exports no routes to
+the nodes. There is no redistribution of WAN, connected or default routes.
+The completed initial test used a single service. The application cutover
+below moves all eight existing LoadBalancer services. Three equal-cost paths are permitted when all nodes advertise a route.
+
+Use UniFi Settings → Routing → BGP → existing `k3s` configuration to replace
+the uploaded file. Preserve Override WAN Monitors and SD-WAN settings.
+Do not change FRR with SSH `write memory`: the controller owns this config.
+Download the existing file before replacing it. The pre-change config peered
+only with 192.168.1.200. Keep its backup outside Git for rollback.
+
+## Validation and rollout
+
+1. Run `python3 -m unittest discover -s tests -p test_bgp_migration.py`.
+2. Validate `kubectl --context ironstone apply --server-side --dry-run=server
+   --force-conflicts --field-manager=bgp-validation -k
+   kubernetes/apps/kube-system/cilium/config`. Conflict resolution here is
+   dry-run only, not permission to overwrite Flux field ownership live.
+3. Parse the rendered router file using FRR. The isolated local FRR 10.4.1
+   parser accepts the template, but the local Docker kernel lacks TCP MD5;
+   authentication must be checked on the actual gateway.
+4. Upload the matching authenticated router configuration. Publish the
+   Cilium configuration through the normal reviewed Flux workflow before
+   considering it durable. Avoid applying it only live: Flux would revert it.
+5. Confirm all three peers are Established and initially advertise no routes.
+6. Apply `docs/examples/bgp-test-service.yaml`. It adds a separate, temporary
+   service to the existing Traefik pods, with no DNS or application changes.
+7. Confirm 192.168.3.10 allocation, the /32 route and next hops on UniFi, and
+   successful HTTPS access from a management-subnet client using an existing
+   Traefik hostname and `curl --resolve hostname:443:192.168.3.10`.
+8. Delete only `network/bgp-test` after testing; confirm withdrawal of its
+   /32 route and continued access through the original Traefik address.
+
+For rollback, remove the test service, restore the Cilium manifests from the
+previous Git revision and upload the backed-up UniFi configuration. Keep the
+new unused Secret until rollback is confirmed; never delete shared secrets
+as part of a broad cleanup. No node, kube-vip or application restart is needed.
+
+## Single-PR application cutover
+
+This PR includes both the BGP configuration and all eight Service migrations.
+There are no temporary old-address aliases. Retain the final octet:
+
+| Service | Previous IP | BGP IP |
+| --- | --- | --- |
+| ESPHome | 192.168.1.227 | 192.168.3.227 |
+| Mosquitto | 192.168.1.229 | 192.168.3.229 |
+| Piper | 192.168.1.231 | 192.168.3.231 |
+| Whisper | 192.168.1.232 | 192.168.3.232 |
+| Matter | 192.168.1.234 | 192.168.3.234 |
+| OpenWakeWord | 192.168.1.235 | 192.168.3.235 |
+| Forgejo SSH | 192.168.1.236 | 192.168.3.236 |
+| Traefik | 192.168.1.238 | 192.168.3.238 |
+
+All requests use `lbipam.cilium.io/ips`; old `loadBalancerIP` fields and
+`io.cilium/lb-ipam-ips` annotations are removed. Service names, port mappings
+and pod selectors are unchanged. The pinned Helm charts were rendered before
+and after the changes to verify this for all eight Services.
+
+Before deployment, reconfigure Home Assistant's Matter integration from
+`ws://192.168.1.234:5580/ws` to
+`ws://matter-server.home-automation.svc.cluster.local:5580/ws` and verify its
+connection. The internal name resolves from the running Home Assistant pod.
+Do this through the integration's supported configuration flow, not by editing
+its storage file while Home Assistant is running.
+
+The owner accepts leaving the Piper and Whisper integrations pointing at their
+old addresses; voice repair is outside this cutover. Home Assistant's MQTT
+integration already uses `mosquitto.home-automation.svc.cluster.local`.
+Its ESPHome integrations point at physical device addresses, not this service.
+Clients outside Home Assistant may still contain hard-coded old addresses and
+have not been exhaustively inventoried.
+
+One PR does not mean an atomic deployment: Flux reconciles the HelmReleases
+independently. Before merging, confirm the three BGP sessions and the Matter
+connection above. After merging, refresh the Flux source, resume/reconcile
+`cilium-config` against the merge revision, and reconcile the eight releases.
+Verify each new Service IP and /32 route. Check DNS has moved for
+`traefik-int.ironstone.casa`, Gateway-derived records and
+`ssh.forgejo.ironstone.casa`, then check HTTPS, Git SSH, MQTT and Matter.
+Old DNS caches and active connections can cause an interruption during cutover.
+Piper/Whisper application health is explicitly not an acceptance gate.
+
+Rollback the eight HelmRelease Service changes to their previous IP requests
+and remove the BGP label. Leave the working BGP infrastructure and L2 pool in
+place; the old addresses then use L2 again. Verify DNS returns to the previous
+addresses and clients reconnect. Full infrastructure rollback is separate.
+
+## Verified rollout on 2026-09-14
+
+The VLAN settings, dedicated authentication Secret, UniFi configuration and
+Cilium configuration are live. All three peers reached Established.
+UniFi installed 192.168.3.10/32 with three equal-cost next hops:
+192.168.1.27, 192.168.1.186 and 192.168.1.233. HTTPS to this address passed
+certificate verification and returned Traefik's default 404 response.
+
+The temporary Service was removed after the test. Subsequent connections to
+192.168.3.10 timed out. All eight existing LoadBalancer addresses stayed
+unchanged; all three nodes and kube-vip pods remained healthy with no kube-vip
+restarts. The initial four regression tests, YAML lint and server-side dry-runs passed.
+The expanded five-test suite and all eight pinned chart renders also pass;
+the eight-service production cutover has not been performed.
+
+Only `flux-system/cilium-config` is temporarily suspended to prevent the old
+Git configuration from overwriting the verified live settings. After merging
+this change, refresh the `home-kubernetes` GitRepository to that revision,
+resume `cilium-config`, reconcile it and recheck all three BGP sessions.
+Do not resume against the old revision. The Cilium workload itself is running.
+
+Sources: [Cilium BGP configuration](https://docs.cilium.io/en/stable/network/bgp-control-plane/bgp-control-plane-configuration/)
+and [UniFi BGP](https://help.ui.com/hc/en-us/articles/16271338193559-UniFi-Border-Gateway-Protocol-BGP).

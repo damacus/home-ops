@@ -1,0 +1,22 @@
+[
+  {
+    "description": "Separate opt-in BGP services from existing L2 services and validate manifests",
+    "passes": true
+  },
+  {
+    "description": "Establish authenticated BGP peers and verify temporary service route, TLS reachability and removal",
+    "passes": true
+  },
+  {
+    "description": "Prepare all eight service IP migrations in the same PR and validate pinned chart rendering",
+    "passes": true
+  },
+  {
+    "description": "Merge the BGP configuration, refresh its Flux source and resume cilium-config reconciliation",
+    "passes": false
+  },
+  {
+    "description": "Reconfigure Matter, deploy the service cutover and verify application connectivity and DNS",
+    "passes": false
+  }
+]

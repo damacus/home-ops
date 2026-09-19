@@ -72,7 +72,10 @@ spec:
       app:
         controller: whisper
         type: LoadBalancer
-        loadBalancerIP: "192.168.1.232"
+        annotations:
+          lbipam.cilium.io/ips: "192.168.3.232"
+        labels:
+          network.ironstone.casa/advertisement: bgp
         ports:
           whisper:
             enabled: true
