@@ -1,0 +1,287 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unifi-radio-dashboard
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    grafana_folder: Network
+data:
+  unifi-radio.json: |
+    {
+      "uid": "unifi-radio-health",
+      "title": "UniFi Radio Health",
+      "tags": [
+        "network",
+        "unifi"
+      ],
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "timezone": "browser",
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Channel utilisation (raw)",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "unpoller_device_radio_channel_utilization_total_ratio{job=\"unpoller\"}",
+              "legendFormat": "{{name}} {{band}} GHz",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              }
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Channel utilisation (5 minute mean)",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "avg_over_time(unpoller_device_radio_channel_utilization_total_ratio{job=\"unpoller\"}[5m])",
+              "legendFormat": "{{name}} {{band}} GHz",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              }
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Receive airtime",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "unpoller_device_radio_channel_utilization_receive_ratio{job=\"unpoller\"}",
+              "legendFormat": "{{name}} {{band}} GHz",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              }
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Transmit airtime",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "unpoller_device_radio_channel_utilization_transmit_ratio{job=\"unpoller\"}",
+              "legendFormat": "{{name}} {{band}} GHz",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              }
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Controller cache age",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 16
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "unpoller_prometheus_cache_age_seconds{job=\"unpoller\"}",
+              "legendFormat": "{{name}} {{band}} GHz",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              }
+            }
+          ],
+          "description": "Age of last successful controller collection. -1 means no successful collection. High or missing values mean radio readings cannot be trusted."
+        },
+        {
+          "id": 6,
+          "title": "Radio retries (controller observation)",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 16
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "unpoller_device_radio_transmit_retries{job=\"unpoller\"}",
+              "legendFormat": "{{name}} {{band}} GHz",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              }
+            }
+          ],
+          "description": "Controller-provided gauge, not a monotonic counter. Does not include a separately exported mesh-backhaul retry series."
+        },
+        {
+          "id": 7,
+          "title": "Radio channel",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 24
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "unpoller_device_radio_channel{job=\"unpoller\"}",
+              "legendFormat": "{{name}} {{band}} GHz",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              }
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "Exporter scrape availability",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 24
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "up{job=\"unpoller\"}",
+              "legendFormat": "{{name}} {{band}} GHz",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              }
+            }
+          ]
+        }
+      ]
+    }

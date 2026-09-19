@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: unpoller
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: unpoller
+  endpoints:
+    - port: http
+      interval: 30s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        # Client collection cannot be disabled in this release. Do not store it.
+        - sourceLabels: [__name__]
+          regex: 'unpoller_(device_.*|prometheus_cache_age_seconds)|go_.*|process_.*'
+          action: keep

@@ -1,0 +1,135 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unifi-radio-alerts
+  labels:
+    grafana_alert: "1"
+data:
+  unifi.yaml: |
+    apiVersion: 1
+    groups:
+      - orgId: 1
+        name: unifi-radio
+        folder: Network
+        interval: 1m
+        rules:
+          - uid: unifi-channel-warning
+            isPaused: true
+            title: UniFi channel usage high
+            condition: B
+            for: 10m
+            noDataState: KeepLast
+            execErrState: KeepLast
+            labels:
+              severity: warning
+              alertgroup: unifi-radio
+            annotations:
+              summary: '{{ $labels.name }} {{ $labels.band }} GHz channel usage is high'
+              description: 'Five-minute mean {{ humanizePercentage $values.A.Value }} has exceeded 80% for 10 minutes. Check Network / UniFi Radio Health. No automatic remediation.'
+              __dashboardUid__: unifi-radio-health
+              __panelId__: "1"
+            data:
+              - &utilisation
+                refId: A
+                datasourceUid: prometheus
+                relativeTimeRange: {from: 600, to: 0}
+                model:
+                  refId: A
+                  datasource: {type: prometheus, uid: prometheus}
+                  instant: true
+                  expr: |-
+                    max by (site_name, name, mac, radio, band) (
+                      avg_over_time(unpoller_device_radio_channel_utilization_total_ratio{job="unpoller"}[5m])
+                      and unpoller_device_radio_channel_utilization_total_ratio{job="unpoller"}
+                      and on (job, instance) (up{job="unpoller"} == 1)
+                      and on (job, instance) (
+                        unpoller_prometheus_cache_age_seconds{job="unpoller"} < 90
+                        and unpoller_prometheus_cache_age_seconds{job="unpoller"} >= 0
+                      )
+                    )
+              - refId: B
+                datasourceUid: __expr__
+                relativeTimeRange: {from: 0, to: 0}
+                model:
+                  refId: B
+                  type: threshold
+                  expression: A
+                  conditions:
+                    - evaluator: {type: gt, params: [0.80]}
+                      operator: {type: and}
+                      reducer: {type: last}
+          - uid: unifi-channel-critical
+            isPaused: true
+            title: UniFi channel saturated
+            condition: B
+            for: 5m
+            noDataState: KeepLast
+            execErrState: KeepLast
+            labels:
+              severity: critical
+              alertgroup: unifi-radio
+            annotations:
+              summary: '{{ $labels.name }} {{ $labels.band }} GHz channel is saturated'
+              description: 'Five-minute mean {{ humanizePercentage $values.A.Value }} has exceeded 95% for 5 minutes. Check mesh traffic and retries. Do not disable PoE on a switch reached through the AP it powers.'
+              __dashboardUid__: unifi-radio-health
+              __panelId__: "1"
+            data:
+              - *utilisation
+              - refId: B
+                datasourceUid: __expr__
+                relativeTimeRange: {from: 0, to: 0}
+                model:
+                  refId: B
+                  type: threshold
+                  expression: A
+                  conditions:
+                    - evaluator: {type: gt, params: [0.95]}
+                      operator: {type: and}
+                      reducer: {type: last}
+          - uid: unifi-telemetry-unavailable
+            isPaused: true
+            title: UniFi radio telemetry unavailable
+            condition: B
+            for: 5m
+            noDataState: Alerting
+            execErrState: Alerting
+            labels:
+              severity: warning
+              alertgroup: unifi-radio
+            annotations:
+              summary: UniFi radio telemetry is incomplete or stale
+              description: 'Check UnPoller, controller authentication and missing radios. A missing reading is not proof of radio recovery. This alert does not notify the phone.'
+              __dashboardUid__: unifi-radio-health
+              __panelId__: "5"
+            data:
+              - refId: A
+                datasourceUid: prometheus
+                relativeTimeRange: {from: 600, to: 0}
+                model:
+                  refId: A
+                  datasource: {type: prometheus, uid: prometheus}
+                  instant: true
+                  expr: |-
+                    (1 - (min(up{job="unpoller"}) or vector(0)))
+                    + (max(unpoller_prometheus_cache_age_seconds{job="unpoller"} >= bool 90) or vector(1))
+                    + (max(unpoller_prometheus_cache_age_seconds{job="unpoller"} < bool 0) or vector(1))
+                    + (count(absent(unpoller_device_radio_channel_utilization_total_ratio{job="unpoller"})) or vector(0))
+                    + (count(
+                        max by (site_name, name, mac, radio, band) (
+                          present_over_time(unpoller_device_radio_channel_utilization_total_ratio{job="unpoller"}[24h])
+                        ) unless max by (site_name, name, mac, radio, band) (
+                          unpoller_device_radio_channel_utilization_total_ratio{job="unpoller"}
+                        )
+                      ) or vector(0))
+              - refId: B
+                datasourceUid: __expr__
+                relativeTimeRange: {from: 0, to: 0}
+                model:
+                  refId: B
+                  type: threshold
+                  expression: A
+                  conditions:
+                    - evaluator: {type: gt, params: [0]}
+                      operator: {type: and}
+                      reducer: {type: last}
