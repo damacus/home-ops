@@ -606,6 +606,11 @@ spec:
           datasource: Prometheus
 
     sidecar:
+      alerts:
+        enabled: true
+        label: grafana_alert
+        labelValue: "1"
+        searchNamespace: monitoring
       dashboards:
         enabled: true
         searchNamespace: ALL

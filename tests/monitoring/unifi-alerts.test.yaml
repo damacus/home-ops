@@ -1,0 +1,102 @@
+---
+rule_files:
+  - unifi-rules.yaml
+evaluation_interval: 1m
+tests:
+  - name: Sustained saturation pages with AP identity and clears on recovery
+    interval: 1m
+    input_series:
+      - series: 'unpoller_device_radio_channel_utilization_total_ratio{job="unpoller",instance="exporter:9130",site_name="Ironstone",name="U6-Mesh",mac="ap",radio="na",band="5"}'
+        values: '0.99+0x15 0.2+0x10'
+      - series: 'unpoller_prometheus_cache_age_seconds{job="unpoller",instance="exporter:9130"}'
+        values: '10+0x26'
+      - series: 'up{job="unpoller",instance="exporter:9130"}'
+        values: '1+0x26'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: unifi-channel-critical
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: unifi-channel-critical
+        exp_alerts:
+          - exp_labels: {site_name: Ironstone, name: U6-Mesh, mac: ap, radio: na, band: "5", severity: critical, alertgroup: unifi-radio}
+      - eval_time: 22m
+        alertname: unifi-channel-critical
+        exp_alerts: []
+  - name: Short speed test does not page
+    interval: 1m
+    input_series:
+      - series: 'unpoller_device_radio_channel_utilization_total_ratio{job="unpoller",instance="exporter:9130",name="U6-LR",radio="na"}'
+        values: '0.2+0x5 1+0x1 0.2+0x15'
+      - series: 'unpoller_prometheus_cache_age_seconds{job="unpoller",instance="exporter:9130"}'
+        values: '10+0x25'
+      - series: 'up{job="unpoller",instance="exporter:9130"}'
+        values: '1+0x25'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: unifi-channel-critical
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: unifi-channel-warning
+        exp_alerts: []
+  - name: Stale cached saturation is telemetry failure not a new congestion page
+    interval: 1m
+    input_series:
+      - series: 'unpoller_device_radio_channel_utilization_total_ratio{job="unpoller",instance="exporter:9130",name="U6-LR",radio="na"}'
+        values: '1.01+0x20'
+      - series: 'unpoller_prometheus_cache_age_seconds{job="unpoller",instance="exporter:9130"}'
+        values: '300+60x20'
+      - series: 'up{job="unpoller",instance="exporter:9130"}'
+        values: '1+0x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: unifi-channel-critical
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: unifi-telemetry-unavailable
+        exp_alerts:
+          - exp_labels: {severity: warning, alertgroup: unifi-radio}
+  - name: Missing exporter produces a non-paging telemetry alert
+    interval: 1m
+    input_series: []
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: unifi-telemetry-unavailable
+        exp_alerts:
+          - exp_labels: {severity: warning, alertgroup: unifi-radio}
+  - name: Sustained moderate usage is warning only
+    interval: 1m
+    input_series:
+      - series: 'unpoller_device_radio_channel_utilization_total_ratio{job="unpoller",instance="exporter:9130",name="U6-LR",radio="na",band="5"}'
+        values: '0.85+0x20'
+      - series: 'unpoller_prometheus_cache_age_seconds{job="unpoller",instance="exporter:9130"}'
+        values: '10+0x20'
+      - series: 'up{job="unpoller",instance="exporter:9130"}'
+        values: '1+0x20'
+    alert_rule_test:
+      - eval_time: 11m
+        alertname: unifi-channel-warning
+        exp_alerts:
+          - exp_labels: {name: U6-LR, radio: na, band: "5", severity: warning, alertgroup: unifi-radio}
+      - eval_time: 11m
+        alertname: unifi-channel-critical
+        exp_alerts: []
+      - eval_time: 11m
+        alertname: unifi-telemetry-unavailable
+        exp_alerts: []
+  - name: A disappearing radio is detected while other radios keep reporting
+    interval: 1m
+    input_series:
+      - series: 'unpoller_device_radio_channel_utilization_total_ratio{job="unpoller",instance="exporter:9130",name="U6-LR",radio="na"}'
+        values: '0.2+0x2 stale'
+      - series: 'unpoller_device_radio_channel_utilization_total_ratio{job="unpoller",instance="exporter:9130",name="U6 Pro",radio="na"}'
+        values: '0.2+0x20'
+      - series: 'unpoller_prometheus_cache_age_seconds{job="unpoller",instance="exporter:9130"}'
+        values: '10+0x20'
+      - series: 'up{job="unpoller",instance="exporter:9130"}'
+        values: '1+0x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: unifi-telemetry-unavailable
+        exp_alerts:
+          - exp_labels: {severity: warning, alertgroup: unifi-radio}
