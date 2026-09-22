@@ -32,7 +32,7 @@ spec:
 
     image:
       repository: ghcr.io/zitadel/zitadel
-      tag: v4.18.0
+      tag: v4.17.3
       pullPolicy: IfNotPresent
 
     annotations:
@@ -102,6 +102,8 @@ spec:
 
     login:
       enabled: true
+      annotations:
+        reloader.stakater.com/auto: "true"
       loginServiceKeySecretName: zitadel-login-service-key
       service:
         appProtocol: ""
