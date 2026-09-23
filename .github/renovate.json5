@@ -25,15 +25,11 @@
   ],
   packageRules: [
     {
-      description: "Skip Zitadel 4.18.0: setup requires owners before its migration creates it",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/zitadel/zitadel"],
-      allowedVersions: "!=4.18.0",
-    },
-    {
       description: "Watch CINC Supermarket main until upstream publishes ordered image tags",
       matchDatasources: ["git-refs"],
-      matchPackageNames: ["https://gitlab.com/cinc-project/distribution/cinc-supermarket.git"],
+      matchPackageNames: [
+        "https://gitlab.com/cinc-project/distribution/cinc-supermarket.git",
+      ],
       sourceUrl: "https://gitlab.com/cinc-project/distribution/cinc-supermarket",
       enabled: true,
       automerge: false,
@@ -45,7 +41,9 @@
     {
       description: "Keep CINC Supermarket image changes coordinated and manually reviewed",
       matchDatasources: ["docker"],
-      matchPackageNames: ["registry.gitlab.com/cinc-project/distribution/cinc-supermarket"],
+      matchPackageNames: [
+        "registry.gitlab.com/cinc-project/distribution/cinc-supermarket",
+      ],
       sourceUrl: "https://gitlab.com/cinc-project/distribution/cinc-supermarket",
       groupName: "CINC Supermarket images",
       automerge: false,
