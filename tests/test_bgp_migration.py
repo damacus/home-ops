@@ -6,6 +6,7 @@ import ipaddress
 import json
 from pathlib import Path
 import subprocess
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,7 +31,12 @@ class BGPMigrationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         rendered = subprocess.check_output(["kubectl", "kustomize", str(CONFIG)], text=True)
-        converted = subprocess.check_output(["yq", "-o=json", "-I=0", "."], input=rendered, text=True)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", encoding="utf-8") as manifest:
+            manifest.write(rendered)
+            manifest.flush()
+            converted = subprocess.check_output(
+                ["yq", "-o=json", "-I=0", ".", manifest.name], text=True
+            )
         cls.resources = [json.loads(line) for line in converted.splitlines() if line.strip()]
 
     def resource(self, kind: str, name: str | None = None) -> dict:
@@ -78,6 +84,11 @@ class BGPMigrationTest(unittest.TestCase):
                 self.assertFalse(selected(l2, service.get("labels", {})))
                 self.assertEqual(service["annotations"]["lbipam.cilium.io/ips"],
                                  f"192.168.3.{expected[name]}")
+                if name == "mosquitto":
+                    self.assertEqual(
+                        service["annotations"].get("external-dns.alpha.kubernetes.io/hostname"),
+                        "mosquitto.ironstone.casa",
+                    )
                 self.assertNotIn("loadBalancerIP", service)
                 self.assertNotIn("io.cilium/lb-ipam-ips", service["annotations"])
                 seen.add(name)
