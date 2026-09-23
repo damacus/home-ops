@@ -63,7 +63,7 @@ spec:
           network.ironstone.casa/advertisement: bgp
         annotations:
           lbipam.cilium.io/ips: "192.168.3.229"
-          external-dns.alpha.kubernetes.io/hostname: mosquitto.ironstone.casa
+          external-dns.kubernetes.io/hostname: mosquitto.ironstone.casa
         ports:
           http:
             port: 1883

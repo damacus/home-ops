@@ -86,7 +86,7 @@ class BGPMigrationTest(unittest.TestCase):
                                  f"192.168.3.{expected[name]}")
                 if name == "mosquitto":
                     self.assertEqual(
-                        service["annotations"].get("external-dns.alpha.kubernetes.io/hostname"),
+                        service["annotations"].get("external-dns.kubernetes.io/hostname"),
                         "mosquitto.ironstone.casa",
                     )
                 self.assertNotIn("loadBalancerIP", service)
