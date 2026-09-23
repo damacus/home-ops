@@ -1,5 +1,5 @@
 ---
-apiVersion: "cilium.io/v2alpha1"
+apiVersion: "cilium.io/v2"
 kind: CiliumBGPAdvertisement
 metadata:
   name: cilium-bgp-advertisement
@@ -12,14 +12,15 @@ spec:
         addresses:
           - LoadBalancerIP
       selector:
-        matchExpressions:
-          - { key: somekey, operator: NotIn, values: ["never-used-value"] }
+        matchLabels:
+          network.ironstone.casa/advertisement: bgp
 ---
-apiVersion: "cilium.io/v2alpha1"
+apiVersion: "cilium.io/v2"
 kind: CiliumBGPPeerConfig
 metadata:
   name: cilium-bgp-peer-config-ipv4
 spec:
+  authSecretRef: cilium-bgp-auth
   families:
     - afi: ipv4
       safi: unicast
@@ -27,7 +28,7 @@ spec:
         matchLabels:
           advertise: "bgp"
 ---
-apiVersion: cilium.io/v2alpha1
+apiVersion: cilium.io/v2
 kind: CiliumBGPClusterConfig
 metadata:
   name: cilium-bgp-cluster-config
@@ -45,12 +46,15 @@ spec:
           peerConfigRef:
             name: "cilium-bgp-peer-config-ipv4"
 ---
-apiVersion: cilium.io/v2alpha1
+apiVersion: cilium.io/v2
 kind: CiliumLoadBalancerIPPool
 metadata:
   name: lb-pool
 spec:
+  serviceSelector:
+    matchLabels:
+      network.ironstone.casa/advertisement: bgp
   allowFirstLastIPs: "No"
   blocks:
-    - cidr: 192.168.3.0/24
-    - cidr: ::ffff:192.168.3.0/112 # IPv4-mapped IPv6
+    - start: 192.168.3.2
+      stop: 192.168.3.254

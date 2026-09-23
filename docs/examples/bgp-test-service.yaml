@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bgp-test
+  namespace: network
+  labels:
+    network.ironstone.casa/advertisement: bgp
+  annotations:
+    lbipam.cilium.io/ips: 192.168.3.10
+spec:
+  type: LoadBalancer
+  allocateLoadBalancerNodePorts: false
+  externalTrafficPolicy: Cluster
+  ipFamilyPolicy: SingleStack
+  ipFamilies: [IPv4]
+  loadBalancerSourceRanges: [192.168.1.0/24]
+  selector:
+    app.kubernetes.io/instance: traefik-network
+    app.kubernetes.io/name: traefik
+  ports:
+    - name: websecure
+      port: 443
+      targetPort: websecure
+      protocol: TCP
