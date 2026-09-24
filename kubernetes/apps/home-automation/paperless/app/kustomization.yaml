@@ -8,6 +8,6 @@ resources:
   - externalsecret.yaml
   - networkpolicy.yaml
   - pvc.yaml
-  - pvc-ssd.yaml
+  - pvc-restore.yaml
   - secret.yaml
   - ./volsync
