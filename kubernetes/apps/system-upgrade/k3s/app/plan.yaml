@@ -24,7 +24,9 @@ spec:
         SLEEP_BIN="${SLEEP_BIN:-sleep}"
         while true; do
           if "$K3S_BIN" kubectl --request-timeout=5s get --raw=/readyz >/dev/null 2>&1 &&
-             "$K3S_BIN" kubectl --request-timeout=5s get nodes --selector=node-role.kubernetes.io/control-plane -o json |
+             nodes_json="$("$K3S_BIN" kubectl --request-timeout=5s get nodes --selector=node-role.kubernetes.io/control-plane -o json)" &&
+             [ -n "$nodes_json" ] &&
+             printf '%s\n' "$nodes_json" |
                jq -e '(.items | length) >= 3 and all(.items[]; any(.status.conditions[]; .type == "Ready" and .status == "True"))' >/dev/null 2>&1; then
             echo "API VIP is ready and all control-plane nodes are Ready"
             exit 0

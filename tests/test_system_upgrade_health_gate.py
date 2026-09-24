@@ -52,6 +52,10 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
                 "    [ \"$count\" -gt \"$READY_AFTER\" ]\n"
                 "    ;;\n"
                 "  \"get nodes --selector=node-role.kubernetes.io/control-plane -o json\")\n"
+                "    count=$(cat \"$NODES_COUNT_FILE\" 2>/dev/null || echo 0)\n"
+                "    count=$((count + 1))\n"
+                "    echo \"$count\" > \"$NODES_COUNT_FILE\"\n"
+                "    [ \"$count\" -gt 1 ] || exit 1\n"
                 "    cat \"$NODES_FILE\"\n"
                 "    ;;\n"
                 "  *) exit 2 ;;\n"
@@ -81,6 +85,7 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
                 "SLEEP_BIN": str(fake_sleep),
                 "READY_COUNT_FILE": str(temp_dir / "ready-count"),
                 "READY_AFTER": "1",
+                "NODES_COUNT_FILE": str(temp_dir / "nodes-count"),
                 "NODES_FILE": str(nodes_file),
             }
             result = subprocess.run(
@@ -94,6 +99,7 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("all control-plane nodes are Ready", result.stdout)
+        self.assertEqual(result.stdout.count("Waiting for API VIP readiness"), 2)
 
     def test_gate_keeps_waiting_when_a_control_plane_node_is_not_ready(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
