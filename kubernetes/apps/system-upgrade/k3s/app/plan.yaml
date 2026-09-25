@@ -10,7 +10,30 @@ spec:
     image: rancher/k3s-upgrade
   serviceAccountName: system-upgrade
   concurrency: 1
+  # Keep the health gate alive until the VIP and control plane recover.
+  jobActiveDeadlineSecs: 0
   cordon: true
+  prepare:
+    image: rancher/k3s-upgrade
+    command: ["/bin/sh", "-ec"]
+    args:
+      - |
+        export KUBERNETES_SERVICE_HOST=192.168.1.220
+        export KUBERNETES_SERVICE_PORT=6443
+        K3S_BIN="${K3S_BIN:-/opt/k3s}"
+        SLEEP_BIN="${SLEEP_BIN:-sleep}"
+        while true; do
+          if "$K3S_BIN" kubectl --request-timeout=5s get --raw=/readyz >/dev/null 2>&1 &&
+             nodes_json="$("$K3S_BIN" kubectl --request-timeout=5s get nodes --selector=node-role.kubernetes.io/control-plane -o json)" &&
+             [ -n "$nodes_json" ] &&
+             printf '%s\n' "$nodes_json" |
+               jq -e '(.items | length) >= 3 and all(.items[]; any(.status.conditions[]; .type == "Ready" and .status == "True"))' >/dev/null 2>&1; then
+            echo "API VIP is ready and all control-plane nodes are Ready"
+            exit 0
+          fi
+          echo "Waiting for API VIP readiness and all control-plane nodes to become Ready"
+          "$SLEEP_BIN" 10
+        done
   nodeSelector:
     matchExpressions:
       - key: node-role.kubernetes.io/control-plane
