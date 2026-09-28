@@ -7,11 +7,9 @@ runs `/northbot migrate` with the `northbot_owner` credential before the bot sta
 The bot itself receives only the separate `northbot_runtime` credential. Both
 connections verify the PostgreSQL server certificate against the mounted CNPG CA.
 
-The old `northbot` SQLite OpenEBS claim is retained with Flux pruning disabled.
-The PostgreSQL Deployment does not mount it. Keep the claim and its SQLite, WAL,
-and SHM files together for rollback until the data migration, application
-behaviour, and backup restoration have been verified. The node-local claim is
-not a backup. Retire it only after the retention decision has been recorded.
+This is a fresh database. Existing test cases in SQLite are disposable; there
+is no data import or SQLite rollback path. The old SQLite claim is not part of
+this Deployment.
 
 The `northbot-refresh` CronJob restarts the Deployment at 04:00 London time so
 the mutable Forgejo `main` tag is pulled each day. The Deployment-level Reloader

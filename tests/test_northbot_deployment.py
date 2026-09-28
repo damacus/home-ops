@@ -1,4 +1,4 @@
-"""Keep NorthBot's PostgreSQL cutover and retained SQLite claim safe in Flux."""
+"""Check NorthBot's fresh PostgreSQL deployment in Flux."""
 
 from pathlib import Path
 import json
@@ -47,7 +47,6 @@ class NorthBotDeploymentTest(unittest.TestCase):
             "replicas: 1",
             "forgejo.ironstone.casa/damacus/northbot:main",
             "imagePullPolicy: Always",
-            "storageClassName: openebs-hostpath",
             "kind: ExternalSecret",
             "kind: CronJob",
             "kind: Role",
@@ -56,20 +55,14 @@ class NorthBotDeploymentTest(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertIn(expected, rendered)
 
-    def test_sqlite_claim_survives_flux_pruning(self) -> None:
-        pvc = self.resources()["PersistentVolumeClaim"]
-        self.assertEqual(
-            pvc["metadata"]["annotations"]["kustomize.toolkit.fluxcd.io/prune"],
-            "disabled",
-        )
-
-    def test_postgres_cutover_separates_migration_and_runtime_credentials(self) -> None:
+    def test_postgres_setup_separates_owner_and_runtime_credentials(self) -> None:
         pod = self.resources()["Deployment"]["spec"]["template"]["spec"]
         self.assertEqual(pod["initContainers"][0]["command"], ["/northbot", "migrate"])
         self.assertEqual(pod["initContainers"][0]["env"][0]["valueFrom"]["secretKeyRef"]["name"], "northops-postgres-owner")
         self.assertEqual(pod["containers"][0]["env"][0]["valueFrom"]["secretKeyRef"]["name"], "northops-postgres-runtime")
         self.assertFalse(any(env["name"] == "DATABASE_PATH" for env in pod["containers"][0]["env"]))
         self.assertFalse(any(volume.get("persistentVolumeClaim") for volume in pod["volumes"]))
+        self.assertNotIn("PersistentVolumeClaim", self.resources())
         self.assertEqual(pod["volumes"][0]["secret"]["secretName"], "northops-postgres-ca")
         self.assertEqual(pod["volumes"][0]["secret"]["items"][0]["key"], "ca.crt")
 
