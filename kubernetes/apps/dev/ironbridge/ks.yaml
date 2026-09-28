@@ -6,7 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   # Lift only after a real digest and both ExternalSecrets are available.
-  suspend: true
+  suspend: false
   targetNamespace: dev
   path: ./kubernetes/apps/dev/ironbridge/app
   prune: true
