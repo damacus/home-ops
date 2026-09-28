@@ -101,6 +101,11 @@ class NorthBotDeploymentTest(unittest.TestCase):
         job = resources["Job"]["spec"]["template"]["spec"]["containers"][0]
         self.assertEqual(job["command"], ["/bin/sh", "/scripts/bootstrap.sh", "northops-postgres"])
         self.assertIn("rustfs-northops-postgres", [ref["secretRef"]["name"] for ref in job["envFrom"]])
+        sync = resources["CronJob"]["spec"]
+        self.assertEqual(sync["schedule"], "*/5 * * * *")
+        sync_job = sync["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
+        self.assertEqual(sync_job["command"], job["command"])
+        self.assertEqual(sync_job["envFrom"], job["envFrom"])
         secret = resources["ExternalSecret"]["spec"]
         self.assertEqual(secret["data"][0]["remoteRef"]["key"], "rustfs-cnpg-northops-postgres")
         script = self.resources(ROOT / "kubernetes/apps/storage/rustfs-iam/app")["ConfigMap"]["data"]["bootstrap.sh"]

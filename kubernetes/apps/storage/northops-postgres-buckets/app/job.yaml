@@ -52,3 +52,61 @@ spec:
           configMap:
             name: rustfs-iam-bootstrap
             defaultMode: 0555
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: northops-postgres-buckets-sync
+  namespace: storage
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 4
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: rc
+              image: rustfs/rc:v0.1.36@sha256:ab024bfebee49a750ce886b4c70963ccd9ddaa03f491704a90710641d7a26699
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              env:
+                - name: RUSTFS_ENDPOINT
+                  value: http://rustfs.storage.svc.cluster.local:9000
+                - name: HOME
+                  value: /tmp
+              envFrom:
+                - secretRef:
+                    name: rustfs-credentials
+                - secretRef:
+                    name: rustfs-northops-postgres
+              command: [/bin/sh, /scripts/bootstrap.sh, northops-postgres]
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+                - name: bootstrap-script
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: tmp
+              emptyDir: {}
+            - name: bootstrap-script
+              configMap:
+                name: rustfs-iam-bootstrap
+                defaultMode: 0555
