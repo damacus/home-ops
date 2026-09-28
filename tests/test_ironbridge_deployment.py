@@ -104,7 +104,8 @@ class IronBridgeDeploymentTest(unittest.TestCase):
             self.assertIn("suspend: true", ks, "placeholder image must not reconcile")
         env = {entry["name"]: entry["value"] for entry in container["env"]}
         self.assertEqual(env["BRIDGE_ENABLED"], "false")
-        self.assertEqual(env["BRIDGE_SCOPE"], "channels")
+        self.assertEqual(env["BRIDGE_DIRECTION"], "both")
+        self.assertEqual(env["BRIDGE_SCOPE"], "all")
         self.assertNotIn("DATABASE_PATH", env)
         self.assertNotIn("PersistentVolumeClaim", by_kind)
         self.assertFalse(any("persistentVolumeClaim" in volume for volume in pod.get("volumes", [])))

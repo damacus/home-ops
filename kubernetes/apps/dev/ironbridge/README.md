@@ -11,13 +11,15 @@ PostgreSQL connection and reads queue and channel state, so a database outage
 makes the pod unready. It does not prove that Slack or Discord gateway sessions
 are healthy; verify those separately during the controlled live test.
 
-The manifest starts with `BRIDGE_ENABLED=false`, `BRIDGE_SCOPE=channels`, and an
+The manifest starts with `BRIDGE_ENABLED=false`,
+`BRIDGE_DIRECTION=both`, `BRIDGE_SCOPE=all`, and an
 empty `SLACK_CHANNEL_IDS` list. Replace the image's all-zero digest with the
 verified Linux ARM64 release digest and lift the Flux suspension before
 reconciling this Kustomization.
-After the database, secrets, backup and restore are verified, set a controlled
-Slack channel ID list and enable the bridge. Switch to `BRIDGE_SCOPE=all` only
-after the controlled test and eligible-channel inventory pass.
+After the database, secrets, backup and access checks are verified, compare
+the full eligible-channel inventory and enable the bridge. It will create
+missing public channels in both directions. Existing same-name channels need
+explicit pairing approval. Verify messages in both directions after activation.
 
 The `ironbridge` 1Password item must contain dedicated Slack and Discord app
 credentials: `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `SLACK_TEAM_ID`,
