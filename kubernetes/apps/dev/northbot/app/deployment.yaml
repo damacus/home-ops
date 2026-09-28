@@ -27,16 +27,16 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       initContainers:
-        - name: migrate
+        - name: init-db
           image: forgejo.ironstone.casa/damacus/northbot:main
           imagePullPolicy: Always
-          command: [/northbot, migrate]
+          command: [/northbot, init-db]
           env:
-            - name: MIGRATION_DATABASE_URL
+            - name: INIT_DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: northops-postgres-owner
-                  key: MIGRATION_DATABASE_URL
+                  key: INIT_DATABASE_URL
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
