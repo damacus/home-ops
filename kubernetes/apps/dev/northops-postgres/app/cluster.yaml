@@ -31,6 +31,17 @@ spec:
         bypassrls: false
         passwordSecret:
           name: northops-postgres-runtime
+      - name: ironbridge
+        ensure: present
+        login: true
+        superuser: false
+        bypassrls: false
+        passwordSecret:
+          name: ironbridge-db
+  postgresql:
+    pg_hba:
+      - hostssl ironbridge ironbridge all scram-sha-256
+      - host all ironbridge all reject
   storage:
     size: 10Gi
     storageClass: openebs-hostpath

@@ -237,11 +237,6 @@ data:
       exit 0
     fi
 
-    if [ "$scope" = "northops" ]; then
-      provision_single_bucket_identity "rustfs-cnpg-northops" "$RUSTFS_CNPG_NORTHOPS_ACCESS_KEY" "$RUSTFS_CNPG_NORTHOPS_SECRET_KEY" "cnpg-northops"
-      exit 0
-    fi
-
     if [ "$scope" != "all" ]; then
       echo "Unsupported bootstrap scope: $scope"
       exit 2

@@ -7,7 +7,6 @@ resources:
   - ./forgejo/ks.yaml
   - ./northops-postgres/ks.yaml
   - ./northbot/ks.yaml
-  - ./northops-pg/ks.yaml
   - ./ironbridge/ks.yaml
   - ./konflate/ks.yaml
   - ./namespace.yaml

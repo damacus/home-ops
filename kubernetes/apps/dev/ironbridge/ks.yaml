@@ -11,7 +11,7 @@ spec:
   path: ./kubernetes/apps/dev/ironbridge/app
   prune: true
   dependsOn:
-    - name: northops-pg
+    - name: northops-postgres
     - name: external-secrets-stores
     - name: forgejo
   sourceRef:
