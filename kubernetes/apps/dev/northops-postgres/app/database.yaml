@@ -9,3 +9,14 @@ spec:
   owner: northbot_owner
   cluster:
     name: northops-postgres
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: ironbridge
+  namespace: dev
+spec:
+  name: ironbridge
+  owner: ironbridge
+  cluster:
+    name: northops-postgres
