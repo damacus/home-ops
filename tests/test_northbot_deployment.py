@@ -57,7 +57,7 @@ class NorthBotDeploymentTest(unittest.TestCase):
 
     def test_postgres_setup_separates_owner_and_runtime_credentials(self) -> None:
         pod = self.resources()["Deployment"]["spec"]["template"]["spec"]
-        self.assertEqual(pod["initContainers"][0]["command"], ["/northbot", "migrate"])
+        self.assertEqual(pod["initContainers"][0]["command"], ["/northbot", "init-db"])
         self.assertEqual(pod["initContainers"][0]["env"][0]["valueFrom"]["secretKeyRef"]["name"], "northops-postgres-owner")
         self.assertEqual(pod["containers"][0]["env"][0]["valueFrom"]["secretKeyRef"]["name"], "northops-postgres-runtime")
         self.assertFalse(any(env["name"] == "DATABASE_PATH" for env in pod["containers"][0]["env"]))

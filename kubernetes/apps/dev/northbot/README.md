@@ -3,7 +3,7 @@
 The desired Deployment runs one NorthBot replica in `dev` with `Recreate` rollout
 strategy. It connects to the `northbot` database on the shared
 `northops-postgres-rw.dev.svc.cluster.local` PostgreSQL service. An init container
-runs `/northbot migrate` with the `northbot_owner` credential before the bot starts.
+runs `/northbot init-db` with the `northbot_owner` credential before the bot starts.
 The bot itself receives only the separate `northbot_runtime` credential. Both
 connections verify the PostgreSQL server certificate against the mounted CNPG CA.
 
