@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: northbot
+  namespace: dev
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: northbot
+  template:
+    metadata:
+      labels:
+        app: northbot
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: northbot
+          image: forgejo.ironstone.casa/damacus/northbot:main
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: northbot
+          env:
+            - name: ADMINS_CHANNEL_ID
+              value: C0C35F05B24 # admins-test
+            - name: PROACTIVE_ENABLED
+              value: "true"
+            - name: DATABASE_PATH
+              value: /data/northbot.sqlite
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: northbot
+        - name: tmp
+          emptyDir: {}

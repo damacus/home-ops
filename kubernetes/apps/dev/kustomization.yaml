@@ -5,6 +5,7 @@ resources:
   - ./externalsecret.yaml
   - ./forgejo-db/ks.yaml
   - ./forgejo/ks.yaml
+  - ./northbot/ks.yaml
   - ./konflate/ks.yaml
   - ./namespace.yaml
   - ./cinc-registry-db/ks.yaml
