@@ -2,20 +2,19 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: northbot
+  name: northops-postgres-buckets
   namespace: flux-system
 spec:
-  targetNamespace: dev
-  path: ./kubernetes/apps/dev/northbot/app
-  prune: true
+  targetNamespace: storage
   dependsOn:
+    - name: rustfs-iam
     - name: external-secrets-stores
-    - name: forgejo
-    - name: northops-postgres
+  path: ./kubernetes/apps/storage/northops-postgres-buckets/app
+  prune: true
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
   wait: true
   interval: 30m
   retryInterval: 1m
-  timeout: 5m
+  timeout: 15m
