@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: ironbridge
+  namespace: flux-system
+spec:
+  # Lift only after a real digest and both ExternalSecrets are available.
+  suspend: true
+  targetNamespace: dev
+  path: ./kubernetes/apps/dev/ironbridge/app
+  prune: true
+  dependsOn:
+    - name: northops-pg
+    - name: external-secrets-stores
+    - name: forgejo
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m

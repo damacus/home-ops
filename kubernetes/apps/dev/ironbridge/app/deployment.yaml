@@ -1,0 +1,70 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ironbridge
+  namespace: dev
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ironbridge
+  template:
+    metadata:
+      labels:
+        app: ironbridge
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: ironbridge
+          # Replace with the verified ARM64 release digest before applying.
+          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: ironbridge
+          env:
+            - name: BRIDGE_ENABLED
+              value: "false"
+            - name: BRIDGE_SCOPE
+              value: channels
+            - name: SLACK_CHANNEL_IDS
+              value: ""
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 256Mi
+          readinessProbe:
+            exec:
+              command: [/usr/local/bin/ironbridge, status]
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 2
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

@@ -1,0 +1,31 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: northops-pg
+  namespace: flux-system
+spec:
+  targetNamespace: dev
+  path: ./kubernetes/apps/dev/northops-pg/app
+  prune: true
+  dependsOn:
+    - name: cloudnative-pg
+    - name: external-secrets-stores
+    - name: openebs
+    - name: rustfs
+    - name: rustfs-iam
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
+  healthCheckExprs:
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      current: >-
+        status.conditions.exists(e,
+          e.type == 'Ready' &&
+          e.status == 'True') &&
+        status.readyInstances == 2
