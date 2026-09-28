@@ -13,9 +13,9 @@ are healthy; verify those separately during the controlled live test.
 
 The manifest starts with `BRIDGE_ENABLED=false`,
 `BRIDGE_DIRECTION=both`, `BRIDGE_SCOPE=all`, and an
-empty `SLACK_CHANNEL_IDS` list. Replace the image's all-zero digest with the
-verified Linux ARM64 release digest and lift the Flux suspension before
-reconciling this Kustomization.
+empty `SLACK_CHANNEL_IDS` list. The image is pinned to the verified Linux
+ARM64 `v0.1.0` release digest. Lift the Flux suspension only after the
+remaining activation checks are complete.
 After the database, secrets, backup and access checks are verified, compare
 the full eligible-channel inventory and enable the bridge. It will create
 missing public channels in both directions. Existing same-name channels need
