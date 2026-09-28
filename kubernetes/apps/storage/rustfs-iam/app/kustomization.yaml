@@ -5,3 +5,5 @@ resources:
   - ./bootstrap-script.yaml
   - ./cronjob-buckets.yaml
   - ./job-buckets.yaml
+  - ./northops-externalsecret.yaml
+  - ./northops-job.yaml

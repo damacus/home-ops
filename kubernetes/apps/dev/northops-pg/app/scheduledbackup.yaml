@@ -1,0 +1,17 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: northops-pg
+  namespace: dev
+spec:
+  schedule: "0 10 3 * * *"
+  immediate: true
+  backupOwnerReference: self
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+    parameters:
+      objectStore: northops-pg-rustfs-store
+  cluster:
+    name: northops-pg
