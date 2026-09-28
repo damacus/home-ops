@@ -13,7 +13,7 @@ spec:
     - name: external-secrets-stores
     - name: openebs
     - name: rustfs
-    - name: rustfs-iam
+    - name: rustfs-iam-northops
   sourceRef:
     kind: GitRepository
     name: home-kubernetes

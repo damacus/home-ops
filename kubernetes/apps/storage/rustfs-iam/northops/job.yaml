@@ -6,7 +6,6 @@ metadata:
   namespace: storage
 spec:
   backoffLimit: 4
-  ttlSecondsAfterFinished: 86400
   template:
     spec:
       automountServiceAccountToken: false
@@ -35,7 +34,7 @@ spec:
             - secretRef:
                 name: rustfs-credentials
             - secretRef:
-                name: rustfs-cnpg-northops
+                name: rustfs-cnpg-northops-v1
           command: [/bin/sh, /scripts/bootstrap.sh, northops]
           volumeMounts:
             - name: tmp
