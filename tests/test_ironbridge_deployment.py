@@ -42,12 +42,17 @@ class IronBridgeDeploymentTest(unittest.TestCase):
             '"$RUSTFS_CNPG_NORTHOPS_SECRET_KEY" "cnpg-northops"',
             script,
         )
-        credentials = (ROOT / "kubernetes/apps/storage/rustfs-iam/app/northops-externalsecret.yaml").read_text()
-        self.assertIn("key: rustfs-cnpg-northops", credentials)
-        job = (ROOT / "kubernetes/apps/storage/rustfs-iam/app/northops-job.yaml").read_text()
+        credentials = (ROOT / "kubernetes/apps/storage/rustfs-iam/northops/externalsecret.yaml").read_text()
+        self.assertIn("key: rustfs-cnpg-northops-v1", credentials)
+        job = (ROOT / "kubernetes/apps/storage/rustfs-iam/northops/job.yaml").read_text()
         self.assertIn("/scripts/bootstrap.sh, northops", job)
+        self.assertIn("name: rustfs-cnpg-northops-v1", job)
+        main_iam = (ROOT / "kubernetes/apps/storage/rustfs-iam/app/kustomization.yaml").read_text()
+        self.assertNotIn("northops", main_iam)
         db_ks = (DEV / "northops-pg/ks.yaml").read_text()
-        self.assertIn("- name: rustfs-iam", db_ks)
+        self.assertIn("- name: rustfs-iam-northops", db_ks)
+        db_credentials = (DEV / "northops-pg/app/externalsecret.yaml").read_text()
+        self.assertIn("key: rustfs-cnpg-northops-v1", db_credentials)
 
     def test_flux_orders_database_before_disabled_bridge(self) -> None:
         dev = (DEV / "kustomization.yaml").read_text()
