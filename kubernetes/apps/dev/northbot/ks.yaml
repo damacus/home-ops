@@ -11,6 +11,7 @@ spec:
   dependsOn:
     - name: external-secrets-stores
     - name: forgejo
+    - name: northops-postgres
   sourceRef:
     kind: GitRepository
     name: home-kubernetes

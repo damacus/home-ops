@@ -26,20 +26,17 @@ spec:
         fsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
-      containers:
-        - name: northbot
+      initContainers:
+        - name: migrate
           image: forgejo.ironstone.casa/damacus/northbot:main
           imagePullPolicy: Always
-          envFrom:
-            - secretRef:
-                name: northbot
+          command: [/northbot, migrate]
           env:
-            - name: ADMINS_CHANNEL_ID
-              value: C0C35F05B24 # admins-test
-            - name: PROACTIVE_ENABLED
-              value: "true"
-            - name: DATABASE_PATH
-              value: /data/northbot.sqlite
+            - name: MIGRATION_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: northops-postgres-owner
+                  key: MIGRATION_DATABASE_URL
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -52,13 +49,51 @@ spec:
             limits:
               memory: 256Mi
           volumeMounts:
-            - name: data
-              mountPath: /data
+            - name: postgres-ca
+              mountPath: /etc/northops-postgres
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: northbot
+          image: forgejo.ironstone.casa/damacus/northbot:main
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: northbot
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: northops-postgres-runtime
+                  key: DATABASE_URL
+            - name: ADMINS_CHANNEL_ID
+              value: C0C35F05B24 # admins-test
+            - name: PROACTIVE_ENABLED
+              value: "true"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: postgres-ca
+              mountPath: /etc/northops-postgres
+              readOnly: true
             - name: tmp
               mountPath: /tmp
       volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: northbot
+        - name: postgres-ca
+          secret:
+            secretName: northops-postgres-ca
+            items:
+              - key: ca.crt
+                path: ca.crt
         - name: tmp
           emptyDir: {}
