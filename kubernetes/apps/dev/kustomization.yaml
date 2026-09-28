@@ -5,6 +5,7 @@ resources:
   - ./externalsecret.yaml
   - ./forgejo-db/ks.yaml
   - ./forgejo/ks.yaml
+  - ./northops-postgres/ks.yaml
   - ./northbot/ks.yaml
   - ./konflate/ks.yaml
   - ./namespace.yaml
