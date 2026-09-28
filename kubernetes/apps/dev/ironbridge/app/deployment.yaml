@@ -38,7 +38,7 @@ spec:
             - name: BRIDGE_ENABLED
               value: "false"
             - name: BRIDGE_DIRECTION
-              value: both
+              value: slack-to-discord
             - name: BRIDGE_SCOPE
               value: all
             - name: SLACK_CHANNEL_IDS
