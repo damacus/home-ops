@@ -38,8 +38,10 @@ spec:
           env:
             - name: BRIDGE_ENABLED
               value: "false"
+            - name: BRIDGE_DIRECTION
+              value: both
             - name: BRIDGE_SCOPE
-              value: channels
+              value: all
             - name: SLACK_CHANNEL_IDS
               value: ""
           securityContext:
