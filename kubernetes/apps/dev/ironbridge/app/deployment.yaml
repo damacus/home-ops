@@ -29,8 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: ironbridge
-          # Replace with the verified ARM64 release digest before applying.
-          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:7d309ca04a91c1fa07c22d890275a46942bdd8e7f4af7737751ca12c40be985c
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:
