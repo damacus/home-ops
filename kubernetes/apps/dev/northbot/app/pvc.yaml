@@ -4,6 +4,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: northbot
   namespace: dev
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes: [ReadWriteOnce]
   storageClassName: openebs-hostpath

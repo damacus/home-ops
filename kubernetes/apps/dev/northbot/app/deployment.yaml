@@ -4,6 +4,8 @@ kind: Deployment
 metadata:
   name: northbot
   namespace: dev
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
@@ -15,8 +17,6 @@ spec:
     metadata:
       labels:
         app: northbot
-      annotations:
-        reloader.stakater.com/auto: "true"
     spec:
       automountServiceAccountToken: false
       securityContext:
