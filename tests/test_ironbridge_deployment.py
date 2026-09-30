@@ -108,6 +108,18 @@ class IronBridgeDeploymentTest(unittest.TestCase):
             "0.1.5 skips Slack thread replies after the channel cursor passes their parent",
         )
 
+    def test_bridge_rejects_image_that_drops_broadcast_replies(self) -> None:
+        deployment = next(
+            resource for resource in render(DEV / "ironbridge/app")
+            if resource["kind"] == "Deployment"
+        )
+        image = deployment["spec"]["template"]["spec"]["containers"][0]["image"]
+        self.assertNotEqual(
+            image.split("@sha256:")[-1],
+            "808bc7e1bed4f3ffadf388050f1f18ef96029c9254c461e2eb572a05c4ce8ec5",
+            "0.1.7 silently discards Slack thread_broadcast replies",
+        )
+
     def test_bridge_has_no_sqlite_volume_and_forwards_both_directions(self) -> None:
         resources = render(DEV / "ironbridge/app")
         by_kind = {resource["kind"]: resource for resource in resources}

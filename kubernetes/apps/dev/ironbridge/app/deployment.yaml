@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: ironbridge
-          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:808bc7e1bed4f3ffadf388050f1f18ef96029c9254c461e2eb572a05c4ce8ec5
+          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:d7d5b63937c4342e08f6b9a1358f4cbdd69c7c65695f09c89d19407f8a04101d
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:

@@ -39,6 +39,10 @@ suppression and loop prevention,
 then restart the pod and verify queued work resumes without duplicate delivery.
 Check delivery failures and unresolved removal tasks after activation.
 
+Version 0.1.8 also mirrors Slack “also send to channel” replies into their
+original Discord thread and recovers broadcasts silently skipped by older
+versions. It does not create a second top-level copy of the reply.
+
 The `ironbridge` 1Password item must contain dedicated Slack and Discord app
 credentials: `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `SLACK_TEAM_ID`,
 `SLACK_ADMIN_CHANNEL_ID`, `DISCORD_BOT_TOKEN`, and `DISCORD_GUILD_ID`. The
