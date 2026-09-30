@@ -159,7 +159,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python3 -m unittest tests/test_zitadel_config.py
+          python3 -m unittest tests/test_zitadel_config.py tests/test_traefik_gateway.py
           ruby tests/test_zitadel_access_policy.rb
 
       - name: Lint Mondoo policies

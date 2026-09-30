@@ -35,7 +35,7 @@ spec:
         allowEmptyServices: true
       kubernetesGateway:
         enabled: true
-        experimentalChannel: true
+        experimentalChannel: false
 
     # Gateway configuration
     gateway:
