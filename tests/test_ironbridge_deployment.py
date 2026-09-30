@@ -1,4 +1,4 @@
-"""Check the first IronBridge deployment cannot start bridging by accident."""
+"""Check the active bidirectional IronBridge deployment and its safety constraints."""
 
 import json
 from pathlib import Path
@@ -34,7 +34,7 @@ def render(path: Path) -> list[dict]:
 
 
 class IronBridgeDeploymentTest(unittest.TestCase):
-    def test_flux_orders_database_before_disabled_bridge(self) -> None:
+    def test_flux_orders_database_before_bridge(self) -> None:
         dev = (DEV / "kustomization.yaml").read_text()
         self.assertIn("./northops-postgres/ks.yaml", dev)
         self.assertIn("./ironbridge/ks.yaml", dev)
@@ -80,7 +80,7 @@ class IronBridgeDeploymentTest(unittest.TestCase):
         self.assertIn("ironbridge-db", secrets)
         self.assertIn("rustfs-cnpg-northops-postgres", secrets)
 
-    def test_bridge_has_no_sqlite_volume_and_starts_disabled(self) -> None:
+    def test_bridge_has_no_sqlite_volume_and_forwards_both_directions(self) -> None:
         resources = render(DEV / "ironbridge/app")
         by_kind = {resource["kind"]: resource for resource in resources}
         deployment = by_kind["Deployment"]
@@ -99,11 +99,12 @@ class IronBridgeDeploymentTest(unittest.TestCase):
         self.assertGreaterEqual(readiness["timeoutSeconds"], 10)
         digest = container["image"].split("@sha256:")[-1]
         self.assertRegex(digest, re.compile(r"^[0-9a-f]{64}$"))
-        if digest == "0" * 64:
-            ks = (DEV / "ironbridge/ks.yaml").read_text()
-            self.assertIn("suspend: true", ks, "placeholder image must not reconcile")
+        self.assertTrue(container["image"].startswith(
+            "forgejo.ironstone.casa/damacus/ironbridge@sha256:"
+        ))
+        self.assertNotEqual(digest, "0" * 64, "active bridge needs a published image")
         env = {entry["name"]: entry["value"] for entry in container["env"]}
-        self.assertEqual(env["BRIDGE_ENABLED"], "false")
+        self.assertEqual(env["BRIDGE_ENABLED"], "true")
         self.assertEqual(env["BRIDGE_DIRECTION"], "both")
         self.assertEqual(env["BRIDGE_SCOPE"], "all")
         self.assertNotIn("DATABASE_PATH", env)

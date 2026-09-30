@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: ironbridge
-          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:267f4804b47a3303023537830f69bdef0ecdefcc918df51f74a972cfac65d8d4
+          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:41215596876ab2f2545c4a851a83a98e9d97fdf3c707dd9911039e7f694a4c54
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:
@@ -38,7 +38,7 @@ spec:
             - name: BRIDGE_ENABLED
               value: "true"
             - name: BRIDGE_DIRECTION
-              value: slack-to-discord
+              value: both
             - name: BRIDGE_SCOPE
               value: all
             - name: SLACK_CHANNEL_IDS
