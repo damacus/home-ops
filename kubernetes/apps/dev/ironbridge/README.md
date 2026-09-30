@@ -26,8 +26,16 @@ administrator approves each pairing.
 Verify fresh human messages in both directions, then replies, edits, files,
 reactions and deletions in a controlled channel. Slack messages retain the
 author avatar and `Name · via Slack` webhook identity without a source-link
-footer. Discord messages use the fixed Slack bridge identity and name the
-Discord author in the body. Check mention suppression and loop prevention,
+footer. Discord messages use the fixed Slack bridge identity, display the Discord
+author avatar, and name the author in the body without a source-link footer.
+Slack customization requires `chat:write.customize` and informed member consent;
+the installed IronBridge app has been updated with this scope. Source references
+remain in hidden Slack message metadata for retry recovery.
+
+Version 0.1.7 recovers missed Slack replies even after the channel cursor has
+passed their parent, mirrors a missed Discord thread starter before attaching
+replies, and names new Discord threads from the original message. Check mention
+suppression and loop prevention,
 then restart the pod and verify queued work resumes without duplicate delivery.
 Check delivery failures and unresolved removal tasks after activation.
 
