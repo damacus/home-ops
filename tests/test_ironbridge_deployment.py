@@ -80,6 +80,20 @@ class IronBridgeDeploymentTest(unittest.TestCase):
         self.assertIn("ironbridge-db", secrets)
         self.assertIn("rustfs-cnpg-northops-postgres", secrets)
 
+    def test_bridge_rejects_known_gateway_tls_panic_image(self) -> None:
+        deployment = next(
+            resource for resource in render(DEV / "ironbridge/app")
+            if resource["kind"] == "Deployment"
+        )
+        image = deployment["spec"]["template"]["spec"]["containers"][0]["image"]
+        # This published 0.1.3 artifact panics while opening both gateways.
+        self.assertNotEqual(
+            image,
+            "forgejo.ironstone.casa/damacus/ironbridge@sha256:"
+            "41215596876ab2f2545c4a851a83a98e9d97fdf3c707dd9911039e7f694a4c54",
+            "do not redeploy the observed gateway TLS startup failure",
+        )
+
     def test_bridge_has_no_sqlite_volume_and_forwards_both_directions(self) -> None:
         resources = render(DEV / "ironbridge/app")
         by_kind = {resource["kind"]: resource for resource in resources}
