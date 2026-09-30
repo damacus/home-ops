@@ -96,6 +96,18 @@ class IronBridgeDeploymentTest(unittest.TestCase):
             "do not redeploy an observed gateway startup failure",
         )
 
+    def test_bridge_rejects_image_that_skips_undiscovered_threads(self) -> None:
+        deployment = next(
+            resource for resource in render(DEV / "ironbridge/app")
+            if resource["kind"] == "Deployment"
+        )
+        image = deployment["spec"]["template"]["spec"]["containers"][0]["image"]
+        self.assertNotEqual(
+            image.split("@sha256:")[-1],
+            "b2108f46a7b0fe491bc8f0dfb1b944893b1a1796c460f6aaada7e39830f9bfea",
+            "0.1.5 skips Slack thread replies after the channel cursor passes their parent",
+        )
+
     def test_bridge_has_no_sqlite_volume_and_forwards_both_directions(self) -> None:
         resources = render(DEV / "ironbridge/app")
         by_kind = {resource["kind"]: resource for resource in resources}
