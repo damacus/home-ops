@@ -9,7 +9,9 @@ Deployment has no database PVC.
 The readiness probe runs `ironbridge status` inside the image. It opens the
 PostgreSQL connection and reads queue and channel state, so a database outage
 makes the pod unready. It does not prove that Slack or Discord gateway sessions
-are healthy; verify those separately during the controlled live test.
+are healthy; verify those separately during the controlled live test. Version
+0.1.4 selects the TLS crypto provider before connecting and exits if a worker or
+gateway task stops, allowing Kubernetes to restart the bridge.
 
 The active manifest uses `BRIDGE_ENABLED=true`,
 `BRIDGE_DIRECTION=both`, `BRIDGE_SCOPE=all`, and an empty
