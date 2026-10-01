@@ -6,14 +6,13 @@ pods must never forward at the same time. State is in the `ironbridge` database
 on the existing `northops-postgres` cluster; this
 Deployment has no database PVC.
 
-The readiness probe runs `ironbridge status` inside the image. It opens the
-PostgreSQL connection and reads queue and channel state, so a database outage
-makes the pod unready. It does not prove that Slack or Discord gateway sessions
-are healthy; verify those separately during the controlled live test. Version
-0.1.5 selects the TLS crypto provider before connecting, constructs a valid
-Discord WebSocket request target, and exits if a worker or gateway task stops,
-allowing Kubernetes to restart the bridge. Enable Message Content access on
-the Discord application before activating reverse forwarding.
+The readiness probe runs `ironbridge ready` inside the image. Version 0.2.1
+opens the PostgreSQL connection and, when the dashboard is enabled, requires
+an actual HTTP 204 from the local dashboard health endpoint. A database outage
+or stopped dashboard listener makes the pod unready. This does not prove that
+Slack or Discord gateway sessions are healthy; verify those separately during
+the controlled live test. Enable Message Content access on the Discord
+application before activating reverse forwarding.
 
 The active manifest uses `BRIDGE_ENABLED=true`,
 `BRIDGE_DIRECTION=both`, `BRIDGE_SCOPE=all`, and an empty
@@ -45,7 +44,9 @@ versions. It does not create a second top-level copy of the reply.
 
 The `ironbridge` 1Password item must contain dedicated Slack and Discord app
 credentials: `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `SLACK_TEAM_ID`,
-`SLACK_ADMIN_CHANNEL_ID`, `DISCORD_BOT_TOKEN`, and `DISCORD_GUILD_ID`. The
+`SLACK_ADMIN_CHANNEL_ID`, `DISCORD_BOT_TOKEN`, `DISCORD_GUILD_ID`, and
+`DISCORD_ADMIN_USER_ID`. The latter identifies the verified Discord
+administrator for private notification destination access checks. The
 `ironbridge-db` item contains a separate random `password`. Neither item may
 reuse NorthBot's credentials. The database URL uses the internal
 `northops-postgres-rw` Service with verified TLS and the CNPG CA Secret.
@@ -62,17 +63,17 @@ The existing cluster's 30-day RustFS Barman backup policy covers both databases;
 check a fresh backup, WAL archive and restore containing `ironbridge` before
 enabling the bridge.
 
-## Version 0.2.0 rollout
+## Version 0.2.1 dashboard activation
 
 Version 0.2.0 includes conversation moderation, the administrator dashboard,
 channel selection for notification destinations, and durable channel-approval
 notifications. Moderation remains in shadow mode and external alerts remain off.
 The dashboard credentials must be enrolled before its listener is enabled.
 
-The dashboard resources are prepared only. `DASHBOARD_ENABLED=false` means
-there is no web listener. The internal TLS HTTPRoute can therefore return an unavailable
-backend until a reviewed release and dashboard activation. It references the
-existing `traefik-internal` `websecure` listener and wildcard certificate.
+The activation manifest pins the verified v0.2.1 ARM64 image digest, uses
+`DASHBOARD_ENABLED=true`, and requires `ironbridge-dashboard` at startup.
+The internal TLS HTTPRoute references the existing `traefik-internal`
+`websecure` listener and wildcard certificate.
 The ClusterIP Service has no external address. The ingress NetworkPolicy allows
 only Traefik pods in `network` on TCP 8080; database, Slack, Discord and Jev
 outbound traffic remain available. Check policy enforcement and Gateway TLS
@@ -83,7 +84,9 @@ was applied and ingress denial has not yet been demonstrated live.
 
 `ironbridge-forward-auth` in `dev` uses the existing OAuth2 Proxy and forwards
 its ID token in `Authorization`. The application independently validates the
-signature, issuer, audience and membership. It must ignore proxy identity
+signature, issuer and audience. The exact verified administrator subject
+receives administrator access; other users need the dedicated `ironbridge`
+member claim for public status access. It must ignore proxy identity
 headers as an authorisation source. OAuth2 Proxy already uses
 `--set-authorization-header=true`. No native callback or application OAuth
 client secret is required. All POSTs require exact Origin, signed subject-bound
@@ -106,29 +109,30 @@ infer identity from names or email addresses.
 | `DASHBOARD_CSRF_SECRET` | Separately generated random secret of at least 32 bytes |
 
 Use only `op` CLI for credential operations; never print values in logs or task
-reports. No values are needed to review these manifests. The separate
-`prepare-secrets/` Kustomization is deliberately absent from Flux. Its
-`ironbridge-dashboard` ExternalSecret refers to a new item with the three
-JWKS/admin-subject/CSRF fields above. Audience is read directly from the same
-`zitadel-oauth2-proxy-oidc` item, property `client_id`, used by OAuth2 Proxy. Its `ironbridge-moderation` ExternalSecret
-reuses existing item `JEV_API_KEY`, property `credential`, as `JEV_API_KEY`.
-Neither adds fields to the current operational `ironbridge` ExternalSecret.
-The Deployment's optional references let the existing bridge continue when
-these secrets do not exist. When enabled, incomplete dashboard configuration
-must fail startup. Missing Jev key must leave durable pending work without
-calling Jev. Do not add a fictitious `MODERATION_ENABLED` setting.
+reports. No values are needed to review these manifests. The app Kustomization
+manages `ironbridge-dashboard` and `ironbridge-moderation` ExternalSecrets.
+The dashboard secret reads JWKS/admin-subject/CSRF fields from the dedicated
+`ironbridge-dashboard` item. Audience is read directly from the same
+`zitadel-oauth2-proxy-oidc` item, property `client_id`, used by OAuth2 Proxy.
+The moderation secret reuses item `JEV_API_KEY`, property `credential`.
+The dashboard reference is required; moderation remains optional. Incomplete
+dashboard configuration must fail startup. Missing Jev key must leave durable
+pending work without calling Jev. Do not add a fictitious `MODERATION_ENABLED`
+setting.
 
-After explicit approval, enrol only Dan as administrator and reviewed members
-in `ironbridge`; confirm the signed token has the expected group claim. A
-member may view public status only. Cases, preview and actions are admin only.
-Validate non-member denial and member denial of every admin endpoint.
-Only after verified fields exist and a new reviewed image is published should
-an activation PR add the standalone ExternalSecrets to the app Kustomization,
-update the image to its immutable digest, and change `DASHBOARD_ENABLED` to
-`true`. Review the rendered diff before merging. Flux reconciliation and
-activation need separate approval. Preserve one replica, Recreate, CNPG TLS,
-read-only filesystem and scratch storage. The bridge image can be upgraded
-while dashboard activation remains gated.
+Dan's exact administrator subject and Discord administrator ID have been
+verified and enrolled using `op`. Verify ExternalSecret synchronisation without
+printing their values. Enrol reviewed members in `ironbridge` separately and
+confirm the signed token has the expected group claim. A member may view
+public status only. Cases, preview and actions are admin only. Validate
+non-member denial and member denial of every admin endpoint with the released
+application.
+
+Before each rollout, verify the release and ARM64 image, confirm required
+credentials are synchronised, and review the rendered diff. Verify database
+and dashboard readiness after deployment, then both platform gateways.
+Flux reconciliation and activation need separate approval. Preserve one replica,
+Recreate, CNPG TLS, read-only filesystem and scratch storage.
 
 ### Slack permission and shadow acceptance gate
 
@@ -156,8 +160,8 @@ usage with the Jev account before alert activation. Validate pending backlog
 survives restart and key absence, then drains within an agreed bound when
 credentials return. Compare decisions with human review and NorthBot output;
 review false positives, omissions and duplicate incidents. Treat readiness as
-database evidence only; separately verify both platform gateways. No new
-metrics endpoint or alert names are claimed by these manifests. Initially use
+database and dashboard listener evidence; separately verify both platform
+gateways. No new metrics endpoint or alert names are claimed by these manifests. Initially use
 the actual application dashboard, structured logs and database inspection;
 add monitoring rules only against verified emitted metrics.
 
@@ -198,8 +202,8 @@ channel; it never guesses a target or replays them. Current cases remain visible
 
 Rollback server notifications to false first, then disable chosen external UI
 switches. Inbox presentation can be disabled separately. Retain evidence and
-queued work. These runbook changes preserve the current disabled/shadow defaults,
-one replica/Recreate, authentication membership and NorthBot.
+queued work. These runbook changes preserve shadow mode and disabled external
+notifications, one replica/Recreate, authentication membership and NorthBot.
 
 ### Reviewed NorthBot transition (not applied)
 

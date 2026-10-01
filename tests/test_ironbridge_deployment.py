@@ -134,7 +134,7 @@ class IronBridgeDeploymentTest(unittest.TestCase):
         self.assertEqual(container["securityContext"]["capabilities"]["drop"], ["ALL"])
         readiness = container["readinessProbe"]
         self.assertEqual(
-            readiness["exec"]["command"], ["/usr/local/bin/ironbridge", "status"]
+            readiness["exec"]["command"], ["/usr/local/bin/ironbridge", "ready"]
         )
         self.assertGreaterEqual(readiness["timeoutSeconds"], 10)
         digest = container["image"].split("@sha256:")[-1]
@@ -151,7 +151,7 @@ class IronBridgeDeploymentTest(unittest.TestCase):
         self.assertNotIn("PersistentVolumeClaim", by_kind)
         self.assertFalse(any("persistentVolumeClaim" in volume for volume in pod.get("volumes", [])))
         self.assertTrue(any(volume["name"] == "postgres-ca" for volume in pod["volumes"]))
-        secret = by_kind["ExternalSecret"]
+        secret = next(resource for resource in resources if resource["kind"] == "ExternalSecret" and resource["metadata"]["name"] == "ironbridge")
         self.assertIn("northops-postgres-rw.dev.svc.cluster.local", secret["spec"]["target"]["template"]["data"]["DATABASE_URL"])
         self.assertIn("sslmode=verify-full", secret["spec"]["target"]["template"]["data"]["DATABASE_URL"])
         self.assertIn("ExternalSecret", by_kind)
