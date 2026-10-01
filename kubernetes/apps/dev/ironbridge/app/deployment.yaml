@@ -34,7 +34,29 @@ spec:
           envFrom:
             - secretRef:
                 name: ironbridge
+            - secretRef:
+                name: ironbridge-dashboard
+                optional: true
+            - secretRef:
+                name: ironbridge-moderation
+                optional: true
           env:
+            - name: DASHBOARD_ENABLED
+              value: "false"
+            - name: DASHBOARD_BIND
+              value: "0.0.0.0:8080"
+            - name: DASHBOARD_PUBLIC_ORIGIN
+              value: "https://ironbridge.ironstone.casa"
+            - name: DASHBOARD_OIDC_ISSUER
+              value: "https://zitadel.damacus.io"
+            - name: DASHBOARD_MEMBER_GROUP
+              value: ironbridge
+            - name: MODERATION_SHADOW
+              value: "true"
+            - name: MODERATION_NOTIFICATIONS_ENABLED
+              value: "false"
+            - name: DASHBOARD_BASE_URL
+              value: "https://ironbridge.ironstone.casa"
             - name: BRIDGE_ENABLED
               value: "true"
             - name: BRIDGE_DIRECTION

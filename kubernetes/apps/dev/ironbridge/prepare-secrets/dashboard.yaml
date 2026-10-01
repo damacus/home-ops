@@ -1,0 +1,23 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: ironbridge-dashboard
+  namespace: dev
+spec:
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: onepassword-connect
+  target:
+    name: ironbridge-dashboard
+    creationPolicy: Owner
+  data:
+    - secretKey: DASHBOARD_OIDC_AUDIENCE
+      remoteRef: {key: zitadel-oauth2-proxy-oidc, property: client_id}
+    - secretKey: DASHBOARD_JWKS_URL
+      remoteRef: {key: ironbridge-dashboard, property: DASHBOARD_JWKS_URL}
+    - secretKey: DASHBOARD_ADMIN_SUBJECT
+      remoteRef: {key: ironbridge-dashboard, property: DASHBOARD_ADMIN_SUBJECT}
+    - secretKey: DASHBOARD_CSRF_SECRET
+      remoteRef: {key: ironbridge-dashboard, property: DASHBOARD_CSRF_SECRET}

@@ -4,3 +4,7 @@ kind: Kustomization
 resources:
   - externalsecret.yaml
   - deployment.yaml
+  - service.yaml
+  - httproute.yaml
+  - middleware.yaml
+  - networkpolicy.yaml

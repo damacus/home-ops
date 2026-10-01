@@ -576,5 +576,16 @@
 			"Confirm extension installation"
 		],
 		"passes": false
+	},
+	{
+		"category": "apps",
+		"description": "Prepare disabled IronBridge dashboard and shadow moderation rollout",
+		"steps": [
+			"Run failing dashboard/auth/network manifest checks",
+			"Render disabled resources and optional secret activation preparation",
+			"Document identity enrolment, shadow gates and NorthBot transition",
+			"Confirm final Task2 environment settings before completion"
+		],
+		"passes": true
 	}
 ]
