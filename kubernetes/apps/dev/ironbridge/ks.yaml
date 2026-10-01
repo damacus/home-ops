@@ -5,7 +5,7 @@ metadata:
   name: ironbridge
   namespace: flux-system
 spec:
-  # Lift only after a real digest and both ExternalSecrets are available.
+  # Enable only after a verified image and required secrets are available.
   suspend: false
   targetNamespace: dev
   path: ./kubernetes/apps/dev/ironbridge/app
@@ -17,7 +17,20 @@ spec:
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
-  wait: true
+  # Moderation credentials are optional and must not gate bridge readiness.
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: ironbridge
+      namespace: dev
+    - apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      name: ironbridge
+      namespace: dev
+    - apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      name: ironbridge-dashboard
+      namespace: dev
   interval: 30m
   retryInterval: 1m
   timeout: 5m
