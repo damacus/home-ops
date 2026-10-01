@@ -29,20 +29,19 @@ spec:
           type: RuntimeDefault
       containers:
         - name: ironbridge
-          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:f44c083a4bb985ba0d0642fb33d8a7ce6378f0c0a9aaaba4cc9ceaec7e198ca7
+          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:c2d1342ba98da2610eb23e21422533484fb56b69ef9284a5c546c31581110a9c
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:
                 name: ironbridge
             - secretRef:
                 name: ironbridge-dashboard
-                optional: true
             - secretRef:
                 name: ironbridge-moderation
                 optional: true
           env:
             - name: DASHBOARD_ENABLED
-              value: "false"
+              value: "true"
             - name: DASHBOARD_BIND
               value: "0.0.0.0:8080"
             - name: DASHBOARD_PUBLIC_ORIGIN
@@ -79,7 +78,7 @@ spec:
               memory: 256Mi
           readinessProbe:
             exec:
-              command: [/usr/local/bin/ironbridge, status]
+              command: [/usr/local/bin/ironbridge, ready]
             initialDelaySeconds: 15
             periodSeconds: 30
             timeoutSeconds: 10
