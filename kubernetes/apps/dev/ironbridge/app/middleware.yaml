@@ -1,0 +1,12 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ironbridge-forward-auth
+  namespace: dev
+spec:
+  forwardAuth:
+    address: http://oauth2-proxy-app.authentication.svc.cluster.local:4180/
+    trustForwardHeader: true
+    authResponseHeaders:
+      - Authorization
