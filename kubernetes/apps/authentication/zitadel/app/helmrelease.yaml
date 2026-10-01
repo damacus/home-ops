@@ -124,7 +124,7 @@ spec:
       kubectl:
         image:
           repository: rancher/k3s
-          tag: "v1.37.0-k3s1"
+          tag: "v1.37.1-k3s1"
 
     readinessProbe:
       enabled: true
