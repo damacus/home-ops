@@ -115,7 +115,10 @@ The dashboard secret reads JWKS/admin-subject/CSRF fields from the dedicated
 `ironbridge-dashboard` item. Audience is read directly from the same
 `zitadel-oauth2-proxy-oidc` item, property `client_id`, used by OAuth2 Proxy.
 The moderation secret reuses item `JEV_API_KEY`, property `credential`.
-The dashboard reference is required; moderation remains optional. Incomplete
+The dashboard reference is required; moderation remains optional. Flux health
+checks require the Deployment, operational ExternalSecret and dashboard
+ExternalSecret. Monitor the optional moderation ExternalSecret status separately;
+a missing Jev key must not block bridge readiness. Incomplete
 dashboard configuration must fail startup. Missing Jev key must leave durable
 pending work without calling Jev. Do not add a fictitious `MODERATION_ENABLED`
 setting.

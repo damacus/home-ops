@@ -49,6 +49,23 @@ class IronBridgeDeploymentTest(unittest.TestCase):
             {"name": "northops-postgres"}, ks["spec"]["dependsOn"]
         )
 
+    def test_flux_readiness_requires_bridge_and_dashboard_secrets_only(self) -> None:
+        ks = json.loads(subprocess.run(
+            ["yq", "-o=json", "-I=0", ".", str(DEV / "ironbridge/ks.yaml")],
+            capture_output=True, text=True, check=True,
+        ).stdout)
+        self.assertFalse(ks["spec"].get("wait", False), "wait=true ignores explicit healthChecks")
+        checks = ks["spec"].get("healthChecks", [])
+        self.assertEqual(len(checks), 3)
+        self.assertEqual(
+            {(c["apiVersion"], c["kind"], c["name"], c["namespace"]) for c in checks},
+            {
+                ("apps/v1", "Deployment", "ironbridge", "dev"),
+                ("external-secrets.io/v1", "ExternalSecret", "ironbridge", "dev"),
+                ("external-secrets.io/v1", "ExternalSecret", "ironbridge-dashboard", "dev"),
+            },
+        )
+
     def test_shared_cluster_adds_isolated_ironbridge_database(self) -> None:
         resources = render(DEV / "northops-postgres/app")
         by_kind = {resource["kind"]: resource for resource in resources if resource["kind"] not in {"ExternalSecret", "Database"}}
