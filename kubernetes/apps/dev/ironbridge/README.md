@@ -63,6 +63,14 @@ The existing cluster's 30-day RustFS Barman backup policy covers both databases;
 check a fresh backup, WAL archive and restore containing `ironbridge` before
 enabling the bridge.
 
+## Version 0.2.2 channel approvals
+
+Channel approvals open a dialogue on the channel page and keep the entered
+reason when a request fails. Same-origin submissions preserve their origin;
+administrator identity and CSRF checks still apply. Competing approvals cannot
+replace a selected pair. This deployment keeps both bridge directions enabled
+and retains shadow moderation with external notifications disabled.
+
 ## Version 0.2.1 dashboard activation
 
 Version 0.2.0 includes conversation moderation, the administrator dashboard,

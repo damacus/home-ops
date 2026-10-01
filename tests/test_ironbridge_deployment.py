@@ -137,6 +137,18 @@ class IronBridgeDeploymentTest(unittest.TestCase):
             "0.1.7 silently discards Slack thread_broadcast replies",
         )
 
+    def test_bridge_rejects_image_that_blocks_browser_approvals(self) -> None:
+        deployment = next(
+            resource for resource in render(DEV / "ironbridge/app")
+            if resource["kind"] == "Deployment"
+        )
+        image = deployment["spec"]["template"]["spec"]["containers"][0]["image"]
+        self.assertNotEqual(
+            image.split("@sha256:")[-1],
+            "c2d1342ba98da2610eb23e21422533484fb56b69ef9284a5c546c31581110a9c",
+            "0.2.1 sends Origin: null on browser approvals and lacks the approval dialogue",
+        )
+
     def test_bridge_has_no_sqlite_volume_and_forwards_both_directions(self) -> None:
         resources = render(DEV / "ironbridge/app")
         by_kind = {resource["kind"]: resource for resource in resources}
