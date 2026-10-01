@@ -14,7 +14,7 @@ class DashboardPreparationTest(unittest.TestCase):
         self.assertEqual(env["MODERATION_NOTIFICATIONS_ENABLED"], "false")
         for name in ("ironbridge-dashboard", "ironbridge-moderation"):
             self.assertIn({"secretRef": {"name": name, "optional": True}}, container["envFrom"])
-        self.assertEqual(container["image"].split("@sha256:")[1], "d7d5b63937c4342e08f6b9a1358f4cbdd69c7c65695f09c89d19407f8a04101d")
+        self.assertEqual(container["image"].split("@sha256:")[1], "f44c083a4bb985ba0d0642fb33d8a7ce6378f0c0a9aaaba4cc9ceaec7e198ca7")
         self.assertEqual([r["metadata"]["name"] for r in resources if r["kind"] == "ExternalSecret"], ["ironbridge"])
 
     def test_tls_auth_and_no_direct_ingress(self) -> None:

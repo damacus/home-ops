@@ -62,10 +62,15 @@ The existing cluster's 30-day RustFS Barman backup policy covers both databases;
 check a fresh backup, WAL archive and restore containing `ironbridge` before
 enabling the bridge.
 
-## Dashboard and moderation preparation
+## Version 0.2.0 rollout
 
-This change prepares resources only. `DASHBOARD_ENABLED=false` means there is
-no web listener. The internal TLS HTTPRoute can therefore return an unavailable
+Version 0.2.0 includes conversation moderation, the administrator dashboard,
+channel selection for notification destinations, and durable channel-approval
+notifications. Moderation remains in shadow mode and external alerts remain off.
+The dashboard credentials must be enrolled before its listener is enabled.
+
+The dashboard resources are prepared only. `DASHBOARD_ENABLED=false` means
+there is no web listener. The internal TLS HTTPRoute can therefore return an unavailable
 backend until a reviewed release and dashboard activation. It references the
 existing `traefik-internal` `websecure` listener and wildcard certificate.
 The ClusterIP Service has no external address. The ingress NetworkPolicy allows
@@ -122,7 +127,8 @@ an activation PR add the standalone ExternalSecrets to the app Kustomization,
 update the image to its immutable digest, and change `DASHBOARD_ENABLED` to
 `true`. Review the rendered diff before merging. Flux reconciliation and
 activation need separate approval. Preserve one replica, Recreate, CNPG TLS,
-read-only filesystem and scratch storage. Keep the current digest until then.
+read-only filesystem and scratch storage. The bridge image can be upgraded
+while dashboard activation remains gated.
 
 ### Slack permission and shadow acceptance gate
 
@@ -131,9 +137,9 @@ Reinstall the app into the same workspace after reviewing the scope diff.
 If reinstall rotates credentials, use `op` to update the existing token item
 without exposing the value. Confirm workspace identity, emoji lookup and the
 existing channel scopes still work. This is an authorised later operation.
-The source release must retain the 0.1.9 approval notification fix; the current
-manifest digest alone does not establish source inclusion or published build
-provenance. Have the source coordinator verify the fix and release tests.
+The version 0.2.0 release includes the approval notification fix and its
+PostgreSQL-backed tests. Verify private administrator feedback after rollout;
+source tests do not establish live delivery.
 
 Begin with `MODERATION_SHADOW=true` and
 `MODERATION_NOTIFICATIONS_ENABLED=false`. No history import, automatic
@@ -193,7 +199,7 @@ channel; it never guesses a target or replays them. Current cases remain visible
 Rollback server notifications to false first, then disable chosen external UI
 switches. Inbox presentation can be disabled separately. Retain evidence and
 queued work. These runbook changes preserve the current disabled/shadow defaults,
-one replica/Recreate, deployment digest, authentication membership and NorthBot.
+one replica/Recreate, authentication membership and NorthBot.
 
 ### Reviewed NorthBot transition (not applied)
 
