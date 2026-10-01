@@ -107,6 +107,11 @@
       description: "Auto-merge non-major updates for selected home-ops assets",
       matchPackageNames: [
         "jdx/mise",
+        "jdx/mise-action",
+        "kustomize",
+        "yq",
+        "ghcr.io/cloudnative-pg/plugin-barman-cloud",
+        "ghcr.io/cloudnative-pg/plugin-barman-cloud-sidecar",
         "ghcr.io/coder/code-server",
         "ghcr.io/cloudnative-pg/postgresql",
         "ghcr.io/home-operations/home-assistant",
