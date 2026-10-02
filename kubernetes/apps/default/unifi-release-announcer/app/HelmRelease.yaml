@@ -25,16 +25,20 @@ spec:
     keepHistory: false
   values:
     defaultPodOptions:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 35
       imagePullSecrets:
         - name: ghcr-credentials
 
     controllers:
       app:
+        replicas: 1
+        strategy: Recreate
         containers:
           app:
             image:
               repository: ghcr.io/damacus/unifi-release-announcer
-              tag: 0.2.14@sha256:19ef75ff3c21473a49e07c91ed19aefa9187cd286b8e595d783eb2148cb4a552
+              tag: 0.3.0@sha256:71397b18bc253a4132b873fe30b42fc9e3ab5b294e2beb66a8cc5d9dd2eaf81e
             env:
               - name: TAGS
                 value: "unifi-drive,unifi-network,unifi-protect"
@@ -49,6 +53,7 @@ spec:
                     name: unifi-release-announcer
                     key: DISCORD_CHANNEL_ID
             securityContext:
+              readOnlyRootFilesystem: true
               allowPrivilegeEscalation: false
               runAsNonRoot: true
               runAsUser: 1000
