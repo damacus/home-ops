@@ -49,7 +49,7 @@ spec:
           migrate:
             image:
               repository: &repository ghcr.io/damacus/med-tracker
-              tag: &tag 0.5.33@sha256:994ebb61fd556925ae1ccbd23c2b7e78603df7e3f3fb88f14381d698460a5920
+              tag: &tag 0.5.34@sha256:9d18a0330f25d22641200aa950046bf3c8aef7b3979b9e5cb903d92bbba000dd
             command: ["bin/rails", "db:prepare"]
             envFrom:
               - secretRef:
