@@ -180,7 +180,7 @@ spec:
       image:
         registry: ghcr.io
         repository: damacus/k8s-sidecar-rs
-        tag: "0.2.1"
+        tag: "0.2.2"
         sha: ""
         pullPolicy: IfNotPresent
 
