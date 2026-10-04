@@ -60,7 +60,7 @@ spec:
       sidecar:
         image:
           repository: ghcr.io/damacus/k8s-sidecar-rs
-          tag: "0.2.3"
+          tag: "0.2.4"
           sha: ""
           pullPolicy: IfNotPresent
 

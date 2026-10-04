@@ -610,7 +610,7 @@ spec:
       image:
         registry: ghcr.io
         repository: damacus/k8s-sidecar-rs
-        tag: "0.2.3"
+        tag: "0.2.4"
         sha: ""
       imagePullPolicy: IfNotPresent
       alerts:
@@ -624,6 +624,10 @@ spec:
         labelValue: ""
         label: grafana_dashboard
         folderAnnotation: grafana_folder
+        # Both sidecars share the pod's network: the alerts sidecar owns the
+        # default HEALTH_PORT 8080, so this one needs its own port.
+        env:
+          HEALTH_PORT: "8081"
         provider:
           disableDelete: true
           foldersFromFilesStructure: true
