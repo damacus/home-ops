@@ -606,6 +606,13 @@ spec:
           datasource: Prometheus
 
     sidecar:
+      # Rust port of the kiwigrid sidecar
+      image:
+        registry: ghcr.io
+        repository: damacus/k8s-sidecar-rs
+        tag: "0.2.3"
+        sha: ""
+      imagePullPolicy: IfNotPresent
       alerts:
         enabled: true
         label: grafana_alert
