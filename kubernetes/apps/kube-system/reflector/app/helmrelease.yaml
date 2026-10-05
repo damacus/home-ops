@@ -28,9 +28,9 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    # canary: Rust re-implementation (kubernetes-reflector-rs)
+    # canary: Rust re-implementation (k8s-reflector-rs)
     image:
-      repository: ghcr.io/damacus/kubernetes-reflector-rs
-      tag: 0.1.2
+      repository: ghcr.io/damacus/k8s-reflector-rs
+      tag: 0.1.3
     imagePullSecrets:
       - name: dockerhub-credentials
