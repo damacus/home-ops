@@ -62,11 +62,7 @@ spec:
     service:
       app:
         controller: esphome
-        annotations:
-          lbipam.cilium.io/ips: "192.168.3.227"
-        type: LoadBalancer
-        labels:
-          network.ironstone.casa/advertisement: bgp
+        type: ClusterIP
         ports:
           http:
             port: 6052

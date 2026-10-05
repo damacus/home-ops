@@ -9,6 +9,7 @@ spec:
   path: ./kubernetes/apps/home-automation/esphome/app
   prune: true
   dependsOn:
+    - name: oauth2-proxy
     - name: cert-manager
     - name: external-dns-unifi
     - name: csi-driver-nfs
