@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - ./HelmRelease.yaml
   - ./pvc.yaml
+  - ./networkpolicy.yaml
 
 configMapGenerator:
   - name: frigate-configmap
