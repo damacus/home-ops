@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gateway-api-crds
+  namespace: flux-system
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: gateway-api-crds
+  force: false
+  interval: 1h
+  path: ./config/crd/standard
+  # Removing this reconciler must never delete CRDs or their route resources.
+  prune: false
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: gateway-api
+  timeout: 5m
+  wait: true

@@ -99,6 +99,13 @@ tasks:
     preconditions:
       - { msg: "Missing cluster health binary", sh: "test -x {{.CLUSTER_HEALTH_BIN}}" }
 
+  test-cluster-health:
+    desc: Test cluster health checks, including repeated Flux failures
+    summary: |
+      Runs offline regression tests for the health checker and its CLI.
+      Repeated reconciliation errors must fail even during recent retries.
+    cmd: go test ./internal/clusterhealth ./cmd/cluster-health
+
   health-nodes:
     desc: Report Kubernetes node readiness
     cmds:
@@ -134,8 +141,8 @@ tasks:
     silent: true
     summary: |
       Runs child reports for nodes, kube-vip, Cilium, active pods, deployments,
-      CNPG cluster state, and Grafana/Alertmanager alerts. Run a child task
-      directly to diagnose a specific concern.
+      CNPG cluster state, Flux readiness, and Grafana/Alertmanager alerts.
+      Run a child task directly to diagnose a specific concern.
 
       Examples:
         task kubernetes:health
@@ -152,7 +159,7 @@ tasks:
       TIMEOUT: '{{.timeout | default "45"}}'
     cmd: |
       failed=0
-      checks="health-nodes health-kube-vip health-cilium health-pods health-deployments cnpg-health grafana-alerts"
+      checks="health-nodes health-kube-vip health-cilium health-pods health-deployments cnpg-health gitops-health grafana-alerts"
       for check in ${checks}; do
         task kubernetes:"${check}" \
           format={{.FORMAT}} \
@@ -194,7 +201,8 @@ tasks:
     summary: |
       Checks GitRepositories, Kustomizations, and HelmReleases that are not
       intentionally suspended. Failed details include the controller reason
-      and message where available.
+      and message where available. Repeated failures are not hidden by the
+      grace period for a new reconciliation.
 
       Examples:
         task kubernetes:gitops-health

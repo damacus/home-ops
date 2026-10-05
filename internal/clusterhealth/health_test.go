@@ -363,3 +363,36 @@ func TestReadWebSocketFrame(t *testing.T) {
 		t.Fatalf("got %q, want hello", payload)
 	}
 }
+
+func TestGitOpsReportsFailuresDuringRecentRetries(t *testing.T) {
+	for _, reason := range []string{"ProgressingWithRetry", "Progressing"} {
+		t.Run(reason, func(t *testing.T) {
+			responses := map[string]CommandOutput{
+				kubectlGetKey("gitrepository"): jsonOutput(map[string]any{"items": []any{}}),
+				kubectlGetKey("helmrelease"):   jsonOutput(map[string]any{"items": []any{}}),
+				kubectlGetKey("kustomization"): jsonOutput(map[string]any{"items": []any{
+					map[string]any{
+						"metadata": map[string]any{"namespace": "flux-system", "name": "gateway-api-crds"},
+						"status": map[string]any{"conditions": []any{
+							map[string]any{"type": "Ready", "status": "False", "reason": "ReconciliationFailed", "message": "CRD update denied"},
+							map[string]any{"type": "Reconciling", "status": "True", "reason": reason, "lastTransitionTime": "2026-05-20T16:02:59Z"},
+						}},
+					},
+				}}),
+			}
+			result := fixedChecker(responses).GitOps(context.Background())
+			if result.Status != StatusFail || len(result.Details) != 1 || !strings.Contains(result.Details[0], "CRD update denied") {
+				t.Fatalf("recent retry hid reconciliation failure: %#v", result)
+			}
+		})
+	}
+}
+
+func TestReadinessRetryCannotUseGraceWithoutReady(t *testing.T) {
+	resource := readinessResource{}
+	resource.Metadata.Name = "retrying"
+	resource.Status.Conditions = []condition{{Type: "Reconciling", Status: "True", Reason: "ProgressingWithRetry", LastTransitionTime: "2026-05-20T16:02:59Z"}}
+	if failures := fixedChecker(nil).readinessFailures([]readinessResource{resource}, "Kustomization", true); len(failures) != 1 {
+		t.Fatalf("retry without Ready was ignored: %v", failures)
+	}
+}
