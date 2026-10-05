@@ -1,0 +1,48 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: vmsingle-ingress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vmsingle
+      app.kubernetes.io/instance: vm
+  ingress:
+    # Internal monitoring clients keep their existing service URLs.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values: [grafana, vmagent, vmalert, vm-operator]
+      toPorts:
+        - ports:
+            - port: "8428"
+              protocol: TCP
+    # RustFS exports OTLP metrics directly to the internal backend.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: storage
+            app.kubernetes.io/name: rustfs
+      toPorts:
+        - ports:
+            - port: "8428"
+              protocol: TCP
+    # Browser traffic may only reach VMUI assets and its read-only query APIs.
+    # Ingestion, export, debug and administrative endpoints remain internal.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: network
+            app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "8428"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: "^/vmui(/.*)?$"
+              - method: "GET|POST"
+                path: "^/api/v1/(query|query_range|labels|series|label/[^/]+/values|status/(tsdb|top_queries|active_queries))$"

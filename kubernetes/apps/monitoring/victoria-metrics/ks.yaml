@@ -10,6 +10,7 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
+    - name: oauth2-proxy
     - name: external-secrets-stores
     - name: prometheus-operator-crds # Depends on CRDs being present (though VM installs its own, it uses ServiceMonitors)
   path: ./kubernetes/apps/monitoring/victoria-metrics/app
