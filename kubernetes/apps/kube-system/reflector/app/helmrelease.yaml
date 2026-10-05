@@ -31,6 +31,6 @@ spec:
     # canary: Rust re-implementation (kubernetes-reflector-rs)
     image:
       repository: ghcr.io/damacus/kubernetes-reflector-rs
-      tag: 0.1.1
+      tag: 0.1.2
     imagePullSecrets:
       - name: dockerhub-credentials
