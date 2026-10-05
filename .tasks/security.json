@@ -537,5 +537,15 @@
 			"Test SSO logout propagation"
 		],
 		"passes": false
+	},
+	{
+		"category": "grafana",
+		"description": "Remove Grafana discovery sidecars and Kubernetes API access",
+		"steps": [
+			"Provision the existing dashboards and alert rules as named ConfigMap mounts in monitoring",
+			"Verify rendered Grafana has no discovery containers, API token or RBAC bindings",
+			"After GitOps deployment verify dashboard and alert inventories and denied Secret access"
+		],
+		"passes": false
 	}
 ]
