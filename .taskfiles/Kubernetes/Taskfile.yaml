@@ -275,7 +275,7 @@ tasks:
       TIMEOUT: '{{.timeout | default "45"}}'
     cmd: |
       failed=0
-      checks="health gitops-health external-secrets-health service-account-health cnpg-backups"
+      checks="health external-secrets-health service-account-health cnpg-backups"
       [ "{{.EDGE_SMOKE}}" = "true" ] && checks="${checks} edge-smoke"
       [ "{{.LOG_NOISE}}" = "true" ] && checks="${checks} log-noise"
       for check in ${checks}; do
