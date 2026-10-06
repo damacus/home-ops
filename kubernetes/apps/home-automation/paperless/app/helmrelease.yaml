@@ -127,7 +127,7 @@ spec:
                   periodSeconds: 5
             resources:
               requests:
-                cpu: 100m
+                cpu: 50m
                 memory: 1Gi
               limits:
                 cpu: 2000m
@@ -145,7 +145,7 @@ spec:
               - { name: DISABLE_GOOGLE_CHROME, value: "1" }
             resources:
               requests:
-                cpu: 100m
+                cpu: 25m
                 memory: 256Mi
               limits:
                 cpu: 500m
@@ -161,7 +161,7 @@ spec:
               tag: 3.3.1.0@sha256:90b7fa1dc018434075fce9e1d9b88b1e3d0ea6979d0cf86e116c79a8073ae973
             resources:
               requests:
-                cpu: 100m
+                cpu: 25m
                 memory: 256Mi
               limits:
                 cpu: 500m
