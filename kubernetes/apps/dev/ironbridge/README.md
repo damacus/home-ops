@@ -6,13 +6,41 @@ pods must never forward at the same time. State is in the `ironbridge` database
 on the existing `northops-postgres` cluster; this
 Deployment has no database PVC.
 
-The readiness probe runs `ironbridge ready` inside the image. Version 0.2.1
+The readiness probe runs `ironbridge ready` inside the image. Version 0.2.5
 opens the PostgreSQL connection and, when the dashboard is enabled, requires
 an actual HTTP 204 from the local dashboard health endpoint. A database outage
 or stopped dashboard listener makes the pod unready. This does not prove that
 Slack or Discord gateway sessions are healthy; verify those separately during
 the controlled live test. Enable Message Content access on the Discord
 application before activating reverse forwarding.
+
+## Version 0.2.5 Slack commands
+
+The proposed deployment pins the published ARM64 image
+`sha256:d527439f6233f38202f8b90d247b3610606d411d1c626d5ea3388acad6f13137`.
+The source tests, container build and registry publication passed. The Slack
+app has been reinstalled in North Ops with `commands` permission and the
+`/poll` and `/gif` definitions. The rollout and live command checks remain
+pending.
+
+`/poll` opens a native Slack editor with 2–10 options and add/remove controls.
+Published polls have a fixed option list; members can change their own vote.
+Polls and votes persist in PostgreSQL. After rollout, verify that the
+`bot_polls` and `bot_votes` tables exist, readiness succeeds, both platform
+gateways connect, and the poll editor opens and preserves entries when options
+are added or removed. Publishing and voting in a controlled channel remain
+unverified until that live check is performed.
+
+`/gif` opens a search picker, but searches require `GIPHY_API_KEY`. No key is
+currently enrolled or mapped into the deployment, so GIF search is not active.
+Before activating search, store a dedicated key in the IronBridge 1Password
+item, map it through an ExternalSecret, and verify a search after the secret
+synchronises. Keep the existing operational secret healthy while credentials
+are absent. Slack's built-in GIF picker is available independently of this
+custom command and does not need an IronBridge API key.
+
+These bot interactions apply to eligible public Slack channels. Polls are not
+mirrored to Discord, and bridge readiness does not establish command delivery.
 
 The active manifest uses `BRIDGE_ENABLED=true`,
 `BRIDGE_DIRECTION=both`, `BRIDGE_SCOPE=all`, and an empty
@@ -78,7 +106,7 @@ channel selection for notification destinations, and durable channel-approval
 notifications. Moderation remains in shadow mode and external alerts remain off.
 The dashboard credentials must be enrolled before its listener is enabled.
 
-The activation manifest pins the verified v0.2.1 ARM64 image digest, uses
+The original dashboard activation pinned the verified v0.2.1 ARM64 image and used
 `DASHBOARD_ENABLED=true`, and requires `ironbridge-dashboard` at startup.
 The internal TLS HTTPRoute references the existing `traefik-internal`
 `websecure` listener and wildcard certificate.
