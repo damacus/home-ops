@@ -10,8 +10,8 @@ import tempfile
 import unittest
 
 
-ROOT = Path(__file__).resolve().parents[1]
-PLAN = ROOT / "kubernetes/apps/system-upgrade/k3s/app/plan.yaml"
+ROOT: Path = Path(__file__).resolve().parents[1]
+PLAN: Path = ROOT / "kubernetes/apps/system-upgrade/k3s/app/plan.yaml"
 
 
 class SystemUpgradeHealthGateTest(unittest.TestCase):
@@ -38,12 +38,14 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
     def test_gate_waits_for_vip_and_every_control_plane_node(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             temp_dir = Path(tmp)
+            (temp_dir / "token").write_text("fixture-token")
+            (temp_dir / "ca.crt").write_text("fixture-ca")
             fake_k3s = temp_dir / "k3s"
             fake_k3s.write_text(
                 "#!/bin/sh\n"
                 "[ \"$1\" = kubectl ] || exit 2\n"
                 "shift\n"
-                "[ \"$1\" = --request-timeout=5s ] && shift\n"
+                "while [ \"$#\" -gt 0 ]; do case \"$1\" in --*) shift ;; *) break ;; esac; done\n"
                 "case \"$*\" in\n"
                 "  \"get --raw=/readyz\")\n"
                 "    count=$(cat \"$READY_COUNT_FILE\" 2>/dev/null || echo 0)\n"
@@ -78,6 +80,7 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
             env = {
                 **os.environ,
                 "K3S_BIN": str(fake_k3s),
+                "SERVICE_ACCOUNT_DIR": str(temp_dir),
                 "SLEEP_BIN": str(fake_sleep),
                 "READY_COUNT_FILE": str(temp_dir / "ready-count"),
                 "READY_AFTER": "1",
@@ -98,12 +101,14 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
     def test_gate_keeps_waiting_when_a_control_plane_node_is_not_ready(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             temp_dir = Path(tmp)
+            (temp_dir / "token").write_text("fixture-token")
+            (temp_dir / "ca.crt").write_text("fixture-ca")
             fake_k3s = temp_dir / "k3s"
             fake_k3s.write_text(
                 "#!/bin/sh\n"
                 "[ \"$1\" = kubectl ] || exit 2\n"
                 "shift\n"
-                "[ \"$1\" = --request-timeout=5s ] && shift\n"
+                "while [ \"$#\" -gt 0 ]; do case \"$1\" in --*) shift ;; *) break ;; esac; done\n"
                 "case \"$*\" in\n"
                 "  \"get --raw=/readyz\") exit 0 ;;\n"
                 "  \"get nodes --selector=node-role.kubernetes.io/control-plane -o json\") cat \"$NODES_FILE\" ;;\n"
@@ -131,6 +136,7 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
             env = {
                 **os.environ,
                 "K3S_BIN": str(fake_k3s),
+                "SERVICE_ACCOUNT_DIR": str(temp_dir),
                 "SLEEP_BIN": str(fake_sleep),
                 "NODES_FILE": str(nodes_file),
             }

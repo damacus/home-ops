@@ -22,9 +22,17 @@ spec:
         export KUBERNETES_SERVICE_PORT=6443
         K3S_BIN="${K3S_BIN:-/opt/k3s}"
         SLEEP_BIN="${SLEEP_BIN:-sleep}"
+        SERVICE_ACCOUNT_DIR="${SERVICE_ACCOUNT_DIR:-/var/run/secrets/kubernetes.io/serviceaccount}"
+        # kubectl loads a kubeconfig; service-host exports alone do not select the VIP.
+        vip_kubectl() {
+          "$K3S_BIN" kubectl --request-timeout=5s --kubeconfig=/dev/null \
+            --server=https://192.168.1.220:6443 \
+            --certificate-authority="$SERVICE_ACCOUNT_DIR/ca.crt" \
+            --token="$(cat "$SERVICE_ACCOUNT_DIR/token")" "$@"
+        }
         while true; do
-          if "$K3S_BIN" kubectl --request-timeout=5s get --raw=/readyz >/dev/null 2>&1 &&
-             "$K3S_BIN" kubectl --request-timeout=5s get nodes --selector=node-role.kubernetes.io/control-plane -o json |
+          if vip_kubectl get --raw=/readyz >/dev/null 2>&1 &&
+             vip_kubectl get nodes --selector=node-role.kubernetes.io/control-plane -o json |
                jq -e '(.items | length) >= 3 and all(.items[]; any(.status.conditions[]; .type == "Ready" and .status == "True"))' >/dev/null 2>&1; then
             echo "API VIP is ready and all control-plane nodes are Ready"
             exit 0

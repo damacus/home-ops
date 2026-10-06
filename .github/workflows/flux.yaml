@@ -162,6 +162,10 @@ jobs:
           python3 -m unittest tests/test_zitadel_config.py
           ruby tests/test_zitadel_access_policy.rb
 
+      - name: Verify PR behaviour regressions
+        run: |
+          python3 -m unittest tests/test_system_upgrade_health_gate.py tests/test_system_upgrade_vip_credentials.py
+
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml
 
