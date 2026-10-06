@@ -537,5 +537,15 @@
 			"Test SSO logout propagation"
 		],
 		"passes": false
+	},
+	{
+		"category": "monitoring",
+		"description": "Remove unused kube-state-metrics Secret collection and RBAC",
+		"steps": [
+			"Exclude the secrets collector through the pinned chart",
+			"Verify Helm output removes Secret permissions and preserves other collectors and custom resource health metrics",
+			"After GitOps deployment verify KSM readiness and denied Secret access"
+		],
+		"passes": false
 	}
 ]
