@@ -85,6 +85,8 @@ spec:
         ports:
           http:
             port: *api_port
+          authenticated:
+            port: 8971
           rtsp:
             port: 8554
 
@@ -95,6 +97,11 @@ spec:
           - name: traefik-internal
             namespace: network
             sectionName: websecure
+        rules:
+          - backendRefs:
+              - kind: Service
+                name: frigate
+                port: 8971
 
     persistence:
       data:
