@@ -53,6 +53,7 @@ jobs:
               - '.github/workflows/flux.yaml'
               - 'kubernetes/**'
               - 'mondoo/**'
+              - 'tests/test_metrics_ui_auth.py'
               - 'scripts/mondoo_scan.py'
               - 'tests/test_zitadel_access_policy.rb'
               - 'tests/test_zitadel_config.py'
@@ -215,6 +216,12 @@ jobs:
           --output junit
           --report-dir mondoo-reports
           k8s-manifests --path ./kubernetes --include-posture
+
+      - name: Verify authenticated metrics access
+        run: |
+          python3 -m venv "$RUNNER_TEMP/metrics-test-env"
+          "$RUNNER_TEMP/metrics-test-env/bin/pip" install PyYAML==6.0.3
+          "$RUNNER_TEMP/metrics-test-env/bin/python" -m unittest tests/test_metrics_ui_auth.py
 
       - name: Upload Mondoo reports
         if: always()

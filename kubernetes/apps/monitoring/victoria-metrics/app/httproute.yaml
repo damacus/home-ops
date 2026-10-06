@@ -14,8 +14,31 @@ spec:
   rules:
     - matches:
         - path:
-            type: PathPrefix
+            type: Exact
             value: /
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /vmui/
+            statusCode: 302
+    - matches:
+        - path: { type: PathPrefix, value: /vmui }
+        - path: { type: Exact, value: /api/v1/query }
+        - path: { type: Exact, value: /api/v1/query_range }
+        - path: { type: Exact, value: /api/v1/labels }
+        - path: { type: PathPrefix, value: /api/v1/label }
+        - path: { type: Exact, value: /api/v1/series }
+        - path: { type: Exact, value: /api/v1/status/tsdb }
+        - path: { type: Exact, value: /api/v1/status/top_queries }
+        - path: { type: Exact, value: /api/v1/status/active_queries }
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: oauth2-proxy-forward-auth
       backendRefs:
         - name: vmsingle-vm
           port: 8428
