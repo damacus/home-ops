@@ -1,0 +1,360 @@
+[
+  {
+    "file": "kubernetes/apps/home-automation/home-assistant/app/HelmRelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "home-assistant",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 0,
+    "request_ceilings": {
+      "cpu": "175m"
+    },
+    "limits": {
+      "cpu": "4000m",
+      "memory": "6Gi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/home-automation/paperless/app/helmrelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "paperless",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 0,
+    "request_ceilings": {
+      "cpu": "50m"
+    },
+    "limits": {
+      "cpu": "2000m",
+      "memory": "4Gi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/home-automation/paperless/app/helmrelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "paperless",
+      "containers",
+      "gotenberg",
+      "resources"
+    ],
+    "memory_floor_mib": 0,
+    "request_ceilings": {
+      "cpu": "25m"
+    },
+    "limits": {
+      "cpu": "500m",
+      "memory": "1Gi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/home-automation/paperless/app/helmrelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "paperless",
+      "containers",
+      "tika",
+      "resources"
+    ],
+    "memory_floor_mib": 0,
+    "request_ceilings": {
+      "cpu": "25m"
+    },
+    "limits": {
+      "cpu": "500m",
+      "memory": "1Gi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/home-automation/n8n/app/helmrelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "n8n",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 0,
+    "request_ceilings": {
+      "cpu": "25m"
+    },
+    "limits": {
+      "cpu": "1000m",
+      "memory": "2Gi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/home-automation/n8n/app/helmrelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "worker",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 0,
+    "request_ceilings": {
+      "cpu": "25m"
+    },
+    "limits": {
+      "cpu": "1000m",
+      "memory": "2Gi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/home-automation/matter/app/helmrelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "matter-server",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 0,
+    "request_ceilings": {
+      "cpu": "25m"
+    },
+    "limits": {
+      "memory": "512Mi",
+      "cpu": "1000m"
+    }
+  },
+  {
+    "file": "kubernetes/apps/home-automation/whisper/app/HelmRelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "whisper",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 512,
+    "request_ceilings": {
+      "memory": "1Gi"
+    },
+    "limits": {
+      "cpu": "4000m",
+      "memory": "4Gi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/home-automation/piper/app/HelmRelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "piper",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 128,
+    "request_ceilings": {
+      "memory": "256Mi"
+    },
+    "limits": {
+      "cpu": "2000m",
+      "memory": "2Gi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/home-automation/wakeword/app/HelmRelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "openwakeword",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 64,
+    "request_ceilings": {
+      "memory": "128Mi"
+    },
+    "limits": {
+      "cpu": "2000m",
+      "memory": "2Gi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/dev/supermarket/app/helmrelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "api",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 24,
+    "request_ceilings": {
+      "cpu": "10m",
+      "memory": "32Mi"
+    },
+    "limits": {
+      "memory": "512Mi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/dev/supermarket/app/helmrelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "worker",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 24,
+    "request_ceilings": {
+      "cpu": "25m",
+      "memory": "32Mi"
+    },
+    "limits": {
+      "memory": "256Mi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/dev/supermarket/app/helmrelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "gateway",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 24,
+    "request_ceilings": {
+      "cpu": "10m",
+      "memory": "32Mi"
+    },
+    "limits": {
+      "memory": "128Mi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/dev/zot/app/helmrelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "main",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 64,
+    "request_ceilings": {
+      "cpu": "25m",
+      "memory": "96Mi"
+    },
+    "limits": {
+      "memory": "512Mi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/dev/ironbridge/app/deployment.yaml",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers",
+      0,
+      "resources"
+    ],
+    "memory_floor_mib": 16,
+    "request_ceilings": {
+      "cpu": "25m",
+      "memory": "32Mi"
+    },
+    "limits": {
+      "cpu": "1000m",
+      "memory": "256Mi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/dev/northbot/app/deployment.yaml",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "initContainers",
+      0,
+      "resources"
+    ],
+    "memory_floor_mib": 32,
+    "request_ceilings": {
+      "cpu": "25m",
+      "memory": "64Mi"
+    },
+    "limits": {
+      "memory": "256Mi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/dev/northbot/app/deployment.yaml",
+    "path": [
+      "spec",
+      "template",
+      "spec",
+      "containers",
+      0,
+      "resources"
+    ],
+    "memory_floor_mib": 16,
+    "request_ceilings": {
+      "cpu": "10m",
+      "memory": "32Mi"
+    },
+    "limits": {
+      "memory": "256Mi"
+    }
+  },
+  {
+    "file": "kubernetes/apps/default/unifi-release-announcer/app/HelmRelease.yaml",
+    "path": [
+      "spec",
+      "values",
+      "controllers",
+      "app",
+      "containers",
+      "app",
+      "resources"
+    ],
+    "memory_floor_mib": 16,
+    "request_ceilings": {
+      "memory": "32Mi"
+    },
+    "limits": {
+      "cpu": "1000m",
+      "memory": "100M"
+    }
+  }
+]

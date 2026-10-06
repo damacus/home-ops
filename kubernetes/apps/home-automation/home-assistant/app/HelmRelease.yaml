@@ -64,7 +64,7 @@ spec:
                 enabled: false
             resources:
               requests:
-                cpu: 250m
+                cpu: 175m
                 memory: 1Gi
               limits:
                 cpu: 4000m
