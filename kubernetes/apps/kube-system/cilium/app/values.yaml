@@ -18,6 +18,7 @@ cluster:
   name: ironstone
 
 dashboards:
+  namespace: monitoring
   annotations:
     grafana_folder: Cilium
   enabled: true
@@ -76,6 +77,7 @@ localRedirectPolicy: true
 
 operator:
   dashboards:
+    namespace: monitoring
     annotations:
       grafana_folder: Cilium
     enabled: true

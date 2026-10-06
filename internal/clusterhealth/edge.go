@@ -11,6 +11,7 @@ import (
 	"io"
 	"net"
 	"net/textproto"
+	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -32,11 +33,12 @@ type httpCheck struct {
 }
 
 type webSocketCheck struct {
-	name            string
-	host            string
-	path            string
-	expectSubstring string
-	port            int
+	name                 string
+	host                 string
+	path                 string
+	expectSubstring      string
+	port                 int
+	expectedAuthRedirect string
 }
 
 var baselineHTTPChecks = []httpCheck{
@@ -104,11 +106,12 @@ func (c *Checker) EdgeSmoke(ctx context.Context, options EdgeOptions) Result {
 	}
 	if options.IncludeESPHomeCanary && options.ESPHomeWebSocketPath != "" {
 		ok, detail := runWebSocketCheck(ctx, webSocketCheck{
-			name:            "ESPHome canary WebSocket",
-			host:            "esphome-traefik.ironstone.casa",
-			path:            options.ESPHomeWebSocketPath,
-			expectSubstring: options.ESPHomeWebSocketContains,
-			port:            443,
+			name:                 "ESPHome canary WebSocket",
+			expectedAuthRedirect: "https://zitadel.damacus.io/oauth/v2/authorize",
+			host:                 "esphome-traefik.ironstone.casa",
+			path:                 options.ESPHomeWebSocketPath,
+			expectSubstring:      options.ESPHomeWebSocketContains,
+			port:                 443,
 		})
 		details = append(details, detail)
 		failed = failed || !ok
@@ -213,7 +216,10 @@ func runWebSocketCheck(ctx context.Context, check webSocketCheck) (bool, string)
 	if _, err := io.WriteString(connection, request); err != nil {
 		return false, fmt.Sprintf("[FAIL] %s: %v", check.name, err)
 	}
-	reader := bufio.NewReader(connection)
+	return readWebSocketResponse(bufio.NewReader(connection), key, check)
+}
+
+func readWebSocketResponse(reader *bufio.Reader, key string, check webSocketCheck) (bool, string) {
 	statusLine, err := reader.ReadString('\n')
 	if err != nil {
 		return false, fmt.Sprintf("[FAIL] %s: read handshake: %v", check.name, err)
@@ -221,6 +227,21 @@ func runWebSocketCheck(ctx context.Context, check webSocketCheck) (bool, string)
 	headers, err := textproto.NewReader(reader).ReadMIMEHeader()
 	if err != nil {
 		return false, fmt.Sprintf("[FAIL] %s: read handshake headers: %v", check.name, err)
+	}
+	if check.expectedAuthRedirect != "" {
+		if check.expectSubstring != "" {
+			return false, fmt.Sprintf("[FAIL] %s: authenticated payload assertion requires a session; this probe only verifies the login redirect", check.name)
+		}
+		fields := strings.Fields(statusLine)
+		if len(fields) < 2 || (fields[1] != "302" && fields[1] != "303" && fields[1] != "307" && fields[1] != "308") {
+			return false, fmt.Sprintf("[FAIL] %s: expected authentication redirect", check.name)
+		}
+		location, locationErr := url.Parse(headers.Get("Location"))
+		expected, expectedErr := url.Parse(check.expectedAuthRedirect)
+		if locationErr != nil || expectedErr != nil || location.User != nil || location.Fragment != "" || location.Scheme != "https" || !strings.EqualFold(location.Host, expected.Host) || location.Path != expected.Path {
+			return false, fmt.Sprintf("[FAIL] %s: missing or unexpected authentication redirect destination", check.name)
+		}
+		return true, fmt.Sprintf("[PASS] %s: authentication redirect verified; authenticated handshake not checked", check.name)
 	}
 	if !strings.Contains(statusLine, "101 Switching Protocols") {
 		return false, fmt.Sprintf("[FAIL] %s: missing 101 response", check.name)
