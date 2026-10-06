@@ -1,10 +1,12 @@
 # MQTT authentication migration
 
-This branch is the credential staging step. Anonymous access remains enabled
-until Home Assistant, Frigate and the live Growhat controller authenticate.
-Do not treat this stage as the completed security fix.
+The broker requires authentication and loads the topic ACLs from the
+GitOps-managed mosquitto-policy ConfigMap. Home Assistant, Frigate and GrowHAT
+were verified with separate usernames before this final cutover.
 
-## Prerequisites
+The steps below record the migration order and its rollback checks.
+
+## Historical migration prerequisites
 
 1. Inventory all connected clients, including ones absent from recent logs.
 2. Create a `mqtt-auth` item in the `home-ops` 1Password vault with private fields
@@ -14,7 +16,7 @@ Do not treat this stage as the completed security fix.
 3. Verify Growhat SSH access and its actual device ID/discovery topics. Current
    logs show client ID `growhat_grow_pi_zero_w`; confirm before using the final ACLs.
 
-## Stage credentials and migrate clients
+## Historical credential and client migration
 
 1. Merge the credential-staging GitOps changes only after the vault item exists.
    Verify both ExternalSecrets, broker readiness and Frigate MQTT connectivity.
@@ -28,19 +30,23 @@ Do not treat this stage as the completed security fix.
 4. Verify authenticated connections for all three usernames, fresh sensor data,
    discovery, availability, Frigate events and existing Home Assistant alerts.
 
-## Disable anonymous access
+## Historical final cutover
 
-Prepare a second GitOps change replacing the inline broker configuration with
-`app/mosquitto-final.conf` and mounting `app/acl.conf` as
-`/mosquitto/config/acl.conf`. Confirm every live client's exact topic permissions
-first. Test rejected anonymous connections, wrong passwords, forbidden cross-client
-publishes and allowed telemetry/commands in an isolated broker.
+The final GitOps change replaced the inline broker configuration with
+`app/mosquitto-final.conf` and mounted `app/acl.conf` as
+`/mosquitto/config/acl.conf`. Live client identities and discovery topics were
+checked first. The isolated broker checks cover rejected anonymous connections,
+wrong passwords, forbidden cross-client reads/publishes and allowed access.
 
 Run `rtk proxy python3 tests/check_mqtt_acl.py` for isolated broker checks.
 The harness uses dummy credentials and does not expose a host port.
 
-Only then merge the final change and verify all three clients reconnect.
-Keep the broker persistence volume and retained discovery data intact.
+## Live rollout verification
+
+After Flux applies the final change, verify all three clients reconnect with
+usernames, anonymous connections fail, and fresh GrowHAT telemetry and Frigate
+messages still arrive. Preserve the broker persistence volume and retained
+discovery data.
 Rollback uses the prior GitOps revision and the protected client configurations.
 
 ## Transport and network access
