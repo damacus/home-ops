@@ -4,9 +4,9 @@ import os
 import subprocess
 import unittest
 import yaml
-ROOT = Path(__file__).resolve().parents[1]
-HR = ROOT / "kubernetes/apps/monitoring/victoria-metrics/app/helmrelease.yaml"
-CHART = os.environ.get("VM_STACK_CHART_PATH")
+ROOT: Path = Path(__file__).resolve().parents[1]
+HR: Path = ROOT / "kubernetes/apps/monitoring/victoria-metrics/app/helmrelease.yaml"
+CHART: str | None = os.environ.get("VM_STACK_CHART_PATH")
 
 class KsmSecretAccessTests(unittest.TestCase):
     def test_secret_collector_is_explicitly_excluded(self) -> None:
