@@ -1,9 +1,9 @@
 import subprocess, tempfile, shutil, time
 from pathlib import Path
-IMAGE="public.ecr.aws/docker/library/eclipse-mosquitto:2.0.22"
+IMAGE="public.ecr.aws/docker/library/eclipse-mosquitto:2.0.22@sha256:199ea8ef2e35ec2b1b37e59cfd1dbae538ed4dfa4a2251a121a52215a6248a21"
 APP=Path(__file__).resolve().parents[1] / "kubernetes/apps/home-automation/mosquitto/app"
-def run(*args, check=True):
-    result=subprocess.run(["rtk","proxy","docker",*args],capture_output=True,text=True)
+def run(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    result=subprocess.run(["docker",*args],capture_output=True,text=True,timeout=30)
     if check and result.returncode: raise RuntimeError(result.stdout + result.stderr)
     return result
 with tempfile.TemporaryDirectory(prefix="mqtt-auth-test-") as temporary:
@@ -26,5 +26,23 @@ with tempfile.TemporaryDirectory(prefix="mqtt-auth-test-") as temporary:
             result=run("exec",container,"mosquitto_pub","-h","127.0.0.1",*credentials,"-t",topic,"-m","isolated-test","-V","5","-q","1","-d",check=False)
             assert (result.returncode==0 and "RC:135" not in result.stdout and "Not authorized" not in (result.stdout+result.stderr))==allowed, label+": unexpected publish result\n"+result.stdout+result.stderr
             print("PASS:",label)
+        for user, topic in (("frigate", "frigate/security-test"), ("growhat", "growhat/grow_pi_zero_w/security-test"), ("homeassistant", "homeassistant/status")):
+            run("exec",container,"mosquitto_pub","-h","127.0.0.1","-u",user,"-P","isolated-test-password","-t",topic,"-m","isolated-read-test","-r","-q","1")
+        read_cases = [
+            ("HA reads Frigate", "homeassistant", "frigate/security-test", True),
+            ("HA reads Growhat", "homeassistant", "growhat/grow_pi_zero_w/security-test", True),
+            ("Growhat reads own state", "growhat", "growhat/grow_pi_zero_w/security-test", True),
+            ("Growhat reads HA birth", "growhat", "homeassistant/status", True),
+            ("Frigate reads HA birth", "frigate", "homeassistant/status", True),
+            ("Frigate cannot read Growhat", "frigate", "growhat/grow_pi_zero_w/security-test", False),
+            ("Growhat cannot read Frigate", "growhat", "frigate/security-test", False),
+        ]
+        for label, user, topic, allowed in read_cases:
+            result = run("exec",container,"mosquitto_sub","-h","127.0.0.1","-u",user,"-P","isolated-test-password","-t",topic,"-C","1","-W","2",check=False)
+            received = result.returncode == 0 and result.stdout.strip() == "isolated-read-test"
+            assert received == allowed, label + ": unexpected read result"
+            if not allowed:
+                assert result.returncode == 27 and "Timed out" in result.stderr, label + ": expected a read denial, not a connection failure"
+            print("PASS:", label)
     finally:
         run("stop",container,check=False)
