@@ -17,3 +17,13 @@ dashboard authentication. Alternatively, migrate device addressing and verify
 OTA before removing host networking and restricting dashboard ingress to Traefik.
 Do not rely only on removal of the load-balancer service or on a pod network
 policy to secure a host-network listener. Verify applicable LAN firewall rules.
+
+## Smoke-check scope
+
+The optional WebSocket-path probe sends no session cookie. It verifies a redirect
+to the configured Zitadel authorization endpoint; a successful unauthenticated
+upgrade is a failure. It does not verify authenticated WebSocket connectivity.
+Check dashboard login and an actual authenticated WebSocket connection separately
+before treating the rollout as complete. Payload assertions through
+`esphome_ws_contains` require an authenticated session and are rejected by this
+unauthenticated probe rather than silently ignored.
