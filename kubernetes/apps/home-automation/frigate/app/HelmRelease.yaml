@@ -43,6 +43,11 @@ spec:
               tag: 0.18.0-rk@sha256:06f72cee07ddcdba52c7dc8c4ce5d954e51cbc49b655bfdd31bcf0892bdad2eb
             env:
               TZ: Europe/London
+              FRIGATE_MQTT_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: frigate-mqtt
+                    key: FRIGATE_MQTT_PASSWORD
             probes:
               liveness: &probes
                 enabled: false
