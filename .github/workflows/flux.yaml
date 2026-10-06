@@ -179,6 +179,12 @@ jobs:
           python3 -m unittest tests/test_kured_reboot_markers.py
           ruby tests/test_zitadel_access_policy.rb
 
+      - name: Verify PR behaviour regressions
+        run: |
+          python3 -m venv "$RUNNER_TEMP/behaviour-tests"
+          "$RUNNER_TEMP/behaviour-tests/bin/pip" install PyYAML==6.0.3
+          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_paperless_backup.py
+
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml
 
