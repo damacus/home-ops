@@ -9,3 +9,4 @@ resources:
   - networkpolicy-egress.yaml
   - pvc.yaml
   - job-skip-onboarding.yaml
+  - redis-externalsecret.yaml

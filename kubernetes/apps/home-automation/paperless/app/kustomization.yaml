@@ -13,3 +13,4 @@ resources:
   - pvc-restore.yaml
   - secret.yaml
   - ./volsync
+  - redis-externalsecret.yaml
