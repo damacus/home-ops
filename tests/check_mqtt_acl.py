@@ -1,4 +1,4 @@
-import subprocess, tempfile, shutil, time
+import os, subprocess, tempfile, shutil, time
 from pathlib import Path
 IMAGE="public.ecr.aws/docker/library/eclipse-mosquitto:2.0.22@sha256:199ea8ef2e35ec2b1b37e59cfd1dbae538ed4dfa4a2251a121a52215a6248a21"
 APP=Path(__file__).resolve().parents[1] / "kubernetes/apps/home-automation/mosquitto/app"
@@ -12,7 +12,7 @@ with tempfile.TemporaryDirectory(prefix="mqtt-auth-test-") as temporary:
     shutil.copyfile(APP/"acl.conf",directory/"acl.conf")
     for index,user in enumerate(("homeassistant","frigate","growhat")):
         flags=["-c","-b"] if index==0 else ["-b"]
-        run("run","--rm","--entrypoint","mosquitto_passwd","-v",str(directory)+":/test",IMAGE,*flags,"/test/password_file",user,"isolated-test-password")
+        run("run","--rm","--user",f"{os.getuid()}:{os.getgid()}","--entrypoint","mosquitto_passwd","-v",str(directory)+":/test",IMAGE,*flags,"/test/password_file",user,"isolated-test-password")
     (directory/"password_file").chmod(0o644)
     container=run("run","-d","--rm","--entrypoint","mosquitto","-v",str(directory)+":/test:ro",IMAGE,"-c","/test/mosquitto.conf").stdout.strip()
     try:
