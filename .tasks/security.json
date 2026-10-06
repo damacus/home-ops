@@ -537,5 +537,15 @@
 			"Test SSO logout propagation"
 		],
 		"passes": false
+	},
+	{
+		"category": "monitoring",
+		"description": "Select VictoriaMetrics rule namespaces without duplicate database or Longhorn evaluation",
+		"steps": [
+			"Compare source rules against loaded VMAlert definitions",
+			"Render the exact chart and verify explicit namespace selection",
+			"Deploy through Flux and verify the original rules plus twelve additional alerts"
+		],
+		"passes": false
 	}
 ]
