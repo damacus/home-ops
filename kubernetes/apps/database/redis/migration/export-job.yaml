@@ -32,8 +32,13 @@ spec:
             - |
               test ! -e /data/dump.rdb
               test ! -d /data/appendonlydir
-              redis-cli -h redis-master.database.svc.cluster.local --rdb /data/dump.rdb
-              redis-check-rdb /data/dump.rdb
+              temporary="$(mktemp /data/.redis-export.XXXXXX)"
+              trap 'rm -f -- "$temporary"' EXIT
+              trap 'exit 1' HUP INT TERM
+              redis-cli -h redis-master.database.svc.cluster.local --rdb "$temporary"
+              redis-check-rdb "$temporary"
+              # Atomic publication fails if another export already published.
+              ln -- "$temporary" /data/dump.rdb
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

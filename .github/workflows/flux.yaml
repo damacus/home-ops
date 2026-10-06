@@ -54,6 +54,7 @@ jobs:
               - 'kubernetes/**'
               - 'mondoo/**'
               - 'tests/test_metrics_ui_auth.py'
+              - 'tests/test_redis_export.py'
               - 'scripts/mondoo_scan.py'
               - 'tests/test_zitadel_access_policy.rb'
               - 'tests/test_zitadel_config.py'
@@ -186,7 +187,7 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/behaviour-tests"
           "$RUNNER_TEMP/behaviour-tests/bin/pip" install PyYAML==6.0.3
-          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_paperless_backup.py
+          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_paperless_backup.py tests/test_redis_export.py
 
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml

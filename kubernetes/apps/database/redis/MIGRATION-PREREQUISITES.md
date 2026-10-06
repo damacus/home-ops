@@ -14,6 +14,8 @@ Kustomize. Quiesce producers and drain active work before adding it to the Redis
 Kustomization through Git. It exports and validates a consistent RDB onto the
 new PVC and refuses to overwrite an existing snapshot or AOF directory. Retain
 an independent rollback copy and validate restoration before replacing Redis.
+Failed exports use a unique temporary file and clean only that file. A validated
+snapshot is atomically published without replacing an existing final snapshot.
 Remove the helper Job and its ingress allowance after successful cutover.
 
 The final configuration is in PR #4431. Follow its REDIS-ROLLOUT.md procedure;
