@@ -99,7 +99,7 @@ spec:
       config:
         enabled: true
         type: configMap
-        name: mosquitto-config
+        name: mosquitto
         globalMounts:
           - path: /mosquitto/config/mosquitto.conf
             subPath: mosquitto.conf
