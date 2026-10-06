@@ -1,0 +1,17 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: ironbridge-moderation
+  namespace: dev
+spec:
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: onepassword-connect
+  target:
+    name: ironbridge-moderation
+    creationPolicy: Owner
+  data:
+    - secretKey: JEV_API_KEY
+      remoteRef: {key: JEV_API_KEY, property: credential}

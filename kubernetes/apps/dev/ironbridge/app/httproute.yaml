@@ -1,0 +1,29 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: ironbridge
+  namespace: dev
+  annotations:
+    external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
+spec:
+  hostnames:
+    - ironbridge.ironstone.casa
+  parentRefs:
+    - name: traefik-internal
+      namespace: network
+      sectionName: websecure
+  rules:
+    - filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: ironbridge-forward-auth
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: ironbridge
+          port: 8080

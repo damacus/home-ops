@@ -1,0 +1,36 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: ironbridge
+  namespace: flux-system
+spec:
+  # Enable only after a verified image and required secrets are available.
+  suspend: false
+  targetNamespace: dev
+  path: ./kubernetes/apps/dev/ironbridge/app
+  prune: true
+  dependsOn:
+    - name: northops-postgres
+    - name: external-secrets-stores
+    - name: forgejo
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  # Moderation credentials are optional and must not gate bridge readiness.
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: ironbridge
+      namespace: dev
+    - apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      name: ironbridge
+      namespace: dev
+    - apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      name: ironbridge-dashboard
+      namespace: dev
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m

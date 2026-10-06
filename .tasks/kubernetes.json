@@ -576,5 +576,27 @@
 			"Confirm extension installation"
 		],
 		"passes": false
+	},
+	{
+		"category": "apps",
+		"description": "Prepare disabled IronBridge dashboard and shadow moderation rollout",
+		"steps": [
+			"Run failing dashboard/auth/network manifest checks",
+			"Render disabled resources and optional secret activation preparation",
+			"Document identity enrolment, shadow gates and NorthBot transition",
+			"Confirm final Task2 environment settings before completion"
+		],
+		"passes": true
+	},
+	{
+		"category": "validation",
+		"description": "GitOps health reports repeated reconciliation failures",
+		"steps": [
+			"Reproduce Ready=False hidden by recent Reconciling timestamps with failing regression tests",
+			"Verify task kubernetes:test-cluster-health passes",
+			"Verify task kubernetes:gitops-health reports the live gateway-api-crds failure",
+			"Include gitops-health in task kubernetes:health"
+		],
+		"passes": true
 	}
 ]

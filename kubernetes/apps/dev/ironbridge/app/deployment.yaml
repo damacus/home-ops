@@ -1,0 +1,101 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ironbridge
+  namespace: dev
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ironbridge
+  template:
+    metadata:
+      labels:
+        app: ironbridge
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: ironbridge
+          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:50c8edbdd0a4572dad8914ee54b0aec47e0e7330c2d11bf508433367e082b959
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: ironbridge
+            - secretRef:
+                name: ironbridge-dashboard
+            - secretRef:
+                name: ironbridge-moderation
+                optional: true
+          env:
+            - name: DASHBOARD_ENABLED
+              value: "true"
+            - name: DASHBOARD_BIND
+              value: "0.0.0.0:8080"
+            - name: DASHBOARD_PUBLIC_ORIGIN
+              value: "https://ironbridge.ironstone.casa"
+            - name: DASHBOARD_OIDC_ISSUER
+              value: "https://zitadel.damacus.io"
+            - name: DASHBOARD_MEMBER_GROUP
+              value: ironbridge
+            - name: MODERATION_SHADOW
+              value: "true"
+            - name: MODERATION_NOTIFICATIONS_ENABLED
+              value: "false"
+            - name: DASHBOARD_BASE_URL
+              value: "https://ironbridge.ironstone.casa"
+            - name: BRIDGE_ENABLED
+              value: "true"
+            - name: BRIDGE_DIRECTION
+              value: both
+            - name: BRIDGE_SCOPE
+              value: all
+            - name: SLACK_CHANNEL_IDS
+              value: ""
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 1000m
+              memory: 256Mi
+          readinessProbe:
+            exec:
+              command: [/usr/local/bin/ironbridge, ready]
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 2
+          volumeMounts:
+            - name: postgres-ca
+              mountPath: /etc/northops-postgres
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: postgres-ca
+          secret:
+            secretName: northops-postgres-ca
+            items:
+              - key: ca.crt
+                path: ca.crt
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

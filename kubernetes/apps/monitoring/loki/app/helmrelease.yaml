@@ -175,6 +175,15 @@ spec:
       lokiCanary:
         enabled: false
 
+    # Canary: Rust port of the kiwigrid rules sidecar
+    sidecar:
+      image:
+        registry: ghcr.io
+        repository: damacus/k8s-sidecar-rs
+        tag: "0.2.4"
+        sha: ""
+        pullPolicy: IfNotPresent
+
     # Test configuration
     test:
       enabled: false

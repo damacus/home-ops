@@ -26,9 +26,10 @@ func (c *Checker) readinessFailures(resources []readinessResource, kind string, 
 			continue
 		}
 		transition := ""
-		if reconciling != nil {
+		if reconciling != nil && reconciling.Reason == "Progressing" &&
+			(ready == nil || ready.Reason == "Progressing") {
 			transition = reconciling.LastTransitionTime
-		} else if ready != nil && ready.Reason == "Progressing" {
+		} else if reconciling == nil && ready != nil && ready.Reason == "Progressing" {
 			transition = ready.LastTransitionTime
 		}
 		if transition != "" {

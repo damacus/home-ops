@@ -56,6 +56,13 @@ spec:
       serviceAccount:
         imagePullSecrets:
           - name: dockerhub-credentials
+      # Rust port of the kiwigrid rules sidecar (loki 6.29.0 has no registry field)
+      sidecar:
+        image:
+          repository: ghcr.io/damacus/k8s-sidecar-rs
+          tag: "0.2.4"
+          sha: ""
+          pullPolicy: IfNotPresent
 
     alloy:
       global:

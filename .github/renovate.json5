@@ -14,6 +14,15 @@
   customManagers: [
     {
       customType: "regex",
+      managerFilePatterns: ["/^kubernetes/apps/dev/forgejo/app/helmrelease\\.yaml$/"],
+      matchStrings: [
+        "tag: \"(?<currentValue>\\d+\\.\\d+\\.\\d+-rootless)\"",
+      ],
+      depNameTemplate: "code.forgejo.org/forgejo/forgejo",
+      datasourceTemplate: "docker",
+    },
+    {
+      customType: "regex",
       managerFilePatterns: ["/^kubernetes/apps/dev/supermarket/README\\.md$/"],
       matchStrings: [
         "Upstream source watch: `(?<currentValue>main)@(?<currentDigest>[a-f0-9]{40})`",
@@ -24,6 +33,12 @@
     },
   ],
   packageRules: [
+    {
+      description: "Review Forgejo image updates separately from chart updates",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["code.forgejo.org/forgejo/forgejo"],
+      automerge: false,
+    },
     {
       description: "Watch CINC Supermarket main until upstream publishes ordered image tags",
       matchDatasources: ["git-refs"],
@@ -92,6 +107,11 @@
       description: "Auto-merge non-major updates for selected home-ops assets",
       matchPackageNames: [
         "jdx/mise",
+        "jdx/mise-action",
+        "kustomize",
+        "yq",
+        "ghcr.io/cloudnative-pg/plugin-barman-cloud",
+        "ghcr.io/cloudnative-pg/plugin-barman-cloud-sidecar",
         "ghcr.io/coder/code-server",
         "ghcr.io/cloudnative-pg/postgresql",
         "ghcr.io/home-operations/home-assistant",
@@ -107,6 +127,60 @@
       ],
       matchUpdateTypes: ["digest", "minor", "patch", "pin", "pinDigest"],
       automerge: true,
+    },
+    {
+      description: "Auto-merge non-major service and shared-chart updates",
+      matchPackageNames: [
+        "gh",
+        "ghcr.io/home-operations/charts/gatus-sidecar",
+        "rhasspy/wyoming-whisper",
+        "rhasspy/wyoming-piper",
+        "rhasspy/wyoming-openwakeword",
+        "ghcr.io/traefik/helm/traefik",
+        "docker.io/cloudflare/cloudflared",
+        "external-dns",
+        "ghcr.io/mendhak/http-https-echo",
+        "cloudnative-pg",
+        "openebs",
+        "longhorn",
+        "volsync",
+        "rustfs/rustfs",
+        "ghcr.io/dragonflydb/dragonfly",
+        "ghcr.io/dragonflydb/operator",
+        "dragonflydb/dragonfly-operator",
+        "app-template",
+        "ghcr.io/bjw-s-labs/helm/app-template",
+        "keda-add-ons-http",
+        "prometheus-operator-crds",
+        "ghcr.io/grafana-community/helm-charts/tempo",
+      ],
+      matchUpdateTypes: ["digest", "minor", "patch", "pin", "pinDigest"],
+      automerge: true,
+    },
+    {
+      description: "Auto-merge MedTracker canary image updates",
+      matchPackageNames: ["ghcr.io/damacus/med-tracker"],
+      matchFileNames: ["kubernetes/apps/home/med-tracker-canary/**"],
+      matchUpdateTypes: ["digest", "minor", "patch", "pin", "pinDigest"],
+      groupName: "MedTracker canary",
+      automerge: true,
+    },
+    {
+      description: "Keep production MedTracker upgrades manual",
+      matchFileNames: ["kubernetes/apps/home/med-tracker/**"],
+      groupName: "MedTracker production",
+      automerge: false,
+    },
+    {
+      description: "Keep node and cluster networking upgrades manual",
+      matchPackageNames: [
+        "k3s-io/k3s",
+        "rancher/k3s",
+        "cilium",
+        "quay.io/cilium/cilium",
+        "ghcr.io/kube-vip/kube-vip",
+      ],
+      automerge: false,
     },
   ],
 }

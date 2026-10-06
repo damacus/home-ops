@@ -63,6 +63,7 @@ spec:
           network.ironstone.casa/advertisement: bgp
         annotations:
           lbipam.cilium.io/ips: "192.168.3.229"
+          external-dns.kubernetes.io/hostname: mosquitto.ironstone.casa
         ports:
           http:
             port: 1883
@@ -75,12 +76,21 @@ spec:
             persistence true
             persistence_location /data/mosquitto/
             listener 1883
+            # Migration stage: keep anonymous clients until all are verified.
             allow_anonymous true
+            password_file /mosquitto/auth/password_file
             per_listener_settings false
             connection_messages true
             autosave_interval 60
 
     persistence:
+      auth:
+        type: secret
+        name: mosquitto-auth
+        globalMounts:
+          - path: /mosquitto/auth
+            readOnly: true
+
       data:
         existingClaim: mosquitto
         globalMounts:
@@ -89,7 +99,7 @@ spec:
       config:
         enabled: true
         type: configMap
-        name: mosquitto-config
+        name: mosquitto
         globalMounts:
           - path: /mosquitto/config/mosquitto.conf
             subPath: mosquitto.conf

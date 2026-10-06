@@ -1,0 +1,99 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: northbot
+  namespace: dev
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: northbot
+  template:
+    metadata:
+      labels:
+        app: northbot
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: init-db
+          image: forgejo.ironstone.casa/damacus/northbot:main
+          imagePullPolicy: Always
+          command: [/northbot, init-db]
+          env:
+            - name: INIT_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: northops-postgres-owner
+                  key: INIT_DATABASE_URL
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: postgres-ca
+              mountPath: /etc/northops-postgres
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: northbot
+          image: forgejo.ironstone.casa/damacus/northbot:main
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: northbot
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: northops-postgres-runtime
+                  key: DATABASE_URL
+            - name: ADMINS_CHANNEL_ID
+              value: C0C35F05B24 # admins-test
+            - name: PROACTIVE_ENABLED
+              value: "true"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: postgres-ca
+              mountPath: /etc/northops-postgres
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: postgres-ca
+          secret:
+            secretName: northops-postgres-ca
+            items:
+              - key: ca.crt
+                path: ca.crt
+        - name: tmp
+          emptyDir: {}
