@@ -27,7 +27,13 @@ This repository, `home-ops`, is a production-grade home infrastructure managemen
 
 ## Development Workflow & Rules
 
-1. **Test-Driven Development (TDD)**: Every production change must be driven by a failing test.
+1. **Proportionate Verification**: Choose checks that demonstrate the intended behaviour or catch a specific plausible regression.
+   - For scripts, application logic and health checkers, add a failing behavioural regression test when fixing a defect.
+   - For declarative manifests, use the existing render, schema and security-policy checks. Do not add per-application tests that merely repeat YAML values, file layout, image versions or object ordering.
+   - Keep focused safety assertions where they protect an independent invariant, such as denying Secret reads or preventing CRD pruning. Prefer checking rendered resources when chart behaviour matters.
+   - For authentication, routing and network-policy changes, record the allowed and denied access cases and verify them in an isolated environment or after an approved rollout. Static checks do not prove live access.
+   - Retain tests of executable behaviour. Remove stale migration snapshots and duplicated checks when their original risk has passed or another maintained check covers it.
+   - State what was verified and what remains unverified. Do not create a new test solely to satisfy a test-count or failure-first requirement.
 2. **Conventional Commits**: All commits must follow the `feat:`, `fix:`, `refactor:`, `test:` format.
 3. **Small, Atomic Changes**: Avoid monolithic PRs. Each change should be verifiable.
 4. **Repository Automation**: Prefer `task <command>` for cluster operations and `mise run provisioning:<command>` for host provisioning.
@@ -48,7 +54,7 @@ We are building a highly resilient, automated, and observable home infrastructur
 When working in this repository:
 
 - Consult `.tasks/*.json` for your current objectives.
-- Update the relevant task list by setting `"passes": true` only after verifying functionality with tests.
+- Update the relevant task list by setting `"passes": true` only after verifying the intended functionality with the appropriate checks.
 - Reference `GEMINI.md` for specific maintenance commands and troubleshooting.
 - Never delete the root `docs.txt`. It is the historical field guide to the
   Armbian build system and preserves hard-won context for future engineers and
