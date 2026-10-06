@@ -171,7 +171,11 @@ spec:
                   secretKeyRef:
                     name: penpot-app
                     key: password
-              PENPOT_REDIS_URI: redis://redis-master.database.svc.cluster.local:6379/3
+              PENPOT_REDIS_URI:
+                valueFrom:
+                  secretKeyRef:
+                    name: penpot-redis
+                    key: uri
               PENPOT_STORAGE_BACKEND: fs
               PENPOT_STORAGE_FS_DIRECTORY: /opt/data/assets
               PENPOT_TELEMETRY_ENABLED: "false"
@@ -259,7 +263,11 @@ spec:
               PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team
               # Exporter loads pages via headless Chromium; use the internal frontend service
               PENPOT_PUBLIC_URI: http://penpot-frontend.home.svc.cluster.local
-              PENPOT_REDIS_URI: redis://redis-master.database.svc.cluster.local:6379/3
+              PENPOT_REDIS_URI:
+                valueFrom:
+                  secretKeyRef:
+                    name: penpot-redis
+                    key: uri
               PENPOT_BROWSER_CONFIG: --no-sandbox --disable-dev-shm-usage
               PENPOT_SECRET_KEY:
                 valueFrom:

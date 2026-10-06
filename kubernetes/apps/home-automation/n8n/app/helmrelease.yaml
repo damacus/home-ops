@@ -89,6 +89,12 @@ spec:
               NODE_ENV: "production"
               QUEUE_BULL_REDIS_HOST: "redis-master.database.svc.cluster.local"
               QUEUE_BULL_REDIS_PORT: 6379
+              QUEUE_BULL_REDIS_USERNAME: n8n
+              QUEUE_BULL_REDIS_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-redis
+                    key: password
             securityContext: &securityContext
               allowPrivilegeEscalation: false
               capabilities:

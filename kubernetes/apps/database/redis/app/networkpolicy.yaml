@@ -26,8 +26,10 @@ spec:
             k8s:app.kubernetes.io/instance: penpot
             k8s:app.kubernetes.io/name: penpot
         - matchLabels:
-            k8s:io.kubernetes.pod.namespace: database
-            k8s:app.kubernetes.io/name: redis-migration
+            k8s:io.kubernetes.pod.namespace: home
+            k8s:app.kubernetes.io/controller: exporter
+            k8s:app.kubernetes.io/instance: penpot
+            k8s:app.kubernetes.io/name: penpot
       toPorts:
         - ports:
             - port: "6379"

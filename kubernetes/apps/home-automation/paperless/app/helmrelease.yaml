@@ -98,7 +98,11 @@ spec:
               PAPERLESS_EXPORT_DIR: /data/nas-mount/export
               PAPERLESS_MEDIA_ROOT: /data/nas-mount/media
               PAPERLESS_REDIS_PREFIX: pngx
-              PAPERLESS_REDIS: redis://redis-master.database.svc.cluster.local:6379
+              PAPERLESS_REDIS:
+                valueFrom:
+                  secretKeyRef:
+                    name: paperless-redis
+                    key: uri
               PAPERLESS_TIKA_ENABLED: 1
               PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://localhost:3000
               PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
