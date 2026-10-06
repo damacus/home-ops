@@ -30,7 +30,7 @@ spec:
     service:
       ipFamilyPolicy: preferDualStack
     metrics:
-      create: false
+      create: true
     resources:
       requests:
         cpu: 15m
