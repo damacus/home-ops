@@ -15,7 +15,8 @@ exists.
 2. Through Flux, set `spec.paused` to `false` on
    `paperless-localdata-restore` and change `spec.trigger.manual` to a new unique
    value.
-3. Wait for the ReplicationDestination mover result to report success.
+3. Wait for the ReplicationDestination mover result to report success, then set
+   `spec.paused` back to `true` through Flux before mounting the recovered claim.
 4. Through Flux, change both of these claims to `paperless-localdata-restore`:
    - `persistence.data.existingClaim` in `app/helmrelease.yaml`
    - `spec.sourcePVC` in `app/volsync/replicationsource.yaml`

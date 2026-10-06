@@ -126,6 +126,12 @@ jobs:
       - name: Validate migrated policy parity
         run: python3 scripts/mondoo_scan.py validate-parity
 
+      - name: Verify PR behaviour regressions
+        run: |
+          python3 -m venv "$RUNNER_TEMP/behaviour-tests"
+          "$RUNNER_TEMP/behaviour-tests/bin/pip" install PyYAML==6.0.3
+          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_paperless_backup.py
+
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml
 
