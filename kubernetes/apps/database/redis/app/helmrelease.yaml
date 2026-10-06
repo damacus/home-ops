@@ -39,6 +39,8 @@ spec:
       maxmemory-policy noeviction
       aclfile /opt/bitnami/redis/acl/users.acl
     master:
+      annotations:
+        secret.reloader.stakater.com/reload: redis-auth
       resources:
         requests:
           cpu: 25m

@@ -30,7 +30,7 @@ that pod loses its append-only log. Helm rollback does not restore those bytes.
    credentials without printing them. Ensure each application's ExternalSecret
    exposes only its own credential, and that the admin/ACL Secret stays in
    `database`.
-2. Deliver the new PVC and ExternalSecrets as a prerequisite GitOps change,
+2. Merge and deploy prerequisite PR #4432, which delivers the new PVC and ExternalSecrets,
    leaving the running Redis and application configuration unchanged. Verify
    the Secrets are Ready and `redis-data` is available. With WaitForFirstConsumer
    storage, provision it through the migration helper rather than waiting for
@@ -68,3 +68,15 @@ blindly revert to the old `emptyDir` configuration. Never restore an old
 snapshot over newer queued work without an explicit data-loss decision.
 
 Redis remains a cluster-only TCP service. This change does not add TLS.
+
+## Credential rotation
+
+The Redis StatefulSet watches `redis-auth` through its Reloader workload
+annotation. Changing its ACL Secret triggers a Redis rollout, so the new
+password hashes are loaded. Clients also restart when their own Secrets change.
+These independent reconciliations can briefly overlap; clients must retry while
+the single Redis pod restarts. For planned rotation, use a maintenance window
+and verify both new-password acceptance and old-password rejection after all
+Secrets and workloads converge. A live Reloader-triggered rollout remains a
+post-deployment acceptance check; the isolated test verifies the rendered
+trigger and password behaviour after replacement.

@@ -39,6 +39,9 @@ def main() -> None:
         chart = os.environ.get('REDIS_TEST_CHART', 'oci://registry-1.docker.io/bitnamicharts/redis')
         rendered = run('helm', 'template', 'redis', chart, '--version', '28.2.0', '-f', str(directory / 'values.yaml')).stdout
         resources = list(yaml.safe_load_all(rendered))
+        workload = next(item for item in resources if item.get('kind') == 'StatefulSet' and item['metadata']['name'] == 'redis-master')
+        watched = workload['metadata'].get('annotations', {}).get('secret.reloader.stakater.com/reload', '')
+        assert 'redis-auth' in watched.split(','), 'Redis must roll out when its external ACL Secret changes'
         config = next(item['data'] for item in resources if item.get('kind') == 'ConfigMap' and item['metadata']['name'] == 'redis-configuration')
         scripts = next(item['data'] for item in resources if item.get('kind') == 'ConfigMap' and item['metadata']['name'] == 'redis-scripts')
         for name in ('redis.conf', 'master.conf'):
@@ -97,11 +100,20 @@ def main() -> None:
             assert cli('default', 'CONFIG', 'GET', 'maxmemory-policy').splitlines()[-1] == 'noeviction'
             assert cli('default', 'CONFIG', 'GET', 'maxmemory').splitlines()[-1] == '33554432'
             assert cli('default', 'SET', 'persistence:test', 'survives') == 'OK'
+            old_password = PASSWORDS['n8n']
+            PASSWORDS['n8n'] = 'isolated-rotated-n8n-password'
+            rotated_acl = acl.replace(hashlib.sha256(old_password.encode()).hexdigest(), hashlib.sha256(PASSWORDS['n8n'].encode()).hexdigest())
+            (directory / 'users.acl').write_text(rotated_acl)
+            assert 'WRONGPASS' in cli('n8n', 'PING'), 'Mounted file updates alone must not be mistaken for ACL reload'
+            assert cli('n8n', 'PING', password=old_password) == 'PONG'
             run('docker', 'stop', container)
             run('docker', 'rm', container)
             container = start()
             ready()
             assert cli('default', 'GET', 'persistence:test') == 'survives'
+            assert cli('n8n', 'PING') == 'PONG'
+            assert 'WRONGPASS' in cli('n8n', 'PING', password=old_password)
+            print('PASS: rotated password accepted and previous password rejected after rollout')
             print('PASS: bounded memory, noeviction and AOF survives container replacement')
         finally:
             if container:
