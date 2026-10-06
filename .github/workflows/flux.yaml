@@ -132,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
       - name: Verify Redis authentication and persistence
         run: |
           python3 -m venv "$RUNNER_TEMP/redis-tests"
@@ -215,7 +215,7 @@ jobs:
         run: cnspec policy lint mondoo/policies/*.mql.yaml
 
       - name: Setup Helm for KSM regression
-        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
         with:
           version: v4.3.0
 
