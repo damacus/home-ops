@@ -53,11 +53,13 @@ jobs:
               - '.github/workflows/flux.yaml'
               - 'kubernetes/**'
               - 'mondoo/**'
+              - 'tests/test_metrics_ui_auth.py'
               - 'scripts/mondoo_scan.py'
               - 'tests/test_zitadel_access_policy.rb'
               - 'tests/test_zitadel_config.py'
               - 'tests/test_gateway_api_source.py'
-              - 'tests/test_metrics_ui_auth.py'
+              - 'tests/test_ksm_secret_access.py'
+              - 'tests/test_ksm_ci.py'
             mqtt:
               - '.github/workflows/flux.yaml'
               - 'kubernetes/apps/home-automation/mosquitto/**'
@@ -184,10 +186,27 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/behaviour-tests"
           "$RUNNER_TEMP/behaviour-tests/bin/pip" install PyYAML==6.0.3
-          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_metrics_ui_auth.py tests/test_paperless_backup.py
+          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_paperless_backup.py
 
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml
+
+      - name: Setup Helm for KSM regression
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+        with:
+          version: v4.3.0
+
+      - name: Verify rendered KSM permissions
+        env:
+          VM_STACK_CHART_PATH: ${{ runner.temp }}/ksm-charts/victoria-metrics-k8s-stack
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/ksm-test-env"
+          "$RUNNER_TEMP/ksm-test-env/bin/pip" install 'PyYAML==6.0.3'
+          chart_version=$("$RUNNER_TEMP/ksm-test-env/bin/python" -c 'import yaml; print(yaml.safe_load(open("kubernetes/apps/monitoring/victoria-metrics/app/helmrelease.yaml"))["spec"]["chart"]["spec"]["version"])')
+          mkdir -p "$RUNNER_TEMP/ksm-charts"
+          helm pull victoria-metrics-k8s-stack --repo https://victoriametrics.github.io/helm-charts --version "$chart_version" --untar --untardir "$RUNNER_TEMP/ksm-charts"
+          "$RUNNER_TEMP/ksm-test-env/bin/python" -m unittest tests/test_ksm_secret_access.py tests/test_ksm_ci.py
 
       - name: Run rendered manifest scans
         env:
@@ -197,6 +216,12 @@ jobs:
           --output junit
           --report-dir mondoo-reports
           k8s-manifests --path ./kubernetes --include-posture
+
+      - name: Verify authenticated metrics access
+        run: |
+          python3 -m venv "$RUNNER_TEMP/metrics-test-env"
+          "$RUNNER_TEMP/metrics-test-env/bin/pip" install PyYAML==6.0.3
+          "$RUNNER_TEMP/metrics-test-env/bin/python" -m unittest tests/test_metrics_ui_auth.py
 
       - name: Upload Mondoo reports
         if: always()
