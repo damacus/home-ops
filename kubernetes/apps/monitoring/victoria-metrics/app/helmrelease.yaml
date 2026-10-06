@@ -153,6 +153,9 @@ spec:
     # Enable KubeStateMetrics to be self-contained (duplicates KPS KSM for now)
     kube-state-metrics:
       enabled: true
+      # Secret metadata metrics are unused; exclude the collector and its RBAC.
+      collectorsExclude:
+        - secrets
       extraArgs:
         - --auto-gomemlimit
       rbac:
