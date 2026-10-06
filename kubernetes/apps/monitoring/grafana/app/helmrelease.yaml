@@ -506,6 +506,16 @@ spec:
             options:
               path: /var/lib/grafana/dashboards/system
 
+          - name: provisioned
+            orgId: 1
+            type: file
+            disableDeletion: true
+            updateIntervalSeconds: 30
+            allowUiUpdates: true
+            options:
+              path: /var/lib/grafana/provisioned-dashboards
+              foldersFromFilesStructure: true
+
     datasources:
       datasources.yaml:
         apiVersion: 1
@@ -605,34 +615,267 @@ spec:
           revision: 1
           datasource: Prometheus
 
+    # Provision known ConfigMaps as files; Grafana needs no Kubernetes API access.
+    rbac:
+      create: false
+    automountServiceAccountToken: false
+    serviceAccount:
+      automountServiceAccountToken: false
     sidecar:
-      # Rust port of the kiwigrid sidecar
-      image:
-        registry: ghcr.io
-        repository: damacus/k8s-sidecar-rs
-        tag: "0.2.4"
-        sha: ""
-      imagePullPolicy: IfNotPresent
-      alerts:
-        enabled: true
-        label: grafana_alert
-        labelValue: "1"
-        searchNamespace: monitoring
       dashboards:
-        enabled: true
-        searchNamespace: ALL
-        labelValue: ""
-        label: grafana_dashboard
-        folderAnnotation: grafana_folder
-        # Both sidecars share the pod's network: the alerts sidecar owns the
-        # default HEALTH_PORT 8080, so this one needs its own port.
-        env:
-          HEALTH_PORT: "8081"
-        provider:
-          disableDelete: true
-          foldersFromFilesStructure: true
+        enabled: false
+      alerts:
+        enabled: false
       datasources:
         enabled: false
+      plugins:
+        enabled: false
+      notifiers:
+        enabled: false
+    extraVolumes:
+      - name: provisioned-dashboards
+        projected:
+          sources:
+            - configMap:
+                name: cilium-dashboard
+                items:
+                  - key: cilium-dashboard.json
+                    path: Cilium/cilium-dashboard.json
+            - configMap:
+                name: cilium-operator-dashboard
+                items:
+                  - key: cilium-operator-dashboard.json
+                    path: Cilium/cilium-operator-dashboard.json
+            - configMap:
+                name: cnpg-grafana-dashboard
+                items:
+                  - key: cnp.json
+                    path: cnp.json
+            - configMap:
+                name: med-tracker-canary-logs-dashboard
+                items:
+                  - key: med-tracker-canary-logs.json
+                    path: Home/med-tracker-canary-logs.json
+            - configMap:
+                name: med-tracker-logs-dashboard
+                items:
+                  - key: med-tracker-logs.json
+                    path: Home/med-tracker-logs.json
+            - configMap:
+                name: unifi-radio-dashboard
+                items:
+                  - key: unifi-radio.json
+                    path: Network/unifi-radio.json
+            - configMap:
+                name: vm-dashboard-alertmanager-overview
+                items:
+                  - key: alertmanager-overview.json
+                    path: alertmanager-overview.json
+            - configMap:
+                name: vm-dashboard-apiserver
+                items:
+                  - key: apiserver.json
+                    path: apiserver.json
+            - configMap:
+                name: vm-dashboard-cluster-total
+                items:
+                  - key: cluster-total.json
+                    path: cluster-total.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-cluster
+                items:
+                  - key: k8s-resources-cluster.json
+                    path: k8s-resources-cluster.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-multicluster
+                items:
+                  - key: k8s-resources-multicluster.json
+                    path: k8s-resources-multicluster.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-namespace
+                items:
+                  - key: k8s-resources-namespace.json
+                    path: k8s-resources-namespace.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-node
+                items:
+                  - key: k8s-resources-node.json
+                    path: k8s-resources-node.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-nodes-overview
+                items:
+                  - key: k8s-resources-nodes-overview.json
+                    path: k8s-resources-nodes-overview.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-pod
+                items:
+                  - key: k8s-resources-pod.json
+                    path: k8s-resources-pod.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-windows-cluster
+                items:
+                  - key: k8s-resources-windows-cluster.json
+                    path: k8s-resources-windows-cluster.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-windows-namespace
+                items:
+                  - key: k8s-resources-windows-namespace.json
+                    path: k8s-resources-windows-namespace.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-windows-pod
+                items:
+                  - key: k8s-resources-windows-pod.json
+                    path: k8s-resources-windows-pod.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-workload
+                items:
+                  - key: k8s-resources-workload.json
+                    path: k8s-resources-workload.json
+            - configMap:
+                name: vm-dashboard-k8s-resources-workloads-namespace
+                items:
+                  - key: k8s-resources-workloads-namespace.json
+                    path: k8s-resources-workloads-namespace.json
+            - configMap:
+                name: vm-dashboard-k8s-windows-cluster-rsrc-use
+                items:
+                  - key: k8s-windows-cluster-rsrc-use.json
+                    path: k8s-windows-cluster-rsrc-use.json
+            - configMap:
+                name: vm-dashboard-k8s-windows-node-rsrc-use
+                items:
+                  - key: k8s-windows-node-rsrc-use.json
+                    path: k8s-windows-node-rsrc-use.json
+            - configMap:
+                name: vm-dashboard-kubelet
+                items:
+                  - key: kubelet.json
+                    path: kubelet.json
+            - configMap:
+                name: vm-dashboard-kubernetes-system-api-server
+                items:
+                  - key: kubernetes-system-api-server.json
+                    path: kubernetes-system-api-server.json
+            - configMap:
+                name: vm-dashboard-kubernetes-system-coredns
+                items:
+                  - key: kubernetes-system-coredns.json
+                    path: kubernetes-system-coredns.json
+            - configMap:
+                name: vm-dashboard-kubernetes-views-global
+                items:
+                  - key: kubernetes-views-global.json
+                    path: kubernetes-views-global.json
+            - configMap:
+                name: vm-dashboard-kubernetes-views-namespaces
+                items:
+                  - key: kubernetes-views-namespaces.json
+                    path: kubernetes-views-namespaces.json
+            - configMap:
+                name: vm-dashboard-kubernetes-views-nodes
+                items:
+                  - key: kubernetes-views-nodes.json
+                    path: kubernetes-views-nodes.json
+            - configMap:
+                name: vm-dashboard-kubernetes-views-pods
+                items:
+                  - key: kubernetes-views-pods.json
+                    path: kubernetes-views-pods.json
+            - configMap:
+                name: vm-dashboard-namespace-by-pod
+                items:
+                  - key: namespace-by-pod.json
+                    path: namespace-by-pod.json
+            - configMap:
+                name: vm-dashboard-namespace-by-workload
+                items:
+                  - key: namespace-by-workload.json
+                    path: namespace-by-workload.json
+            - configMap:
+                name: vm-dashboard-node-cluster-rsrc-use
+                items:
+                  - key: node-cluster-rsrc-use.json
+                    path: node-cluster-rsrc-use.json
+            - configMap:
+                name: vm-dashboard-node-exporter-full
+                items:
+                  - key: node-exporter-full.json
+                    path: node-exporter-full.json
+            - configMap:
+                name: vm-dashboard-node-rsrc-use
+                items:
+                  - key: node-rsrc-use.json
+                    path: node-rsrc-use.json
+            - configMap:
+                name: vm-dashboard-nodes
+                items:
+                  - key: nodes.json
+                    path: nodes.json
+            - configMap:
+                name: vm-dashboard-nodes-aix
+                items:
+                  - key: nodes-aix.json
+                    path: nodes-aix.json
+            - configMap:
+                name: vm-dashboard-nodes-darwin
+                items:
+                  - key: nodes-darwin.json
+                    path: nodes-darwin.json
+            - configMap:
+                name: vm-dashboard-persistentvolumesusage
+                items:
+                  - key: persistentvolumesusage.json
+                    path: persistentvolumesusage.json
+            - configMap:
+                name: vm-dashboard-pod-total
+                items:
+                  - key: pod-total.json
+                    path: pod-total.json
+            - configMap:
+                name: vm-dashboard-prometheus
+                items:
+                  - key: prometheus.json
+                    path: prometheus.json
+            - configMap:
+                name: vm-dashboard-prometheus-remote-write
+                items:
+                  - key: prometheus-remote-write.json
+                    path: prometheus-remote-write.json
+            - configMap:
+                name: vm-dashboard-victoriametrics-operator
+                items:
+                  - key: victoriametrics-operator.json
+                    path: victoriametrics-operator.json
+            - configMap:
+                name: vm-dashboard-victoriametrics-single-node
+                items:
+                  - key: victoriametrics-single-node.json
+                    path: victoriametrics-single-node.json
+            - configMap:
+                name: vm-dashboard-victoriametrics-vmagent
+                items:
+                  - key: victoriametrics-vmagent.json
+                    path: victoriametrics-vmagent.json
+            - configMap:
+                name: vm-dashboard-victoriametrics-vmalert
+                items:
+                  - key: victoriametrics-vmalert.json
+                    path: victoriametrics-vmalert.json
+            - configMap:
+                name: vm-dashboard-workload-total
+                items:
+                  - key: workload-total.json
+                    path: workload-total.json
+    extraVolumeMounts:
+      - name: provisioned-dashboards
+        mountPath: /var/lib/grafana/provisioned-dashboards
+        readOnly: true
+    extraConfigmapMounts:
+      - name: unifi-alert-provisioning
+        configMap: unifi-radio-alerts
+        mountPath: /etc/grafana/provisioning/alerting/unifi.yaml
+        subPath: unifi.yaml
+        readOnly: true
 
     plugins: []
 

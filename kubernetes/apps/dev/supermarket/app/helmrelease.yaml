@@ -59,8 +59,8 @@ spec:
                 - ALL
             resources:
               requests:
-                cpu: 100m
-                memory: 128Mi
+                cpu: 10m
+                memory: 32Mi
               limits:
                 memory: 512Mi
             probes:
@@ -109,8 +109,8 @@ spec:
                 - ALL
             resources:
               requests:
-                cpu: 100m
-                memory: 128Mi
+                cpu: 25m
+                memory: 32Mi
               limits:
                 memory: 256Mi
             probes:
@@ -155,8 +155,8 @@ spec:
                 - ALL
             resources:
               requests:
-                cpu: 100m
-                memory: 128Mi
+                cpu: 10m
+                memory: 32Mi
               limits:
                 memory: 128Mi
             probes:

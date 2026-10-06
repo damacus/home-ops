@@ -104,12 +104,12 @@ func parseOptions(command string, args []string, stderr io.Writer) (Options, boo
 	flags.IntVar(&options.Top, "top", options.Top, "number of log producers to report")
 	flags.BoolVar(&options.SkipHTTP3, "skip-http3", false, "skip informational HTTP/3 checks")
 	flags.BoolVar(&options.IncludeESPHomeCanary, "include-esphome-canary", false, "include the ESPHome canary")
-	flags.StringVar(&options.ESPHomeWebSocketPath, "esphome-websocket-path", "", "ESPHome canary WebSocket path")
+	flags.StringVar(&options.ESPHomeWebSocketPath, "esphome-websocket-path", "", "ESPHome path for the unauthenticated WebSocket login-redirect probe")
 	flags.StringVar(
 		&options.ESPHomeWebSocketContains,
 		"esphome-websocket-contains",
 		"",
-		"expected ESPHome WebSocket payload substring",
+		"authenticated ESPHome payload assertion (unsupported by the unauthenticated login-redirect probe)",
 	)
 	if err := flags.Parse(args); err != nil {
 		return Options{}, false
