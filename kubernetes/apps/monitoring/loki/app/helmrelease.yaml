@@ -91,10 +91,11 @@ spec:
 
       # Ruler configuration
       rulerConfig:
+        alertmanager_url: http://vmalertmanager-vm.monitoring.svc.cluster.local:9093
         storage:
           type: local
           local:
-            directory: /var/loki/rules
+            directory: /etc/loki/managed-rules
         ring:
           kvstore:
             store: inmemory
@@ -115,6 +116,17 @@ spec:
         size: 20Gi
         accessModes:
           - ReadWriteOnce
+      extraVolumes:
+        - name: explicit-rules
+          configMap:
+            name: loki-alert-rules
+            items:
+              - key: home-ops.yaml
+                path: fake/home-ops.yaml
+      extraVolumeMounts:
+        - name: explicit-rules
+          mountPath: /etc/loki/managed-rules
+          readOnly: true
       extraEnv:
         - name: TZ
           value: "Europe/London"

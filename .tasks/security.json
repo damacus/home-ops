@@ -544,7 +544,17 @@
 		"steps": [
 			"Render Loki 7.3.0 and OpenEBS 4.6.1; verify no rule watchers, Loki RBAC or API tokens",
 			"Publish and deploy through Flux GitOps",
-			"Verify both Loki installations remain ready, logs are searchable and rule storage is preserved"
+			"Verify both Loki installations remain ready and monitoring Loki evaluates directly mounted rules"
+		],
+		"passes": false
+	},
+	{
+		"category": "monitoring",
+		"description": "Add log alerts for Frigate camera failures, exhausted IronBridge deliveries and application storage errors",
+		"steps": [
+			"Render the exact Loki chart and validate rule mounts and Alertmanager routing",
+			"Validate all three LogQL expressions against Loki",
+			"Deploy through Flux and verify rule health and Alertmanager delivery"
 		],
 		"passes": false
 	}
