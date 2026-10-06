@@ -1,8 +1,10 @@
 # MQTT authentication migration
 
-This branch is the credential staging step. Anonymous access remains enabled
-until Home Assistant, Frigate and the live Growhat controller authenticate.
-Do not treat this stage as the completed security fix.
+The broker requires authentication and loads the topic ACLs from the
+GitOps-managed mosquitto-policy ConfigMap. Home Assistant, Frigate and GrowHAT
+were verified with separate usernames before this final cutover.
+
+The steps below record the migration order and its rollback checks.
 
 ## Prerequisites
 
