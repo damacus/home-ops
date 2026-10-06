@@ -4,3 +4,13 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./pvc.yaml
+  - ./externalsecret.yaml
+
+configMapGenerator:
+  - name: mosquitto-policy
+    files:
+      - mosquitto.conf=./mosquitto-final.conf
+      - acl.conf=./acl.conf
+
+generatorOptions:
+  disableNameSuffixHash: true

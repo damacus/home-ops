@@ -382,25 +382,14 @@
 	},
 	{
 		"category": "database",
-		"description": "Redis deployment for caching",
+		"description": "Redis authentication and durable application queues",
 		"steps": [
-			"Verify Redis pods are running",
-			"Check persistence configuration",
-			"Validate Sentinel if configured",
-			"Test client connectivity",
-			"Confirm memory limits are set"
-		],
-		"passes": true
-	},
-	{
-		"category": "database",
-		"description": "Dragonfly as Redis alternative",
-		"steps": [
-			"Verify Dragonfly deployment",
-			"Check memory configuration",
-			"Validate Redis protocol compatibility",
-			"Test application connectivity",
-			"Monitor performance metrics"
+			"Verify separate application credentials and anonymous rejection",
+			"Verify application users cannot run administrative commands",
+			"Preserve existing queue data before replacing the emptyDir pod",
+			"Verify durable AOF storage and recovery after pod replacement",
+			"Verify Paperless ingestion, n8n worker execution and Penpot export",
+			"Confirm effective memory limits and noeviction policy"
 		],
 		"passes": false
 	},

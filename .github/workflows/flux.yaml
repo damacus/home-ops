@@ -21,6 +21,8 @@ jobs:
       kubernetes: ${{ steps.filter.outputs.kubernetes }}
       go: ${{ steps.filter.outputs.go }}
       mondoo: ${{ steps.filter.outputs.mondoo }}
+      mqtt: ${{ steps.filter.outputs.mqtt }}
+      redis: ${{ steps.filter.outputs.redis }}
       contracts: ${{ steps.filter.outputs.contracts }}
     steps:
       - name: Classify changed paths
@@ -52,10 +54,25 @@ jobs:
               - '.github/workflows/flux.yaml'
               - 'kubernetes/**'
               - 'mondoo/**'
+              - 'tests/test_metrics_ui_auth.py'
+              - 'tests/test_redis_export.py'
               - 'scripts/mondoo_scan.py'
               - 'tests/test_zitadel_access_policy.rb'
               - 'tests/test_zitadel_config.py'
               - 'tests/test_gateway_api_source.py'
+              - 'tests/test_ksm_secret_access.py'
+              - 'tests/test_ksm_ci.py'
+            mqtt:
+              - '.github/workflows/flux.yaml'
+              - 'kubernetes/apps/home-automation/mosquitto/**'
+              - 'tests/check_mqtt_acl.py'
+            redis:
+              - '.github/workflows/flux.yaml'
+              - 'kubernetes/apps/database/redis/**'
+              - 'kubernetes/apps/home-automation/paperless/app/**'
+              - 'kubernetes/apps/home-automation/n8n/app/**'
+              - 'kubernetes/apps/home/penpot/app/**'
+              - 'tests/check_redis_access.py'
             contracts:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Kubernetes/Taskfile.yaml'
@@ -97,6 +114,30 @@ jobs:
 
       - name: Run yayamlls rendered validation
         run: yayamlls validate --render ./kubernetes
+
+  mqtt-access:
+    name: MQTT Access
+    needs: changes
+    if: ${{ needs.changes.outputs.mqtt == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Verify allowed and denied MQTT access
+        run: python3 tests/check_mqtt_acl.py
+
+  redis-access:
+    name: Redis Access
+    needs: changes
+    if: ${{ needs.changes.outputs.redis == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
+      - name: Verify Redis authentication and persistence
+        run: |
+          python3 -m venv "$RUNNER_TEMP/redis-tests"
+          "$RUNNER_TEMP/redis-tests/bin/pip" install PyYAML==6.0.3
+          "$RUNNER_TEMP/redis-tests/bin/python" tests/check_redis_access.py
 
   cluster-health:
     name: Cluster Health CLI
@@ -142,9 +183,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1
         with:
-          ruby-version: '4.0.6'
+          ruby-version: '4.0.7'
 
       - name: Setup flate
         uses: home-operations/flate/action@v0.6.5
@@ -161,10 +202,34 @@ jobs:
       - name: Run unit tests
         run: |
           python3 -m unittest tests/test_zitadel_config.py tests/test_traefik_gateway.py tests/test_gateway_api_source.py
+          python3 -m unittest tests/test_kured_reboot_markers.py
           ruby tests/test_zitadel_access_policy.rb
+
+      - name: Verify PR behaviour regressions
+        run: |
+          python3 -m venv "$RUNNER_TEMP/behaviour-tests"
+          "$RUNNER_TEMP/behaviour-tests/bin/pip" install PyYAML==6.0.3
+          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_paperless_backup.py tests/test_redis_export.py
 
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml
+
+      - name: Setup Helm for KSM regression
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
+        with:
+          version: v4.3.0
+
+      - name: Verify rendered KSM permissions
+        env:
+          VM_STACK_CHART_PATH: ${{ runner.temp }}/ksm-charts/victoria-metrics-k8s-stack
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/ksm-test-env"
+          "$RUNNER_TEMP/ksm-test-env/bin/pip" install 'PyYAML==6.0.3'
+          chart_version=$("$RUNNER_TEMP/ksm-test-env/bin/python" -c 'import yaml; print(yaml.safe_load(open("kubernetes/apps/monitoring/victoria-metrics/app/helmrelease.yaml"))["spec"]["chart"]["spec"]["version"])')
+          mkdir -p "$RUNNER_TEMP/ksm-charts"
+          helm pull victoria-metrics-k8s-stack --repo https://victoriametrics.github.io/helm-charts --version "$chart_version" --untar --untardir "$RUNNER_TEMP/ksm-charts"
+          "$RUNNER_TEMP/ksm-test-env/bin/python" -m unittest tests/test_ksm_secret_access.py tests/test_ksm_ci.py
 
       - name: Run rendered manifest scans
         env:
@@ -174,6 +239,12 @@ jobs:
           --output junit
           --report-dir mondoo-reports
           k8s-manifests --path ./kubernetes --include-posture
+
+      - name: Verify authenticated metrics access
+        run: |
+          python3 -m venv "$RUNNER_TEMP/metrics-test-env"
+          "$RUNNER_TEMP/metrics-test-env/bin/pip" install PyYAML==6.0.3
+          "$RUNNER_TEMP/metrics-test-env/bin/python" -m unittest tests/test_metrics_ui_auth.py
 
       - name: Upload Mondoo reports
         if: always()
@@ -301,7 +372,7 @@ jobs:
 
   flate-success:
     if: ${{ always() }}
-    needs: ["changes", "flate-diff", "flate-test", "mondoo", "rustfs-iam-policy"]
+    needs: ["changes", "flate-diff", "flate-test", "mondoo", "rustfs-iam-policy", "mqtt-access", "redis-access"]
     name: Flate Successful
     runs-on: ubuntu-slim
     steps:

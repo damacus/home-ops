@@ -5,6 +5,8 @@ logger:
 mqtt:
   host: mosquitto.home-automation.svc.cluster.local
   topic_prefix: frigate
+  user: frigate
+  password: "{FRIGATE_MQTT_PASSWORD}"
 
 # Browser requests arrive through Traefik on the authenticated port.
 auth:

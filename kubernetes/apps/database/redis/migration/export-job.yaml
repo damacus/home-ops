@@ -1,0 +1,59 @@
+---
+# Add to the Redis Kustomization only while producers are quiesced.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: redis-migration-export
+  namespace: database
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 120
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis-migration
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: dockerhub-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: export
+          image: registry-1.docker.io/bitnami/redis@sha256:b2ccacecba0945e1da5c93e8e9e6c4c7af579514941224a7d80a2fc8dfb09f6c
+          command: ["/bin/bash", "-ec"]
+          args:
+            - |
+              test ! -e /data/dump.rdb
+              test ! -d /data/appendonlydir
+              temporary="$(mktemp /data/.redis-export.XXXXXX)"
+              trap 'rm -f -- "$temporary"' EXIT
+              trap 'exit 1' HUP INT TERM
+              redis-cli -h redis-master.database.svc.cluster.local --rdb "$temporary"
+              redis-check-rdb "$temporary"
+              # Atomic publication fails if another export already published.
+              ln -- "$temporary" /data/dump.rdb
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: redis-data

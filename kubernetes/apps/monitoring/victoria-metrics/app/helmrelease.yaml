@@ -90,7 +90,13 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
-        # Select all PrometheusRules to capture existing KPS rules
+        # Keep one copy of the global CNPG and Longhorn rules. Home repeats
+        # home-automation's CNPG queries; storage repeats monitoring's Longhorn.
+        ruleNamespaceSelector:
+          matchExpressions:
+            - key: kubernetes.io/metadata.name
+              operator: In
+              values: [monitoring, cert-manager, home-automation, kube-system]
         ruleSelector: {}
         selectAllRules: true
 
@@ -147,6 +153,9 @@ spec:
     # Enable KubeStateMetrics to be self-contained (duplicates KPS KSM for now)
     kube-state-metrics:
       enabled: true
+      # Secret metadata metrics are unused; exclude the collector and its RBAC.
+      collectorsExclude:
+        - secrets
       extraArgs:
         - --auto-gomemlimit
       rbac:

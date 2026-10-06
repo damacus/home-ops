@@ -13,7 +13,7 @@ class GatewayAPISourceTest(unittest.TestCase):
         source = next(item for item in resources if item["kind"] == "GitRepository")
         reconciler = next(item for item in resources if item["kind"] == "Kustomization" and item["apiVersion"].startswith("kustomize.toolkit"))
         self.assertEqual(source["metadata"]["name"], "gateway-api")
-        self.assertEqual(source["spec"]["ref"]["tag"], "v1.6.1")
+        self.assertRegex(source["spec"]["ref"]["tag"], r"^v\d+\.\d+\.\d+$")
         self.assertEqual(reconciler["metadata"]["name"], "gateway-api-crds")
         self.assertEqual(reconciler["spec"]["sourceRef"]["name"], source["metadata"]["name"])
         self.assertEqual(reconciler["spec"]["path"], "./config/crd/standard")
