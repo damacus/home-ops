@@ -393,18 +393,6 @@
 		"passes": true
 	},
 	{
-		"category": "database",
-		"description": "Dragonfly as Redis alternative",
-		"steps": [
-			"Verify Dragonfly deployment",
-			"Check memory configuration",
-			"Validate Redis protocol compatibility",
-			"Test application connectivity",
-			"Monitor performance metrics"
-		],
-		"passes": false
-	},
-	{
 		"category": "scheduling",
 		"description": "Descheduler for pod rebalancing",
 		"steps": [
