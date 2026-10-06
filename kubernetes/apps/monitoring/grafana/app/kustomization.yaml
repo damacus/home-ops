@@ -7,3 +7,5 @@ resources:
   - ./httproute.yaml
   - ./oci-repository.yaml
   - ./helmrelease.yaml
+  - ./med-tracker-dashboard.yaml
+  - ./med-tracker-canary-dashboard.yaml
