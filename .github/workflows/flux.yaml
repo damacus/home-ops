@@ -158,9 +158,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1
         with:
-          ruby-version: '4.0.6'
+          ruby-version: '4.0.7'
 
       - name: Setup flate
         uses: home-operations/flate/action@v0.6.5
@@ -184,7 +184,7 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/behaviour-tests"
           "$RUNNER_TEMP/behaviour-tests/bin/pip" install PyYAML==6.0.3
-          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_metrics_ui_auth.py
+          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_metrics_ui_auth.py tests/test_paperless_backup.py
 
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml
