@@ -7,3 +7,4 @@ resources:
   - networkpolicy-ingress.yaml
   - networkpolicy.yaml
   - pvc.yaml
+  - redis-externalsecret.yaml

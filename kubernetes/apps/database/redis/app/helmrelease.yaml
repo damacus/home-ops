@@ -22,30 +22,45 @@ spec:
     global:
       imagePullSecrets:
         - dockerhub-credentials
-
+    image:
+      # Pin the currently deployed Redis 8.4.0 image instead of mutable latest.
+      digest: sha256:b2ccacecba0945e1da5c93e8e9e6c4c7af579514941224a7d80a2fc8dfb09f6c
     architecture: standalone
-    resources:
-      limits:
-        cpu: 100m
-        memory: 64Mi
-      requests:
-        cpu: 100m
-        memory: 64Mi
-
     auth:
-      enabled: false
-
+      enabled: true
+      existingSecret: redis-auth
+      existingSecretPasswordKey: admin_password
+      usePasswordFiles: true
+    commonConfiguration: |-
+      appendonly yes
+      appendfsync everysec
+      save ""
+      maxmemory 32mb
+      maxmemory-policy noeviction
+      aclfile /opt/bitnami/redis/acl/users.acl
     master:
+      annotations:
+        secret.reloader.stakater.com/reload: redis-auth
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
       persistence:
-        enabled: false
-
+        enabled: true
+        existingClaim: redis-data
+      extraVolumes:
+        - name: redis-users
+          secret:
+            secretName: redis-auth
+            defaultMode: 0440
+            items:
+              - key: users.acl
+                path: users.acl
+      extraVolumeMounts:
+        - name: redis-users
+          mountPath: /opt/bitnami/redis/acl
+          readOnly: true
     replica:
-      replicaCount: 1
-      persistence:
-        enabled: false
-# networkPolicy:
-#   enabled: false # TODO: enable this
-#   ingressNSMatchLabels:
-#     redis: external
-#   ingressNSPodMatchLabels:
-#     redis-client: true
+      replicaCount: 0
