@@ -389,8 +389,10 @@ tasks:
     summary: |
       Extends the baseline edge smoke checks with the ESPHome Traefik canary
       hostname before cutting over the production internal hostname. Supply
-      esphome_ws_path and esphome_ws_contains when a stable WebSocket endpoint
-      is known and should be enforced by the smoke test.
+      esphome_ws_path to verify that an unauthenticated WebSocket upgrade is
+      redirected to the configured Zitadel login. This does not verify an
+      authenticated handshake or payload. Do not supply esphome_ws_contains:
+      a payload assertion requires a separate authenticated session check.
 
       Example:
         task kubernetes:edge-smoke-esphome esphome_ws_path=/ws

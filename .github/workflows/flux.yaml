@@ -21,6 +21,7 @@ jobs:
       kubernetes: ${{ steps.filter.outputs.kubernetes }}
       go: ${{ steps.filter.outputs.go }}
       mondoo: ${{ steps.filter.outputs.mondoo }}
+      mqtt: ${{ steps.filter.outputs.mqtt }}
       contracts: ${{ steps.filter.outputs.contracts }}
     steps:
       - name: Classify changed paths
@@ -56,6 +57,10 @@ jobs:
               - 'tests/test_zitadel_access_policy.rb'
               - 'tests/test_zitadel_config.py'
               - 'tests/test_gateway_api_source.py'
+            mqtt:
+              - '.github/workflows/flux.yaml'
+              - 'kubernetes/apps/home-automation/mosquitto/**'
+              - 'tests/check_mqtt_acl.py'
             contracts:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Kubernetes/Taskfile.yaml'
@@ -97,6 +102,16 @@ jobs:
 
       - name: Run yayamlls rendered validation
         run: yayamlls validate --render ./kubernetes
+
+  mqtt-access:
+    name: MQTT Access
+    needs: changes
+    if: ${{ needs.changes.outputs.mqtt == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Verify allowed and denied MQTT access
+        run: python3 tests/check_mqtt_acl.py
 
   cluster-health:
     name: Cluster Health CLI
@@ -161,6 +176,7 @@ jobs:
       - name: Run unit tests
         run: |
           python3 -m unittest tests/test_zitadel_config.py tests/test_traefik_gateway.py tests/test_gateway_api_source.py
+          python3 -m unittest tests/test_kured_reboot_markers.py
           ruby tests/test_zitadel_access_policy.rb
 
       - name: Lint Mondoo policies
@@ -301,7 +317,7 @@ jobs:
 
   flate-success:
     if: ${{ always() }}
-    needs: ["changes", "flate-diff", "flate-test", "mondoo", "rustfs-iam-policy"]
+    needs: ["changes", "flate-diff", "flate-test", "mondoo", "rustfs-iam-policy", "mqtt-access"]
     name: Flate Successful
     runs-on: ubuntu-slim
     steps:

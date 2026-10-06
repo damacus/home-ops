@@ -27,6 +27,11 @@ spec:
       endTime: "12:00"
       period: "10m"
       timeZone: "Europe/London"
+      # Armbian kernel updates use a different marker from ordinary packages.
+      # The command runs in the host mount namespace; /run clears on reboot.
+      useRebootSentinelHostPath: false
+      rebootSentinelCommand: >-
+        /bin/sh -c 'test -f /var/run/reboot-required || test -f /var/run/.reboot_required'
     service:
       ipFamilyPolicy: preferDualStack
     metrics:

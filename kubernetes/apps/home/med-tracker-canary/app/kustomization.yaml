@@ -5,7 +5,6 @@ namespace: home
 resources:
   - helmrelease.yaml
   - externalsecret.yaml
-  - grafana-dashboard.yaml
   - networkpolicy.yaml
   - reset-rbac.yaml
   - reset-script.yaml
