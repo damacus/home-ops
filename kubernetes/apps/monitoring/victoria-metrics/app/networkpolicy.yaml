@@ -16,7 +16,7 @@ spec:
           matchExpressions:
             - key: app.kubernetes.io/name
               operator: In
-              values: [grafana, vmagent, vmalert, vm-operator]
+              values: [grafana, vmagent, vmalert, vmalertmanager, vm-operator]
       toPorts:
         - ports:
             - port: "8428"

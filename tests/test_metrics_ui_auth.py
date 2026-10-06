@@ -3,10 +3,15 @@ import unittest
 import re
 from pathlib import Path
 import yaml
-ROOT=Path(__file__).resolve().parents[1]
-APP=ROOT/"kubernetes/apps/monitoring/victoria-metrics/app"
+ROOT: Path = Path(__file__).resolve().parents[1]
+APP: Path = ROOT/"kubernetes/apps/monitoring/victoria-metrics/app"
 class MetricsUiAuthTests(unittest.TestCase):
-    def test_browser_route_has_no_unrestricted_backend(self):
+    def test_cluster_health_alertmanager_retains_backend_access(self) -> None:
+        policy = yaml.safe_load((APP / "networkpolicy.yaml").read_text())
+        clients = policy["spec"]["ingress"][0]["fromEndpoints"][0]
+        self.assertIn("vmalertmanager", clients["matchExpressions"][0]["values"])
+
+    def test_browser_route_has_no_unrestricted_backend(self) -> None:
         route=yaml.safe_load((APP/"httproute.yaml").read_text())
         backend_rules=[r for r in route["spec"]["rules"] if "backendRefs" in r]
         self.assertTrue(backend_rules)
@@ -18,7 +23,7 @@ class MetricsUiAuthTests(unittest.TestCase):
                 allowed.add(match["path"]["value"])
                 self.assertNotEqual(match["path"]["value"],"/")
         self.assertEqual(allowed, {"/vmui", "/api/v1/query", "/api/v1/query_range", "/api/v1/labels", "/api/v1/label", "/api/v1/series", "/api/v1/status/tsdb", "/api/v1/status/top_queries", "/api/v1/status/active_queries"})
-    def test_backend_has_restricted_client_ingress(self):
+    def test_backend_has_restricted_client_ingress(self) -> None:
         policy=yaml.safe_load((APP/"networkpolicy.yaml").read_text())
         rules=policy["spec"]["ingress"]
         self.assertEqual(policy["spec"]["endpointSelector"]["matchLabels"]["app.kubernetes.io/name"],"vmsingle")
@@ -28,10 +33,10 @@ class MetricsUiAuthTests(unittest.TestCase):
         for r in rules:
             self.assertNotIn("fromEntities",r)
             self.assertEqual(r["toPorts"][0]["ports"],[{"port":"8428","protocol":"TCP"}])
-    def test_traefik_cannot_reach_write_or_admin_endpoints(self):
+    def test_traefik_cannot_reach_write_or_admin_endpoints(self) -> None:
         policy=yaml.safe_load((APP/"networkpolicy.yaml").read_text())
         rules=policy["spec"]["ingress"][-1]["toPorts"][0]["rules"]["http"]
-        def allowed(method, path):
+        def allowed(method: str, path: str) -> bool:
             return any(re.fullmatch(r["method"],method) and re.fullmatch(r["path"],path) for r in rules)
         for path in ("/vmui/", "/vmui/assets/main.js", "/api/v1/query", "/api/v1/query_range", "/api/v1/label/__name__/values"):
             self.assertTrue(allowed("GET",path),path)
@@ -39,7 +44,7 @@ class MetricsUiAuthTests(unittest.TestCase):
         for path in ("/api/v1/write", "/api/v1/import", "/api/v1/admin/tsdb/delete_series", "/opentelemetry/api/v1/push", "/snapshot/create", "/flags", "/metrics"):
             for method in ("GET","POST","DELETE"):
                 self.assertFalse(allowed(method,path),(method,path))
-    def test_policy_is_included(self):
+    def test_policy_is_included(self) -> None:
         k=yaml.safe_load((APP/"kustomization.yaml").read_text())
         self.assertIn("./networkpolicy.yaml",k["resources"])
 if __name__=="__main__": unittest.main()
