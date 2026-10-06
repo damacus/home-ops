@@ -56,6 +56,8 @@ jobs:
               - 'tests/test_zitadel_access_policy.rb'
               - 'tests/test_zitadel_config.py'
               - 'tests/test_gateway_api_source.py'
+              - 'tests/test_loki_rule_watchers.py'
+              - 'tests/test_loki_alerts.py'
             contracts:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Kubernetes/Taskfile.yaml'
@@ -165,6 +167,25 @@ jobs:
 
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml
+
+      - name: Setup Helm for Loki regressions
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+        with:
+          version: v4.3.0
+
+      - name: Verify both rendered Loki watchers
+        env:
+          LOKI_CHARTS_PATH: ${{ runner.temp }}/loki-charts
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/loki-test-env"
+          "$RUNNER_TEMP/loki-test-env/bin/pip" install 'PyYAML==6.0.3'
+          loki_version=$("$RUNNER_TEMP/loki-test-env/bin/python" -c 'import yaml; print(next(d for d in yaml.safe_load_all(open("kubernetes/apps/monitoring/loki/app/helmrelease.yaml")) if d["kind"] == "OCIRepository")["spec"]["ref"]["tag"])')
+          openebs_version=$("$RUNNER_TEMP/loki-test-env/bin/python" -c 'import yaml; print(yaml.safe_load(open("kubernetes/apps/openebs-system/openebs/app/helmrelease.yaml"))["spec"]["chart"]["spec"]["version"])')
+          mkdir -p "$LOKI_CHARTS_PATH"
+          helm pull oci://ghcr.io/grafana/helm-charts/loki --version "$loki_version" --untar --untardir "$LOKI_CHARTS_PATH"
+          helm pull openebs --repo https://openebs.github.io/openebs --version "$openebs_version" --untar --untardir "$LOKI_CHARTS_PATH"
+          "$RUNNER_TEMP/loki-test-env/bin/python" -m unittest tests/test_loki_rule_watchers.py tests/test_loki_alerts.py
 
       - name: Run rendered manifest scans
         env:
