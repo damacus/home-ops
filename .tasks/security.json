@@ -540,11 +540,11 @@
 	},
 	{
 		"category": "monitoring",
-		"description": "Remove unused Loki rule discovery and Kubernetes Secret access",
+		"description": "Preserve Loki ConfigMap discovery while removing Kubernetes Secret access",
 		"steps": [
-			"Render Loki 7.3.0 and OpenEBS 4.6.1; verify no rule watchers, Loki RBAC or API tokens",
-			"Publish and deploy through Flux GitOps",
-			"Verify both Loki installations remain ready and monitoring Loki evaluates directly mounted rules"
+			"Render both exact charts; verify ConfigMap-only custom RBAC and retained watchers",
+			"Test cross-namespace discovery, collisions, updates, deletion and Secret denial in an isolated cluster",
+			"Publish and deploy through Flux; compare rule inventories and verify healthy evaluation"
 		],
 		"passes": false
 	},

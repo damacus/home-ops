@@ -95,7 +95,7 @@ spec:
         storage:
           type: local
           local:
-            directory: /etc/loki/managed-rules
+            directory: /rules
         ring:
           kvstore:
             store: inmemory
@@ -116,17 +116,6 @@ spec:
         size: 20Gi
         accessModes:
           - ReadWriteOnce
-      extraVolumes:
-        - name: explicit-rules
-          configMap:
-            name: loki-alert-rules
-            items:
-              - key: home-ops.yaml
-                path: fake/home-ops.yaml
-      extraVolumeMounts:
-        - name: explicit-rules
-          mountPath: /etc/loki/managed-rules
-          readOnly: true
       extraEnv:
         - name: TZ
           value: "Europe/London"
@@ -187,14 +176,26 @@ spec:
       lokiCanary:
         enabled: false
 
-    # Rules are managed explicitly; Loki does not need Kubernetes API access.
+    # Discover chart-generated rule ConfigMaps without access to Secrets.
     sidecar:
+      enableUniqueFilenames: true
+      image:
+        registry: ghcr.io
+        repository: damacus/k8s-sideca-rs
+        tag: "0.2.5"
+        sha: ""
+        pullPolicy: IfNotPresent
       rules:
-        enabled: false
+        enabled: true
+        resource: configmap
+        searchNamespace: ["ALL"]
+        label: loki_rule
+        folder: /rules/fake
     rbac:
-      namespaced: true
+      namespaced: false
+      useExistingRole: loki-rule-configmaps
     serviceAccount:
-      automountServiceAccountToken: false
+      automountServiceAccountToken: true
 
     # Test configuration
     test:

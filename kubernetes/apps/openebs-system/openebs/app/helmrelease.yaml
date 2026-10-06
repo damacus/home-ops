@@ -54,15 +54,26 @@ spec:
       imagePullSecrets:
         - name: dockerhub-credentials
       serviceAccount:
-        automountServiceAccountToken: false
+        automountServiceAccountToken: true
         imagePullSecrets:
           - name: dockerhub-credentials
-      # Rules are managed explicitly; Loki does not need Kubernetes API access.
+      # Retain discovery; existing S3 ruler storage is managed separately.
       sidecar:
+        enableUniqueFilenames: true
+        image:
+          repository: ghcr.io/damacus/k8s-sideca-rs
+          tag: "0.2.5"
+          sha: ""
+          pullPolicy: IfNotPresent
         rules:
-          enabled: false
+          enabled: true
+          resource: configmap
+          searchNamespace: ["ALL"]
+          label: loki_rule
+          folder: /rules
       rbac:
-        namespaced: true
+        namespaced: false
+        useExistingRole: openebs-loki-rule-configmaps
 
     alloy:
       global:

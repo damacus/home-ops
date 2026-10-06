@@ -15,7 +15,7 @@ class LokiAlertTests(unittest.TestCase):
         self.assertIn("./rules.yaml", resources)
         rules = yaml.safe_load((APP / "rules.yaml").read_text())
         self.assertEqual(rules["kind"], "ConfigMap")
-        self.assertNotIn("loki_rule", rules["metadata"].get("labels", {}))
+        self.assertIn("loki_rule", rules["metadata"].get("labels", {}))
         groups = yaml.safe_load(rules["data"]["home-ops.yaml"])["groups"]
         alerts = {r["alert"]: r for g in groups for r in g["rules"]}
         self.assertEqual(set(alerts), {"FrigateCameraRepeatedFailures", "IronBridgeDeliveryExhausted", "ApplicationStorageWriteFailure"})
@@ -34,19 +34,17 @@ class LokiAlertTests(unittest.TestCase):
         docs = [d for d in yaml.safe_load_all(output) if d]
         pod = next(d["spec"]["template"]["spec"] for d in docs if d["kind"] == "StatefulSet" and d["metadata"]["name"] == "loki")
         container = next(c for c in pod["containers"] if c["name"] == "loki")
-        volume = next(v for v in pod["volumes"] if v["name"] == "explicit-rules")
-        self.assertEqual(volume["configMap"]["name"], "loki-alert-rules")
-        self.assertEqual(volume["configMap"]["items"], [{"key": "home-ops.yaml", "path": "fake/home-ops.yaml"}])
-        mount = next(m for m in container["volumeMounts"] if m["name"] == "explicit-rules")
-        self.assertEqual(mount["mountPath"], "/etc/loki/managed-rules")
-        self.assertIs(mount["readOnly"], True)
-        self.assertNotIn("subPath", mount)
+        sidecar = next(c for c in pod["containers"] if c["name"] == "loki-sc-rules")
+        env = {e["name"]: e.get("value") for e in sidecar["env"]}
+        self.assertEqual(env["FOLDER"], "/rules/fake")
+        self.assertEqual(env["UNIQUE_FILENAMES"], "true")
+        self.assertFalse(any(v["name"] == "explicit-rules" for v in pod["volumes"]))
         config = next(yaml.safe_load(d["data"]["config.yaml"]) for d in docs if d["kind"] == "ConfigMap" and "config.yaml" in d.get("data", {}))
-        self.assertEqual(config["ruler"]["storage"]["local"]["directory"], mount["mountPath"])
+        self.assertEqual(config["ruler"]["storage"]["local"]["directory"], "/rules")
         self.assertEqual(config["ruler"]["alertmanager_url"], "http://vmalertmanager-vm.monitoring.svc.cluster.local:9093")
         self.assertFalse(config["auth_enabled"])
-        self.assertIs(pod["automountServiceAccountToken"], False)
-        self.assertNotIn("loki-sc-rules", [c["name"] for c in pod["containers"]])
+        self.assertIs(pod["automountServiceAccountToken"], True)
+        self.assertIn("loki-sc-rules", [c["name"] for c in pod["containers"]])
 
 if __name__ == "__main__":
     unittest.main()
