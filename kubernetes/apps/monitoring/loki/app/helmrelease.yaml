@@ -175,14 +175,14 @@ spec:
       lokiCanary:
         enabled: false
 
-    # Canary: Rust port of the kiwigrid rules sidecar
+    # Rules are managed explicitly; Loki does not need Kubernetes API access.
     sidecar:
-      image:
-        registry: ghcr.io
-        repository: damacus/k8s-sidecar-rs
-        tag: "0.2.4"
-        sha: ""
-        pullPolicy: IfNotPresent
+      rules:
+        enabled: false
+    rbac:
+      namespaced: true
+    serviceAccount:
+      automountServiceAccountToken: false
 
     # Test configuration
     test:

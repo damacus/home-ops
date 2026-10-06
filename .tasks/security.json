@@ -537,5 +537,15 @@
 			"Test SSO logout propagation"
 		],
 		"passes": false
+	},
+	{
+		"category": "monitoring",
+		"description": "Remove unused Loki rule discovery and Kubernetes Secret access",
+		"steps": [
+			"Render Loki 7.3.0 and OpenEBS 4.6.1; verify no rule watchers, Loki RBAC or API tokens",
+			"Publish and deploy through Flux GitOps",
+			"Verify both Loki installations remain ready, logs are searchable and rule storage is preserved"
+		],
+		"passes": false
 	}
 ]
