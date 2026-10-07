@@ -36,6 +36,11 @@ spec:
       enabled: true
       createPrometheusRules: true
 
+    defaultSettings:
+      # Detached backup clones may have a stopped last replica; retain protection
+      # for the last running replica while allowing in-place node maintenance.
+      nodeDrainPolicy: allow-if-replica-is-stopped
+
     persistence:
       defaultClass: true
       defaultClassReplicaCount: 2
