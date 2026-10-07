@@ -27,6 +27,10 @@ class KuredRebootMarkersTest(unittest.TestCase):
         self.assertIs(self.configuration.get("useRebootSentinelHostPath"), False)
         self.assertTrue(self.configuration.get("rebootSentinelCommand"))
 
+    def test_failed_drain_has_a_deadline_and_cannot_force_reboot(self) -> None:
+        self.assertEqual(self.configuration.get("drainTimeout"), "15m")
+        self.assertIs(self.configuration.get("forceReboot"), False)
+
     def test_markers_require_one_reboot_and_clear_after_boot(self) -> None:
         command = self.configuration.get("rebootSentinelCommand", "")
         self.assertTrue(command, "Kured needs a check covering both marker formats")

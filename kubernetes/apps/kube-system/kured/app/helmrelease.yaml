@@ -23,6 +23,9 @@ spec:
   values:
     configuration:
       concurrency: 1
+      # Abort failed drains and uncordon instead of blocking maintenance forever.
+      drainTimeout: "15m"
+      forceReboot: false
       startTime: "7:00"
       endTime: "12:00"
       period: "10m"

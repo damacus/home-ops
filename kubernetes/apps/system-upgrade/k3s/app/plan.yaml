@@ -10,7 +10,7 @@ spec:
     image: rancher/k3s-upgrade
   serviceAccountName: system-upgrade
   concurrency: 1
-  # Keep the health gate alive until the VIP and control plane recover.
+  # Bound each prepare attempt below without timing out a running node upgrade.
   jobActiveDeadlineSecs: 0
   cordon: true
   prepare:
@@ -18,13 +18,38 @@ spec:
     command: ["/bin/sh", "-ec"]
     args:
       - |
-        export KUBERNETES_SERVICE_HOST=192.168.1.220
-        export KUBERNETES_SERVICE_PORT=6443
+        # k3s kubectl does not infer in-cluster credentials from service env vars.
+        # Refer to the mounted token file; never put the token in arguments/logs.
+        umask 077
+        gate_dir="$(mktemp -d)"
+        trap 'rm -rf "$gate_dir"' EXIT
+        service_account="${SERVICE_ACCOUNT_DIR:-/var/run/secrets/kubernetes.io/serviceaccount}"
+        cat > "$gate_dir/kubeconfig" <<EOF
+        apiVersion: v1
+        kind: Config
+        clusters:
+          - name: vip
+            cluster:
+              server: https://192.168.1.220:6443
+              certificate-authority: $service_account/ca.crt
+        users:
+          - name: upgrade
+            user:
+              tokenFile: $service_account/token
+        contexts:
+          - name: vip
+            context:
+              cluster: vip
+              user: upgrade
+        current-context: vip
+        EOF
         K3S_BIN="${K3S_BIN:-/opt/k3s}"
         SLEEP_BIN="${SLEEP_BIN:-sleep}"
-        while true; do
-          if "$K3S_BIN" kubectl --request-timeout=5s get --raw=/readyz >/dev/null 2>&1 &&
-             nodes_json="$("$K3S_BIN" kubectl --request-timeout=5s get nodes --selector=node-role.kubernetes.io/control-plane -o json)" &&
+        attempt=0
+        while [ "$attempt" -lt "${GATE_ATTEMPTS:-60}" ]; do
+          attempt=$((attempt + 1))
+          if "$K3S_BIN" kubectl --kubeconfig="$gate_dir/kubeconfig" --request-timeout=5s get --raw=/readyz >/dev/null &&
+             nodes_json="$("$K3S_BIN" kubectl --kubeconfig="$gate_dir/kubeconfig" --request-timeout=5s get nodes --selector=node-role.kubernetes.io/control-plane -o json)" &&
              [ -n "$nodes_json" ] &&
              printf '%s\n' "$nodes_json" |
                jq -e '(.items | length) >= 3 and all(.items[]; any(.status.conditions[]; .type == "Ready" and .status == "True"))' >/dev/null 2>&1; then
@@ -34,6 +59,8 @@ spec:
           echo "Waiting for API VIP readiness and all control-plane nodes to become Ready"
           "$SLEEP_BIN" 10
         done
+        echo "Health gate exhausted; refusing to cordon or upgrade" >&2
+        exit 1
   nodeSelector:
     matchExpressions:
       - key: node-role.kubernetes.io/control-plane
