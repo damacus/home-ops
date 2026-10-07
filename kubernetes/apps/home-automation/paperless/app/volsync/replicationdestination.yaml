@@ -9,7 +9,7 @@ spec:
   trigger:
     manual: restore-once
   restic:
-    repository: rustfs-paperless
+    repository: paperless-restic-local-v2
     destinationPVC: paperless-localdata-restore
     copyMethod: Direct
     storageClassName: longhorn
