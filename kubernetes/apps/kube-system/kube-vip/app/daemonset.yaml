@@ -75,8 +75,8 @@ spec:
               value: "false"
             - name: vip_arpRate
               value: "3"
-            - name: health_check_port
-              value: "2113"
+            # Keep the optional health server disabled: kube-vip v1.2.4 waits
+            # for it forever after election stops, preventing kubelet restart.
             - name: backend_health_check_interval
               value: "5"
           securityContext:
