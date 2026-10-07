@@ -10,7 +10,7 @@ spec:
     schedule: "0 3 * * *"
   restic:
     pruneIntervalDays: 14
-    repository: rustfs-paperless
+    repository: paperless-restic-local-v2
     retain:
       hourly: 6
       daily: 7
