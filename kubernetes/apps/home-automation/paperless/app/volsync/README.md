@@ -28,7 +28,10 @@ a restore with file verification. The restored SQLite database passed
 A separate, manually captured application export was stored at
 `volsync-paperless/exports-v1`, snapshot `5f611676`. It contains the complete
 export, pending intake and a checksum catalogue. The repository passed a full
-data read. This one-off capture does not establish a recurring full-export
+data read. An isolated restore verified every exported file hash, imported all
+332 documents, passed SQLite integrity checking and completed Paperless's sanity
+checker without errors (three informational no-OCR notices). This one-off capture
+does not establish a recurring full-export
 schedule or an independent storage destination. RustFS and the document media
 still share the primary NAS failure domain; the DSM pull plan remains separate.
 
