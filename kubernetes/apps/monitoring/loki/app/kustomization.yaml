@@ -5,3 +5,5 @@ namespace: monitoring
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
+  - ./rules.yaml
+  - ./rule-discovery-rbac.yaml

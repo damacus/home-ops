@@ -566,5 +566,25 @@
       "After GitOps deployment verify KSM readiness and denied Secret access"
     ],
     "passes": false
+  },
+  {
+    "category": "monitoring",
+    "description": "Preserve Loki ConfigMap discovery while removing Kubernetes Secret access",
+    "steps": [
+      "Render both exact charts; verify ConfigMap-only custom RBAC and retained watchers",
+      "Test cross-namespace discovery, collisions, updates, deletion and Secret denial in an isolated cluster",
+      "Publish and deploy through Flux; compare rule inventories and verify healthy evaluation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "monitoring",
+    "description": "Add log alerts for Frigate camera failures, exhausted IronBridge deliveries and application storage errors",
+    "steps": [
+      "Render the exact Loki chart and validate rule mounts and Alertmanager routing",
+      "Validate all three LogQL expressions against Loki",
+      "Deploy through Flux and verify rule health and Alertmanager delivery"
+    ],
+    "passes": false
   }
 ]

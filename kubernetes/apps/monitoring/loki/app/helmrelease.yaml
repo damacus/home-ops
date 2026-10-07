@@ -91,10 +91,11 @@ spec:
 
       # Ruler configuration
       rulerConfig:
+        alertmanager_url: http://vmalertmanager-vm.monitoring.svc.cluster.local:9093
         storage:
           type: local
           local:
-            directory: /var/loki/rules
+            directory: /rules
         ring:
           kvstore:
             store: inmemory
@@ -175,14 +176,26 @@ spec:
       lokiCanary:
         enabled: false
 
-    # Canary: Rust port of the kiwigrid rules sidecar
+    # Discover chart-generated rule ConfigMaps without access to Secrets.
     sidecar:
+      enableUniqueFilenames: true
       image:
         registry: ghcr.io
-        repository: damacus/k8s-sidecar-rs
-        tag: "0.2.4"
+        repository: damacus/k8s-sideca-rs
+        tag: "0.2.5"
         sha: ""
         pullPolicy: IfNotPresent
+      rules:
+        enabled: true
+        resource: configmap
+        searchNamespace: ["ALL"]
+        label: loki_rule
+        folder: /rules/fake
+    rbac:
+      namespaced: false
+      useExistingRole: loki-rule-configmaps
+    serviceAccount:
+      automountServiceAccountToken: true
 
     # Test configuration
     test:

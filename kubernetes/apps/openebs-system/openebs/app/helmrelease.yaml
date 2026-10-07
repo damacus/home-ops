@@ -54,15 +54,26 @@ spec:
       imagePullSecrets:
         - name: dockerhub-credentials
       serviceAccount:
+        automountServiceAccountToken: true
         imagePullSecrets:
           - name: dockerhub-credentials
-      # Rust port of the kiwigrid rules sidecar (loki 6.29.0 has no registry field)
+      # Retain discovery; existing S3 ruler storage is managed separately.
       sidecar:
+        enableUniqueFilenames: true
         image:
-          repository: ghcr.io/damacus/k8s-sidecar-rs
-          tag: "0.2.4"
+          repository: ghcr.io/damacus/k8s-sideca-rs
+          tag: "0.2.5"
           sha: ""
           pullPolicy: IfNotPresent
+        rules:
+          enabled: true
+          resource: configmap
+          searchNamespace: ["ALL"]
+          label: loki_rule
+          folder: /rules
+      rbac:
+        namespaced: false
+        useExistingRole: openebs-loki-rule-configmaps
 
     alloy:
       global:
