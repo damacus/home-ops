@@ -28,8 +28,8 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
     def test_controller_plan_runs_health_gate_before_cordon(self) -> None:
         self.assertEqual(self.prepare.get("image"), "rancher/k3s-upgrade")
         self.assertEqual(self.prepare.get("command"), ["/bin/sh", "-ec"])
-        self.assertIn("KUBERNETES_SERVICE_HOST=192.168.1.220", self.script)
-        self.assertIn("KUBERNETES_SERVICE_PORT=6443", self.script)
+        self.assertIn("server: https://192.168.1.220:6443", self.script)
+        self.assertIn("tokenFile:", self.script)
         self.assertIn("get --raw=/readyz", self.script)
         self.assertIn("node-role.kubernetes.io/control-plane", self.script)
         self.assertLess(self.script.index("get --raw=/readyz"), self.script.index("get nodes"))
@@ -43,6 +43,9 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
                 "#!/bin/sh\n"
                 "[ \"$1\" = kubectl ] || exit 2\n"
                 "shift\n"
+                'case "$1" in --kubeconfig=*) config="${1#*=}"; shift ;; *) exit 2 ;; esac\n'
+                '[ "$(ls -l "$config" | cut -c1-10)" = -rw------- ] || exit 2\n'
+                'grep -q "tokenFile:" "$config" || exit 2\n'
                 "[ \"$1\" = --request-timeout=5s ] && shift\n"
                 "case \"$*\" in\n"
                 "  \"get --raw=/readyz\")\n"
@@ -101,7 +104,7 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
         self.assertIn("all control-plane nodes are Ready", result.stdout)
         self.assertEqual(result.stdout.count("Waiting for API VIP readiness"), 2)
 
-    def test_gate_keeps_waiting_when_a_control_plane_node_is_not_ready(self) -> None:
+    def test_gate_fails_closed_when_a_control_plane_node_is_not_ready(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             temp_dir = Path(tmp)
             fake_k3s = temp_dir / "k3s"
@@ -109,6 +112,9 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
                 "#!/bin/sh\n"
                 "[ \"$1\" = kubectl ] || exit 2\n"
                 "shift\n"
+                'case "$1" in --kubeconfig=*) config="${1#*=}"; shift ;; *) exit 2 ;; esac\n'
+                '[ "$(ls -l "$config" | cut -c1-10)" = -rw------- ] || exit 2\n'
+                'grep -q "tokenFile:" "$config" || exit 2\n'
                 "[ \"$1\" = --request-timeout=5s ] && shift\n"
                 "case \"$*\" in\n"
                 "  \"get --raw=/readyz\") exit 0 ;;\n"
@@ -140,15 +146,17 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
                 "SLEEP_BIN": str(fake_sleep),
                 "NODES_FILE": str(nodes_file),
             }
-            with self.assertRaises(subprocess.TimeoutExpired):
-                subprocess.run(
-                    ["/bin/sh", "-ec", self.script],
-                    env=env,
-                    capture_output=True,
-                    text=True,
-                    timeout=0.2,
-                    check=False,
-                )
+            env["GATE_ATTEMPTS"] = "3"
+            result = subprocess.run(
+                ["/bin/sh", "-ec", self.script],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Health gate exhausted", result.stderr)
 
 
 if __name__ == "__main__":

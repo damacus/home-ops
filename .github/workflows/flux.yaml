@@ -206,7 +206,7 @@ jobs:
       - name: Run unit tests
         run: |
           python3 -m unittest tests/test_zitadel_config.py tests/test_traefik_gateway.py tests/test_gateway_api_source.py
-          python3 -m unittest tests/test_kured_reboot_markers.py
+          python3 -m unittest tests/test_kured_reboot_markers.py tests/test_system_upgrade_health_gate.py
           ruby tests/test_zitadel_access_policy.rb
 
       - name: Verify PR behaviour regressions
@@ -236,6 +236,23 @@ jobs:
           helm pull oci://ghcr.io/grafana/helm-charts/loki --version "$loki_version" --untar --untardir "$LOKI_CHARTS_PATH"
           helm pull openebs --repo https://openebs.github.io/openebs --version "$openebs_version" --untar --untardir "$LOKI_CHARTS_PATH"
           "$RUNNER_TEMP/loki-test-env/bin/python" -m unittest tests/test_loki_rule_watchers.py tests/test_loki_alerts.py
+
+      - name: Verify rendered maintenance safety
+        env:
+          MAINTENANCE_CHARTS_PATH: ${{ runner.temp }}/maintenance-charts
+        run: |
+          set -euo pipefail
+          mkdir -p "$MAINTENANCE_CHARTS_PATH"
+          for entry in kube-system/kured storage/longhorn; do
+            name=${entry##*/}
+            release="kubernetes/apps/$entry/app/helmrelease.yaml"
+            if [ "$name" = longhorn ]; then release="kubernetes/apps/$entry/app/HelmRelease.yaml"; fi
+            chart_version=$(yq '.spec.chart.spec.version' "$release")
+            repo=$(yq '.spec.url' "kubernetes/flux/repositories/helm/$name.yaml")
+            helm pull "$name" --repo "$repo" --version "$chart_version" --untar --untardir "$MAINTENANCE_CHARTS_PATH"
+          done
+          python3 -m unittest tests/test_maintenance_charts.py
+
       - name: Verify rendered KSM permissions
         env:
           VM_STACK_CHART_PATH: ${{ runner.temp }}/ksm-charts/victoria-metrics-k8s-stack
