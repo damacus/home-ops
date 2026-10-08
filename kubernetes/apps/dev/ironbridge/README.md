@@ -91,6 +91,28 @@ The existing cluster's 30-day RustFS Barman backup policy covers both databases;
 check a fresh backup, WAL archive and restore containing `ironbridge` before
 enabling the bridge.
 
+## Version 0.3.0 Loco migration
+
+Version 0.3.0 rebuilds the application on the Loco framework. Bridge,
+moderation, authentication and CSRF behaviour are unchanged; the deployment
+surface changes in three ways. The readiness probe must invoke the task
+subcommand: `ironbridge task ready` — the previous bare `ironbridge ready`
+exits non-zero on this image and the pod would never become ready. Both
+durable queues move onto `pg_loco_queue`; the start-up migration carries live
+`jobs` and `moderation_jobs` rows across, seeds the deduplication tables, and
+drops the old tables. `database.auto_migrate` applies this on boot, so verify
+the migration in logs before traffic resumes. `TZ=Europe/London` renders
+dashboard timestamps in local time; unset falls back to UTC.
+
+The container starts with `start`, which serves HTTP and runs the bridge
+poller that consumes the queue. No extra worker flag is required. Verify the
+`Creating Postgres queue provider` log line at boot, then confirm queued
+deliveries drain after the pod is ready. The cutover migration is not
+reversible: once it runs, the old image has no `jobs` or `moderation_jobs`
+tables to consume. If rollback is required after migration, restore the
+database from the pre-rollout backup rather than redeploying the old digest
+alone.
+
 ## Version 0.2.2 channel approvals
 
 Channel approvals open a dialogue on the channel page and keep the entered

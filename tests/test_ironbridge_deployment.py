@@ -163,7 +163,8 @@ class IronBridgeDeploymentTest(unittest.TestCase):
         self.assertEqual(container["securityContext"]["capabilities"]["drop"], ["ALL"])
         readiness = container["readinessProbe"]
         self.assertEqual(
-            readiness["exec"]["command"], ["/usr/local/bin/ironbridge", "ready"]
+            readiness["exec"]["command"],
+            ["/usr/local/bin/ironbridge", "task", "ready"],
         )
         self.assertGreaterEqual(readiness["timeoutSeconds"], 10)
         digest = container["image"].split("@sha256:")[-1]

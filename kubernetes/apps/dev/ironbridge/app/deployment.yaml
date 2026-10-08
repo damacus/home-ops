@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: ironbridge
-          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:d527439f6233f38202f8b90d247b3610606d411d1c626d5ea3388acad6f13137
+          image: forgejo.ironstone.casa/damacus/ironbridge@sha256:2bbb532cd450dac56252893bba62abc63a812a88f42cbf55e2cfa66fe59bc3c3
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:
@@ -64,6 +64,8 @@ spec:
               value: all
             - name: SLACK_CHANNEL_IDS
               value: ""
+            - name: TZ
+              value: Europe/London
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -78,7 +80,7 @@ spec:
               memory: 256Mi
           readinessProbe:
             exec:
-              command: [/usr/local/bin/ironbridge, ready]
+              command: [/usr/local/bin/ironbridge, task, ready]
             initialDelaySeconds: 15
             periodSeconds: 30
             timeoutSeconds: 10
