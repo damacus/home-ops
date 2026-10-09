@@ -5,6 +5,7 @@ resources:
   - ./HelmRelease.yaml
   - ./pvc.yaml
   - ./networkpolicy.yaml
+  - ./middleware.yaml
   - ./mqtt-externalsecret.yaml
 
 configMapGenerator:
