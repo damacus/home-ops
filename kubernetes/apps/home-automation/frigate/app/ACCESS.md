@@ -31,3 +31,31 @@ middleware, as ESPHome does. Port 8971 stays restricted
 to Traefik; do not expose it directly now that the upstream proxy owns login.
 The proxy supplies the verified email header, and Frigate gives every admitted
 user the admin role. Home Assistant retains its existing internal access.
+
+## Verification recorded on 9 October 2026
+
+Frigate image: `0.18.0-rk@sha256:06f72cee07ddcdba52c7dc8c4ce5d954e51cbc49b655bfdd31bcf0892bdad2eb`.
+Traefik image: `docker.io/traefik:v3.7.14`.
+The live route was staged with the shared middleware before disabling local
+login, keeping authentication enforced throughout the rollout.
+
+| Check | Observed result |
+| --- | --- |
+| Anonymous HTTPS `/api/config` request | HTTP 302 to Zitadel's authorization endpoint |
+| Same request with forged email, remote-user and remote-role headers | HTTP 302 to Zitadel; no Frigate configuration returned |
+| Traefik pod requesting internal port 5000 | Timed out after four seconds |
+| Actual Home Assistant pod requesting internal port 5000 | HTTP 200 |
+| Deployed Frigate configuration models | Accept disabled local authentication, email header mapping and default admin role |
+| YAML schemas and rendered chart | Passed; route retains port 8971 and adds shared ForwardAuth |
+
+Traefik strips each configured `authResponseHeaders` entry before copying the
+authentication server's value, even when the response omits that header. The
+shared middleware lists `X-Auth-Request-Email`, so the caller's supplied email
+cannot survive a missing proxy response header. See the
+[deployed version's implementation](https://github.com/traefik/traefik/blob/v3.7.14/pkg/middlewares/auth/forward.go#L322-L328).
+
+Still unverified: signed-in browser identity and admin access, WebSocket and
+live-media behaviour, Home Assistant camera/events/RTSP, direct access from an
+ordinary unrelated pod and LAN client, and failure injection of the auth proxy.
+The disabled local-login setting had not yet rolled out when these results
+were recorded. Repeat the relevant checks after Flux applies it.
