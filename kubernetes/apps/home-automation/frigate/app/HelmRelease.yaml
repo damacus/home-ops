@@ -108,7 +108,7 @@ spec:
                 extensionRef:
                   group: traefik.io
                   kind: Middleware
-                  name: frigate-zitadel-auth
+                  name: oauth2-proxy-forward-auth
             backendRefs:
               - kind: Service
                 name: frigate

@@ -25,8 +25,9 @@ unverified cases explicit. If login or Home Assistant access regresses, revert
 through Git. Do not claim the security boundary is proven merely because Flux
 and pods report Ready.
 
-Frigate's route, dedicated ForwardAuth middleware and disabled local login are
-managed together by the Frigate Flux Kustomization. Port 8971 stays restricted
+Frigate's route and disabled local login are managed together by the Frigate
+Flux Kustomization. The route uses the shared oauth2-proxy-forward-auth
+middleware, as ESPHome does. Port 8971 stays restricted
 to Traefik; do not expose it directly now that the upstream proxy owns login.
 The proxy supplies the verified email header, and Frigate gives every admitted
 user the admin role. Home Assistant retains its existing internal access.
