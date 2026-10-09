@@ -8,9 +8,14 @@ mqtt:
   user: frigate
   password: "{FRIGATE_MQTT_PASSWORD}"
 
-# Browser requests arrive through Traefik on the authenticated port.
+# Traefik authenticates browser requests through Zitadel before port 8971.
 auth:
-  enabled: true
+  enabled: false
+
+proxy:
+  header_map:
+    user: x-auth-request-email
+  default_role: admin
 
 # Traefik terminates HTTPS; the authenticated backend uses HTTP.
 tls:
