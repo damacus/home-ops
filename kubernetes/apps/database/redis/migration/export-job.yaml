@@ -26,7 +26,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: export
-          image: registry-1.docker.io/bitnami/redis@sha256:b2ccacecba0945e1da5c93e8e9e6c4c7af579514941224a7d80a2fc8dfb09f6c
+          image: registry-1.docker.io/bitnami/redis@sha256:f4797b37502e6db910d3653368fcfadc171ef605586917774de125ddd05b3e62
           command: ["/bin/bash", "-ec"]
           args:
             - |
