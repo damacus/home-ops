@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: &image n8nio/n8n
-              tag: &tag 2.38.3@sha256:4b76b9c5a69dc1c0f26bedd21b4e281ac2c84bd88d33857487b9e63dd0a42e87
+              tag: &tag 2.43.3@sha256:d4eca183959b30fb1ba5ecda7e58363c5be49a7bcf8c0227a6384a47ce2f7a65
             env: &env
               DB_TYPE: "postgresdb"
               # Blue/green cutover is a single edit: change the anchor target
