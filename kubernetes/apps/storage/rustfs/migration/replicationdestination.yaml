@@ -1,0 +1,18 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationDestination
+metadata:
+  name: rustfs-data-ssd-seed
+  namespace: storage
+spec:
+  paused: true
+  rsyncTLS:
+    destinationPVC: rustfs-data-ssd
+    copyMethod: Direct
+    serviceType: ClusterIP
+    moverSecurityContext:
+      runAsUser: 977
+      runAsGroup: 988
+      runAsNonRoot: true
+      fsGroup: 988
+      fsGroupChangePolicy: OnRootMismatch

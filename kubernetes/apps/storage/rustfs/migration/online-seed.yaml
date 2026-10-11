@@ -1,0 +1,69 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rustfs-data-ssd-online-seed
+  namespace: storage
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 977
+        runAsGroup: 988
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: verify
+          image: quay.io/backube/volsync:0.16.0
+          command: [/bin/bash, -c]
+          args:
+            - |
+              set -euo pipefail
+              # Staging only. Durable multipart data and all system metadata remain included.
+              # The source PVC and source mount are read-only.
+              set +e
+              rsync -aAHx --numeric-ids --delete --exclude=lost+found \
+                --exclude='/.rustfs.sys/tmp/' --stats /source/ /destination/
+              result=$?
+              set -e
+              if [ "$result" -eq 24 ]; then
+                echo 'Online seed finished with concurrent source removals; stopped final sync remains required'
+              elif [ "$result" -eq 0 ]; then
+                echo 'PASS: initial RustFS durable data seed completed'
+              else
+                exit "$result"
+              fi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: source
+              mountPath: /source
+              readOnly: true
+            - name: destination
+              mountPath: /destination
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: source
+          persistentVolumeClaim:
+            claimName: rustfs-data-hdd-migration-source
+            readOnly: true
+        - name: destination
+          persistentVolumeClaim:
+            claimName: rustfs-data-ssd
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi

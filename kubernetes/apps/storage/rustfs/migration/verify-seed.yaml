@@ -1,0 +1,66 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rustfs-data-ssd-verify-seed
+  namespace: storage
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 977
+        runAsGroup: 988
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: verify
+          image: quay.io/backube/volsync:0.16.0
+          command: [/bin/bash, -c]
+          args:
+            - |
+              set -euo pipefail
+              # Both trees are read-only. Check bytes, paths, symlinks, ownership, modes, ACLs and hard links.
+              rsync -aHAcn --omit-dir-times --delete --exclude=lost+found \
+                --exclude='/.rustfs.sys/tmp/' --out-format='%i %n' \
+                /source/ /destination/ > /tmp/differences
+              differences=$(wc -l < /tmp/differences)
+              echo "Content/path/metadata differences: $differences"
+              cat /tmp/differences
+              test "$differences" -eq 0
+              echo 'PASS: content, paths and metadata match'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: source
+              mountPath: /source
+              readOnly: true
+            - name: destination
+              mountPath: /destination
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: source
+          persistentVolumeClaim:
+            claimName: rustfs-data-hdd-migration-source
+            readOnly: true
+        - name: destination
+          persistentVolumeClaim:
+            claimName: rustfs-data-ssd
+            readOnly: true
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi

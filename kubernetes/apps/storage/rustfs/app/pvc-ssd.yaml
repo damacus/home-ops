@@ -4,6 +4,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: rustfs-data-hdd
   namespace: storage
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes: ["ReadWriteMany"]
   resources:

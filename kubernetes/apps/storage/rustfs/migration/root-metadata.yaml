@@ -1,0 +1,54 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rustfs-data-ssd-root-metadata
+  namespace: storage
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 977
+        runAsGroup: 988
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: check
+          image: quay.io/backube/volsync:0.16.0
+          command: [/bin/bash, -c]
+          args:
+            - |
+              set -euo pipefail
+              # VolSync deliberately skips root metadata; match it separately.
+              rsync -aA --include='/' --exclude='*' /source/ /destination/
+              test "$(stat -c '%u:%g:%a' /source)" = "$(stat -c '%u:%g:%a' /destination)"
+              echo 'PASS: destination root ownership, mode and ACL copied from frozen source'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: source
+              mountPath: /source
+              readOnly: true
+            - name: destination
+              mountPath: /destination
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: source
+          nfs:
+            server: 192.168.1.243
+            path: /var/nfs/shared/nfs/pvc-938f25b0-8dbb-4eed-857f-a9205e71156c
+            readOnly: true
+        - name: destination
+          persistentVolumeClaim:
+            claimName: rustfs-data-ssd
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
