@@ -36,6 +36,7 @@ spec:
         annotations:
           reloader.stakater.com/auto: "true"
         initContainers:
+          # Prepare /run for the non-root runtime; documents are not mounted here.
           fix-run-permissions:
             image:
               repository: busybox
@@ -199,9 +200,8 @@ spec:
               - path: /data/local
 
       nas:
-        type: nfs
-        server: 192.168.1.243
-        path: /var/nfs/shared/nfs/paperless
+        type: persistentVolumeClaim
+        existingClaim: paperless-documents-ssd
         globalMounts:
           - path: /data/nas-mount
 
