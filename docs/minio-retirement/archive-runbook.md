@@ -35,7 +35,8 @@ have enough free space. Do not stop RustFS or combine this with its SSD cutover.
 ## Private buckets and restricted identities
 
 Configure administrator `mc` aliases named `source-admin` and `archive-admin`
-using private credential handling. Also configure the same `archive-admin` alias
+using protected configuration files, not secret command-line arguments. Also
+configure the same `archive-admin` alias
 in the RustFS `rc` client: its alias store is separate from `mc`. Use `rc` for
 RustFS IAM administration, matching the deployed bootstrap. Source is the
 bundled service, reached with
@@ -54,7 +55,15 @@ Source endpoint: `http://127.0.0.1:19000`. Archive endpoint:
 `http://127.0.0.1:19001`. Load fresh, randomly generated migration credentials
 into `ARCHIVE_SOURCE_ACCESS_KEY`, `ARCHIVE_SOURCE_SECRET_KEY`,
 `ARCHIVE_TARGET_ACCESS_KEY`, `ARCHIVE_TARGET_SECRET_KEY` without echoing them.
+Use URL-safe alphanumeric migration keys for these environment aliases.
 Keep them private; do not use either service's root credentials for copying.
+Create the source user with `mc admin user add source-admin` and enter both keys
+at its interactive prompts. Create the target user in the authenticated RustFS
+administration console using its private credential fields; `rc admin user add`
+requires the secret in process arguments and must not be used here. Store keys
+in a private credential manager, then load them into the four environment
+variables above. Disable shell tracing. No secret may appear in process arguments.
+The commands below attach the restricted policies to those existing users.
 
 ```bash
 for bucket in chunks ruler admin manifests; do
@@ -64,13 +73,13 @@ for bucket in chunks ruler admin manifests; do
   mc ilm rule ls --json "archive-admin/openebs-loki-archive-$bucket" > "$ARCHIVE_RUN_DIR/$bucket-lifecycle.json"
 done
 mc admin policy create source-admin openebs-loki-archive-read docs/minio-retirement/source-read-policy.json
-mc admin user add source-admin "$ARCHIVE_SOURCE_ACCESS_KEY" "$ARCHIVE_SOURCE_SECRET_KEY"
 mc admin policy attach source-admin openebs-loki-archive-read --user "$ARCHIVE_SOURCE_ACCESS_KEY"
 rc admin policy create archive-admin openebs-loki-archive-write docs/minio-retirement/archive-write-policy.json
-rc admin user add archive-admin "$ARCHIVE_TARGET_ACCESS_KEY" "$ARCHIVE_TARGET_SECRET_KEY"
 rc admin policy attach archive-admin openebs-loki-archive-write --user "$ARCHIVE_TARGET_ACCESS_KEY"
-mc alias set source http://127.0.0.1:19000 "$ARCHIVE_SOURCE_ACCESS_KEY" "$ARCHIVE_SOURCE_SECRET_KEY"
-mc alias set archive http://127.0.0.1:19001 "$ARCHIVE_TARGET_ACCESS_KEY" "$ARCHIVE_TARGET_SECRET_KEY"
+# mc accepts credentials through environment aliases; shell builtins do not
+# expose the expanded values in a child process command line.
+export MC_HOST_source="http://$ARCHIVE_SOURCE_ACCESS_KEY:$ARCHIVE_SOURCE_SECRET_KEY@127.0.0.1:19000"
+export MC_HOST_archive="http://$ARCHIVE_TARGET_ACCESS_KEY:$ARCHIVE_TARGET_SECRET_KEY@127.0.0.1:19001"
 ```
 
 Review the saved bucket policies and lifecycle rules: no anonymous access and no
