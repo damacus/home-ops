@@ -40,6 +40,9 @@ to be restored against the retained claims if a later stage needs rollback.
 
 ## Stage 2: archive historical objects (separate approval)
 
+Use the [manual archive runbook](minio-retirement/archive-runbook.md). Its IAM
+policies and commands are inert until an operator starts the approved stage.
+
 Create private RustFS buckets `openebs-loki-archive-chunks`,
 `openebs-loki-archive-ruler`, `openebs-loki-archive-admin` and
 `openebs-loki-archive-manifests`. Use restricted migration credentials and no
