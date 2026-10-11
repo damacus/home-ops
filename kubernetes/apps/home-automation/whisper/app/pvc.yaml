@@ -3,9 +3,24 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: whisper-models
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes: ["ReadWriteOnce"]
   resources:
     requests:
       storage: 20Gi
   storageClassName: nfs-csi-unas
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: whisper-models-ssd
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: nfs-csi-ssd
