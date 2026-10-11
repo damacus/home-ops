@@ -60,7 +60,7 @@ spec:
             runAsUser: 1000
             runAsGroup: 1000
             fsGroup: 1000
-            fsGroupChangePolicy: Always
+            fsGroupChangePolicy: OnRootMismatch
             seccompProfile: { type: RuntimeDefault }
 
     service:
@@ -72,6 +72,6 @@ spec:
 
     persistence:
       config:
-        existingClaim: home-assistant-nfs-csi-hdd
+        existingClaim: home-assistant-config-ssd
         globalMounts:
           - path: /config

@@ -1,0 +1,71 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: home-assistant-config-ssd-preflight
+  namespace: home-automation
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: check
+          image: quay.io/backube/volsync:0.16.0
+          command: [/bin/bash, -c]
+          args:
+            - |
+              set -euo pipefail
+              test "$(stat -c '%u:%g' /destination)" = '1000:1000'
+              if test -d /destination/.migration-preflight; then
+                rm -f /destination/.migration-preflight/renamed /destination/.migration-preflight/sample
+                rmdir /destination/.migration-preflight
+              fi
+              test ! -e /destination/.migration-preflight
+              mkdir /destination/.migration-preflight
+              printf 'Paperless SSD preflight\n' > /destination/.migration-preflight/test
+              test "$(cat /destination/.migration-preflight/test)" = 'Paperless SSD preflight'
+              mv /destination/.migration-preflight/test /destination/.migration-preflight/renamed
+              test "$(stat -c '%u:%g' /destination/.migration-preflight/renamed)" = '1000:1000'
+              find /source -type f -print0 > /tmp/source-files
+              IFS= read -r -d '' source_file < /tmp/source-files || test -n "$source_file"
+              rsync -aAhHSxz "$source_file" /destination/.migration-preflight/sample
+              test "$(sha256sum "$source_file" | cut -d ' ' -f 1)" = "$(sha256sum /destination/.migration-preflight/sample | cut -d ' ' -f 1)"
+              test "$(stat -c '%u:%g' /destination/.migration-preflight/sample)" = '1000:1000'
+              stat -c 'destination ownership=%u:%g mode=%a' /destination
+              stat -c 'sample ownership=%u:%g mode=%a' /destination/.migration-preflight/sample
+              rm /destination/.migration-preflight/renamed /destination/.migration-preflight/sample
+              rmdir /destination/.migration-preflight
+              echo 'PASS: source readable; SMB write/read/rename and VolSync rsync flags work as 1000:1000'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: source
+              mountPath: /source
+              readOnly: true
+            - name: destination
+              mountPath: /destination
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: source
+          nfs:
+            server: 192.168.1.243
+            path: /var/nfs/shared/nfs/pvc-3d7ffabe-de63-47d9-88c9-197d5cc6d4c4
+            readOnly: true
+        - name: destination
+          persistentVolumeClaim:
+            claimName: home-assistant-config-ssd
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi

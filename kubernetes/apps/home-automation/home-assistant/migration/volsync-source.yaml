@@ -1,0 +1,36 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: home-assistant-config-hdd-migration-source
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes: [ReadOnlyMany]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: home-automation
+    name: home-assistant-config-hdd-migration-source
+  mountOptions: [ro, hard, vers=3, nolock]
+  nfs:
+    server: 192.168.1.243
+    path: /var/nfs/shared/nfs/pvc-3d7ffabe-de63-47d9-88c9-197d5cc6d4c4
+    readOnly: true
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: home-assistant-config-hdd-migration-source
+  namespace: home-automation
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: [ReadOnlyMany]
+  storageClassName: ""
+  volumeName: home-assistant-config-hdd-migration-source
+  resources:
+    requests:
+      storage: 50Gi

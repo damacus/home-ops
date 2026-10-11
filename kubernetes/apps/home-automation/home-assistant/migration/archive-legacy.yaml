@@ -1,0 +1,74 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: home-assistant-config-ssd-archive-legacy
+  namespace: home-automation
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: verify
+          image: quay.io/backube/volsync:0.16.0
+          command: [/usr/bin/python3, -c]
+          args:
+            - |
+              import hashlib
+              import os
+              from pathlib import Path
+              import tarfile
+              source = Path("/source")
+              legacy = [source / "CuwGysJU", *source.glob(".storage/backup.corrupt.2025-01-14T10*")]
+              assert len(legacy) == 2 and all(p.is_file() and not p.is_symlink() for p in legacy)
+              archive = Path("/destination/.migration-legacy-files-20261011.tar.gz")
+              assert not archive.exists(), "Refusing to overwrite existing archive"
+              with tarfile.open(archive, "w:gz") as bundle:
+                  for path in legacy:
+                      bundle.add(path, arcname=str(path.relative_to(source)), recursive=False)
+              with tarfile.open(archive, "r:gz") as bundle:
+                  assert len(bundle.getmembers()) == 2
+                  for path in legacy:
+                      member = bundle.extractfile(str(path.relative_to(source)))
+                      assert member is not None
+                      assert hashlib.sha256(member.read()).digest() == hashlib.sha256(path.read_bytes()).digest()
+              assert os.stat(archive).st_uid == 1000 and os.stat(archive).st_gid == 1000
+              print("PASS: both legacy files preserved byte-for-byte in the SSD archive; original HDD files untouched")
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: source
+              mountPath: /source
+              readOnly: true
+            - name: destination
+              mountPath: /destination
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: source
+          persistentVolumeClaim:
+            claimName: home-assistant-config-hdd-migration-source
+            readOnly: true
+        - name: destination
+          persistentVolumeClaim:
+            claimName: home-assistant-config-ssd
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
