@@ -4,5 +4,6 @@ kind: Kustomization
 namespace: home-automation
 resources:
   - HelmRelease.yaml
+  - ssd-storage.yaml
   - externalsecret.yaml
   - httproute-traefik.yaml

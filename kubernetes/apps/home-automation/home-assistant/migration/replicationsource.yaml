@@ -1,0 +1,21 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: home-assistant-config-ssd-seed
+  namespace: home-automation
+spec:
+  paused: true
+  sourcePVC: home-assistant-config-hdd-migration-source
+  trigger:
+    manual: initial-seed-20261011
+  rsyncTLS:
+    address: volsync-rsync-tls-dst-home-assistant-config-ssd-seed.home-automation.svc.cluster.local
+    keySecret: volsync-rsync-tls-home-assistant-config-ssd-seed
+    copyMethod: Direct
+    moverSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
