@@ -8,16 +8,21 @@ retired standalone MinIO endpoint, not this bundled instance.
 ## Prerequisites and recovery
 
 Use Bash with `set -euo pipefail` and `umask 077`. Required tools: Flux, kubectl,
-MinIO `mc`, rclone, jq, curl and diff. Use the explicit `ironstone` context.
+MinIO `mc`, RustFS `rc` v0.1.36 (the deployed bootstrap client), rclone, jq,
+curl and diff. Use the explicit `ironstone` context.
 Move the private Stage 1 rollback directory from `/private/tmp` to durable,
 private storage first. Keep an independent copy; it contains credentials.
-Save the original Alloy DaemonSet as well before altering it.
+Save the original Alloy DaemonSet as well before altering it. Loki configuration
+can contain S3 credentials: store it only in the private rollback directory,
+never in the archive manifest directory.
 
 ```bash
 export ARCHIVE_RUN_DIR="$(mktemp -d)/openebs-minio-archive"
 mkdir -m 700 "$ARCHIVE_RUN_DIR"
-kubectl --context ironstone -n openebs-system get ds openebs-alloy -o json > "$ARCHIVE_RUN_DIR/alloy-before.json"
-kubectl --context ironstone -n openebs-system get cm loki -o json > "$ARCHIVE_RUN_DIR/loki-config.json"
+: "${ROLLBACK_DIR:?Set ROLLBACK_DIR to a durable private directory outside ARCHIVE_RUN_DIR}"
+mkdir -p -m 700 "$ROLLBACK_DIR"
+kubectl --context ironstone -n openebs-system get ds openebs-alloy -o json > "$ROLLBACK_DIR/alloy-before.json"
+kubectl --context ironstone -n openebs-system get cm loki -o json > "$ROLLBACK_DIR/loki-config.json"
 kubectl --context ironstone -n monitoring get helmrelease loki
 kubectl --context ironstone -n openebs-system get sts openebs-loki openebs-minio
 ```
@@ -30,7 +35,10 @@ have enough free space. Do not stop RustFS or combine this with its SSD cutover.
 ## Private buckets and restricted identities
 
 Configure administrator `mc` aliases named `source-admin` and `archive-admin`
-using private credential handling. Source is the bundled service, reached with
+using private credential handling. Also configure the same `archive-admin` alias
+in the RustFS `rc` client: its alias store is separate from `mc`. Use `rc` for
+RustFS IAM administration, matching the deployed bootstrap. Source is the
+bundled service, reached with
 port forwarding below; archive is RustFS. Never use `s3.ironstone.casa` here.
 Run these in separate terminals and keep them alive throughout the operation:
 
@@ -58,9 +66,9 @@ done
 mc admin policy create source-admin openebs-loki-archive-read docs/minio-retirement/source-read-policy.json
 mc admin user add source-admin "$ARCHIVE_SOURCE_ACCESS_KEY" "$ARCHIVE_SOURCE_SECRET_KEY"
 mc admin policy attach source-admin openebs-loki-archive-read --user "$ARCHIVE_SOURCE_ACCESS_KEY"
-mc admin policy create archive-admin openebs-loki-archive-write docs/minio-retirement/archive-write-policy.json
-mc admin user add archive-admin "$ARCHIVE_TARGET_ACCESS_KEY" "$ARCHIVE_TARGET_SECRET_KEY"
-mc admin policy attach archive-admin openebs-loki-archive-write --user "$ARCHIVE_TARGET_ACCESS_KEY"
+rc admin policy create archive-admin openebs-loki-archive-write docs/minio-retirement/archive-write-policy.json
+rc admin user add archive-admin "$ARCHIVE_TARGET_ACCESS_KEY" "$ARCHIVE_TARGET_SECRET_KEY"
+rc admin policy attach archive-admin openebs-loki-archive-write --user "$ARCHIVE_TARGET_ACCESS_KEY"
 mc alias set source http://127.0.0.1:19000 "$ARCHIVE_SOURCE_ACCESS_KEY" "$ARCHIVE_SOURCE_SECRET_KEY"
 mc alias set archive http://127.0.0.1:19001 "$ARCHIVE_TARGET_ACCESS_KEY" "$ARCHIVE_TARGET_SECRET_KEY"
 ```
@@ -199,8 +207,12 @@ for pass in 1 2; do
  done
 for bucket in chunks ruler admin; do
   mc ls --recursive --versions --json "source/$bucket" > "$ARCHIVE_RUN_DIR/$bucket-versions-after.jsonl"
-  diff -u "$ARCHIVE_RUN_DIR/$bucket-versions.jsonl" "$ARCHIVE_RUN_DIR/$bucket-versions-after.jsonl"
+  for suffix in versions versions-after; do
+    jq --slurp --sort-keys 'map({key,versionId,isDeleteMarker,lastModified,size,etag}) | sort_by(.key,.versionId,.isDeleteMarker,.lastModified)' "$ARCHIVE_RUN_DIR/$bucket-$suffix.jsonl" > "$ARCHIVE_RUN_DIR/$bucket-$suffix-canonical.json"
+  done
+  diff -u "$ARCHIVE_RUN_DIR/$bucket-versions-canonical.json" "$ARCHIVE_RUN_DIR/$bucket-versions-after-canonical.json"
 done
+# Review this directory first: no credentials, kubeconfigs or rollback snapshots.
 rclone copy "$ARCHIVE_RUN_DIR" archive:openebs-loki-archive-manifests --metadata --s3-no-check-bucket
 rclone check "$ARCHIVE_RUN_DIR" archive:openebs-loki-archive-manifests --download
 ```
