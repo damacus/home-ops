@@ -1,0 +1,36 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: paperless-smb-ssd
+provisioner: smb.csi.k8s.io
+parameters:
+  source: //unas.ironstone.casa/csi_ssd
+  csi.storage.k8s.io/provisioner-secret-name: csi-driver-smb
+  csi.storage.k8s.io/provisioner-secret-namespace: storage
+  csi.storage.k8s.io/node-stage-secret-name: csi-driver-smb
+  csi.storage.k8s.io/node-stage-secret-namespace: storage
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+mountOptions:
+  - uid=1030
+  - gid=1030
+  - file_mode=0660
+  - dir_mode=0770
+  - mfsymlinks
+  - cache=strict
+  - noserverino
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-documents-ssd
+  namespace: home-automation
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: [ReadWriteMany]
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: paperless-smb-ssd
