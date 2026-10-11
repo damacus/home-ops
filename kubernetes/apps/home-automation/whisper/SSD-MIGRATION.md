@@ -19,14 +19,14 @@ Live cutover completed on 11 October 2026 with owner approval.
 
 ## GitOps follow-up
 
-The local manifests select `whisper-models-ssd` but have not been published.
+These manifests select `whisper-models-ssd` and are being published for Flux.
 The live `flux-system/whisper` Kustomization is temporarily suspended, with
 `kustomize.toolkit.fluxcd.io/reconcile: disabled` preventing its parent from
 undoing this pause. The `home-automation/wyoming-whisper` HelmRelease is active.
 Other workloads and their reconciliation are unchanged.
 
-After the owner approves publishing the manifests, verify that the Flux source
-revision contains this SSD change. Remove the Kustomization's temporary
+After this change is merged, verify that the Flux source revision contains
+this SSD change before resuming reconciliation with owner approval. Remove the Kustomization's temporary
 `reconcile: disabled` annotation, resume it and verify reconciliation leaves
 Whisper attached to `whisper-models-ssd`. Do not resume against the old source:
 it selects the HDD claim.
