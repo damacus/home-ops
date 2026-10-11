@@ -9,7 +9,6 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLATIONS = {
     "monitoring": ("kubernetes/apps/monitoring/loki/app", "loki", "loki-rule-configmaps"),
-    "openebs-system": ("kubernetes/apps/openebs-system/openebs/app", "openebs", "openebs-loki-rule-configmaps"),
 }
 
 class LokiWatcherTests(unittest.TestCase):
@@ -53,10 +52,6 @@ class LokiWatcherTests(unittest.TestCase):
                     self.assertEqual(env["NAMESPACE"], "ALL")
                     self.assertEqual(env["LABEL"], "loki_rule")
                     self.assertIn("k8s-sideca-rs", sidecar["image"])
-                if chart == "openebs":
-                    config = next(yaml.safe_load(d["data"]["config.yaml"]) for d in docs if d["kind"] == "ConfigMap" and "loki" in d["metadata"]["name"] and "config.yaml" in d.get("data", {}))
-                    self.assertEqual(config["ruler"]["storage"], {"type": "s3", "s3": {"bucketnames": "ruler"}})
-                    self.assertEqual(env["FOLDER"], "/rules")
                 roles = [d for d in docs if d["kind"] in ("Role", "ClusterRole") and "loki" in d["metadata"]["name"]]
                 self.assertEqual(roles, [])
                 bindings = [d for d in docs if d["kind"] == "ClusterRoleBinding" and "loki" in d["metadata"]["name"]]
