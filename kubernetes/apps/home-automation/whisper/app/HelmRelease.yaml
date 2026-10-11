@@ -85,7 +85,7 @@ spec:
 
     persistence:
       models:
-        existingClaim: whisper-models
+        existingClaim: whisper-models-ssd
         globalMounts:
           - path: /data
 
