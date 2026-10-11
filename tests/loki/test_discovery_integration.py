@@ -47,7 +47,7 @@ class DiscoveryIntegrationTests(unittest.TestCase):
         info = json.loads(self.kubectl("config", "view", "--minify", "-o", "json"))
         self.assertEqual(info["current-context"], CONTEXT)
         self.assertIn("127.0.0.1", info["clusters"][0]["cluster"]["server"])
-        for namespace in ("monitoring", "openebs-system", "fixture-a", "fixture-b"):
+        for namespace in ("monitoring", "fixture-a", "fixture-b"):
             self.apply({"apiVersion": "v1", "kind": "Namespace", "metadata": {"name": namespace}})
         config = {
             "auth_enabled": False,
@@ -56,7 +56,7 @@ class DiscoveryIntegrationTests(unittest.TestCase):
             "schema_config": {"configs": [{"from": "2024-01-01", "store": "tsdb", "object_store": "filesystem", "schema": "v13", "index": {"prefix": "index_", "period": "24h"}}]},
             "ruler": {"storage": {"type": "local", "local": {"directory": "/rules"}}, "rule_path": "/tmp/loki/ruler", "alertmanager_url": "http://127.0.0.1:9093", "enable_api": True, "evaluation_interval": "1s", "poll_interval": "2s"},
         }
-        for namespace, directory, chart in (("monitoring", "monitoring/loki", "loki"), ("openebs-system", "openebs-system/openebs", "openebs")):
+        for namespace, directory, chart in (("monitoring", "monitoring/loki", "loki"),):
             app = ROOT / "kubernetes/apps" / directory / "app"
             role = yaml.safe_load((app / "rule-discovery-rbac.yaml").read_text())
             self.apply(role)
@@ -100,7 +100,7 @@ class DiscoveryIntegrationTests(unittest.TestCase):
             return {"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "shared", "namespace": namespace, "labels": {"loki_rule": "true"}}, "data": {"rules.yaml": yaml.safe_dump(rule)}}
         self.apply(fixture("fixture-a", "FixtureA"), fixture("fixture-b", "FixtureB"))
         self.apply({"apiVersion": "v1", "kind": "Secret", "metadata": {"name": "ignored", "namespace": "fixture-a", "labels": {"loki_rule": "true"}}, "stringData": {"ignored.yaml": "secret-fixture-must-not-be-discovered"}})
-        for ns in ("monitoring", "openebs-system"):
+        for ns in ("monitoring",):
             self.eventually(lambda: "FixtureA" in self.files(ns) and "FixtureB" in self.files(ns), "Cross-namespace collision-safe discovery failed: " + ns)
             self.assertNotIn("secret-fixture", self.files(ns))
         self.eventually(lambda: {"FixtureA", "FixtureB"} <= self.rule_names(), "Fixture rules not evaluated")
@@ -108,12 +108,12 @@ class DiscoveryIntegrationTests(unittest.TestCase):
         self.eventually(lambda: "FixtureAUpdated" in self.rule_names() and "FixtureA" not in self.rule_names(), "Update did not reload")
         self.kubectl("-n", "fixture-b", "delete", "configmap", "shared")
         self.eventually(lambda: "FixtureB" not in self.rule_names(), "Deletion did not reload")
-        for ns in ("monitoring", "openebs-system"):
+        for ns in ("monitoring",):
             self.eventually(lambda: "FixtureAUpdated" in self.files(ns) and "FixtureB" not in self.files(ns), "Update/deletion failed: " + ns)
         self.apply(yaml.safe_load((ROOT / "kubernetes/apps/monitoring/loki/app/rules.yaml").read_text()) | {"metadata": {"name": "loki-alert-rules", "namespace": "monitoring", "labels": {"loki_rule": "true"}}})
         expected = {"FrigateCameraRepeatedFailures", "IronBridgeDeliveryExhausted", "ApplicationStorageWriteFailure"}
         self.eventually(lambda: expected <= self.rule_names(), "Approved alerts not healthy in ruler")
-        print("Both Rust watchers passed discovery, collisions, updates, deletion and Secret denial; all three Loki rules evaluate healthily.")
+        print("The central Loki Rust watcher passed discovery, collisions, updates, deletion and Secret denial; all three Loki rules evaluate healthily.")
 
 if __name__ == "__main__":
     unittest.main()

@@ -54,6 +54,28 @@ Pause after verification.
 
 ## Stage 3: remove bundled services (separate approval)
 
+The service-removal configuration must not be merged until the owner accepts
+Stage 2 archive evidence. Review the archive PR first. Require both full SHA256
+comparisons, matching keys/bytes/metadata, unchanged source inventories, private
+buckets without expiration, durable rollback credentials and healthy central
+Loki. Do not use a successful chart render as proof that the archive exists.
+
+After approval and merge, fetch the merged Flux source, resume the `openebs`
+Kustomization to apply the disabled component values, then resume its HelmRelease.
+Wait for the release to become Ready. Verify the bundled Loki/MinIO StatefulSets,
+Alloy DaemonSet and their chart-owned resources disappear, while all six source
+PVCs remain Bound and PVs retain their data. Confirm the Hostpath provisioner,
+StorageClasses and application claims remain available. Verify central Loki
+recent/historical queries, alert evaluation and Vector delivery after rollout.
+Keep the standalone `storage/minio-data-hdd` claim; it is retained data, not a
+running MinIO server. Pause before removing any source data.
+
+For rollback, suspend reconciliation, revert the removal commit, restore the
+saved MinIO credential Secret privately, and resume with the previously recorded
+chart configuration. Reuse the retained claims and verify all three ingesters
+and MinIO replicas recover. Never re-enable automatic PVC deletion.
+
+
 Explicitly disable OpenEBS Loki, Alloy and Loki MinIO. Remove their obsolete RBAC,
 configuration and Vector filter. Update existing checks and documentation to
 expect one Loki backend; add no new tests. Keep storage provisioners, CRDs,

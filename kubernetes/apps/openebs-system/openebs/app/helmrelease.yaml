@@ -50,37 +50,14 @@ spec:
         isDefaultClass: false
         basePath: /var/openebs/local
 
+    # Merge only after the MinIO archive has been verified and accepted.
     loki:
+      enabled: false
+      minio:
+        enabled: false
       singleBinary:
         persistence:
-          # Keep source claims for the staged MinIO retirement and rollback.
           enableStatefulSetAutoDeletePVC: false
-      imagePullSecrets:
-        - name: dockerhub-credentials
-      serviceAccount:
-        automountServiceAccountToken: true
-        imagePullSecrets:
-          - name: dockerhub-credentials
-      # Retain discovery; existing S3 ruler storage is managed separately.
-      sidecar:
-        enableUniqueFilenames: true
-        image:
-          repository: ghcr.io/damacus/k8s-sideca-rs
-          tag: "0.2.5"
-          sha: ""
-          pullPolicy: IfNotPresent
-        rules:
-          enabled: true
-          resource: configmap
-          searchNamespace: ["ALL"]
-          label: loki_rule
-          folder: /rules
-      rbac:
-        namespaced: false
-        useExistingRole: openebs-loki-rule-configmaps
 
     alloy:
-      global:
-        image:
-          pullSecrets:
-            - name: dockerhub-credentials
+      enabled: false

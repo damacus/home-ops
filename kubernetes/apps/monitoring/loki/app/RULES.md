@@ -13,10 +13,11 @@ filenames into `/rules/fake`. The local ruler reads `/rules` and sends alerts to
 `vmalertmanager-vm.monitoring.svc.cluster.local:9093`. Updates and deletions flow
 through the watcher. The three alert thresholds and Alertmanager routes are unchanged.
 
-Both Loki installations use GitOps-managed ClusterRoles granting only `get`,
-`list` and `watch` on ConfigMaps. The API token remains required by each watcher.
+Central Loki uses the GitOps-managed `loki-rule-configmaps` ClusterRole granting
+only `get`, `list` and `watch` on ConfigMaps. The API token remains required by
+the watcher.
 Labels filter discovery behaviour; RBAC permits reading all ConfigMaps, so those
-must contain no confidential values. Neither role grants Secret access.
+must contain no confidential values. The role grants no Secret access.
 
 The watcher image requires the ownership-state layout fix: tracking JSON belongs
 in a private subdirectory, which Loki skips, rather than alongside rule files.
@@ -24,18 +25,17 @@ Version 0.2.5 is a release dependency; do not merge until that image is publishe
 and verified. The isolated test supports an explicit local image override solely
 for validating the unreleased fix.
 
-OpenEBS retains its S3 ruler storage and `/rules` watcher output. Local watcher
-files are not automatically uploaded to S3. Investigate that existing disconnect
-separately; this change neither migrates nor overwrites stored S3 rules.
+The bundled OpenEBS logging stack is disabled. Its historical S3 ruler and chunk
+objects belong to the separate MinIO archive; they are not loaded by central
+Loki. See [the retirement procedure](../../../../../docs/minio-retirement.md)
+for the archive acceptance and rollback requirements.
 
 ## Rollout and rollback
 
-Record the monitoring rule inventory and OpenEBS S3 rule inventory before merging.
-Deploy through Flux after the watcher release is available. Compare inventories,
-including the three new monitoring alerts, and verify healthy evaluation.
-Roll back through a Git revert if discovery or evaluation regresses. Preserve
-rule ConfigMaps and all S3 contents. Do not reconcile Flux manually as part of
-publication.
+Record the monitoring rule inventory before deployment. Deploy through Flux
+only after the relevant rollout is approved. Compare the three monitoring alerts
+and verify healthy evaluation. Roll back through a Git revert if discovery or
+evaluation regresses. Preserve rule ConfigMaps and all S3 contents.
 
 ## Alerts and response
 
@@ -56,9 +56,9 @@ body or message content is copied into alert labels or annotations.
 
 ## Verification after deployment
 
-1. Confirm the monitoring and OpenEBS HelmReleases and replacement Loki pods are Ready.
+1. Confirm the monitoring Loki HelmRelease and Loki pod are Ready.
 2. Confirm `/prometheus/api/v1/rules` on monitoring Loki reports the three rules with healthy evaluation.
-3. Confirm both `loki-sc-rules` containers are present and both service accounts can read ConfigMaps but cannot read Secrets.
+3. Confirm the central `loki-sc-rules` container is present and its service account can read ConfigMaps but cannot read Secrets.
 4. Confirm existing log queries work and existing VictoriaMetrics alerts remain healthy.
 5. Verify the next real firing alert reaches Alertmanager and the existing notification receiver. Do not inject synthetic production failures.
 
