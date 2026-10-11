@@ -51,6 +51,10 @@ spec:
         basePath: /var/openebs/local
 
     loki:
+      singleBinary:
+        persistence:
+          # Keep source claims for the staged MinIO retirement and rollback.
+          enableStatefulSetAutoDeletePVC: false
       imagePullSecrets:
         - name: dockerhub-credentials
       serviceAccount:
