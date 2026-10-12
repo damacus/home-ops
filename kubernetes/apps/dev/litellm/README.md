@@ -124,51 +124,19 @@ Existing cloud-chat clients are outside this rollout.
 
 ## Verification and recovery
 
-Local verification on 12 October 2026:
+Use the existing repository manifest checks and the small, offline script tests:
 
-- Five provisioning/migration unit tests and five disposable gateway integration
-  tests passed, including embeddings, HA-style read/write tool calls, denied
-  application MCP calls, Grafana write-tool exclusion, budgets and revocation.
-- The real provisioning script created and then updated a dummy key successfully.
-- All three client overlays and both new HelmReleases rendered against
-  app-template 5.2.1. The running Frigate 0.18 parser accepted the staged config.
-- Flux validation passed (192 resources; four intentionally suspended parents).
-  YAML lint and rendered schema validation passed.
-- All three security baseline checks passed on the explicitly rendered new
-  gateway workloads. RustFS IAM policy checks passed. The whole-repository
-  report still has three negative baseline checks on other workloads; the
-  wider posture scan is informational and is not a clean bill of health.
-- The disposable database recorded 28 requests with zero stored prompt or
-  response bodies. No real OpenAI requests or live writes were made.
+```sh
+python3 -m unittest tests/test_litellm_keys.py tests/test_mealie_litellm.py
+```
 
-No production service, credential or local MCP client has been changed.
-Production connectivity, application behaviour, secret rotation and backup
-restoration remain rollout acceptance checks. GitHub CI has not run yet.
+The script tests check budget preservation and safe Mealie provider updates.
+They require no containers, credentials or network access. There is no dedicated
+gateway integration environment or CI workflow.
 
-Run `task flux:flate-test`, `task k8s:yayamlls`, and the Python tests for key
-provisioning and Mealie migration. The suspended HelmReleases need explicit
-`helm template` checks because Flate skips suspended parents. The one-line
-render diagnostic suppression does not suppress their YAML schemas. Render
-each rollout directory with `kubectl kustomize`, then validate its Helm values
-against app-template 5.2.1. Run the existing Mondoo manifest policies on output.
-
-`tests/test_litellm_gateway_live.py` is opt-in and rejects non-localhost URLs.
-It needs a disposable LiteLLM/PostgreSQL deployment configured with mocked
-model responses and dummy credentials, never the production gateway.
-
-The reproducible fixture is `tests/fixtures/litellm/compose.yaml`. Start it with
-`docker compose -f tests/fixtures/litellm/compose.yaml up -d --wait`, then run the
-live test module with `LITELLM_TEST_URL=http://127.0.0.1:44000`,
-`LITELLM_TEST_MASTER_KEY=sk-local-test-master` and `LITELLM_TEST_MCP=1` in its
-environment. Finish with `docker compose -f tests/fixtures/litellm/compose.yaml
-down --volumes`. The dedicated GitHub workflow runs these same checks.
-
-Check missing/invalid keys, model isolation, no app MCP access, no agent model
-access, budget exhaustion, key revocation, missing upstream credentials and
-upstream failures. Validate prompt/content omission from persisted spend logs
-as well as console output. ServiceMonitor collects metrics without retaining
-document contents. Runtime access and actual backup restoration require the
-approved rollout; static rendering does not prove them.
+The deployments are suspended and the client overlays are inactive. Check real
+application and MCP connectivity during the approved rollout. Static checks do
+not establish live access or backup recovery.
 
 Rollback one client by restoring its original Flux path. Restore Mealie's
 provider endpoint/key through its API from the secure pre-cutover backup.
