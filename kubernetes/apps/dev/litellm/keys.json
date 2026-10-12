@@ -1,11 +1,7 @@
 {
   "mealie": {
     "key_alias": "mealie",
-    "models": [
-      "gpt-4o",
-      "whisper-1",
-      "gpt-5"
-    ],
+    "models": [],
     "max_budget": 10,
     "budget_duration": "1mo",
     "object_permission": {
@@ -14,9 +10,7 @@
   },
   "frigate": {
     "key_alias": "frigate",
-    "models": [
-      "home-generation"
-    ],
+    "models": [],
     "max_budget": 10,
     "budget_duration": "1mo",
     "object_permission": {
@@ -25,10 +19,7 @@
   },
   "paperless": {
     "key_alias": "paperless",
-    "models": [
-      "home-generation",
-      "home-embeddings"
-    ],
+    "models": [],
     "max_budget": 10,
     "budget_duration": "1mo",
     "object_permission": {

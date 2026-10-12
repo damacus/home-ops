@@ -134,7 +134,7 @@ genai:
     provider: openai
     base_url: http://litellm.dev.svc.cluster.local:4000/v1
     api_key: '{FRIGATE_GENAI_API_KEY}'
-    model: home-generation
+    model: gpt-4.1-mini
     roles:
     - descriptions
     - chat

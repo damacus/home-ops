@@ -19,9 +19,11 @@ Keep a single gateway replica initially so there is no distributed accounting
 dependency. Do not add another replica without configuring shared rate/budget
 coordination. Do not reset spend during key reconciliation or rotation.
 
-Mealie retains `gpt-4o`, `whisper-1` and `gpt-5`. `home-generation` maps to
-`openai/gpt-4.1-mini`; `home-embeddings` maps to
-`openai/text-embedding-3-small`. There is no wildcard model or fallback provider.
+One wildcard route forwards model names to OpenAI. App keys have no model
+allowlist (`models: []`), so models can be changed in each app without editing
+the gateway. OpenAI account access still applies. Mealie retains its configured
+models; Frigate and Paperless initially use `gpt-4.1-mini`, with
+`text-embedding-3-small` for Paperless embeddings.
 
 App keys have no MCP grants. The Codex and Claude keys have Home Assistant and
 Grafana grants, and only the deliberately nonexistent `__mcp_only__` model, so
@@ -84,7 +86,7 @@ database recovery; losing it can make encrypted database credentials unusable.
 6. **Mealie:** inject a group-manager `MEALIE_TOKEN` and its gateway key through
    `op run`. Run `python3 scripts/mealie_litellm.py` to preview, then `--apply`.
    It uses Mealie's supported API, preserves model IDs and provider selection,
-   and verifies each endpoint update. Unknown models or custom headers stop
+   and verifies each endpoint update. Custom headers stop
    the cutover before any write. Repeat with each group if new groups exist.
    Verify text, image and audio operations. Then change the existing Mealie
    Flux Kustomization path to

@@ -13,12 +13,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-MODELS = {"gpt-4o", "gpt-5", "whisper-1"}
-
-
 def provider_update(provider: dict[str, Any], key: str, endpoint: str) -> dict[str, Any]:
-    if provider["model"] not in MODELS:
-        raise ValueError("Provider model is not in the reviewed gateway allowlist")
     # Custom authentication could override the gateway key; stop for review.
     if provider.get("requestHeaders") or provider.get("requestParams"):
         raise ValueError("Custom provider headers or parameters require review before cutover")
