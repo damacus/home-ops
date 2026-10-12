@@ -8,6 +8,7 @@ spec:
   schedule: 0 20 0 * * *
   backupOwnerReference: self
   method: plugin
+  target: primary
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
   cluster:

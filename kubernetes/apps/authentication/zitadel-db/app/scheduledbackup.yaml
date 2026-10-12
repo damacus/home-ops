@@ -9,6 +9,7 @@ spec:
   immediate: true
   backupOwnerReference: self
   method: plugin
+  target: primary
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
     parameters:
