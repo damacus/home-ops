@@ -22,8 +22,11 @@ spec:
       strategy: rollback
       retries: 3
   values:
-    replicas: 2
+    # Preview only: dry-run cannot use leader election.
+    replicas: 1
     kind: Deployment
+    cmdOptions:
+      dry-run: true
     resources:
       requests:
         cpu: 100m
@@ -33,6 +36,8 @@ spec:
         memory: 256Mi
     deschedulerPolicyAPIVersion: descheduler/v1alpha2
     deschedulerPolicy:
+      maxNoOfPodsToEvictPerNode: 2
+      maxNoOfPodsToEvictTotal: 2
       profiles:
         - name: Default
           pluginConfig:
@@ -47,9 +52,11 @@ spec:
                 thresholds:
                   cpu: 50
                   memory: 50
+                  pods: 50
                 targetThresholds:
                   cpu: 75
                   memory: 80
+                  pods: 80
             - name: RemovePodsViolatingInterPodAntiAffinity
             - name: RemovePodsViolatingNodeAffinity
               args:
@@ -76,4 +83,4 @@ spec:
     serviceMonitor:
       enabled: true
     leaderElection:
-      enabled: true
+      enabled: false
