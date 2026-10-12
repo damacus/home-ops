@@ -13,3 +13,4 @@ resources:
   - ./rustfs-iam/ks.yaml
   - ./cinc-registry-buckets/ks.yaml
   - ./northops-postgres-buckets/ks.yaml
+  - ./rustfs-ssd-iam/ks.yaml
