@@ -1,0 +1,53 @@
+{
+  "mealie": {
+    "key_alias": "mealie",
+    "models": [],
+    "max_budget": 10,
+    "budget_duration": "1mo",
+    "object_permission": {
+      "mcp_servers": []
+    }
+  },
+  "frigate": {
+    "key_alias": "frigate",
+    "models": [],
+    "max_budget": 10,
+    "budget_duration": "1mo",
+    "object_permission": {
+      "mcp_servers": []
+    }
+  },
+  "paperless": {
+    "key_alias": "paperless",
+    "models": [],
+    "max_budget": 10,
+    "budget_duration": "1mo",
+    "object_permission": {
+      "mcp_servers": []
+    }
+  },
+  "codex": {
+    "key_alias": "codex-mcp",
+    "models": [
+      "__mcp_only__"
+    ],
+    "object_permission": {
+      "mcp_servers": [
+        "home_assistant",
+        "grafana"
+      ]
+    }
+  },
+  "claude": {
+    "key_alias": "claude-mcp",
+    "models": [
+      "__mcp_only__"
+    ],
+    "object_permission": {
+      "mcp_servers": [
+        "home_assistant",
+        "grafana"
+      ]
+    }
+  }
+}

@@ -641,5 +641,17 @@
             "Check device tracking via BLE"
         ],
         "passes": false
+    },
+    {
+        "category": "ai-gateway",
+        "description": "LiteLLM AI and MCP gateway with $10 monthly budgets per application",
+        "steps": [
+            "Render and validate staged gateway, database and client overlays",
+            "Approve live secret provisioning and suspended Flux activation",
+            "Verify model access, budgets, revocation and MCP permission boundaries",
+            "Migrate Mealie, Frigate and Paperless; verify complete user operations",
+            "Connect local MCP clients and verify database backup and restore"
+        ],
+        "passes": false
     }
 ]

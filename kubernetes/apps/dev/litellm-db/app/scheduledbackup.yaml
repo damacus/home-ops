@@ -1,0 +1,17 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: litellm-db
+  namespace: dev
+spec:
+  schedule: 0 7 0 * * *
+  backupOwnerReference: self
+  method: plugin
+  target: primary
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+    parameters:
+      objectStore: litellm-db-rustfs-store
+  cluster:
+    name: litellm-db

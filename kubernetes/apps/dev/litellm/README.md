@@ -1,0 +1,163 @@
+# LiteLLM AI and MCP gateway
+
+Status: staged. All four new Flux Kustomizations are suspended. Client overlays
+are not included in the active application tree. Activation, live credentials
+and client changes require the owner's explicit rollout approval.
+
+## Access and cost
+
+The private endpoint is `https://litellm.ironstone.casa`; applications use
+`http://litellm.dev.svc.cluster.local:4000/v1`. TLS uses the existing internal
+Traefik gateway and certificate. There is no public route or admin UI.
+
+OpenAI API usage is billed separately from ChatGPT subscriptions. Each of
+Mealie, Frigate and Paperless has a **$10 USD calendar-month budget** in
+`keys.json`. Paperless generation and embeddings share its budget. Concurrent
+requests and delayed accounting can slightly exceed the limit. Exhaustion stops
+new AI requests; it must not stop recording, ingestion or ordinary recipe use.
+Keep a single gateway replica initially so there is no distributed accounting
+dependency. Do not add another replica without configuring shared rate/budget
+coordination. Do not reset spend during key reconciliation or rotation.
+
+One wildcard route forwards model names to OpenAI. App keys have no model
+allowlist (`models: []`), so models can be changed in each app without editing
+the gateway. OpenAI account access still applies. Mealie retains its configured
+models; Frigate and Paperless initially use `gpt-4.1-mini`, with
+`text-embedding-3-small` for Paperless embeddings.
+
+App keys have no MCP grants. The Codex and Claude keys have Home Assistant and
+Grafana grants, and only the deliberately nonexistent `__mcp_only__` model, so
+they cannot perform model inference. Their existing subscription login remains
+unchanged. Home Assistant keeps **all currently exposed read/write tools**.
+Grafana uses both `--disable-write` and a dedicated Viewer service account.
+
+The upstream OpenAI key and HA token live only in the gateway. Grafana's Viewer
+token lives only in grafana-mcp; LiteLLM holds a separate MCP transport token.
+Mealie still stores its restricted gateway key in its provider records because
+that is how this version stores provider credentials. This removes upstream
+credentials from clients, not every credential from every application.
+
+## Secret inventory
+
+Create or update the following items in the existing `home-ops` vault after
+approval. Preserve unrelated fields. Never commit values or print API responses
+containing keys.
+
+| Item | Fields |
+| --- | --- |
+| `litellm` | `openai-api-key`, `master-key`, `salt-key`, `home-assistant-token`, `grafana-service-account-token`, `grafana-mcp-token` |
+| `litellm-db` | `password` |
+| `rustfs-cnpg-litellm` | `username`, `password` |
+| `litellm-mealie`, `litellm-frigate`, `litellm-paperless` | `key` |
+| `litellm-codex`, `litellm-claude` | `key` |
+
+Generate independent random `sk-` master/client keys in 1Password. The salt must
+remain stable across restarts and database restores. Create an HA long-lived
+token on an identity with the existing broad MCP permissions; do not change the
+HA integration's exposure settings. The Grafana token must belong to a dedicated
+Viewer service account, not the existing interactive administrator.
+
+The database uses two CNPG instances, WAL archiving to the dedicated
+`cnpg-litellm` RustFS bucket, daily backups and 30-day retention. Its bucket IAM
+identity has no access to other buckets. Preserve the 1Password salt alongside
+database recovery; losing it can make encrypted database credentials unusable.
+
+## Approved activation sequence
+
+1. Back up Mealie and Paperless databases and preserve current provider settings
+   securely. Check that the active storage migrations have finished before
+   rolling either application. Rebase the Frigate overlay's config against any
+   intervening camera changes; it deliberately replaces the generated config.
+2. Provision the listed secrets and identities. Set `suspend: false` in
+   `litellm-buckets`, then `litellm-db`, then `grafana-mcp`, then `litellm`.
+   Commit these activation changes only after approval. Use the normal GitOps
+   reconciliation path with the explicit `ironstone` context.
+3. Confirm ExternalSecrets are ready, the database is ready, a backup succeeds,
+   both gateway pods are healthy, private DNS resolves and HTTPS is valid.
+4. Preview `python3 scripts/litellm_keys.py mealie` (repeat for the other four
+   clients). Inject `LITELLM_MASTER_KEY` and the appropriate
+   `LITELLM_CLIENT_KEY` using `op run`, then add `--apply`. It creates a missing
+   key or updates policy without submitting a spend reset. A failed request
+   stops; it never falls back to unauthenticated access. Keep the master key
+   out of clients and shell history.
+5. Verify model requests and MCP allow/deny cases before client cutover. For HA,
+   read state, change a reversible test entity and restore its original state.
+   For Grafana, read a dashboard and query data; verify write tools are absent.
+6. **Mealie:** inject a group-manager `MEALIE_TOKEN` and its gateway key through
+   `op run`. Run `python3 scripts/mealie_litellm.py` to preview, then `--apply`.
+   It uses Mealie's supported API, preserves model IDs and provider selection,
+   and verifies each endpoint update. Custom headers stop
+   the cutover before any write. Repeat with each group if new groups exist.
+   Verify text, image and audio operations. Then change the existing Mealie
+   Flux Kustomization path to
+   `./kubernetes/apps/dev/litellm/rollout/mealie` to remove the obsolete upstream
+   OpenAI environment variable and ExternalSecret field.
+7. **Frigate:** change its existing Flux Kustomization path to
+   `./kubernetes/apps/dev/litellm/rollout/frigate`. It enables completed bird
+   event descriptions and review summaries using preview frames; no early
+   significant-update requests. Existing local semantic embeddings, detection
+   and recording remain unchanged. Verify event descriptions and chat.
+8. **Paperless:** review Application Configuration for database overrides of
+   `PAPERLESS_AI_*`; clear only conflicting AI overrides after backing them up.
+   Change its existing Flux path to
+   `./kubernetes/apps/dev/litellm/rollout/paperless`. Whole-archive processing,
+   including health, school and finance documents, is approved. The existing
+   daily index task builds embeddings; no automatic metadata application is
+   introduced. Verify retrieval, source-linked answers and reviewable suggestions.
+9. Add `litellm` to each client's Flux `dependsOn` during its cutover. Keep the
+   original database and storage dependencies. Observe cost, latency, errors
+   and ordinary application health before moving to the next client.
+10. Connect local agents, verify the same MCP operations, then remove their
+    redundant direct HA/Grafana entries. Do not change their model provider or
+    copy the gateway master key into any client configuration.
+
+Example Codex MCP configuration (the environment variable is injected from
+1Password when launching the client):
+
+```toml
+[mcp_servers.litellm]
+url = "https://litellm.ironstone.casa/mcp"
+bearer_token_env_var = "LITELLM_MCP_KEY"
+```
+
+Claude uses the same HTTP MCP URL with its own gateway key in the Bearer header.
+Use the client's environment-variable mechanism rather than a literal token.
+Existing cloud-chat clients are outside this rollout.
+
+## Verification and recovery
+
+Use the existing repository manifest checks and the small, offline script tests:
+
+```sh
+python3 -m unittest tests/test_litellm_keys.py tests/test_mealie_litellm.py
+```
+
+The script tests check budget preservation and safe Mealie provider updates.
+They require no containers, credentials or network access. There is no dedicated
+gateway integration environment or CI workflow.
+
+The deployments are suspended and the client overlays are inactive. Check real
+application and MCP connectivity during the approved rollout. Static checks do
+not establish live access or backup recovery.
+
+Gateway ingress permits Traefik, the three application pods and monitoring
+`vmagent` pods. Other monitoring pods must be denied direct port 4000 access.
+During rollout, check that vmagent can scrape metrics and an unrelated
+monitoring pod cannot connect. Home Assistant MCP uses its private HTTPS route;
+verify its certificate and MCP connectivity from the gateway.
+
+Rollback one client by restoring its original Flux path. Restore Mealie's
+provider endpoint/key through its API from the secure pre-cutover backup.
+Restore Paperless AI overrides if changed; disable AI if the old state had it
+disabled. Retain the existing vector index unless deliberately rebuilding it.
+Restoring the Frigate base disables the new external GenAI without changing
+recordings. Revoke the affected gateway key after the rollback succeeds.
+Do not delete the gateway database or backup bucket as part of rollback.
+
+Rotate provider credentials in 1Password and let External Secrets/reloader
+refresh the relevant workload. For client rotation, use LiteLLM's key
+regeneration API with preserved spend, update that client's 1Password item,
+verify the new key and reject the old one. Do not create a fresh budget to
+work around exhaustion. For disaster recovery, restore CNPG from the dedicated
+ObjectStore to a separate cluster, supply the original salt and test keys and
+budgets before directing clients to the recovered gateway.

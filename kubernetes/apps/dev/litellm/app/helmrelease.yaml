@@ -1,0 +1,136 @@
+--- # yayamlls-disable-line
+# Suspended Flux parents are not discoverable by the render adapter.
+# Validate this chart explicitly with Helm; schema checks below remain enabled.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: litellm
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.2.1
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    controllers:
+      litellm:
+        replicas: 1
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        containers:
+          app:
+            image:
+              repository: ghcr.io/berriai/litellm
+              tag: v1.105.0@sha256:60947db020b57e204823d3fbc8bb295c85be890d7c9adcc77fb4f5fc2fe410b2
+            args:
+              - --config
+              - /etc/litellm/config.yaml
+              - --port
+              - '4000'
+            env:
+              DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: litellm-db-owner
+                    key: DATABASE_URL
+              LITELLM_LOG: WARNING
+              NO_DOCS: 'true'
+              DISABLE_ADMIN_UI: 'true'
+              HOME: /tmp
+            envFrom:
+              - secretRef:
+                  name: litellm
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health/liveliness
+                    port: 4000
+                  initialDelaySeconds: 0
+                  timeoutSeconds: 5
+                  failureThreshold: 60
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health/liveliness
+                    port: 4000
+                  initialDelaySeconds: 0
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health/readiness
+                    port: 4000
+                  initialDelaySeconds: 0
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-credentials
+    service:
+      app:
+        controller: litellm
+        ports:
+          http:
+            port: 4000
+    persistence:
+      config:
+        type: configMap
+        name: litellm-config
+        globalMounts:
+          - path: /etc/litellm
+            readOnly: true
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+    route:
+      app:
+        hostnames:
+          - litellm.ironstone.casa
+        parentRefs:
+          - name: traefik-internal
+            namespace: network
+            sectionName: websecure
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - identifier: app
+                port: http
