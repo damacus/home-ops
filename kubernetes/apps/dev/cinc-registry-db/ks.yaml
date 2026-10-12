@@ -15,6 +15,7 @@ spec:
   - name: openebs
   - name: rustfs
   - name: cinc-registry-buckets
+  - name: rustfs-ssd-iam
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
@@ -22,9 +23,9 @@ spec:
   retryInterval: 1m
   timeout: 10m
   healthCheckExprs:
-    - apiVersion: postgresql.cnpg.io/v1
-      kind: Cluster
-      current: >-
-        status.conditions.exists(e,
-          e.type == 'Ready' &&
-          e.status == 'True')
+  - apiVersion: postgresql.cnpg.io/v1
+    kind: Cluster
+    current: >-
+      status.conditions.exists(e,
+        e.type == 'Ready' &&
+        e.status == 'True')
