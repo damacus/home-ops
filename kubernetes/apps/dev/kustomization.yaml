@@ -13,3 +13,5 @@ resources:
   - ./cinc-registry-db/ks.yaml
   - ./zot/ks.yaml
   - ./supermarket/ks.yaml
+  - ./litellm-db/ks.yaml
+  - ./litellm/ks.yaml

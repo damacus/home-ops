@@ -1,0 +1,140 @@
+---
+logger:
+  default: info
+mqtt:
+  host: mosquitto.home-automation.svc.cluster.local
+  topic_prefix: frigate
+  user: frigate
+  password: '{FRIGATE_MQTT_PASSWORD}'
+auth:
+  enabled: false
+proxy:
+  header_map:
+    user: x-auth-request-email
+  default_role: admin
+tls:
+  enabled: false
+database:
+  path: /data/frigate.db
+detectors:
+  rknn:
+    type: rknn
+    num_cores: 3
+model:
+  path: frigate-fp16-yolov9-t
+  model_type: yolo-generic
+  width: 320
+  height: 320
+  input_tensor: nhwc
+  labelmap_path: /labelmap/coco-80.txt
+ffmpeg:
+  hwaccel_args: preset-rkmpp
+  apple_compatibility: true
+  output_args:
+    record: -f segment -segment_time 10 -segment_format mp4 -reset_timestamps 1 -strftime
+      1 -vf scale=in_range=pc:out_range=tv,format=yuv420p -c:v h264_rkmpp -profile:v
+      main -level:v 41 -g 30 -r 15 -c:a aac
+record:
+  enabled: true
+  continuous:
+    days: 0
+  motion:
+    days: 7
+snapshots:
+  enabled: true
+  retain:
+    default: 30
+objects:
+  track:
+  - bird
+go2rtc:
+  ffmpeg:
+    h264: -vf format=yuv420p -codec:v h264_rkmpp -profile:v main -level:v 41 -g:v
+      15 -r 15 -bf:v 0
+  streams:
+    birdy:
+    - rtsp://192.168.1.180:8554/main
+    - ffmpeg:birdy#audio=aac
+    - ffmpeg:birdy#audio=opus
+    birdy_live:
+    - ffmpeg:birdy#video=h264#audio=aac/16000
+    birdy_sub:
+    - rtsp://192.168.1.180:8554/sub
+    birdy_sub_live:
+    - ffmpeg:birdy_sub#video=h264#audio=aac/16000
+cameras:
+  birdy:
+    ffmpeg:
+      inputs:
+      - path: rtsp://127.0.0.1:8554/birdy
+        input_args: preset-rtsp-restream
+        roles:
+        - record
+        - audio
+      - path: rtsp://127.0.0.1:8554/birdy_sub
+        input_args: preset-rtsp-restream
+        roles:
+        - detect
+    detect:
+      width: 640
+      height: 480
+      fps: 5
+    live:
+      streams:
+        Main: birdy_live
+        Sub: birdy_sub_live
+    objects:
+      filters:
+        bird: {}
+      genai:
+        enabled: true
+        objects:
+        - bird
+        send_triggers:
+          tracked_object_end: true
+          after_significant_updates: null
+        prompt: Describe observable bird and nest activity. Do not invent events or
+          infer intent. State uncertainty.
+    notifications:
+      enabled: true
+    zones:
+      Nesting:
+        coordinates: 0.218,0.935,0.249,0.381,0.717,0.383,0.803,0.952
+        loitering_time: 5
+    review:
+      alerts:
+        required_zones: Nesting
+      genai:
+        enabled: true
+        alerts: true
+        detections: true
+        image_source: preview
+        activity_context_prompt: This camera watches a bird nest. Summarise visible
+          nesting, feeding, arrivals and departures. State uncertainty; do not invent
+          events.
+detect:
+  enabled: true
+version: 0.17-0
+semantic_search:
+  enabled: true
+  model_size: small
+face_recognition:
+  enabled: false
+  model_size: small
+lpr:
+  enabled: false
+classification:
+  bird:
+    enabled: true
+notifications:
+  enabled: false
+  email: dan.m.webb@gmail.com
+genai:
+  litellm:
+    provider: openai
+    base_url: http://litellm.dev.svc.cluster.local:4000/v1
+    api_key: '{FRIGATE_GENAI_API_KEY}'
+    model: home-generation
+    roles:
+    - descriptions
+    - chat

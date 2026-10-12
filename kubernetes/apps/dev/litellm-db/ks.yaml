@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: litellm-db
+  namespace: flux-system
+spec:
+  suspend: true
+  targetNamespace: dev
+  path: ./kubernetes/apps/dev/litellm-db/app
+  prune: true
+  dependsOn:
+    - name: cloudnative-pg
+    - name: external-secrets-stores
+    - name: openebs
+    - name: litellm-buckets
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m

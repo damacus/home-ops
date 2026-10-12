@@ -1,0 +1,30 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../../home/mealie/app
+  - externalsecret.yaml
+patches:
+  - patch: |
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: mealie
+        namespace: home
+      spec:
+        values:
+          controllers:
+            mealie:
+              containers:
+                app:
+                  env:
+                    OPENAI_API_KEY: null
+  - target:
+      kind: ExternalSecret
+      name: mealie-secret
+    patch: |
+      - op: test
+        path: /spec/data/1/secretKey
+        value: OPENAI_API_KEY
+      - op: remove
+        path: /spec/data/1

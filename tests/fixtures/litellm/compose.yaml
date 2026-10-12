@@ -1,0 +1,55 @@
+---
+# Only dummy credentials. No live service or provider is contacted.
+name: litellm-verification
+services:
+  database:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_PASSWORD: local-test-only
+      POSTGRES_DB: litellm
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d litellm"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  home-assistant:
+    image: ghcr.io/berriai/litellm:v1.105.0@sha256:60947db020b57e204823d3fbc8bb295c85be890d7c9adcc77fb4f5fc2fe410b2
+    entrypoint: [python, /fixture.py]
+    volumes:
+      - ./home_assistant.py:/fixture.py:ro
+  grafana:
+    image: grafana/mcp-grafana:2.0.2@sha256:78d208116ec52b09b44f0eca66892073b39aefcb64483c54d43255c8eab7e97a
+    command: [-t, streamable-http, --address, '0.0.0.0:8000', --allowed-hosts, 'grafana:8000', --disable-write]
+    environment:
+      GRAFANA_URL: http://unused-grafana:3000
+      GRAFANA_SERVICE_ACCOUNT_TOKEN: dummy-viewer
+      MCP_GRAFANA_SERVER_TOKEN: fixture-grafana-token
+  gateway:
+    image: ghcr.io/berriai/litellm:v1.105.0@sha256:60947db020b57e204823d3fbc8bb295c85be890d7c9adcc77fb4f5fc2fe410b2
+    user: '1000:1000'
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    command: [--config, /etc/litellm/config.yaml, --port, '4000']
+    ports: ['127.0.0.1:44000:4000']
+    environment:
+      DATABASE_URL: postgresql://postgres:local-test-only@database:5432/litellm
+      LITELLM_MASTER_KEY: sk-local-test-master
+      LITELLM_SALT_KEY: local-test-only-salt
+      OPENAI_API_KEY: sk-local-test-upstream
+      LITELLM_LOG: WARNING
+      DISABLE_ADMIN_UI: 'true'
+      HOME: /tmp
+    volumes:
+      - ./config.yaml:/etc/litellm/config.yaml:ro
+    depends_on:
+      database:
+        condition: service_healthy
+      home-assistant:
+        condition: service_started
+      grafana:
+        condition: service_started
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness', timeout=5)"]
+      interval: 5s
+      timeout: 6s
+      retries: 60

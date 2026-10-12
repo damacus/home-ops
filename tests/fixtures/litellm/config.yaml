@@ -1,0 +1,32 @@
+---
+model_list:
+  - model_name: home-generation
+    litellm_params:
+      model: openai/gpt-4.1-mini
+      api_key: os.environ/OPENAI_API_KEY
+      mock_response: A synthetic response for gateway testing.
+  - model_name: home-embeddings
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: os.environ/OPENAI_API_KEY
+      mock_response: [0.1, 0.2, 0.3]
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  store_model_in_db: false
+litellm_settings:
+  set_verbose: false
+  turn_off_message_logging: true
+  request_timeout: 120
+  num_retries: 1
+mcp_servers:
+  home_assistant:
+    url: http://home-assistant:8000/mcp
+    transport: http
+    allow_all_keys: false
+  grafana:
+    url: http://grafana:8000/mcp
+    transport: http
+    auth_type: bearer_token
+    auth_value: fixture-grafana-token
+    allow_all_keys: false
