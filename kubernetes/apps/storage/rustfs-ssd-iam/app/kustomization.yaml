@@ -1,0 +1,54 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: storage
+namePrefix: ssd-
+resources:
+  - ../../rustfs-iam/app
+  - cinc-registry.yaml
+  - northops-postgres.yaml
+patches:
+  - target:
+      kind: Job
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: ignored
+      spec:
+        template:
+          spec:
+            containers:
+              - name: rc
+                env:
+                  - name: RUSTFS_ENDPOINT
+                    value: https://rustfs-dr-s3.ironstone.casa
+                resources:
+                  requests:
+                    cpu: 25m
+                    memory: 64Mi
+                  limits:
+                    memory: 256Mi
+  - target:
+      kind: CronJob
+    patch: |-
+      apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: ignored
+      spec:
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: rc
+                    env:
+                      - name: RUSTFS_ENDPOINT
+                        value: https://rustfs-dr-s3.ironstone.casa
+                    resources:
+                      requests:
+                        cpu: 25m
+                        memory: 64Mi
+                      limits:
+                        memory: 256Mi
