@@ -19,7 +19,7 @@ litellm_settings:
   num_retries: 1
 mcp_servers:
   home_assistant:
-    url: https://home-assistant.damacus.io/api/mcp
+    url: https://home-assistant.ironstone.casa/api/mcp
     transport: http
     auth_type: bearer_token
     auth_value: os.environ/HOME_ASSISTANT_TOKEN

@@ -140,6 +140,12 @@ The deployments are suspended and the client overlays are inactive. Check real
 application and MCP connectivity during the approved rollout. Static checks do
 not establish live access or backup recovery.
 
+Gateway ingress permits Traefik, the three application pods and monitoring
+`vmagent` pods. Other monitoring pods must be denied direct port 4000 access.
+During rollout, check that vmagent can scrape metrics and an unrelated
+monitoring pod cannot connect. Home Assistant MCP uses its private HTTPS route;
+verify its certificate and MCP connectivity from the gateway.
+
 Rollback one client by restoring its original Flux path. Restore Mealie's
 provider endpoint/key through its API from the secure pre-cutover backup.
 Restore Paperless AI overrides if changed; disable AI if the old state had it
