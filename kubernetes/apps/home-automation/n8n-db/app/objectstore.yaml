@@ -8,7 +8,7 @@ spec:
   retentionPolicy: 30d
   configuration:
     destinationPath: s3://cnpg-n8n/
-    endpointURL: http://rustfs.storage.svc.cluster.local:9000
+    endpointURL: https://rustfs-dr-s3.ironstone.casa
     s3Credentials:
       accessKeyId:
         name: rustfs-cnpg-n8n

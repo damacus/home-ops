@@ -99,5 +99,19 @@
 			"Monitor MinIO health via ServiceMonitor"
 		],
 		"passes": true
+	},
+	{
+		"category": "backup",
+		"description": "Provide an independent S3-compatible RustFS recovery copy on Synology",
+		"steps": [
+			"Compare an S3 service on Synology with a separate RustFS instance backed by a Synology NFS export; account for old Docker support and RustFS backend support limits",
+			"Compare native bucket replication with scheduled S3 copy or version-preserving backup; define retention and protection from propagated deletes",
+			"Choose where the service runs and prove the recovery copy remains usable when UNAS or the primary Kubernetes cluster is unavailable",
+			"Preserve required object versions, metadata, tags and IAM configuration; store recovery credentials independently",
+			"Test TLS, UID/GID permissions, restart behaviour and a small disposable bucket before copying real data",
+			"Restore a CNPG database and an application backup from the Synology copy; record recovery time and a recovery runbook",
+			"Obtain approval for the selected design before deploying or replicating real data"
+		],
+		"passes": false
 	}
 ]
