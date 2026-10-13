@@ -1,8 +1,9 @@
 # LiteLLM AI and MCP gateway
 
-Status: staged. All four new Flux Kustomizations are suspended. Client overlays
-are not included in the active application tree. Activation, live credentials
-and client changes require the owner's explicit rollout approval.
+Status: gateway activation authorised on 13 October 2026. The four gateway
+Flux Kustomizations are enabled; dependency checks order bucket provisioning,
+database creation and MCP startup before LiteLLM. Client overlays remain staged
+until gateway access and backup checks pass.
 
 ## Access and cost
 
@@ -136,7 +137,7 @@ The script tests check budget preservation and safe Mealie provider updates.
 They require no containers, credentials or network access. There is no dedicated
 gateway integration environment or CI workflow.
 
-The deployments are suspended and the client overlays are inactive. Check real
+The gateway deployments are enabled and the client overlays are inactive. Check real
 application and MCP connectivity during the approved rollout. Static checks do
 not establish live access or backup recovery.
 

@@ -5,7 +5,7 @@ metadata:
   name: litellm-buckets
   namespace: flux-system
 spec:
-  suspend: true
+  suspend: false
   targetNamespace: storage
   dependsOn:
     - name: rustfs-iam

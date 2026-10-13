@@ -8,7 +8,7 @@ metadata:
     kustomize.toolkit.fluxcd.io/force: enabled
 spec:
   backoffLimit: 4
-  activeDeadlineSeconds: 600
+  # Initial provisioning may wait for External Secrets; Flux bounds each health check.
   template:
     spec:
       automountServiceAccountToken: false
