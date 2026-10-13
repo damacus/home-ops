@@ -8,30 +8,51 @@ must not be activated until the copy and final verification below are complete.
 
 The initial current-object comparison found 150,159 missing destination objects,
 totalling 255,786,167,630 bytes. Replication configuration alone had not copied
-that older history. The in-cluster retirement copy Jobs copy missing current objects and verify
-their contents with SHA-256, metadata and tags. Each worker uses conditional writes to avoid overwriting objects that arrive through
-replication. The copy deliberately excludes the three buckets already authoritative on
-SSD: `cnpg-cinc-registry`, `cnpg-n8n` and `cnpg-mealie`.
+that older history. The sole active copy Job is
+`storage/rustfs-retirement-seed-v9`, UID
+`4170de0e-240e-4f8f-9184-2152be25cab2`. It uses eight workers, a bounded queue of
+32 tasks and one concurrent large-object copy. Conditional writes protect
+objects that arrive through replication. The copy is processing `cnpg-zitadel`
+and will continue through the remaining buckets. It remains active; this is not
+a successful final audit or a production cutover.
+
+The v9 online seed skips six buckets already seeded by predecessors. This is
+only an online-copy optimisation. The required final convergence audit must
+revisit all 21 source-authoritative buckets, including those six, after writers
+are quiescent. Preserve the three buckets already authoritative on SSD:
+`cnpg-cinc-registry`, `cnpg-n8n` and `cnpg-mealie`.
 
 Verification checkpoints are stored under `migration-evidence/retirement/` in the
 existing SSD bucket `dr-replication-trial-20261012`. Earlier worker Jobs are
 suspended. Their completed verification records were retained separately.
 
-The latest seed stopped after the HDD source exceeded its 2 GiB memory limit
-at 05:08:41 UTC on 13 October. Production and the trial now require a 1 GiB
-memory request and 6 GiB limit. Apply this resource change with `Recreate`
-while copying is stopped, then verify both Deployment templates and Ready pods
-before resuming a worker. A live pod resize alone is not durable.
+The previous seed stopped after the HDD source exceeded its 2 GiB memory limit
+at 05:08:41 UTC on 13 October. The separate memory fix is now deployed: production
+and trial Deployment templates and Ready pods have a 1 GiB memory request,
+6 GiB limit and `Recreate`. Production continues using the HDD claim.
 
 This is a current-object migration. It does not establish parity for every old
 object version. Keep the HDD data after the service cutover.
 
-The previous worker stopped on 454 artifact metadata comparisons: one endpoint
-returned `layer-digest`, the other `Layer-Digest`. User-metadata header names are
-case-insensitive. The corrected comparator normalises names while retaining exact
-values and system headers, and rejects conflicting case variants. All 454
-artifacts passed independent content, metadata and tag verification after the
-fix; five behavioural regression tests passed.
+User-metadata header names are case-insensitive. The corrected comparator
+normalises names while retaining exact values and system headers, and rejects
+conflicting case variants. The initial 460 OCI and 31 Forgejo differences passed
+independent SHA-256, metadata and tag verification with zero errors. These
+bounded checks do not replace the final audit while writers remain active.
+
+Read-only SHA-256, metadata and tag verification is still running for 30 existing
+Home Assistant backup objects with differing multipart ETags. Its backup bucket
+is one of the six predecessor-seeded buckets. This pending check concerns backup
+objects, not Home Assistant configuration or volume migration; that separate
+Longhorn migration completed in PR #4487.
+
+The prepared final audit is
+`/private/tmp/rustfs-retirement/audit_convergence.py`. It compares current keys,
+sizes and ETags across every source-authoritative bucket. Where ETags differ,
+it requires matching SHA-256 verification evidence for the current source and
+destination objects. Missing objects, extra destination objects or unresolved
+differences fail the audit. Writer quiescence must be verified separately; the
+audit cannot establish it. Preserve its evidence before retiring either store.
 
 ## Remaining HDD consumers
 
@@ -66,18 +87,21 @@ that investigation; no password was reset.
 ## Activation sequence
 
 1. Refresh the live bucket and writer inventory, including services added since
-   the initial comparison. Require the current copy Job to complete successfully. Review skipped/changed objects
-   and errors, then compare current objects again. Size/count equality alone is
-   insufficient; preserve checksum verification for multipart ETag differences.
+   the initial comparison. Require the current copy Job to complete successfully.
+   Review skipped/changed objects and errors. Online skips and size/count equality
+   are insufficient evidence for the final swap.
 2. Capture the current Flux, workload, CronJob and backup schedule state. Suspend
    the relevant reconcilers before a manual pause so they cannot undo it.
 3. Pause new backup jobs and wait for active jobs to finish. Stop other S3 writers.
    Pausing CNPG ScheduledBackups does **not** pause continuous WAL archiving:
    temporarily disable the seven HDD backup accounts while their databases stay
    running, pause IAM jobs that could re-enable them, and monitor WAL headroom.
-4. Finish the last copy and verify convergence. Treat SSD as authoritative for
-   Cinc Registry, n8n and Mealie. Reconcile source-side deletions deliberately;
-   never blindly overwrite their newer SSD history with the HDD copy.
+4. Finish the last copy and run the full convergence audit over all 21
+   source-authoritative buckets, including the six skipped by the online seed.
+   Require zero missing, extra or unresolved objects and matching SHA-256 proofs
+   for differing ETags. Verify writer quiescence separately. Treat SSD as
+   authoritative for Cinc Registry, n8n and Mealie. Reconcile source-side deletions
+   deliberately; never blindly overwrite their newer SSD history with HDD data.
 5. Disable HDD replication rules. Scaling a deployment to zero stops replication
    activity but does not remove its persisted configuration.
 6. Suspend the RustFS HelmRelease for the swap. Stop **both** RustFS deployments
