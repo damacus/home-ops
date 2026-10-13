@@ -6,3 +6,5 @@ resources:
   - ./helmrelease.yaml
   - ./pvc.yaml
   - ./pvc-ssd.yaml
+  - ./pvc-production-ssd.yaml
+  - ./compatibility.yaml

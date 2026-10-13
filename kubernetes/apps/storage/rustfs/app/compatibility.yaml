@@ -1,0 +1,64 @@
+---
+# Retain the endpoint used by migrated CNPG archives and SSD IAM provisioning.
+apiVersion: v1
+kind: Service
+metadata:
+  name: rustfs-dr
+  namespace: storage
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/controller: main
+    app.kubernetes.io/instance: rustfs
+    app.kubernetes.io/name: rustfs
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: 9000
+    - name: console
+      port: 9001
+      targetPort: 9001
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: rustfs-dr-s3
+  namespace: storage
+spec:
+  hostnames: ["rustfs-dr-s3.ironstone.casa"]
+  parentRefs:
+    - name: traefik-internal
+      namespace: network
+      sectionName: websecure
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: rustfs-dr
+          port: 9000
+---
+# Use the production console origin and its existing OIDC callback.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: rustfs-dr-console
+  namespace: storage
+spec:
+  hostnames: ["rustfs-dr.ironstone.casa"]
+  parentRefs:
+    - name: traefik-internal
+      namespace: network
+      sectionName: websecure
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            hostname: rustfs.ironstone.casa
+            scheme: https
+            statusCode: 302
