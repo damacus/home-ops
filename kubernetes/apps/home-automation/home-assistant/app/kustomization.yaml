@@ -5,5 +5,6 @@ namespace: home-automation
 resources:
   - HelmRelease.yaml
   - ssd-storage.yaml
+  - longhorn-storage.yaml
   - externalsecret.yaml
   - httproute-traefik.yaml

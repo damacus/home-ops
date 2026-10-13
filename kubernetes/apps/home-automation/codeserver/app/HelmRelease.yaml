@@ -30,6 +30,7 @@ spec:
 
     controllers:
       code:
+        replicas: 0
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -55,6 +56,14 @@ spec:
                 cpu: 2000m
                 memory: 2Gi
         pod:
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/instance: home-assistant
+                      app.kubernetes.io/controller: home-assistant
+                  topologyKey: kubernetes.io/hostname
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
@@ -72,6 +81,6 @@ spec:
 
     persistence:
       config:
-        existingClaim: home-assistant-config-ssd
+        existingClaim: home-assistant-config-longhorn
         globalMounts:
           - path: /config
