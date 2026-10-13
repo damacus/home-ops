@@ -24,6 +24,7 @@ spec:
   values:
     controllers:
       main:
+        strategy: Recreate
         replicas: 1
         annotations:
           reloader.stakater.com/auto: "true"
@@ -85,10 +86,10 @@ spec:
             resources:
               requests:
                 cpu: 100m
-                memory: 256Mi
+                memory: 1Gi
               limits:
                 cpu: 1000m
-                memory: 2Gi
+                memory: 6Gi
 
     service:
       main:
