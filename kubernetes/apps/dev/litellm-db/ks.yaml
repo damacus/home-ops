@@ -21,3 +21,10 @@ spec:
   interval: 30m
   retryInterval: 1m
   timeout: 10m
+  healthCheckExprs:
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      current: >-
+        status.conditions.exists(e,
+          e.type == 'Ready' &&
+          e.status == 'True')
