@@ -17,7 +17,17 @@ OIDC with PKCE. The Zitadel application `litellm` uses the callback
 account (subject `356498976247120897`) is the proxy administrator; other accounts
 have no dashboard access. Both database password login and environment/master-key
 UI login are disabled. API key authentication remains available for clients.
-LiteLLM's free SSO tier permits up to five users.
+LiteLLM's free SSO tier permits up to five users. The dedicated Zitadel project
+`LiteLLM` requires a project role on authentication, and only the administrator
+has a grant. Keep this restriction: LiteLLM creates user records before its
+`admin_only` check, so denied accounts could otherwise consume SSO seats.
+
+After an authentication rollout, verify an administrator can complete Zitadel
+sign-in and open the dashboard. An account without the project's `admin` grant
+must be rejected by Zitadel before returning an authorisation code; verify it
+creates no LiteLLM user record. Confirm both `/login` and `/v2/login` reject
+passwords (including the master key) with HTTP 403, while authenticated API and
+MCP requests still work. Never record credentials or session tokens as evidence.
 
 OpenAI API usage is billed separately from ChatGPT subscriptions. Each of
 Mealie, Frigate and Paperless has a **$10 USD calendar-month budget** in
