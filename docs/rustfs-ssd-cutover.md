@@ -9,17 +9,19 @@ must not be activated until the copy and final verification below are complete.
 The initial current-object comparison found 150,159 missing destination objects,
 totalling 255,786,167,630 bytes. Replication configuration alone had not copied
 that older history. The sole active copy Job is
-`storage/rustfs-retirement-seed-v9`, UID
-`4170de0e-240e-4f8f-9184-2152be25cab2`. It uses eight workers, a bounded queue of
-32 tasks and one concurrent large-object copy. Conditional writes protect
-objects that arrive through replication. The copy is processing `cnpg-zitadel`
-and will continue through the remaining buckets. It remains active; this is not
-a successful final audit or a production cutover.
+`storage/rustfs-retirement-seed-v10`, UID
+`19fa24f0-747e-434c-97b7-89f89d3307de`. It uses 16 small-object workers with a
+bounded queue of 32 tasks, plus one large-object worker with one pending task.
+Conditional writes protect objects that arrive through replication. Its v9
+predecessor was suspended and its pod deleted before this Job started. The final
+1,000 verification records were persisted and read back before copying resumed.
+The legacy CNPG and canary backup seeds have completed without errors; Loki is
+still copying. This is not a successful final audit or a production cutover.
 
-The v9 online seed skips six buckets already seeded by predecessors. This is
+The v10 online seed skips 14 buckets already seeded by predecessors. This is
 only an online-copy optimisation. The required final convergence audit must
-revisit all 21 source-authoritative buckets, including those six, after writers
-are quiescent. Preserve the three buckets already authoritative on SSD:
+discover and revisit every current source-authoritative bucket, including those
+14, after writers are quiescent. Preserve the three buckets already authoritative on SSD:
 `cnpg-cinc-registry`, `cnpg-n8n` and `cnpg-mealie`.
 
 Verification checkpoints are stored under `migration-evidence/retirement/` in the
@@ -40,11 +42,20 @@ conflicting case variants. The initial 460 OCI and 31 Forgejo differences passed
 independent SHA-256, metadata and tag verification with zero errors. These
 bounded checks do not replace the final audit while writers remain active.
 
-Read-only SHA-256, metadata and tag verification is still running for 30 existing
-Home Assistant backup objects with differing multipart ETags. Its backup bucket
-is one of the six predecessor-seeded buckets. This pending check concerns backup
-objects, not Home Assistant configuration or volume migration; that separate
-Longhorn migration completed in PR #4487.
+Read-only SHA-256, metadata, tag and unchanged-version verification passed for
+all 30 existing Home Assistant backup objects and all 30 Zitadel backup objects
+with differing multipart ETags. These checks concern backup objects, not Home
+Assistant configuration or volume migration; that separate Longhorn migration
+completed in PR #4487. They do not replace final convergence checks.
+
+The `dev/litellm-db` backup writer and `cnpg-litellm` bucket were created after
+v10 took its bucket list. Include that bucket in final catch-up even if the seed
+Job succeeds. Its account was recreated on SSD from the existing Flux bootstrap
+and Secret references; own-bucket list/read/write/delete and unrelated-bucket
+list/write denial passed over verified TLS. Disposable probes were removed.
+The existing `litellm-buckets-sync` Flux CronJob targets the production address
+and will keep reconciling the account after cutover. Refresh its credentials and
+all bucket settings again at the final gate.
 
 The prepared final audit is
 `/private/tmp/rustfs-retirement/audit_convergence.py`. It compares current keys,
@@ -57,7 +68,7 @@ audit cannot establish it. Preserve its evidence before retiring either store.
 ## Remaining HDD consumers
 
 - CNPG backups and WAL: Zitadel, Forgejo, Northops, Home Assistant, Immich,
-  MedTracker and Penpot.
+  MedTracker, Penpot and LiteLLM.
 - Longhorn backups and the Paperless VolSync/Restic repository.
 - Loki, Tempo, Zot and Supermarket artifact storage.
 
@@ -67,11 +78,15 @@ their existing production URLs; their endpoint manifests need no change.
 
 ## Completed preparation
 
-- All ten CNPG accounts passed read/write/delete tests on their SSD buckets and
-  were denied access to an unrelated bucket. Disposable probes were removed.
+- The original ten CNPG accounts passed read/write/delete tests on their SSD
+  buckets and were denied access to an unrelated bucket. LiteLLM subsequently
+  passed the same access cases. Disposable probes were removed. The fresh backup
+  and isolated explicit-ID restore test set now covers eleven production writers.
 - Fresh SSD backup `dev/cinc-registry-ssd-retirement-202610121950` completed at
   19:50:23 UTC, Barman backup ID `20261012T195018`.
-- All 25 source IAM policies and all 16 active user-policy mappings match SSD.
+- The initial IAM audit matched 25 source policies and 16 active user-policy
+  mappings on SSD. LiteLLM was added later; refresh the full identity inventory
+  before cutover rather than treating those initial counts as current.
 - The production OIDC provider, including its original secret and callback, was
   copied and verified. Production must start without the trial OIDC environment
   overrides. Interactive production login still needs checking after the swap.
@@ -94,10 +109,12 @@ that investigation; no password was reset.
    the relevant reconcilers before a manual pause so they cannot undo it.
 3. Pause new backup jobs and wait for active jobs to finish. Stop other S3 writers.
    Pausing CNPG ScheduledBackups does **not** pause continuous WAL archiving:
-   temporarily disable the seven HDD backup accounts while their databases stay
-   running, pause IAM jobs that could re-enable them, and monitor WAL headroom.
-4. Finish the last copy and run the full convergence audit over all 21
-   source-authoritative buckets, including the six skipped by the online seed.
+   temporarily disable the HDD backup accounts in the refreshed inventory while
+   their databases stay running, pause IAM jobs that could re-enable them
+   (including LiteLLM), and monitor WAL headroom.
+4. Finish the last copy and run the full convergence audit over every current
+   source-authoritative bucket, including those skipped by the online seed and
+   any created after its initial bucket list, such as `cnpg-litellm`.
    Require zero missing, extra or unresolved objects and matching SHA-256 proofs
    for differing ETags. Verify writer quiescence separately. Treat SSD as
    authoritative for Cinc Registry, n8n and Mealie. Reconcile source-side deletions
@@ -112,7 +129,8 @@ that investigation; no password was reset.
    Automatic Helm rollback to an HDD-backed release is disabled.
 8. Verify both endpoint names, application credentials, production OIDC login,
    object reads and writes. Resume writers and their original reconciliation and
-   schedule state. Verify WAL archiving and run fresh backups on SSD.
+   schedule state. Verify WAL archiving and run fresh backups and isolated
+   explicit-ID restores for all eleven production database backup writers.
 9. Keep the HDD claims and data. Physical array retirement requires a separate
    check of remaining NAS shares, recovery coverage and historical versions.
 
