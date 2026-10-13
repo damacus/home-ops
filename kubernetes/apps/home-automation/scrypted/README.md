@@ -4,8 +4,15 @@
 
 Rollout approved on 2026-10-13. The Flux Kustomization is enabled; deployment
 and live acceptance must be verified before marking the task as passing.
-The doorbell is online at `192.168.1.17`. No plugin, Apple Home pairing, notification,
-two-way audio or UniFi recording acceptance test has passed yet.
+Scrypted is deployed with a valid dedicated TLS certificate and native admin
+login. The administrator credential is saved as `Scrypted` in the home-ops
+1Password vault. ONVIF and HomeKit plugins are installed; the camera is imported
+as a Doorbell, with only the substream selected for prebuffering, local/remote
+viewing and recording. A JPEG snapshot succeeded. HomeKit uses ciao on
+192.168.1.186 with standalone accessory mode. Physical acceptance remains open.
+
+The doorbell is online at `192.168.1.17`. Apple Home pairing, notification,
+two-way audio and UniFi recording acceptance remain unverified.
 Do not mark the Scrypted task as passing until those live checks are recorded.
 
 Target hardware: `DBB_NT19DNO34MPW6DBB3`.
@@ -14,8 +21,13 @@ Authenticated ONVIF inspection on 2026-10-13 confirmed that firmware and two
 profiles: `Preview_01_main` (2048×2048 at 15 fps) and
 `Preview_01_sub` (720×720 at 15 fps). Live RTSP probes confirmed H.265/AAC
 on the main stream and H.264/AAC on the substream, despite ONVIF incorrectly
-reporting H.264 for both. Select the substream for HomeKit compatibility;
-Frigate copies the main stream for recording. ONVIF listens on port 8000 and RTSP on
+reporting H.264 for both. Use the H.264 substream for both Scrypted and Frigate recording/detection.
+The main stream stalled during live testing, including outside Frigate; the
+owner also reports Protect streaming problems. Reolink’s firmware announcement
+explicitly recommends the substream to avoid disconnections:
+<https://www.reddit.com/r/reolinkcam/comments/1wsah0i/new_firmware_released_home_assistant_integration/>.
+This limits current recordings to 720×720; do not restore the main stream
+without verifying sustained capture on a corrected firmware. ONVIF listens on port 8000 and RTSP on
 554. HTTP, HTTPS, RTMP and the vendor service ports refused connections.
 Use the ONVIF plugin with `admin` and port 8000 for the initial import; the
 Reolink plugin's HTTP/RTMP path is unavailable with the current camera settings.
@@ -100,7 +112,7 @@ Host-network traffic is not isolated by an ordinary pod NetworkPolicy.
 
 ## Plugins and exact-model acceptance
 
-Install `@scrypted/reolink`, `@scrypted/onvif` and `@scrypted/homekit` through
+Install `@scrypted/onvif` and `@scrypted/homekit` through
 Scrypted's plugin UI. Record installed versions. Let their declared dependencies
 install normally. There is no assumed multi-plugin environment-variable bootstrap.
 

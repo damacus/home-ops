@@ -69,9 +69,8 @@ go2rtc:
       -vf format=yuv420p -codec:v h264_rkmpp -profile:v main -level:v 41
       -g:v 15 -r 15 -bf:v 0
   streams:
+    # Firmware v3.0.0.7261 requires the substream for stable RTSP.
     doorbell:
-      - "rtsp://admin:{FRIGATE_REOLINK_PASSWORD}@192.168.1.17:554/Preview_01_main#backchannel=0"
-    doorbell_sub:
       - "rtsp://admin:{FRIGATE_REOLINK_PASSWORD}@192.168.1.17:554/Preview_01_sub#backchannel=0"
     birdy:
       - rtsp://192.168.1.180:8554/main
@@ -87,24 +86,20 @@ go2rtc:
 cameras:
   doorbell:
     ffmpeg:
-      # Copy native H.265/AAC; inherited apple_compatibility handles playback.
+      # Share one H.264/AAC substream for recording and detection.
       output_args:
         record: preset-record-generic-audio-copy
       inputs:
         - path: rtsp://127.0.0.1:8554/doorbell
           input_args: preset-rtsp-restream
-          roles: [record]
-        - path: rtsp://127.0.0.1:8554/doorbell_sub
-          input_args: preset-rtsp-restream
-          roles: [detect]
+          roles: [record, detect]
     detect:
       width: 720
       height: 720
       fps: 5
     live:
       streams:
-        Main: doorbell
-        Sub: doorbell_sub
+        Sub: doorbell
     objects:
       track: [person]
   birdy:
