@@ -45,7 +45,16 @@ spec:
                     key: DATABASE_URL
               LITELLM_LOG: WARNING
               NO_DOCS: 'true'
-              DISABLE_ADMIN_UI: 'true'
+              PROXY_BASE_URL: https://litellm.ironstone.casa
+              ROOT_REDIRECT_URL: /ui
+              GENERIC_AUTHORIZATION_ENDPOINT: https://zitadel.damacus.io/oauth/v2/authorize
+              GENERIC_TOKEN_ENDPOINT: https://zitadel.damacus.io/oauth/v2/token
+              GENERIC_USERINFO_ENDPOINT: https://zitadel.damacus.io/oidc/v1/userinfo
+              GENERIC_SCOPE: openid email profile
+              GENERIC_CLIENT_USE_PKCE: 'true'
+              GENERIC_USER_ID_ATTRIBUTE: sub
+              GENERIC_USER_DISPLAY_NAME_ATTRIBUTE: name
+              PROXY_ADMIN_ID: '356498976247120897'
               HOME: /tmp
             envFrom:
               - secretRef:
