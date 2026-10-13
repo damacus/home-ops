@@ -1,0 +1,26 @@
+{
+  "repository": "https://github.com/tdalejandro/scrypted-rknn-yolo11-rk3588",
+  "commit": "d122df96539d35adde0635e3f35269fcf8f322f1",
+  "upstream_branch_at_review": "claude/etiquetas-coco",
+  "merged_to_main_at_review": false,
+  "source_git_archive_tar_sha256": "1dd29a9467f8793741d93d9e0baa6b3d3a39ed6c41566a6c022047ea7c0b11b0",
+  "official_plugin": {
+    "name": "@scrypted/rknn",
+    "version": "0.1.3",
+    "tarball": "https://registry.npmjs.org/@scrypted/rknn/-/rknn-0.1.3.tgz",
+    "integrity": "sha512-DLB7YxdQ3T45k2SUiUuO/jfGNU39SJYsAexi8CtkZfnZF1iKsgUtOX+PMLqEJNIY67UNOcY0hDOCYMDZZ/oz/Q=="
+  },
+  "model": {
+    "filename": "yolo11n_rk3588_optimized.rknn",
+    "sha256": "f0ef2a43d4e9bc3ac56b9b2da2d02b60a3826887d624b9924da31539b74feeae"
+  },
+  "runtime": {
+    "version": "2.3.2",
+    "sha256": "d31fc19c85b85f6091b2bd0f6af9d962d5264a4e410bfb536402ec92bac738e8",
+    "python": "3.10",
+    "initial_workers": 1
+  },
+  "local_review_date": "2026-10-10",
+  "hardware_validated": false,
+  "installed": false
+}

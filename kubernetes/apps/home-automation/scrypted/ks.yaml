@@ -1,0 +1,25 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app scrypted
+  namespace: flux-system
+spec:
+  # Rollout approved 2026-10-13; retain the node/network checks in README.md.
+  suspend: false
+  targetNamespace: home-automation
+  path: ./kubernetes/apps/home-automation/scrypted/app
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  prune: true
+  dependsOn:
+    - name: external-secrets-stores
+    - name: node-feature-discovery
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m

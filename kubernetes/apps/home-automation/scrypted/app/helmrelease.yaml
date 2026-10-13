@@ -1,0 +1,172 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: scrypted
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.2.1
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    defaultPodOptions:
+      imagePullSecrets:
+        - name: ghcr-credentials
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/arch: arm64
+        rockchip.feature.node.kubernetes.io/rk3588: "true"
+      affinity:
+        podAntiAffinity:
+          # Hard separation from Frigate's NPU/VPU devices, not a preference.
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: frigate
+              namespaces: [home-automation]
+              topologyKey: kubernetes.io/hostname
+    controllers:
+      scrypted:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        type: deployment
+        replicas: 1
+        strategy: Recreate
+        initContainers:
+          tls-options:
+            image:
+              repository: ghcr.io/koush/scrypted
+              tag: v0.147.0-noble-full@sha256:e78b4fcecdd6c61acaaf22b50ccef303c738da58cc0be57afdb116521df52296
+            command: [node, -e]
+            args:
+              - >-
+                const fs = require('fs');
+                fs.writeFileSync('/run/scrypted-tls/options.json', JSON.stringify({
+                  key: fs.readFileSync('/run/certificate/tls.key', 'utf8'),
+                  cert: fs.readFileSync('/run/certificate/tls.crt', 'utf8')
+                }), { mode: 0o600 });
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+        containers:
+          app:
+            image:
+              repository: ghcr.io/koush/scrypted
+              tag: v0.147.0-noble-full@sha256:e78b4fcecdd6c61acaaf22b50ccef303c738da58cc0be57afdb116521df52296
+            env:
+              TZ: Europe/London
+              SCRYPTED_HTTPS_OPTIONS_FILE: /run/scrypted-tls/options.json
+              # Conservative initial limit for the selected community RKNN patch.
+              SCRYPTED_RKNN_MAX_WORKERS: "1"
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 10443
+                  periodSeconds: 10
+                  failureThreshold: 60
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 10443
+                  periodSeconds: 10
+              liveness:
+                enabled: false
+            resources:
+              requests:
+                cpu: 250m
+                memory: 1Gi
+              limits:
+                cpu: "2"
+                memory: 4Gi
+    service:
+      app:
+        controller: scrypted
+        ports:
+          https:
+            port: 10443
+    route:
+      app:
+        hostnames: [scrypted.ironstone.casa]
+        parentRefs:
+          - name: traefik-internal
+            namespace: network
+            sectionName: websecure
+        rules:
+          - filters:
+              - type: ExtensionRef
+                extensionRef:
+                  group: traefik.io
+                  kind: Middleware
+                  name: oauth2-proxy-forward-auth
+            backendRefs:
+              - kind: Service
+                name: scrypted
+                port: 10443
+    persistence:
+      certificate:
+        type: secret
+        name: scrypted-tls
+        defaultMode: 0400
+        advancedMounts:
+          scrypted:
+            tls-options:
+              - path: /run/certificate
+                readOnly: true
+      tls-options:
+        type: emptyDir
+        medium: Memory
+        advancedMounts:
+          scrypted:
+            tls-options:
+              - path: /run/scrypted-tls
+            app:
+              - path: /run/scrypted-tls
+                readOnly: true
+      config:
+        existingClaim: scrypted-config
+        globalMounts:
+          - path: /server/volume
+      credentials:
+        type: secret
+        name: scrypted-credentials
+        defaultMode: 0400
+        globalMounts:
+          - path: /run/secrets/scrypted
+            readOnly: true
+      shm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 256Mi
+        globalMounts:
+          - path: /dev/shm
