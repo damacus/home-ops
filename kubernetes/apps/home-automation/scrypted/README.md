@@ -215,32 +215,13 @@ privileged mode, `/sys`, USB or a Docker socket just to make it start. The curre
 cluster has no device plugin providing exclusive allocation. Verify sustained
 inference/transcoding and Frigate/Protect health before accepting acceleration.
 
-## HA Visitor fallback (only if direct presses fail)
+## HA Visitor fallback (deferred)
 
-Confirm that HA's Reolink integration exposes a Visitor binary sensor for this
-exact model and that a physical press toggles it. Do not infer the entity ID.
-The example blueprint in `examples/visitor-mqtt.yaml` requires selecting that
-verified entity. It only publishes a short, non-retained pulse on an `off` to
-`on` transition; unknown/unavailable recovery cannot ring the doorbell.
-
-Before enabling the blueprint, extend broker access in a separate reviewed
-Mosquitto change: `homeassistant` gets write permission to exactly
-`scrypted/doorbell/reolink/visitor`; a new `scrypted` user gets read permission
-to exactly that topic. Preserve all existing users, password hashes and ACLs.
-Add `scrypted_password` to the existing 1Password `mqtt-auth` item and its
-`password_file`, then use that account in Scrypted's MQTT client plugin. Never
-reuse Frigate credentials, enable anonymous access, or enable Scrypted's own broker.
-Run the existing isolated broker test with new allowed/denied cases before
-rolling out that change. Broker rollout must not restart Frigate pods.
-
-Install `@scrypted/mqtt` and `@scrypted/dummy-switch`. Create an MQTT custom
-device using `examples/visitor-mqtt.ts` against the established broker. Enable
-the camera's **Custom Doorbell Button** extension and select this BinarySensor.
-Configure this before HomeKit pairing where possible. Leave the fallback off
-when native presses work. Verify one physical press gives one notification,
-repeated presses work, and HA startup, broker/Scrypted reconnect and motion alone
-do not ring. Clear any retained message on the exact topic before enabling it;
-the Scrypted script API does not expose the retained-message flag.
+The optional MQTT fallback is not included in this deployment. Direct ONVIF
+events must be tested first. If a fallback is needed, prepare it separately
+with scoped broker permissions and verify closely spaced physical presses,
+exactly one notification per press, and no spurious rings after reconnects.
+The untested prototypes remain in the original local checkout.
 
 ## Local verification
 
