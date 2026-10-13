@@ -141,10 +141,10 @@ The gateway deployments are enabled and the client overlays are inactive. Check 
 application and MCP connectivity during the approved rollout. Static checks do
 not establish live access or backup recovery.
 
-Gateway ingress permits Traefik, the three application pods and monitoring
-`vmagent` pods. Other monitoring pods must be denied direct port 4000 access.
-During rollout, check that vmagent can scrape metrics and an unrelated
-monitoring pod cannot connect. Home Assistant MCP uses its private HTTPS route;
+Gateway API ingress on port 4000 permits Traefik and the three application pods.
+A separate metrics listener on port 4001 permits only monitoring `vmagent` pods.
+During rollout, check that vmagent can scrape port 4001 and an unrelated
+monitoring pod cannot connect to either port. Home Assistant MCP uses its private HTTPS route;
 verify its certificate and MCP connectivity from the gateway.
 
 Rollback one client by restoring its original Flux path. Restore Mealie's
