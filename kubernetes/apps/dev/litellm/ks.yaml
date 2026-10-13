@@ -5,12 +5,13 @@ metadata:
   name: litellm
   namespace: flux-system
 spec:
-  suspend: true
+  suspend: false
   targetNamespace: dev
   path: ./kubernetes/apps/dev/litellm/app
   prune: true
   dependsOn:
     - name: litellm-db
+    - name: grafana-mcp
     - name: external-secrets-stores
   sourceRef:
     kind: GitRepository

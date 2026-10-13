@@ -5,7 +5,7 @@ metadata:
   name: grafana-mcp
   namespace: flux-system
 spec:
-  suspend: true
+  suspend: false
   targetNamespace: monitoring
   path: ./kubernetes/apps/monitoring/grafana-mcp/app
   prune: true

@@ -1,6 +1,4 @@
---- # yayamlls-disable-line
-# Suspended Flux parents are not discoverable by the render adapter.
-# Validate this chart explicitly with Helm; schema checks below remain enabled.
+---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
