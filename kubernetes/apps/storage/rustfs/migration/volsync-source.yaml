@@ -1,0 +1,36 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rustfs-data-hdd-migration-source
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  capacity:
+    storage: 500Gi
+  accessModes: [ReadOnlyMany]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: storage
+    name: rustfs-data-hdd-migration-source
+  mountOptions: [ro, hard, vers=3, nolock]
+  nfs:
+    server: 192.168.1.243
+    path: /var/nfs/shared/nfs/pvc-938f25b0-8dbb-4eed-857f-a9205e71156c
+    readOnly: true
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rustfs-data-hdd-migration-source
+  namespace: storage
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: [ReadOnlyMany]
+  storageClassName: ""
+  volumeName: rustfs-data-hdd-migration-source
+  resources:
+    requests:
+      storage: 500Gi

@@ -1,0 +1,71 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rustfs-data-ssd-preflight
+  namespace: storage
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 977
+        runAsGroup: 988
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: check
+          image: quay.io/backube/volsync:0.16.0
+          command: [/bin/bash, -c]
+          args:
+            - |
+              set -euo pipefail
+              test "$(stat -c '%u:%g' /destination)" = '977:988'
+              if test -d /destination/.migration-preflight; then
+                rm -f /destination/.migration-preflight/renamed /destination/.migration-preflight/sample
+                rmdir /destination/.migration-preflight
+              fi
+              test ! -e /destination/.migration-preflight
+              mkdir /destination/.migration-preflight
+              printf 'RustFS SSD preflight\n' > /destination/.migration-preflight/test
+              test "$(cat /destination/.migration-preflight/test)" = 'RustFS SSD preflight'
+              mv /destination/.migration-preflight/test /destination/.migration-preflight/renamed
+              test "$(stat -c '%u:%g' /destination/.migration-preflight/renamed)" = '977:988'
+              find /source -type f -print0 -quit > /tmp/source-files
+              IFS= read -r -d '' source_file < /tmp/source-files || test -n "$source_file"
+              rsync -aAhHSxz "$source_file" /destination/.migration-preflight/sample
+              test "$(sha256sum "$source_file" | cut -d ' ' -f 1)" = "$(sha256sum /destination/.migration-preflight/sample | cut -d ' ' -f 1)"
+              test "$(stat -c '%u:%g' /destination/.migration-preflight/sample)" = '977:988'
+              stat -c 'destination ownership=%u:%g mode=%a' /destination
+              stat -c 'sample ownership=%u:%g mode=%a' /destination/.migration-preflight/sample
+              rm /destination/.migration-preflight/renamed /destination/.migration-preflight/sample
+              rmdir /destination/.migration-preflight
+              echo 'PASS: source readable; NFS write/read/rename and VolSync rsync flags work as 977:988'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: source
+              mountPath: /source
+              readOnly: true
+            - name: destination
+              mountPath: /destination
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: source
+          nfs:
+            server: 192.168.1.243
+            path: /var/nfs/shared/nfs/pvc-938f25b0-8dbb-4eed-857f-a9205e71156c
+            readOnly: true
+        - name: destination
+          persistentVolumeClaim:
+            claimName: rustfs-data-ssd
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
