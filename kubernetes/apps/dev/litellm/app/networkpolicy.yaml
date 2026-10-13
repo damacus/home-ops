@@ -35,6 +35,10 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: paperless
+      ports:
+        - port: 4000
+          protocol: TCP
+    - from:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: monitoring
@@ -42,5 +46,5 @@ spec:
             matchLabels:
               app.kubernetes.io/name: vmagent
       ports:
-        - port: 4000
+        - port: 4001
           protocol: TCP

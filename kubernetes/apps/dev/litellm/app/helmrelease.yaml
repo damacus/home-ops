@@ -35,6 +35,8 @@ spec:
               - /etc/litellm/config.yaml
               - --port
               - '4000'
+              - --prometheus_metrics_port
+              - '4001'
             env:
               DATABASE_URL:
                 valueFrom:
@@ -105,6 +107,8 @@ spec:
         ports:
           http:
             port: 4000
+          metrics:
+            port: 4001
     persistence:
       config:
         type: configMap
