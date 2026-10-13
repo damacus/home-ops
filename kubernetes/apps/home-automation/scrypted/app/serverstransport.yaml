@@ -1,0 +1,9 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: scrypted
+spec:
+  # Scrypted serves its own self-signed certificate on the internal backend.
+  # This exception applies only to the Scrypted Service, not other routes.
+  insecureSkipVerify: true

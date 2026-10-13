@@ -653,5 +653,25 @@
             "Connect local MCP clients and verify database backup and restore"
         ],
         "passes": false
+    },
+    {
+        "category": "scrypted",
+        "description": "Independent Scrypted bridge for Reolink second-generation doorbell and Apple Home",
+        "steps": [
+            "Approve and activate the suspended independent Scrypted deployment",
+            "Verify Longhorn configuration persistence and 1Password ExternalSecret",
+            "Verify authenticated internal route and native LAN login",
+            "Check node placement and keep Scrypted off the Frigate node",
+            "Install official RKNN 0.1.3 with pinned community patch d122df96539d35adde0635e3f35269fcf8f322f1 after validating RK3588 driver/runtime compatibility",
+            "Enable Rockchip Essentials only if accelerated FFmpeg is needed and isolated",
+            "Configure ONVIF on 192.168.1.17:8000 and HomeKit using the H.264 substream",
+            "Test physical doorbell presses directly; enable HA Visitor MQTT fallback only if needed",
+            "Test Apple Home pairing, local and remote live video, audio and one notification per press",
+            "Test two-way audio on this exact model and record any unsupported cases",
+            "Verify camera reconnect and Scrypted restart preserve settings and pairing",
+            "Verify Frigate Birdy and doorbell recordings and Protect coexist after the planned Frigate restart",
+            "Preserve live Frigate SSD media configuration before resuming its suspended Flux Kustomization"
+        ],
+        "passes": false
     }
 ]
