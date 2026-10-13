@@ -1,0 +1,15 @@
+---
+# Adopt the populated trial claim; do not allocate another SSD volume.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rustfs-dr-data-ssd
+  namespace: storage
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: ["ReadWriteMany"]
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: nfs-csi-ssd

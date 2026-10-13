@@ -19,8 +19,9 @@ spec:
   upgrade:
     cleanupOnFail: true
     remediation:
-      strategy: rollback
-      retries: 3
+      # Never automatically reactivate an old HDD-backed release after cutover.
+      retries: 0
+      remediateLastFailure: false
   values:
     controllers:
       main:
@@ -124,6 +125,6 @@ spec:
 
     persistence:
       data:
-        existingClaim: rustfs-data-hdd
+        existingClaim: rustfs-dr-data-ssd
         globalMounts:
           - path: /data
