@@ -5,8 +5,8 @@ metadata:
   name: &app scrypted
   namespace: flux-system
 spec:
-  # Enable only after credentials and the node/network preflight in README.md.
-  suspend: true
+  # Rollout approved 2026-10-13; retain the node/network checks in README.md.
+  suspend: false
   targetNamespace: home-automation
   path: ./kubernetes/apps/home-automation/scrypted/app
   commonMetadata:

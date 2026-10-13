@@ -2,7 +2,8 @@
 
 ## Delivery status
 
-Prepared locally, not deployed. The Flux Kustomization is suspended deliberately.
+Rollout approved on 2026-10-13. The Flux Kustomization is enabled; deployment
+and live acceptance must be verified before marking the task as passing.
 The doorbell is online at `192.168.1.17`. No plugin, Apple Home pairing, notification,
 two-way audio or UniFi recording acceptance test has passed yet.
 Do not mark the Scrypted task as passing until those live checks are recorded.
@@ -22,15 +23,13 @@ Do not enable those services or change codecs merely to match older examples.
 ONVIF video working in UniFi Protect is owner-supplied evidence; it does not
 prove doorbell events or ONVIF audio backchannel support.
 
-## Frigate rollout dependency (2026-10-13)
+## Frigate SSD preservation (2026-10-13)
 
-The doorbell configuration is validated locally but not active. Live Frigate
-uses `frigate-media-ssd`; `main` still declares `frigate-media`. Its Flux
-Kustomization is suspended. Do not resume it with the old claim: publish the
-existing storage owner’s SSD configuration first, or include that narrowly
-reviewed dependency in the approved rollout. The doorbell change itself does
-not alter storage. Keep seven days of motion recordings and thirty days of
-snapshots, inherited from the existing configuration.
+The approved rollout keeps live media on `frigate-media-ssd` and tracks that
+existing claim in Git. Both media claims have pruning disabled; the original
+HDD claim remains intact. Frigate reconciliation can resume after these
+resources reach main. Recording retains seven days of motion and thirty days
+of snapshots, inherited from the existing configuration.
 
 ## Deployment and isolation
 
@@ -40,7 +39,10 @@ avoids concurrent writers to Scrypted's database. Scrypted uses host networking
 for HomeKit mDNS, accessory TCP connections and RTP traffic. The HTTPRoute only
 serves administration; it does not carry HomeKit traffic. Native Scrypted login
 still protects direct LAN access to port 10443. Do not expose it on the Internet.
-The scoped Traefik ServersTransport accepts Scrypted's self-signed backend TLS.
+A dedicated cert-manager certificate covers `scrypted.ironstone.casa`. The
+Gateway BackendTLSPolicy validates that hostname against system CAs. An init
+container renders Scrypted's HTTPS options into memory; Reloader restarts the
+service on certificate renewal. No TLS verification bypass is configured.
 
 Read-only cluster inspection on 2026-10-10:
 
@@ -84,11 +86,11 @@ Host-network traffic is not isolated by an ordinary pod NetworkPolicy.
    Enter credentials from 1Password into the Scrypted UI over TLS. Scrypted stores
    plugin settings on its PVC. No credentials, pairing codes or exported database
    belong in Git, logs or screenshots. Keep the Scrypted admin password in 1Password.
-3. After explicit rollout approval, set `spec.suspend: false` in `ks.yaml` and
-   publish through the normal GitOps workflow. Do not apply the parent namespace
-   or reconcile Frigate. Verify ExternalSecret Ready, PVC Bound, Deployment Ready,
+3. Rollout was approved on 2026-10-13 and `spec.suspend` is false. Publish
+   through the normal GitOps workflow. Reconcile only the reviewed applications. Verify ExternalSecret Ready, PVC Bound, Deployment Ready,
    route login and direct LAN login. Record the selected node and Frigate UID,
-   restart count and recording health before and after.
+   restart count and recording health before and after. A Frigate restart is
+   expected when its new camera environment variable is applied.
 4. Create the Scrypted administrator immediately over a trusted LAN connection.
    Use `https://scrypted.ironstone.casa` for subsequent administration. Check
    unauthenticated route access is rejected/redirected and direct LAN access

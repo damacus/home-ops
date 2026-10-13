@@ -1,0 +1,14 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: BackendTLSPolicy
+metadata:
+  name: scrypted
+spec:
+  targetRefs:
+    - group: ""
+      kind: Service
+      name: scrypted
+      sectionName: https
+  validation:
+    hostname: scrypted.ironstone.casa
+    wellKnownCACertificates: System

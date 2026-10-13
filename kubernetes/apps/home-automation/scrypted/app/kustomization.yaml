@@ -5,4 +5,5 @@ resources:
   - ./helmrelease.yaml
   - ./pvc.yaml
   - ./externalsecret.yaml
-  - ./serverstransport.yaml
+  - ./certificate.yaml
+  - ./backendtlspolicy.yaml

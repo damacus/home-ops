@@ -41,9 +41,35 @@ spec:
               topologyKey: kubernetes.io/hostname
     controllers:
       scrypted:
+        annotations:
+          reloader.stakater.com/auto: "true"
         type: deployment
         replicas: 1
         strategy: Recreate
+        initContainers:
+          tls-options:
+            image:
+              repository: ghcr.io/koush/scrypted
+              tag: v0.147.0-noble-full@sha256:e78b4fcecdd6c61acaaf22b50ccef303c738da58cc0be57afdb116521df52296
+            command: [node, -e]
+            args:
+              - >-
+                const fs = require('fs');
+                fs.writeFileSync('/run/scrypted-tls/options.json', JSON.stringify({
+                  key: fs.readFileSync('/run/certificate/tls.key', 'utf8'),
+                  cert: fs.readFileSync('/run/certificate/tls.crt', 'utf8')
+                }), { mode: 0o600 });
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
         containers:
           app:
             image:
@@ -51,6 +77,7 @@ spec:
               tag: v0.147.0-noble-full@sha256:e78b4fcecdd6c61acaaf22b50ccef303c738da58cc0be57afdb116521df52296
             env:
               TZ: Europe/London
+              SCRYPTED_HTTPS_OPTIONS_FILE: /run/scrypted-tls/options.json
               # Conservative initial limit for the selected community RKNN patch.
               SCRYPTED_RKNN_MAX_WORKERS: "1"
             securityContext:
@@ -85,9 +112,6 @@ spec:
     service:
       app:
         controller: scrypted
-        annotations:
-          traefik.ingress.kubernetes.io/service.serversscheme: https
-          traefik.ingress.kubernetes.io/service.serverstransport: home-automation-scrypted@kubernetescrd
         ports:
           https:
             port: 10443
@@ -110,6 +134,25 @@ spec:
                 name: scrypted
                 port: 10443
     persistence:
+      certificate:
+        type: secret
+        name: scrypted-tls
+        defaultMode: 0400
+        advancedMounts:
+          scrypted:
+            tls-options:
+              - path: /run/certificate
+                readOnly: true
+      tls-options:
+        type: emptyDir
+        medium: Memory
+        advancedMounts:
+          scrypted:
+            tls-options:
+              - path: /run/scrypted-tls
+            app:
+              - path: /run/scrypted-tls
+                readOnly: true
       config:
         existingClaim: scrypted-config
         globalMounts:
