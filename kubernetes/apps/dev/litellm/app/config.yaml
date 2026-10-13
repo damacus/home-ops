@@ -8,6 +8,9 @@ general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
   store_model_in_db: false
+  ui_access_mode: admin_only
+  disable_password_login_when_sso_enabled: true
+  disable_env_credential_login: true
 litellm_settings:
   set_verbose: false
   turn_off_message_logging: true

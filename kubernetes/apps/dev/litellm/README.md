@@ -9,7 +9,15 @@ until gateway access and backup checks pass.
 
 The private endpoint is `https://litellm.ironstone.casa`; applications use
 `http://litellm.dev.svc.cluster.local:4000/v1`. TLS uses the existing internal
-Traefik gateway and certificate. There is no public route or admin UI.
+Traefik gateway and certificate. There is no public route.
+
+The admin UI is at `https://litellm.ironstone.casa/ui` and uses native Zitadel
+OIDC with PKCE. The Zitadel application `litellm` uses the callback
+`https://litellm.ironstone.casa/sso/callback`. The `dan.webb@damacus.io`
+account (subject `356498976247120897`) is the proxy administrator; other accounts
+have no dashboard access. Both database password login and environment/master-key
+UI login are disabled. API key authentication remains available for clients.
+LiteLLM's free SSO tier permits up to five users.
 
 OpenAI API usage is billed separately from ChatGPT subscriptions. Each of
 Mealie, Frigate and Paperless has a **$10 USD calendar-month budget** in
@@ -48,6 +56,7 @@ containing keys.
 | --- | --- |
 | `litellm` | `openai-api-key`, `master-key`, `salt-key`, `home-assistant-token`, `grafana-service-account-token`, `grafana-mcp-token` |
 | `litellm-db` | `password` |
+| `litellm` (UI) | `oidc-client-id`, `oidc-client-secret` |
 | `rustfs-cnpg-litellm` | `username`, `password` |
 | `litellm-mealie`, `litellm-frigate`, `litellm-paperless` | `key` |
 | `litellm-codex`, `litellm-claude` | `key` |
