@@ -31,18 +31,18 @@ Verify live video and a new recording on the relay before ending the cutover.
 ## Phone alerts
 
 The Home Assistant package is mounted from `home-assistant-doorbell` and sends
-native visitor presses to `notify.mobile_app_pixel_9_pro` and
-`notify.mobile_app_laura_2`. Pictures use the authenticated camera proxy; View
+native visitor presses to `notify.mobile_app_pixel_9_pro`. Laura’s notifications
+were tested successfully and then disabled at the owner’s request. Pictures use the authenticated camera proxy; View
 live opens the camera more-info panel. Each phone is dispatched independently.
 
 Android uses high-priority, zero-TTL delivery and the alarm_stream channel.
 Enable pop-on-screen and the required DND exception on the Pixel. iOS requests a
-critical sound; Laura must allow Critical Alerts for Home Assistant. These phone
+critical sound when enabled; Laura must allow Critical Alerts for Home Assistant. These phone
 permissions and actual delivery require physical-device testing.
 
 Run `script.doorbell_phone_alert` with a labelled `message` for a delivery test,
 then press the physical bell to verify the native trigger. Test with phones
-locked and silenced. Confirm pictures and View live separately on both devices.
+locked and silenced. Confirm pictures and View live on the enabled recipient devices.
 
 ## Verification and rollback
 

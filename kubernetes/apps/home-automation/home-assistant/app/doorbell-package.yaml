@@ -2,52 +2,34 @@
 # Video is supplied by Frigate from Scrypted; native Reolink supplies events only.
 script:
   doorbell_phone_alert:
-    alias: Doorbell picture alert on both phones
+    alias: Doorbell picture alert on Pixel
     mode: parallel
     max: 5
     fields:
       message:
         description: Optional message for a labelled delivery test
     sequence:
-      - parallel:
-          - action: notify.mobile_app_pixel_9_pro
-            data:
-              title: Front door
-              message: "{{ message | default('Someone pressed the doorbell.', true) }}"
-              data:
-                image: /api/camera_proxy/camera.doorbell
-                clickAction: /?more-info-entity-id=camera.doorbell
-                ttl: 0
-                priority: high
-                channel: alarm_stream
-                importance: high
-                visibility: public
-                tag: front-door-press
-                actions:
-                  - action: URI
-                    title: View live
-                    uri: /?more-info-entity-id=camera.doorbell
-          - action: notify.mobile_app_laura_2
-            data:
-              title: Front door
-              message: "{{ message | default('Someone pressed the doorbell.', true) }}"
-              data:
-                image: /api/camera_proxy/camera.doorbell
-                url: /?more-info-entity-id=camera.doorbell
-                tag: front-door-press
-                push:
-                  sound:
-                    name: default
-                    critical: 1
-                    volume: 1.0
-                actions:
-                  - action: URI
-                    title: View live
-                    uri: /?more-info-entity-id=camera.doorbell
+      - action: notify.mobile_app_pixel_9_pro
+        data:
+          title: Front door
+          message: "{{ message | default('Someone pressed the doorbell.', true) }}"
+          data:
+            image: /api/camera_proxy/camera.doorbell
+            clickAction: /?more-info-entity-id=camera.doorbell
+            ttl: 0
+            priority: high
+            channel: alarm_stream
+            importance: high
+            visibility: public
+            tag: front-door-press
+            actions:
+              - action: URI
+                title: View live
+                uri: /?more-info-entity-id=camera.doorbell
 
 automation:
   - id: reolink_doorbell_phone_alert
-    alias: Front door - ring both phones
+    alias: Front door - ring Pixel
     description: Native Reolink button event; picture and live video use the Scrypted relay through Frigate.
     triggers:
       - trigger: state
