@@ -43,11 +43,11 @@ spec:
               tag: 0.18.1-rk@sha256:d6278a59227c660a6418581871927191b35283048e0e2e28c747a830422cd019
             env:
               TZ: Europe/London
-              FRIGATE_REOLINK_PASSWORD:
+              FRIGATE_DOORBELL_RELAY_URL:
                 valueFrom:
                   secretKeyRef:
-                    name: frigate-reolink
-                    key: FRIGATE_REOLINK_PASSWORD
+                    name: scrypted-doorbell-relay
+                    key: FRIGATE_DOORBELL_RELAY_URL
               FRIGATE_MQTT_PASSWORD:
                 valueFrom:
                   secretKeyRef:

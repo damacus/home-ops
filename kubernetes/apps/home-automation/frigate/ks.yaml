@@ -12,6 +12,7 @@ spec:
       app.kubernetes.io/name: *app
   prune: true
   dependsOn:
+    - name: scrypted
     - name: mosquitto
     - name: external-secrets-stores
     - name: node-feature-discovery

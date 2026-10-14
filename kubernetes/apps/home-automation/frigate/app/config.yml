@@ -69,9 +69,9 @@ go2rtc:
       -vf format=yuv420p -codec:v h264_rkmpp -profile:v main -level:v 41
       -g:v 15 -r 15 -bf:v 0
   streams:
-    # Firmware v3.0.0.7261 requires the substream for stable RTSP.
+    # All video consumers share Scrypted's single camera connection.
     doorbell:
-      - "rtsp://admin:{FRIGATE_REOLINK_PASSWORD}@192.168.1.17:554/Preview_01_sub#backchannel=0"
+      - "{FRIGATE_DOORBELL_RELAY_URL}"
     birdy:
       - rtsp://192.168.1.180:8554/main
       - "ffmpeg:birdy#audio=aac"
