@@ -1,5 +1,5 @@
 ---
-# Retain the endpoint used by migrated CNPG archives and SSD IAM provisioning.
+# Keep temporary migration aliases during the final production URL transition.
 apiVersion: v1
 kind: Service
 metadata:

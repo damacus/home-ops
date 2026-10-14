@@ -1,0 +1,130 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: rustfs-hdd
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      # Never automatically reactivate an old HDD-backed release after cutover.
+      retries: 0
+      remediateLastFailure: false
+  values:
+    controllers:
+      main:
+        strategy: Recreate
+        replicas: 0
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod:
+          securityContext:
+            fsGroup: 988
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile: { type: RuntimeDefault }
+        containers:
+          app:
+            image:
+              repository: rustfs/rustfs
+              tag: 1.0.1
+            env:
+              TZ: "${TZ}"
+              RUSTFS_VOLUMES: /data
+              RUSTFS_ADDRESS: :9000
+              RUSTFS_CONSOLE_ENABLE: "true"
+              RUSTFS_CONSOLE_ADDRESS: :9001
+              RUSTFS_OBS_ENDPOINT: http://vmsingle-vm.monitoring.svc.cluster.local:8428
+              RUSTFS_OBS_METRIC_ENDPOINT: http://vmsingle-vm.monitoring.svc.cluster.local:8428/opentelemetry/api/v1/push
+              RUSTFS_OBS_USE_STDOUT: "false"
+              RUSTFS_OBS_TRACES_EXPORT_ENABLED: "false"
+              RUSTFS_OBS_LOGS_EXPORT_ENABLED: "false"
+            envFrom:
+              - secretRef:
+                  name: rustfs-credentials
+            args: ["/data"]
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 9000
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 6
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 9000
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  timeoutSeconds: 10
+                  failureThreshold: 6
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 977
+              runAsGroup: 988
+              runAsNonRoot: true
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 100m
+                memory: 1Gi
+              limits:
+                cpu: 1000m
+                memory: 6Gi
+
+    service:
+      main:
+        controller: main
+        ports:
+          http:
+            port: 9001
+          api:
+            port: 9000
+
+    route:
+      console:
+        hostnames: ["rustfs-hdd.ironstone.casa"]
+        parentRefs:
+          - name: traefik-internal
+            namespace: network
+            sectionName: websecure
+        rules:
+          - backendRefs:
+              - name: rustfs-hdd
+                port: 9001
+      s3:
+        hostnames: ["s3-hdd.ironstone.casa"]
+        parentRefs:
+          - name: traefik-internal
+            namespace: network
+            sectionName: websecure
+        rules:
+          - backendRefs:
+              - name: rustfs-hdd
+                port: 9000
+
+    persistence:
+      data:
+        existingClaim: rustfs-data-hdd
+        globalMounts:
+          - path: /data

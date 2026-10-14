@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
+  - ./helmrelease-hdd.yaml
   - ./pvc.yaml
   - ./pvc-ssd.yaml
   - ./pvc-production-ssd.yaml
