@@ -1,0 +1,32 @@
+---
+# Google Home sends only doorbell-press pulses through this virtual switch.
+# Google owns the Nest event path; no Nest SDM OAuth or video access is used.
+google_assistant:
+  project_id: home-assistant-42748
+  expose_by_default: false
+  report_state: false
+  entity_config:
+    input_boolean.nest_doorbell_press:
+      name: Nest doorbell press
+      room: Hallway
+      expose: true
+
+input_boolean:
+  nest_doorbell_press:
+    name: Nest doorbell press
+    icon: mdi:doorbell
+    initial: false
+
+automation:
+  - id: nest_doorbell_reset_relay
+    alias: Nest doorbell reset event relay
+    description: Reset each press so the next Google Home command creates a new event.
+    triggers:
+      - trigger: state
+        entity_id: input_boolean.nest_doorbell_press
+        to: "on"
+    actions:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.nest_doorbell_press
+    mode: restart

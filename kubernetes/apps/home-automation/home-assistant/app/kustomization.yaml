@@ -8,3 +8,9 @@ resources:
   - longhorn-storage.yaml
   - externalsecret.yaml
   - httproute-traefik.yaml
+configMapGenerator:
+  - name: home-assistant-nest-doorbell
+    files:
+      - nest-doorbell-relay.yaml
+generatorOptions:
+  disableNameSuffixHash: true

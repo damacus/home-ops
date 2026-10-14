@@ -54,7 +54,7 @@
     },
     {
         "category": "home-assistant",
-        "description": "Home Assistant automations",
+        "description": "Home Assistant automations, including Nest doorbell press events relayed through Google Home while Advanced Protection remains enabled",
         "steps": [
             "Create test automation for validation",
             "Verify automation triggers work",
