@@ -34,7 +34,8 @@
     "object_permission": {
       "mcp_servers": [
         "home_assistant",
-        "grafana"
+        "grafana",
+        "scrypted"
       ]
     }
   },
@@ -46,7 +47,8 @@
     "object_permission": {
       "mcp_servers": [
         "home_assistant",
-        "grafana"
+        "grafana",
+        "scrypted"
       ]
     }
   }

@@ -33,3 +33,12 @@ mcp_servers:
     auth_type: bearer_token
     auth_value: os.environ/GRAFANA_MCP_TOKEN
     allow_all_keys: false
+  scrypted:
+    url: https://scrypted.ironstone.casa/endpoint/scrypted-mcp/public/mcp
+    transport: http
+    auth_type: oauth2
+    oauth2_flow: authorization_code
+    authorization_url: https://scrypted.ironstone.casa/endpoint/scrypted-mcp/public/authorize
+    token_url: https://scrypted.ironstone.casa/endpoint/scrypted-mcp/public/token
+    registration_url: https://scrypted.ironstone.casa/endpoint/scrypted-mcp/public/register
+    allow_all_keys: false
