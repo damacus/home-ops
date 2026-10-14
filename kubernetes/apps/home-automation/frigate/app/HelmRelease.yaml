@@ -40,7 +40,7 @@ spec:
           app:
             image:
               repository: ghcr.io/blakeblackshear/frigate
-              tag: 0.18.0-rk@sha256:06f72cee07ddcdba52c7dc8c4ce5d954e51cbc49b655bfdd31bcf0892bdad2eb
+              tag: 0.18.1-rk@sha256:d6278a59227c660a6418581871927191b35283048e0e2e28c747a830422cd019
             env:
               TZ: Europe/London
               FRIGATE_REOLINK_PASSWORD:
