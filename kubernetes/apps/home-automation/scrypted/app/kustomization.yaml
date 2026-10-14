@@ -7,3 +7,4 @@ resources:
   - ./externalsecret.yaml
   - ./certificate.yaml
   - ./backendtlspolicy.yaml
+  - ./relay.secret.sops.yaml

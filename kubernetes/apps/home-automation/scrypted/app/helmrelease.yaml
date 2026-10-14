@@ -115,6 +115,8 @@ spec:
         ports:
           https:
             port: 10443
+          rtsp:
+            port: 10454
     route:
       app:
         hostnames: [scrypted.ironstone.casa]

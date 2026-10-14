@@ -1,0 +1,69 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doorbell-onvif
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: doorbell-onvif
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: doorbell-onvif
+    spec:
+      # Existing wired MAC/IP; no virtual interface or NET_ADMIN required.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: node-0b06df
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bridge
+          image: docker.io/ptarmiganlabs/rtsp-to-onvif:1.2.0@sha256:37a78b0cb3d5a18cde19290b059ce6081959288a953f649588cdc0bba0105e1d
+          env:
+            - name: DEBUG
+              value: "0"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          readinessProbe:
+            tcpSocket:
+              port: 18081
+          livenessProbe:
+            tcpSocket:
+              port: 18081
+            initialDelaySeconds: 30
+          volumeMounts:
+            - name: config
+              mountPath: /onvif.yaml
+              subPath: onvif.yaml
+              readOnly: true
+      volumes:
+        - name: config
+          secret:
+            secretName: scrypted-doorbell-relay
+            defaultMode: 0444
+            items:
+              - key: onvif.yaml
+                path: onvif.yaml

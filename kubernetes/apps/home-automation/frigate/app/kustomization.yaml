@@ -6,7 +6,6 @@ resources:
   - ./pvc.yaml
   - ./networkpolicy.yaml
   - ./mqtt-externalsecret.yaml
-  - ./reolink-externalsecret.yaml
 
 configMapGenerator:
   - name: frigate-configmap
