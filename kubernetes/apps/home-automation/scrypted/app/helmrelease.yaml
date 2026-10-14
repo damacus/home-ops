@@ -130,7 +130,7 @@ spec:
                 extensionRef:
                   group: traefik.io
                   kind: Middleware
-                  name: oauth2-proxy-forward-auth
+                  name: scrypted-forward-auth
             backendRefs:
               - kind: Service
                 name: scrypted
