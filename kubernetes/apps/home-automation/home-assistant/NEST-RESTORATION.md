@@ -12,10 +12,12 @@ The working native Nest experience remains the baseline for answering the door.
 ## Existing state checked on 14 October 2026
 
 Home Assistant runs 2026.10.1. A Nest config entry exists but is not loaded; its
-stored data and options are empty. No Nest-specific error appeared in the inspected
-startup logs. This does not establish whether a Google Cloud/Device Access project
-or reusable OAuth application credentials still exist. Inspect these before creating
-or deleting cloud resources. Keep the existing entry until its role is understood.
+stored data and options are empty. A Nest OAuth application credential imported
+from configuration.yaml still exists, although no top-level Nest YAML block remains.
+No Nest-specific error appeared in the inspected startup logs. The credential may
+be reusable; its validity and the Google Cloud/Device Access projects are unverified.
+Inspect these before creating or deleting cloud resources. Keep the existing entry
+until its role is understood.
 
 ## Recovery sequence
 
