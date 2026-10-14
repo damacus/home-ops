@@ -22,7 +22,7 @@ patches:
               - name: rc
                 env:
                   - name: RUSTFS_ENDPOINT
-                    value: https://rustfs-dr-s3.ironstone.casa
+                    value: http://rustfs.storage.svc.cluster.local:9000
                 resources:
                   requests:
                     cpu: 25m
@@ -45,7 +45,7 @@ patches:
                   - name: rc
                     env:
                       - name: RUSTFS_ENDPOINT
-                        value: https://rustfs-dr-s3.ironstone.casa
+                        value: http://rustfs.storage.svc.cluster.local:9000
                     resources:
                       requests:
                         cpu: 25m

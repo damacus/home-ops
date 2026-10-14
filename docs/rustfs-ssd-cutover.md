@@ -1,6 +1,11 @@
-# RustFS SSD production cutover
+# Historical RustFS SSD cutover record
 
-## Current stage — 13 October 2026
+> Superseded on 14 October 2026. Production now uses SSD storage.
+> See [RustFS SSD production and retained HDD copy](rustfs-ssd-production.md)
+> for current addresses and recovery guidance. The stages and activation
+> commands below are historical evidence; do not run them against production.
+
+## Recorded stage — 13 October 2026
 
 Production `storage/rustfs` still uses `rustfs-data-hdd`. The second deployment,
 `storage/rustfs-dr`, uses the populated `rustfs-dr-data-ssd` claim. This change

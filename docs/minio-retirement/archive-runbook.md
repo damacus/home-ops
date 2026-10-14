@@ -2,8 +2,9 @@
 
 This is a manual Stage 2 procedure. Merging this runbook does not run it.
 Obtain approval for Stage 2 before changing the live cluster. Pause at the end.
-Do not use `task kubernetes:object-storage-migrate`: that helper targets the
-retired standalone MinIO endpoint, not this bundled instance.
+The obsolete standalone MinIO migration helper and Task command have been
+removed. These archival instructions refer to the bundled instance only;
+`https://s3.ironstone.casa` is RustFS production and must never be its source.
 
 ## Prerequisites and recovery
 
