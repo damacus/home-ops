@@ -16,7 +16,7 @@ Google Home's editor lists Hallway - Hallway for device.event.DoorbellPress. The
 
 Required rollout preflight: confirm that the PVC-backed configuration.yaml already enables homeassistant.packages with !include_dir_named packages, preserving its other settings. This exact include was verified on 14 October 2026. A restored PVC must pass the same preflight before deployment; mounting the file alone is insufficient.
 
-The GitOps package mounts /config/packages/nest-doorbell-relay.yaml and exposes only input_boolean.nest_doorbell_press to Google Assistant. It starts off and resets after every on command. Original automation 1657399874293 now uses this helper's off-to-on state trigger, preserving its after-dark condition, Hallway Bright scene and ten-minute switch-off action.
+The GitOps package mounts /config/packages/nest_doorbell_relay.yaml and exposes only input_boolean.nest_doorbell_press to Google Assistant. It starts off and resets after every on command. Original automation 1657399874293 now uses this helper's off-to-on state trigger, preserving its after-dark condition, Hallway Bright scene and ten-minute switch-off action.
 
 report_state is disabled. The installed Home Assistant 2026.10.1 schema allows this connection without a service-account key. Automatic HomeGraph reporting and HA's request_sync service are unavailable; the initial Google SYNC still lists the helper. Relink or use Google's sync command if needed.
 
