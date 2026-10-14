@@ -656,7 +656,7 @@
     },
     {
         "category": "scrypted",
-        "description": "Independent Scrypted bridge for Reolink second-generation doorbell and Apple Home",
+        "description": "Retired Reolink experiment: physical talkback and stream stability acceptance failed; retain shared Scrypted service",
         "steps": [
             "Approve and activate the suspended independent Scrypted deployment",
             "Verify Longhorn configuration persistence and 1Password ExternalSecret",

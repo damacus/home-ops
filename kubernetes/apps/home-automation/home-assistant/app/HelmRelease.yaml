@@ -31,7 +31,6 @@ spec:
     controllers:
       home-assistant:
         annotations:
-          configmap.reloader.stakater.com/reload: home-assistant-doorbell
           reloader.stakater.com/auto: "true"
         type: statefulset
         containers:
@@ -98,13 +97,6 @@ spec:
             targetPort: 5353
 
     persistence:
-      doorbell:
-        type: configMap
-        name: home-assistant-doorbell
-        globalMounts:
-          - path: /config/packages/doorbell.yaml
-            subPath: doorbell.yaml
-            readOnly: true
       config:
         existingClaim: home-assistant-config-longhorn
         globalMounts:

@@ -1,76 +1,18 @@
-# Doorbell relay
+# Retired Reolink ONVIF relay
 
-The Reolink at 192.168.1.17 feeds Scrypted once using its 720p H.264 substream.
-Frigate and the ONVIF bridge consume the same Scrypted rebroadcast. Home Assistant
-uses native Reolink visitor events and the Frigate camera entity `camera.doorbell`.
-Native Reolink camera entities remain disabled to avoid additional video sessions.
+Retired on 14 October 2026 after the battery second-generation Reolink doorbell
+failed the physical two-way audio test and dropped its RTSP source connection.
+The deployment and its GitOps entry have been removed.
 
-## Persistent settings
+Keep both existing UniFi Protect camera records to retain access to their recordings.
+Do not unmanage or delete either camera as part of this cleanup.
+Frigate retains a disabled `doorbell` camera for historical recordings. Its existing
+retention policy still applies; this is not a permanent archive. No media or database
+PVC is deleted or moved. Birdy remains active.
 
-- Scrypted camera 29: all stream choices use `Profile001_SubStream` and the
-  rebroadcast port is 10454. Restart Scrypted after changing the port.
-- Scrypted PVC retains the random rebroadcast path. `scrypted-doorbell-relay` is
-  encrypted with SOPS in the Scrypted application and contains the Frigate URL
-  and bridge configuration. Regenerate both values if the camera is recreated.
-- The bridge runs on node-0b06df, using its existing wired MAC 00:e0:4c:0b:06:df
-  and address 192.168.1.27. ONVIF listens on 18081; the RTSP proxy listens on
-  18554. UUID f240fd7d-648e-4bf6-baa2-afb3e7a72528 must remain stable.
-- It runs without NET_ADMIN or root and cannot create a macvlan. A node/interface
-  replacement requires an explicit configuration update.
-- The bridge has no ONVIF authentication. Keep these ports on the trusted LAN;
-  do not publish them through the ingress gateway. The snapshot fallback provided
-  by the bridge is static; Home Assistant pictures come from Frigate instead.
+The Reolink and test Scrypted HA integrations, talkback dashboard, HACS integration
+and card are removed. The obsolete restricted account is revoked; its 1Password
+item is archived. The original Reolink credential is retained for device return/reset.
+Scrypted and its MCP gateway remain available as independent shared services.
 
-## Protect migration
-
-Adopt `FrontDoorRelay` as a new camera. Keep the original Reolink camera entry
-and its recordings. Disable its direct connection using a non-destructive
-Protect setting; do not unadopt/delete it or use any option that erases history.
-Verify live video and a new recording on the relay before ending the cutover.
-
-## Phone alerts
-
-The Home Assistant package is mounted from `home-assistant-doorbell` and sends
-native visitor presses to `notify.mobile_app_pixel_9_pro`. Laura’s notifications
-were tested successfully and then disabled at the owner’s request. Pictures use the authenticated camera proxy; View
-live opens the camera more-info panel. Each phone is dispatched independently.
-
-Android uses high-priority, zero-TTL delivery and the alarm_stream channel.
-Enable pop-on-screen and the required DND exception on the Pixel. iOS requests a
-critical sound when enabled; Laura must allow Critical Alerts for Home Assistant. These phone
-permissions and actual delivery require physical-device testing.
-
-Run `script.doorbell_phone_alert` with a labelled `message` for a delivery test,
-then press the physical bell to verify the native trigger. Test with phones
-locked and silenced. Confirm pictures and View live on the enabled recipient devices.
-
-## Verification and rollback
-
-Check Frigate `/api/stats` for doorbell camera/process FPS and fresh snapshots.
-Inspect established camera RTSP connections on the Scrypted node; only Scrypted
-should pull video directly. Native Home Assistant event traffic is expected.
-Do not interpret an HTTP 200 snapshot alone as proof of fresh video.
-
-To roll back video routing, restore the previous Frigate input and its original
-ExternalSecret together. Retain both Protect entries and all recording volumes.
-Do not enable multiple direct camera consumers during diagnosis.
-
-## Acceptance on 2026-10-14
-
-- Protect relay camera `6acf3c37036af603e400a3f3` is connected, reports 720x720
-  at 15 fps and has continuous recording selected.
-- Original camera `6aca44620188c003e43c69ae` remains in the API and Playback
-  list, disconnected. No camera or recording was deleted. Old recording playback
-  could not be verified in the in-app browser.
-- The bridge RTSP probe decoded 151 H.264 frames and AAC audio over ten seconds.
-  Frigate processes the relay at 5 fps and Birdy remains at 5 fps.
-- One established camera RTSP connection was observed from the Scrypted node.
-- Both phones received the initial test. Laura was subsequently disabled at the
-  owner's request. A physical press then produced picture, sound and working
-  View live on the Pixel.
-- The live HA configuration enables `homeassistant.packages`; package validation
-  passed. Two existing Nest-device automations still refer to a missing device.
-- Talkback investigation: the exact battery-doorbell firmware advertises a PCMU
-  8 kHz sendonly ONVIF backchannel on both profiles. This matches Scrypted's
-  intercom probe, but microphone-to-speaker operation is not verified. The
-  current HA camera view and RTSP relay do not provide talkback controls.
+See [Nest restoration plan](../home-assistant/NEST-RESTORATION.md).
