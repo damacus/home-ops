@@ -8,3 +8,4 @@ resources:
   - ./certificate.yaml
   - ./backendtlspolicy.yaml
   - ./relay.secret.sops.yaml
+  - ./middleware.yaml
