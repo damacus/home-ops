@@ -69,9 +69,6 @@ go2rtc:
       -vf format=yuv420p -codec:v h264_rkmpp -profile:v main -level:v 41
       -g:v 15 -r 15 -bf:v 0
   streams:
-    # All video consumers share Scrypted's single camera connection.
-    doorbell:
-      - "{FRIGATE_DOORBELL_RELAY_URL}"
     birdy:
       - rtsp://192.168.1.180:8554/main
       - "ffmpeg:birdy#audio=aac"
@@ -84,7 +81,9 @@ go2rtc:
       - "ffmpeg:birdy_sub#video=h264#audio=aac/16000"
 
 cameras:
+  # Retired camera: keep its identity for historical recordings; never reconnect.
   doorbell:
+    enabled: false
     ffmpeg:
       # Share one H.264/AAC substream for recording and detection.
       output_args:

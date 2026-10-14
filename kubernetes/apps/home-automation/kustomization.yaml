@@ -14,7 +14,6 @@ resources:
   - ./n8n/ks.yaml
   - ./frigate/ks.yaml
   - ./scrypted/ks.yaml
-  - ./doorbell-onvif/ks.yaml
   - ./namespace.yaml
   - ./paperless/ks.yaml
   - ./piper/ks.yaml

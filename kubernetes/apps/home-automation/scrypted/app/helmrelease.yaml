@@ -159,13 +159,6 @@ spec:
         existingClaim: scrypted-config
         globalMounts:
           - path: /server/volume
-      credentials:
-        type: secret
-        name: scrypted-credentials
-        defaultMode: 0400
-        globalMounts:
-          - path: /run/secrets/scrypted
-            readOnly: true
       shm:
         type: emptyDir
         medium: Memory

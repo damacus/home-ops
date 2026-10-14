@@ -1,3 +1,9 @@
+> Reolink retirement, 14 October 2026: the camera and test-only HA account are
+> being removed following failed physical acceptance. Camera credential mounts and
+> relay secrets are removed. Scrypted, its PVC and MCP endpoint are retained.
+> The deployment notes below describe the historical experiment, not current camera
+> availability. See [retirement record](../doorbell-onvif/README.md).
+
 # Scrypted / Reolink second-generation doorbell
 
 ## Delivery status
