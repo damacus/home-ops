@@ -2,7 +2,7 @@
 
 ## Agreed scope
 
-Receive only Nest Hello doorbell presses in Home Assistant and reconnect the existing hall-light automation. The doorbell has not been reinstalled, so the physical press test remains pending. Keep Gmail Advanced Protection enabled. Laura's doorbell notifications remain disabled. Video, snapshots, talkback and Scrypted forwarding are outside this setup.
+Receive only Nest Hello doorbell presses in Home Assistant and reconnect the existing hall-light automation. The owner has reinstalled the doorbell; the physical press test through this relay remains pending. Keep Gmail Advanced Protection enabled. Laura's doorbell notifications remain disabled. Video, snapshots, talkback and Scrypted forwarding are outside this setup.
 
 ## Native Nest block
 
@@ -14,7 +14,9 @@ Nest Hello -> Google Home DoorbellPress automation -> HA input_boolean -> existi
 
 Google Home's editor lists Hallway - Hallway for device.event.DoorbellPress. The old cloud-to-cloud project home-assistant-42748 already exists with a Home Assistant integration. Its haas.damacus.io URLs need the current public home-assistant.damacus.io host.
 
-The GitOps package mounts /config/packages/nest-doorbell-relay.yaml and exposes only input_boolean.nest_doorbell_press to Google Assistant. It starts off and resets after every on command. Original automation 1657399874293 should use this helper's off-to-on state trigger, preserving its after-dark condition, Hallway Bright scene and ten-minute switch-off action.
+Required rollout preflight: confirm that the PVC-backed configuration.yaml already enables homeassistant.packages with !include_dir_named packages, preserving its other settings. This exact include was verified on 14 October 2026. A restored PVC must pass the same preflight before deployment; mounting the file alone is insufficient.
+
+The GitOps package mounts /config/packages/nest-doorbell-relay.yaml and exposes only input_boolean.nest_doorbell_press to Google Assistant. It starts off and resets after every on command. Original automation 1657399874293 now uses this helper's off-to-on state trigger, preserving its after-dark condition, Hallway Bright scene and ten-minute switch-off action.
 
 report_state is disabled. The installed Home Assistant 2026.10.1 schema allows this connection without a service-account key. Automatic HomeGraph reporting and HA's request_sync service are unavailable; the initial Google SYNC still lists the helper. Relink or use Google's sync command if needed.
 
@@ -23,7 +25,7 @@ report_state is disabled. The installed Home Assistant 2026.10.1 schema allows t
 Reuse the existing project and OAuth client ID:
 https://oauth-redirect.googleusercontent.com/r/home-assistant-42748
 
-Update the integration to these public endpoints:
+The existing Google Home integration was saved with these current public endpoints on 14 October 2026:
 
 - Authorisation: https://home-assistant.damacus.io/auth/authorize
 - Token: https://home-assistant.damacus.io/auth/token
@@ -49,9 +51,9 @@ automations:
 
 Check unauthenticated fulfilment is denied, authenticated SYNC returns only the helper, and a synthetic Google EXECUTE turns it on and HA resets it. Distinguish the synthetic test from a real Nest press. Confirm the old automation is available with the same conditions and actions.
 
-The doorbell is offline because it has not been reinstalled. Afterwards, press it and verify Google's execution log and HA's trace. Test after dark for the original lighting behaviour and test a second press. Physical acceptance remains pending until then.
+The owner reports that the doorbell is back online. After account linking and script activation, press it and verify Google's execution log and HA's trace. Test after dark for the original lighting behaviour and test a second press. Physical acceptance remains pending until then.
 
-Before runtime changes, retain the original automations and helper registry in a private /config/backups/nest-events-20261014 archive. The legacy person-event automation remains outside this doorbell-press scope. Restore the saved hall-light configuration through HA's editor to roll back. Disable the Google Home routine before removing its relay.
+The original automations and helper registry are retained in /config/backups/nest-events-20261014/before-relay.tar.gz (0600), with hall-light-before.json for the individual automation. The runtime trigger was updated through HA's supported editor API; its legacy YAML keys were normalised by HA. The legacy person-event automation remains outside this doorbell-press scope. Restore the saved hall-light configuration through HA's editor to roll back. Disable the Google Home routine before removing its relay.
 
 ## References
 
