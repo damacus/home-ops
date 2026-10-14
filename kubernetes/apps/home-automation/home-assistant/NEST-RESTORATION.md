@@ -1,61 +1,63 @@
-# Restore the first-generation Nest doorbell to Home Assistant
+# Nest doorbell press events through Google Home
 
-## Scope and capability boundary
+## Agreed scope
 
-Use the native Nest integration for live viewing, doorbell presses and supported
-motion/person events. Keep Pixel picture notifications as the initial target;
-Laura's notifications remain off until explicitly requested.
-Google's legacy-doorbell SDM API does not expose a talkback command. This plan
-must not promise two-way conversation inside the Home Assistant Companion app.
-The working native Nest experience remains the baseline for answering the door.
+Receive only Nest Hello doorbell presses in Home Assistant and reconnect the existing hall-light automation. The owner has reinstalled the doorbell; the physical press test through this relay remains pending. Keep Gmail Advanced Protection enabled. Laura's doorbell notifications remain disabled. Video, snapshots, talkback and Scrypted forwarding are outside this setup.
 
-## Existing state checked on 14 October 2026
+## Native Nest block
 
-Home Assistant runs 2026.10.1. A Nest config entry exists but is not loaded; its
-stored data and options are empty. A Nest OAuth application credential imported
-from configuration.yaml still exists, although no top-level Nest YAML block remains.
-No Nest-specific error appeared in the inspected startup logs. The credential may
-be reusable; its validity and the Google Cloud/Device Access projects are unverified.
-Inspect these before creating or deleting cloud resources. Keep the existing entry
-until its role is understood.
+The original Cloud project is haas-318622 and Device Access project is a4135cb5-4d3c-4976-bb2b-441db99eb20d. Its Google-managed event topic remains enabled. Google rejected native HA OAuth with Error 400: policy_enforced because Gmail uses Advanced Protection. The documented block also applies to event-only access.
 
-## Recovery sequence
+## Event path
 
-1. Reinstall the Nest Hello and confirm its native live view, chime and conversation.
-   Identify whether it remains in Nest or has been transferred to Google Home.
-2. Inspect existing Home Assistant application credentials, Google Cloud project,
-   Device Access project and Pub/Sub topic using the owning personal Google account.
-   Google Workspace and Advanced Protection have documented compatibility limits.
-3. Reuse valid existing resources. Enable SDM and Pub/Sub APIs in the chosen Cloud
-   project. Configure a Web OAuth client with redirect
-   `https://my.home-assistant.io/redirect/oauth`. Store any newly generated secret in
-   1Password. Use an External consent app in Production to avoid seven-day Testing
-   token expiry. Google consent and any payment/terms require owner interaction.
-4. Check the January 2025 Pub/Sub change: existing working topics can be retained;
-   new or re-enabled event setups need a user-created topic. Grant Google's documented
-   SDM publisher principal Pub/Sub Publisher on that topic only, then enter the exact
-   full topic name in Device Access and Home Assistant. Verify the current principal
-   from Google's documentation at implementation time; do not grant project-wide roles
-   or weaken organisation policies as a workaround.
-5. Complete HA's Nest setup/reauthentication with the existing Device Access project,
-   Cloud project, topic/subscription and OAuth credentials. Do not pay the Device
-   Access registration fee again if the owner is already enrolled.
-6. Test a physical button press, one Pixel picture notification, event image retrieval,
-   local and mobile-data live viewing, and recovery after an HA restart. Verify session
-   renewal rather than storing a temporary RTSP URL as a permanent Frigate source.
-7. Only after the integration works, replace the retired notification automation with
-   the actual Nest event/entity identifiers. Do not add Scrypted, Frigate or Protect
-   forwarding unless it is separately needed and demonstrated to work.
+Nest Hello -> Google Home DoorbellPress automation -> HA input_boolean -> existing hall-light automation.
 
-## Acceptance and unresolved inputs
+Google Home's editor lists Hallway - Hallway for device.event.DoorbellPress. The old cloud-to-cloud project home-assistant-42748 already exists with a Home Assistant integration. Its haas.damacus.io URLs need the current public home-assistant.damacus.io host.
 
-Not deployed: this is a plan. Need the owning Google account/project inventory and
-the reinstalled doorbell. If a Google policy blocks Pub/Sub publishing, capture the
-exact policy/error first; a generic security-change explanation is not sufficient.
-Cloud permission changes are outside this cleanup and require a concrete scoped plan.
+Required rollout preflight: confirm that the PVC-backed configuration.yaml already enables homeassistant.packages with !include_dir_named packages, preserving its other settings. This exact include was verified on 14 October 2026. A restored PVC must pass the same preflight before deployment; mounting the file alone is insufficient.
 
-## Primary references
+The GitOps package mounts /config/packages/nest-doorbell-relay.yaml and exposes only input_boolean.nest_doorbell_press to Google Assistant. It starts off and resets after every on command. Original automation 1657399874293 now uses this helper's off-to-on state trigger, preserving its after-dark condition, Hallway Bright scene and ten-minute switch-off action.
 
-- https://www.home-assistant.io/integrations/nest/
-- https://developers.google.com/nest/device-access/api/doorbell
-- https://developers.google.com/nest/device-access/subscribe-to-events
+report_state is disabled. The installed Home Assistant 2026.10.1 schema allows this connection without a service-account key. Automatic HomeGraph reporting and HA's request_sync service are unavailable; the initial Google SYNC still lists the helper. Relink or use Google's sync command if needed.
+
+## Google account linking
+
+Reuse the existing project and OAuth client ID:
+https://oauth-redirect.googleusercontent.com/r/home-assistant-42748
+
+The existing Google Home integration was saved with these current public endpoints on 14 October 2026:
+
+- Authorisation: https://home-assistant.damacus.io/auth/authorize
+- Token: https://home-assistant.damacus.io/auth/token
+- Fulfilment: https://home-assistant.damacus.io/api/google_assistant
+
+After package deployment and endpoint updates, use Pixel Google Home -> Devices -> Add -> Works with Google Home -> [test] Home Assistant. Sign in through Home Assistant's login screen. Only the dedicated helper should appear. Assign it to Hallway in Ironstone Road. Validate and activate this script using the editor's actual device names:
+
+```yaml
+metadata:
+  name: Nest doorbell to Home Assistant
+  description: Send doorbell presses to the existing Home Assistant automations.
+automations:
+  - starters:
+      - type: device.event.DoorbellPress
+        device: Hallway - Hallway
+    actions:
+      - type: device.command.OnOff
+        devices: Nest doorbell press - Hallway
+        on: true
+```
+
+## Acceptance and recovery
+
+Check unauthenticated fulfilment is denied, authenticated SYNC returns only the helper, and a synthetic Google EXECUTE turns it on and HA resets it. Distinguish the synthetic test from a real Nest press. Confirm the old automation is available with the same conditions and actions.
+
+The owner reports that the doorbell is back online. After account linking and script activation, press it and verify Google's execution log and HA's trace. Test after dark for the original lighting behaviour and test a second press. Physical acceptance remains pending until then.
+
+The original automations and helper registry are retained in /config/backups/nest-events-20261014/before-relay.tar.gz (0600), with hall-light-before.json for the individual automation. The runtime trigger was updated through HA's supported editor API; its legacy YAML keys were normalised by HA. The legacy person-event automation remains outside this doorbell-press scope. Restore the saved hall-light configuration through HA's editor to roll back. Disable the Google Home routine before removing its relay.
+
+## References
+
+- https://www.home-assistant.io/integrations/nest/#google-advanced-protection-program
+- https://support.google.com/accounts/answer/7539956
+- https://developers.home.google.com/automations/schema/reference/entity/sht_device/doorbell_press_event
+- https://www.home-assistant.io/integrations/google_assistant/

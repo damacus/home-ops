@@ -102,6 +102,14 @@ spec:
         globalMounts:
           - path: /config
 
+      nest-doorbell:
+        type: configMap
+        name: home-assistant-nest-doorbell
+        globalMounts:
+          - path: /config/packages/nest-doorbell-relay.yaml
+            subPath: nest-doorbell-relay.yaml
+            readOnly: true
+
       tmpfs:
         type: emptyDir
         advancedMounts:
