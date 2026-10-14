@@ -54,3 +54,23 @@ Do not interpret an HTTP 200 snapshot alone as proof of fresh video.
 To roll back video routing, restore the previous Frigate input and its original
 ExternalSecret together. Retain both Protect entries and all recording volumes.
 Do not enable multiple direct camera consumers during diagnosis.
+
+## Acceptance on 2026-10-14
+
+- Protect relay camera `6acf3c37036af603e400a3f3` is connected, reports 720x720
+  at 15 fps and has continuous recording selected.
+- Original camera `6aca44620188c003e43c69ae` remains in the API and Playback
+  list, disconnected. No camera or recording was deleted. Old recording playback
+  could not be verified in the in-app browser.
+- The bridge RTSP probe decoded 151 H.264 frames and AAC audio over ten seconds.
+  Frigate processes the relay at 5 fps and Birdy remains at 5 fps.
+- One established camera RTSP connection was observed from the Scrypted node.
+- Both phones received the initial test. Laura was subsequently disabled at the
+  owner's request. A physical press then produced picture, sound and working
+  View live on the Pixel.
+- The live HA configuration enables `homeassistant.packages`; package validation
+  passed. Two existing Nest-device automations still refer to a missing device.
+- Talkback investigation: the exact battery-doorbell firmware advertises a PCMU
+  8 kHz sendonly ONVIF backchannel on both profiles. This matches Scrypted's
+  intercom probe, but microphone-to-speaker operation is not verified. The
+  current HA camera view and RTSP relay do not provide talkback controls.
