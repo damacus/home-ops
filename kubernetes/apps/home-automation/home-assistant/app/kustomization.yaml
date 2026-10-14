@@ -11,6 +11,6 @@ resources:
 configMapGenerator:
   - name: home-assistant-nest-doorbell
     files:
-      - nest-doorbell-relay.yaml
+      - nest_doorbell_relay.yaml
 generatorOptions:
   disableNameSuffixHash: true
