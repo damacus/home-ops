@@ -9,3 +9,4 @@ resources:
   - ./backendtlspolicy.yaml
   - ./relay.secret.sops.yaml
   - ./middleware.yaml
+  - ./mcp-route.yaml
