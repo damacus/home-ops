@@ -203,3 +203,10 @@ Validation before gateway rollout: TLS discovery returned HTTP 200 from the
 LiteLLM pod and advertised the hostname-based OAuth endpoints. An anonymous
 MCP POST returned HTTP 401. Authenticated tool listing, a harmless tool call,
 client grant enforcement and refresh-token operation remain rollout checks.
+
+OAuth ownership: the Codex and Claude keys belong to dedicated non-admin
+identities `mcp-codex` and `mcp-claude` respectively. Provision these as
+`internal_user_viewer` with no generated key before applying key policies.
+Complete a separate Scrypted OAuth connection for each identity. Do not attach
+these service keys to the interactive proxy administrator. Preserve their
+`__mcp_only__` model restriction and existing MCP grants.

@@ -37,7 +37,8 @@
         "grafana",
         "scrypted"
       ]
-    }
+    },
+    "user_id": "mcp-codex"
   },
   "claude": {
     "key_alias": "claude-mcp",
@@ -50,6 +51,7 @@
         "grafana",
         "scrypted"
       ]
-    }
+    },
+    "user_id": "mcp-claude"
   }
 }
