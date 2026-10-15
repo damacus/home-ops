@@ -134,3 +134,22 @@ and denial for regular, unknown and machine users.
 
 The action accepts both string email fields and the Email objects returned by
 Zitadel 4.19.4. Both formats use the same exact approved email lists.
+
+### Rollout acceptance recorded on 15 October 2026
+
+The persisted production provider uses `rustfs_policies` for both `claim_name`
+and `groups_claim`, with an empty `role_policy`. The existing client ID and
+secret are retained, and additional audiences are explicitly allowlisted.
+
+| Access case | Evidence | Result |
+| --- | --- | --- |
+| Existing administrator signs in through Zitadel at the original RustFS URL | Live SSO callback succeeded; authenticated bucket browser loaded | Passed |
+| Regular approved user receives general `user` group without a RustFS policy | Action executed in isolation with string and wrapped email values | Passed in isolation; live login unverified |
+| Unknown or machine user receives no RustFS policy | Action executed in isolation through both entry points | Passed in isolation; live denial unverified |
+
+The 28 Node cases verify claim generation, not end-to-end authorisation. A live
+non-admin sign-in remains required before claiming the denied-login acceptance
+case has passed. Use an existing non-admin account without changing its roles;
+confirm RustFS denies access and does not issue a usable console session. Do not
+save tokens or credentials in the evidence. Temporary diagnostic claims and
+RustFS debug logging have been removed.
