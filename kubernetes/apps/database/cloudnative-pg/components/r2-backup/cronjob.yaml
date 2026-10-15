@@ -78,7 +78,7 @@ spec:
                 ephemeral-storage: 38Gi
           containers:
           - name: upload
-            image: ghcr.io/cloudnative-pg/plugin-barman-cloud-sidecar:v0.6.0
+            image: ghcr.io/cloudnative-pg/plugin-barman-cloud-sidecar:v0.15.1
             command:
             - python3
             - -u
