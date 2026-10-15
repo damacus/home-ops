@@ -17,13 +17,6 @@ class PaperlessBackupTest(unittest.TestCase):
             check=True, capture_output=True, text=True
         ).stdout)
 
-    def test_existing_claim_is_retained_for_flux_pruning(self) -> None:
-        app = APP.parent
-        self.assertIn("pvc-ssd.yaml", self.load(app / "kustomization.yaml")["resources"])
-        legacy = self.load(app / "pvc-ssd.yaml")
-        self.assertEqual(legacy["metadata"]["name"], "paperless-data-hdd")
-        self.assertEqual(legacy["spec"]["resources"]["requests"]["storage"], "100Gi")
-
     def test_backup_and_restore_match_application_claim(self) -> None:
         source = self.load(APP / "replicationsource.yaml")["spec"]
         destination = self.load(APP / "replicationdestination.yaml")["spec"]

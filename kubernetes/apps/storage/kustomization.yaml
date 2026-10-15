@@ -8,7 +8,6 @@ resources:
   - ./csi-driver-nfs/ks.yaml
   - ./csi-driver-smb/ks.yaml
   - ./longhorn/ks.yaml
-  - ./minio/ks.yaml
   - ./rustfs/ks.yaml
   - ./rustfs-iam/ks.yaml
   - ./cinc-registry-buckets/ks.yaml

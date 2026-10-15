@@ -1,5 +1,11 @@
 # Whisper SSD migration
 
+> Historical migration procedure. HDD claim definitions and the stopped HDD
+> RustFS release have now been retired from Flux. Do not follow the HDD
+> retention or rollback instructions below as a current recovery procedure.
+> Use the active SSD/Longhorn configuration and verified backups for recovery.
+> See [HDD retirement](https://github.com/damacus/home-ops/blob/main/kubernetes/apps/storage/rustfs/HDD-RETIREMENT.md) for cleanup behaviour.
+
 Live cutover completed on 11 October 2026 with owner approval.
 
 - Original claim: `home-automation/whisper-models`, 20Gi, `nfs-csi-unas`.

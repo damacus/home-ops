@@ -9,8 +9,6 @@ resources:
   - networkpolicy.yaml
   - pvc.yaml
   - ssd-storage.yaml
-  # Keep the existing bound claim; removal would let Flux prune its data.
-  - pvc-ssd.yaml
   - pvc-restore.yaml
   - secret.yaml
   - ./volsync
