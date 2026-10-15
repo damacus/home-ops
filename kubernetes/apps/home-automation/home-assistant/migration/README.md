@@ -1,5 +1,11 @@
 # Home Assistant and code-server SSD migration
 
+> Historical migration procedure. HDD claim definitions and the stopped HDD
+> RustFS release have now been retired from Flux. Do not follow the HDD
+> retention or rollback instructions below as a current recovery procedure.
+> Use the active SSD/Longhorn configuration and verified backups for recovery.
+> See [HDD retirement](https://github.com/damacus/home-ops/blob/main/kubernetes/apps/storage/rustfs/HDD-RETIREMENT.md) for cleanup behaviour.
+
 Both workloads share `/config` and must move together. The target is
 `home-assistant-config-ssd` on `//unas.ironstone.casa/csi_ssd`. SMB presents every
 entry as UID/GID 1000:1000, directories 0770 and files 0660. Both workloads use

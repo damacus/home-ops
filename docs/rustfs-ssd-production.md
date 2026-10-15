@@ -1,5 +1,11 @@
 # RustFS SSD production and retained HDD copy
 
+> Historical migration procedure. HDD claim definitions and the stopped HDD
+> RustFS release have now been retired from Flux. Do not follow the HDD
+> retention or rollback instructions below as a current recovery procedure.
+> Use the active SSD/Longhorn configuration and verified backups for recovery.
+> See [HDD retirement](https://github.com/damacus/home-ops/blob/main/kubernetes/apps/storage/rustfs/HDD-RETIREMENT.md) for cleanup behaviour.
+
 Production is the `rustfs` HelmRelease using the populated
 `rustfs-dr-data-ssd` claim. The PVC name is retained to avoid replacing its data.
 The console is `https://rustfs.ironstone.casa`; S3 is

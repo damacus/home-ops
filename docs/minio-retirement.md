@@ -1,5 +1,11 @@
 # OpenEBS logging retirement
 
+> Historical migration procedure. HDD claim definitions and the stopped HDD
+> RustFS release have now been retired from Flux. Do not follow the HDD
+> retention or rollback instructions below as a current recovery procedure.
+> Use the active SSD/Longhorn configuration and verified backups for recovery.
+> See [HDD retirement](https://github.com/damacus/home-ops/blob/main/kubernetes/apps/storage/rustfs/HDD-RETIREMENT.md) for cleanup behaviour.
+
 The OpenEBS 4.6.2 chart includes a second Loki, Alloy and MinIO stack.
 Keep OpenEBS Hostpath and application volumes. Central Loki in `monitoring`
 uses RustFS and will remain the live logging backend.
