@@ -1,0 +1,11 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: dev
+namePrefix: northops-postgres-r2-
+resources:
+- ../../../../database/cloudnative-pg/components/r2-backup
+patches:
+- path: patch.yaml
+- patch: "apiVersion: external-secrets.io/v1\nkind: ExternalSecret\nmetadata:\n  name:\
+    \ credentials\nspec:\n  target:\n    name: northops-postgres-r2-credentials\n"

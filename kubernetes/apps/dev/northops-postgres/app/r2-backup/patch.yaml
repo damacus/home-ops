@@ -1,0 +1,54 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: physical-backup
+spec:
+  schedule: 15 1 * * *
+  suspend: false
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          initContainers:
+          - name: basebackup
+            env:
+            - name: PGHOST
+              value: northops-postgres-rw.dev.svc.cluster.local
+            resources:
+              limits:
+                ephemeral-storage: 38Gi
+          containers:
+          - name: upload
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: northops-postgres-r2-credentials
+                  key: aws-access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: northops-postgres-r2-credentials
+                  key: aws-secret-access-key
+            - name: BACKUP_PREFIX
+              value: physical/dev/northops-postgres/
+          volumes:
+          - name: work
+            emptyDir:
+              sizeLimit: 38Gi
+          - name: ca
+            secret:
+              secretName: northops-postgres-ca
+              items:
+              - key: ca.crt
+                path: ca.crt
+          - name: client
+            secret:
+              secretName: northops-postgres-replication
+              defaultMode: 288
+              items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
