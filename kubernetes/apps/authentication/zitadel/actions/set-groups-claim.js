@@ -28,7 +28,9 @@ function setGroupsClaim(ctx, api) {
     if (!user.human) {
         return;
     }
-    const userEmail = user.human.email;
+    // Zitadel versions expose either a string or an Email object.
+    const email = user.human.email;
+    const userEmail = email == null ? undefined : String(email);
 
     // Initialize groups array
     const groups = [];
@@ -47,6 +49,12 @@ function setGroupsClaim(ctx, api) {
     else {
         // Optionally log or handle unapproved users
         // For now, we just don't add any groups
+    }
+
+    // RustFS 1.0.1 requires every mapped value to name an existing policy.
+    // Keep general application groups separate from storage permissions.
+    if (groups.includes('consoleAdmin')) {
+        api.v1.claims.setClaim('rustfs_policies', ['consoleAdmin']);
     }
 
     // Set the groups claim in the token

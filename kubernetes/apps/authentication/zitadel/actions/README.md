@@ -12,7 +12,8 @@ This directory contains Zitadel Actions - JavaScript functions that execute duri
 
 **Behavior**:
 
-- Admin users get: `["admin", "user"]`
+- Admin users get: `["admin", "consoleAdmin", "user"]`
+- Existing admin users also get `rustfs_policies: ["consoleAdmin"]`.
 - Regular users get: `["user"]`
 - Unapproved users get: no groups (effectively denied)
 
@@ -79,7 +80,7 @@ You should see:
 
 ```json
 {
-  "groups": ["admin", "user"]  // for admin
+  "groups": ["admin", "consoleAdmin", "user"]  // for admin
   // or
   "groups": ["user"]           // for regular users
 }
@@ -117,3 +118,19 @@ Changes take effect immediately on next login.
 - Review Action logs in Zitadel Console
 - Check JavaScript syntax
 - Ensure `ctx.v1.user.email` is available
+
+## RustFS policy mapping
+
+RustFS uses `rustfs_policies` for both `claim_name` and `groups_claim`.
+Leave `role_policy` empty: a fixed admin policy would grant every authenticated
+user administrator access. General `groups` remain unchanged for other apps.
+Only the existing admin email list receives the dedicated RustFS claim.
+Keep the existing OIDC client ID, secret, callback and strict audience validation.
+These provider settings are persisted in RustFS; update the existing Zitadel
+action in place so its trigger attachments remain intact.
+
+Run `node --test tests/test_zitadel_groups_action.cjs` to verify admin access
+and denial for regular, unknown and machine users.
+
+The action accepts both string email fields and the Email objects returned by
+Zitadel 4.19.4. Both formats use the same exact approved email lists.
