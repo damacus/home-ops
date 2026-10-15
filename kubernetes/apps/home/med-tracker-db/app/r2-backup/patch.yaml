@@ -17,7 +17,7 @@ spec:
               value: med-tracker-rw.home.svc.cluster.local
             resources:
               limits:
-                ephemeral-storage: 3Gi
+                ephemeral-storage: 23Gi
           containers:
           - name: upload
             env:
@@ -36,7 +36,7 @@ spec:
           volumes:
           - name: work
             emptyDir:
-              sizeLimit: 3Gi
+              sizeLimit: 23Gi
           - name: ca
             secret:
               secretName: med-tracker-ca

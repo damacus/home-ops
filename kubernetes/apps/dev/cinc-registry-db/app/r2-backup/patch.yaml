@@ -17,7 +17,7 @@ spec:
               value: cinc-registry-rw.dev.svc.cluster.local
             resources:
               limits:
-                ephemeral-storage: 3Gi
+                ephemeral-storage: 38Gi
           containers:
           - name: upload
             env:
@@ -36,7 +36,7 @@ spec:
           volumes:
           - name: work
             emptyDir:
-              sizeLimit: 3Gi
+              sizeLimit: 38Gi
           - name: ca
             secret:
               secretName: cinc-registry-ca

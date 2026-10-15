@@ -15,7 +15,8 @@ This gives nightly recovery points, not continuous off-site point-in-time
 recovery. A full site loss can lose changes since the last successful job.
 
 Schedules are staggered and each job forbids overlap. Temporary node storage is
-sized per database; it contains the verified base, compressed archive and
+sized to three times each provisioned database capacity plus 8Gi for WAL and
+headroom; it contains the verified base, compressed archive and
 verification download. No NAS volume is mounted. Credentials come from the
 owner's existing R2 item through a dedicated ExternalSecret per database.
 The R2 Standard bucket is `cnpg`; the prefix is isolated per database.
@@ -52,3 +53,7 @@ The running Barman sidecar 0.6.0 ignored it and wrote into the Cluster's normal
 RustFS store. The trial schedule remains suspended. The tagged implementations
 for 0.6.0 and 0.15.1 both derive the backup write destination from the Cluster.
 The dedicated job therefore avoids altering working local backup/WAL routing.
+
+When expanding a database PVC, increase its backup work-volume and ephemeral
+storage limits together. These limits cover the base, archive and downloaded
+copy; they are not based on the current compressed data size.

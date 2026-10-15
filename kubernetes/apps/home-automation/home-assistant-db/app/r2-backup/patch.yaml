@@ -17,7 +17,7 @@ spec:
               value: home-assistant-green-rw.home-automation.svc.cluster.local
             resources:
               limits:
-                ephemeral-storage: 15Gi
+                ephemeral-storage: 68Gi
           containers:
           - name: upload
             env:
@@ -36,7 +36,7 @@ spec:
           volumes:
           - name: work
             emptyDir:
-              sizeLimit: 15Gi
+              sizeLimit: 68Gi
           - name: ca
             secret:
               secretName: home-assistant-green-ca

@@ -17,7 +17,7 @@ spec:
               value: zitadel-green-rw.authentication.svc.cluster.local
             resources:
               limits:
-                ephemeral-storage: 6Gi
+                ephemeral-storage: 38Gi
           containers:
           - name: upload
             env:
@@ -36,7 +36,7 @@ spec:
           volumes:
           - name: work
             emptyDir:
-              sizeLimit: 6Gi
+              sizeLimit: 38Gi
           - name: ca
             secret:
               secretName: zitadel-green-ca

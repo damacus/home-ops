@@ -75,7 +75,7 @@ spec:
               limits:
                 cpu: '1'
                 memory: 512Mi
-                ephemeral-storage: 20Gi
+                ephemeral-storage: 38Gi
           containers:
           - name: upload
             image: ghcr.io/cloudnative-pg/plugin-barman-cloud-sidecar:v0.6.0
@@ -113,7 +113,7 @@ spec:
           volumes:
           - name: work
             emptyDir:
-              sizeLimit: 20Gi
+              sizeLimit: 38Gi
           - name: script
             configMap:
               name: backup-script
