@@ -1,0 +1,54 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: physical-backup
+spec:
+  schedule: 55 0 * * *
+  suspend: false
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          initContainers:
+          - name: basebackup
+            env:
+            - name: PGHOST
+              value: forgejo-green-rw.dev.svc.cluster.local
+            resources:
+              limits:
+                ephemeral-storage: 3Gi
+          containers:
+          - name: upload
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-green-r2-credentials
+                  key: aws-access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-green-r2-credentials
+                  key: aws-secret-access-key
+            - name: BACKUP_PREFIX
+              value: physical/dev/forgejo-green/
+          volumes:
+          - name: work
+            emptyDir:
+              sizeLimit: 3Gi
+          - name: ca
+            secret:
+              secretName: forgejo-green-ca
+              items:
+              - key: ca.crt
+                path: ca.crt
+          - name: client
+            secret:
+              secretName: forgejo-green-replication
+              defaultMode: 288
+              items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key

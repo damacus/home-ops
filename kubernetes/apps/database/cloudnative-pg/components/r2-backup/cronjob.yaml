@@ -1,0 +1,134 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: physical-backup
+spec:
+  schedule: 35 0 * * *
+  timeZone: Etc/UTC
+  suspend: true
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: cnpg-r2-physical-backup
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 26
+            runAsGroup: 26
+            fsGroup: 26
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+          - name: basebackup
+            image: ghcr.io/cloudnative-pg/postgresql:18.1-202602090816-minimal-trixie@sha256:b09afc1667ed571b31ce35d633fc1139a6fd1a0a25a40546e1432f4d8370e91a
+            command:
+            - sh
+            - -ec
+            - pg_basebackup --pgdata=/work/base --wal-method=stream --checkpoint=spread
+              --manifest-checksums=SHA256 --no-password; pg_verifybackup /work/base;
+              touch /work/verified
+            env:
+            - name: PGHOST
+              value: n8n-green-rw.home-automation.svc.cluster.local
+            - name: PGUSER
+              value: streaming_replica
+            - name: PGSSLMODE
+              value: verify-full
+            - name: PGSSLROOTCERT
+              value: /certs/ca/ca.crt
+            - name: PGSSLCERT
+              value: /certs/client/tls.crt
+            - name: PGSSLKEY
+              value: /certs/client/tls.key
+            - name: PGCONNECT_TIMEOUT
+              value: '15'
+            volumeMounts:
+            - name: work
+              mountPath: /work
+            - name: ca
+              mountPath: /certs/ca
+              readOnly: true
+            - name: client
+              mountPath: /certs/client
+              readOnly: true
+            securityContext: &id001
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+              readOnlyRootFilesystem: true
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+                ephemeral-storage: 1Gi
+              limits:
+                cpu: '1'
+                memory: 512Mi
+                ephemeral-storage: 20Gi
+          containers:
+          - name: upload
+            image: ghcr.io/cloudnative-pg/plugin-barman-cloud-sidecar:v0.6.0
+            command:
+            - python3
+            - -u
+            - /scripts/backup.py
+            env:
+            - name: R2_ENDPOINT
+              value: https://eeded8796e30bfe7b412cd59df29bb34.r2.cloudflarestorage.com
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: credentials
+                  key: aws-access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: credentials
+                  key: aws-secret-access-key
+            volumeMounts:
+            - name: work
+              mountPath: /work
+            - name: script
+              mountPath: /scripts
+              readOnly: true
+            securityContext: *id001
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: '1'
+                memory: 512Mi
+          volumes:
+          - name: work
+            emptyDir:
+              sizeLimit: 20Gi
+          - name: script
+            configMap:
+              name: backup-script
+          - name: ca
+            secret:
+              secretName: n8n-green-ca
+              items:
+              - key: ca.crt
+                path: ca.crt
+          - name: client
+            secret:
+              secretName: n8n-green-replication
+              defaultMode: 288
+              items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key

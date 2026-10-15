@@ -1,0 +1,54 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: physical-backup
+spec:
+  schedule: 35 1 * * *
+  suspend: false
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          initContainers:
+          - name: basebackup
+            env:
+            - name: PGHOST
+              value: n8n-green-rw.home-automation.svc.cluster.local
+            resources:
+              limits:
+                ephemeral-storage: 3Gi
+          containers:
+          - name: upload
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-r2-credentials
+                  key: aws-access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-r2-credentials
+                  key: aws-secret-access-key
+            - name: BACKUP_PREFIX
+              value: n8n-r2-pilot/physical/
+          volumes:
+          - name: work
+            emptyDir:
+              sizeLimit: 3Gi
+          - name: ca
+            secret:
+              secretName: n8n-green-ca
+              items:
+              - key: ca.crt
+                path: ca.crt
+          - name: client
+            secret:
+              secretName: n8n-green-replication
+              defaultMode: 288
+              items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key

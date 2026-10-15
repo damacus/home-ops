@@ -6,3 +6,4 @@ resources:
   - objectstore.yaml
   - cluster.yaml
   - scheduledbackup.yaml
+  - ./r2-backup
