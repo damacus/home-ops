@@ -221,7 +221,7 @@ jobs:
       - name: Setup Helm for monitoring and KSM regressions
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
         with:
-          version: v4.3.0
+          version: v4.3.1
 
       - name: Verify rendered central Loki watcher
         env:
