@@ -24,7 +24,7 @@ assert_yq '.spec.values.persistence.enabled == true and .spec.values.persistence
 assert_yq '.spec.values.service.type == "ClusterIP" and .spec.values.serviceAccount.automountServiceAccountToken == false' "$tempo_app/helmrelease.yaml"
 
 assert_yq '.kind == "CiliumNetworkPolicy" and .spec.endpointSelector.matchLabels."app.kubernetes.io/name" == "tempo"' "$tempo_app/networkpolicy.yaml"
-assert_yq '(([.spec.ingress[].fromEndpoints[].matchLabels."k8s:app.kubernetes.io/name"] | sort | join(",")) == "grafana,med-tracker-canary,tempo-diagnostics,vmagent")' "$tempo_app/networkpolicy.yaml"
+assert_yq '(([.spec.ingress[].fromEndpoints[].matchLabels."k8s:app.kubernetes.io/name"] | sort | join(",")) == "grafana,tempo-diagnostics,vmagent")' "$tempo_app/networkpolicy.yaml"
 assert_yq '[.spec.ingress[].toPorts[] | select(has("rules")) | .rules.http[] | select(.method != "GET" or (.path | test("flush|shutdown")))] | length == 0' "$tempo_app/networkpolicy.yaml"
 for manifest in "$tempo_app"/*.yaml; do
   if yq -e 'select(.kind == "Ingress" or .kind == "HTTPRoute")' "$manifest" >/dev/null 2>&1; then

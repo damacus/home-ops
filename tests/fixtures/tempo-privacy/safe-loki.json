@@ -5,8 +5,8 @@
     "result": [
       {
         "stream": {
-          "app": "med-tracker-canary",
-          "pod": "med-tracker-canary-safe"
+          "app": "example-app",
+          "pod": "example-app-safe"
         },
         "values": [
           [

@@ -17,7 +17,6 @@ Migration removes discovery only. Existing dashboard JSON, folders, datasource U
 | cilium-dashboard | Cilium Metrics | Cilium |
 | cilium-operator-dashboard | Cilium Operator | Cilium |
 | cnpg-grafana-dashboard | CloudNativePG | General |
-| med-tracker-canary-logs-dashboard | Med Tracker Canary Logs | Home |
 | med-tracker-logs-dashboard | Med Tracker Logs | Home |
 | unifi-radio-dashboard | UniFi Radio Health | Network |
 | vm-dashboard-alertmanager-overview | Alertmanager / Overview | General |

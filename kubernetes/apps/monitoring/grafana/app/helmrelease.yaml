@@ -652,11 +652,6 @@ spec:
                   - key: cnp.json
                     path: cnp.json
             - configMap:
-                name: med-tracker-canary-logs-dashboard
-                items:
-                  - key: med-tracker-canary-logs.json
-                    path: Home/med-tracker-canary-logs.json
-            - configMap:
                 name: med-tracker-logs-dashboard
                 items:
                   - key: med-tracker-logs.json

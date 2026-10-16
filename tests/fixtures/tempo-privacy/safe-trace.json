@@ -12,7 +12,7 @@
           {
             "key": "host.name",
             "value": {
-              "stringValue": "med-tracker-canary-safe"
+              "stringValue": "example-app-safe"
             }
           }
         ]
