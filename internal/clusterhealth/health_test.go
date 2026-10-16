@@ -238,7 +238,7 @@ func TestCNPGBackupsSkipClustersWithoutSchedule(t *testing.T) {
 		kubectlGetKey("backups.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{}}),
 		kubectlGetKey("clusters.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{
 			map[string]any{
-				"metadata": map[string]any{"namespace": "home", "name": "med-tracker-canary"},
+				"metadata": map[string]any{"namespace": "home", "name": "unscheduled-test-db"},
 			},
 		}}),
 		kubectlGetKey("scheduledbackups.postgresql.cnpg.io"): jsonOutput(map[string]any{"items": []any{}}),

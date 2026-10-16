@@ -26,7 +26,7 @@ bounded queue of 32 tasks, plus one large-object worker with one pending task.
 Conditional writes protect objects that arrive through replication. Its v9
 predecessor was suspended and its pod deleted before this Job started. The final
 1,000 verification records were persisted and read back before copying resumed.
-The legacy CNPG and canary backup seeds have completed without errors; Loki is
+The legacy CNPG backup seeds have completed without errors; Loki is
 still copying. This is not a successful final audit or a production cutover.
 
 The v10 online seed skips 14 buckets already seeded by predecessors. This is
@@ -104,7 +104,7 @@ their existing production URLs; their endpoint manifests need no change.
 - Source and destination bucket settings matched in 192 checks.
 - All RustFS PVs currently use `Retain`.
 
-The inactive `rustfs-cnpg-med-tracker-canary` user has no current Kubernetes
+An inactive legacy CNPG user has no current Kubernetes
 credential reference and is not recreated on SSD. Its original identity metadata
 was preserved privately. Source IAM export also reports `policy does not exist`,
 so persistent STS mappings are not fully inventoried. Retain the HDD metadata for

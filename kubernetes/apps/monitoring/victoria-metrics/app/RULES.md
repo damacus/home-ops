@@ -20,8 +20,8 @@ on the source inventory remaining unchanged; compare full identities and queries
 not counts alone, after deployment.
 
 The database rule resources in home repeat the same unfiltered queries as the
-six-rule set in home-automation. The five-rule canary set is a subset. Keep their
-resources in place but exclude home from selection to avoid repeated evaluation.
+six-rule set in home-automation. Keep their resources in place but exclude home
+from selection to avoid repeated evaluation.
 Storage contains the same 11 Longhorn queries already loaded from monitoring,
 and a legacy MinIO rule set whose targets have not been qualified. Keep storage
 excluded. Do not select all namespaces until those additional sources are needed

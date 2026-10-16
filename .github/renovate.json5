@@ -158,14 +158,6 @@
       automerge: true,
     },
     {
-      description: "Auto-merge MedTracker canary image updates",
-      matchPackageNames: ["ghcr.io/damacus/med-tracker"],
-      matchFileNames: ["kubernetes/apps/home/med-tracker-canary/**"],
-      matchUpdateTypes: ["digest", "minor", "patch", "pin", "pinDigest"],
-      groupName: "MedTracker canary",
-      automerge: true,
-    },
-    {
       description: "Keep production MedTracker upgrades manual",
       matchFileNames: ["kubernetes/apps/home/med-tracker/**"],
       groupName: "MedTracker production",
