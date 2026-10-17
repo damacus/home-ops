@@ -40,7 +40,7 @@ spec:
           app:
             image:
               repository: ghcr.io/blakeblackshear/frigate
-              tag: 0.18.1-rk@sha256:d6278a59227c660a6418581871927191b35283048e0e2e28c747a830422cd019
+              tag: 0.18.2-rk@sha256:2e331f98f362628811dd0e26d307fed58b0bf1f9f0d34de1ff5b370b8846b16a
             env:
               TZ: Europe/London
               FRIGATE_MQTT_PASSWORD:
