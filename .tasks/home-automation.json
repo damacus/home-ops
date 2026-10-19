@@ -673,5 +673,16 @@
             "Preserve live Frigate SSD media configuration before resuming its suspended Flux Kustomization"
         ],
         "passes": false
+    },
+    {
+        "category": "unifi-mcp",
+        "description": "Private UniFi Network and Protect MCP servers behind LiteLLM",
+        "steps": [
+            "Validate manifests and ARM64 image availability",
+            "Provision dedicated read-only local UniFi service accounts in 1Password",
+            "Activate unifi-mcp Flux Kustomization and reconcile Codex/Claude key grants",
+            "Verify read tools, mutation denial, gateway authentication and backend network isolation"
+        ],
+        "passes": false
     }
 ]

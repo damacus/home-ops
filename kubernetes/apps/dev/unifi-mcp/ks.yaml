@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: unifi-mcp
+  namespace: flux-system
+spec:
+  suspend: true
+  targetNamespace: dev
+  path: ./kubernetes/apps/dev/unifi-mcp/app
+  prune: true
+  dependsOn:
+    - name: external-secrets-stores
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
