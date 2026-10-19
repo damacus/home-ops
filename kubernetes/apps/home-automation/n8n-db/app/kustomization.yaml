@@ -6,4 +6,4 @@ resources:
   - externalsecret.yaml
   - objectstore.yaml
   - scheduledbackup.yaml
-  - ./r2-backup
+  - r2-credentials.yaml

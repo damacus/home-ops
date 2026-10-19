@@ -1,6 +1,6 @@
 import os, subprocess, tempfile, shutil, time
 from pathlib import Path
-IMAGE="public.ecr.aws/docker/library/eclipse-mosquitto:2.0.22@sha256:199ea8ef2e35ec2b1b37e59cfd1dbae538ed4dfa4a2251a121a52215a6248a21"
+IMAGE="docker.io/library/eclipse-mosquitto:2.0.22@sha256:199ea8ef2e35ec2b1b37e59cfd1dbae538ed4dfa4a2251a121a52215a6248a21"
 APP=Path(__file__).resolve().parents[1] / "kubernetes/apps/home-automation/mosquitto/app"
 def run(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     result=subprocess.run(["docker",*args],capture_output=True,text=True,timeout=30)
