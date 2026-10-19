@@ -8,7 +8,6 @@ Homelab Kubernetes using Flux.
 
 - **[AGENTS.md](AGENTS.md)**: Comprehensive project specification and AI agent instructions.
 - **[GEMINI.md](GEMINI.md)**: Maintenance guide and common automation tasks.
-- **[.tasks/](.tasks/)**: Segregated task lists for tracking development progress.
 
 ## 🚀 Getting Started
 
@@ -16,7 +15,7 @@ Homelab Kubernetes using Flux.
    ```bash
    mise install
    ```
-2. Review the task lists in `.tasks/` to see current progress and pending items.
+2. Read the relevant application README for deployment and maintenance procedures.
 3. List the repository automation:
    ```bash
    task --list

@@ -30,7 +30,6 @@ includes:
   user:
     taskfile: .taskfiles/User
     optional: true
-  jq: .taskfiles/Jq/Taskfile.yaml
   postgres:
     aliases: ["pg"]
     taskfile: .taskfiles/Postgres/Taskfile.yaml
