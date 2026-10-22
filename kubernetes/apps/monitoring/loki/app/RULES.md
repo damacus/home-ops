@@ -2,7 +2,7 @@
 
 Vector sends Kubernetes container logs to monitoring Loki. These rules complement
 VictoriaMetrics alerts for certificates, workloads, databases, backups, node and
-volume capacity, Longhorn, Tempo and Home Assistant. They do not replace those
+volume capacity, Longhorn and Home Assistant. They do not replace those
 metrics alerts.
 
 ## Provisioning
