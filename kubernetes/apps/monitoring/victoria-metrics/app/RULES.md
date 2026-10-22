@@ -7,7 +7,7 @@ Select these namespace names explicitly:
 
 | Namespace | Coverage |
 | --- | --- |
-| monitoring | Existing chart defaults, miscellaneous rules, Longhorn and Tempo |
+| monitoring | Existing chart defaults, miscellaneous rules, Longhorn |
 | cert-manager | Certificate readiness and expiry |
 | home-automation | One global CloudNativePG rule set covering all scraped databases |
 | kube-system | Kured reboot coordination |

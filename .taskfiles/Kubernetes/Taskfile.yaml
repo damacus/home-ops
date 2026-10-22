@@ -8,7 +8,6 @@ vars:
   RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
   RUSTFS_IAM_LIVE_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam-live.mql.yaml"
   RUSTFS_IAM_LIVE_CHECK_SCRIPT: "{{.SCRIPTS_DIR}}/rustfs_iam_live_check.sh"
-  TEMPO_TRACE_BACKEND_CONTRACT: "{{.SCRIPTS_DIR}}/tempo_trace_backend_contract.sh"
 
 tasks:
   resources:
@@ -326,16 +325,6 @@ tasks:
       - { msg: "Missing jq", sh: "command -v jq >/dev/null" }
       - { msg: "Missing RustFS live IAM policy", sh: "test -f {{.RUSTFS_IAM_LIVE_POLICY}}" }
       - { msg: "Missing RustFS live IAM check script", sh: "test -f {{.RUSTFS_IAM_LIVE_CHECK_SCRIPT}}" }
-
-  tempo-trace-backend-contract:
-    desc: Validate Tempo durable storage, private access, and telemetry privacy
-    silent: true
-    cmd: bash {{.TEMPO_TRACE_BACKEND_CONTRACT}} {{.ROOT_DIR}}
-    preconditions:
-      - { msg: "Missing bash", sh: "command -v bash >/dev/null" }
-      - { msg: "Missing yq", sh: "command -v yq >/dev/null" }
-      - { msg: "Missing rg", sh: "command -v rg >/dev/null" }
-      - { msg: "Missing Tempo trace backend contract script", sh: "test -f {{.TEMPO_TRACE_BACKEND_CONTRACT}}" }
 
   edge-smoke:
     desc: Run baseline HTTP and WebSocket smoke checks for the Traefik edge

@@ -79,11 +79,7 @@ jobs:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Kubernetes/Taskfile.yaml'
               - 'kubernetes/apps/home/med-tracker/**'
-              - 'kubernetes/apps/monitoring/tempo/**'
               - 'kubernetes/apps/storage/rustfs-iam/**'
-              - 'scripts/tempo_privacy_check.sh'
-              - 'scripts/tempo_trace_backend_contract.sh'
-              - 'tests/fixtures/tempo-privacy/**'
               - 'tests/mondoo/rustfs-iam.mql.yaml'
 
   yaml-lint:
@@ -312,9 +308,6 @@ jobs:
 
       - name: Run RustFS IAM policy
         run: task k8s:rustfs-iam-policy
-
-      - name: Run Tempo trace backend contract
-        run: task k8s:tempo-trace-backend-contract
 
   flate-test:
     name: Flate Test
