@@ -65,6 +65,7 @@ type fakeWorkloads struct {
 
 func (w *fakeWorkloads) Preflight(context.Context) error { return nil }
 func (w *fakeWorkloads) Quiesce(context.Context) error   { return nil }
+func (w *fakeWorkloads) Ready(context.Context) error     { w.calls = append(w.calls, "ready"); return nil }
 func (w *fakeWorkloads) Job(_ context.Context, _ string, stage string, _ []string) error {
 	w.calls = append(w.calls, stage)
 	if stage == w.failStage {
@@ -122,6 +123,20 @@ func TestCompletedWeekIsNoOp(t *testing.T) {
 	}
 	if len(db.events) != 0 || len(w.calls) != 0 {
 		t.Fatal("same-week image mismatch changed data")
+	}
+}
+
+func TestSuccessfulResetWaitsForRuntimeBeforeJourney(t *testing.T) {
+	db := &fakeStore{held: true, state: State{Phase: "empty"}}
+	w := &fakeWorkloads{}
+	if err := Run(context.Background(), config(), db, w, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(w.calls, ",") != "preflight,migrate,seed,ready,smoke" {
+		t.Fatalf("unsafe startup order: %v", w.calls)
+	}
+	if db.state.Phase != "ready" {
+		t.Fatal("successful journey did not reopen canary")
 	}
 }
 

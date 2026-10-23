@@ -29,8 +29,15 @@ type Kubernetes struct {
 }
 
 type pod struct {
-	Metadata struct{ Name, UID string }
-	Spec     struct{ Containers []struct{ Image string } }
+	Metadata struct {
+		Name, UID         string
+		Labels            map[string]string
+		DeletionTimestamp *string
+	}
+	Spec   struct{ Containers []struct{ Image string } }
+	Status struct {
+		Conditions []struct{ Type, Status string }
+	}
 }
 type job struct {
 	Metadata struct{ Name string }
@@ -148,6 +155,35 @@ func (k *Kubernetes) Quiesce(ctx context.Context) error {
 			}
 		}
 		return true, nil
+	})
+}
+
+// Ready waits out database fencing/startup backoff before submitting the journey.
+func (k *Kubernetes) Ready(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	return k.poll(ctx, func() (bool, error) {
+		pods, err := k.pods(ctx)
+		if err != nil {
+			return false, err
+		}
+		ready := make(map[string]bool)
+		for _, pod := range pods {
+			if pod.Metadata.DeletionTimestamp != nil {
+				continue
+			}
+			for _, container := range pod.Spec.Containers {
+				if container.Image != k.Image {
+					return false, errors.New("runtime image changed during reset")
+				}
+			}
+			for _, condition := range pod.Status.Conditions {
+				if condition.Type == "Ready" && condition.Status == "True" {
+					ready[pod.Metadata.Labels["app"]] = true
+				}
+			}
+		}
+		return ready["medtracker-canary-server"] && ready["medtracker-canary-worker"] && ready["medtracker-canary-scheduler"], nil
 	})
 }
 

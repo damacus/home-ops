@@ -24,6 +24,7 @@ type Store interface {
 type Workloads interface {
 	Preflight(context.Context) error
 	Quiesce(context.Context) error
+	Ready(context.Context) error
 	Job(context.Context, string, string, []string) error
 }
 
@@ -81,6 +82,7 @@ func Run(ctx context.Context, c Config, db Store, workloads Workloads, now time.
 		}},
 		{name: "seeding", run: func(ctx context.Context) error { return workloads.Job(ctx, runID, "seed", c.SeedArgs) }},
 		{name: "verifying", run: db.Open},
+		{name: "verifying", run: workloads.Ready},
 		{name: "verifying", run: func(ctx context.Context) error { return workloads.Job(ctx, runID, "smoke", c.SmokeArgs) }},
 	}
 	for _, step := range steps {

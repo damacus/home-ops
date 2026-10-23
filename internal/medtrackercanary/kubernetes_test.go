@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestQuiesceUsesCanaryNamespaceAndUIDPreconditions(t *testing.T) {
@@ -43,6 +44,19 @@ func TestQuiesceUsesCanaryNamespaceAndUIDPreconditions(t *testing.T) {
 	k := &Kubernetes{Client: server.Client(), Endpoint: server.URL}
 	if err := k.Quiesce(context.Background()); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestReadyCannotAcceptOnlyTheServer(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `{"items":[{"metadata":{"labels":{"app":"medtracker-canary-server"}},"spec":{"containers":[{"image":%q}]},"status":{"conditions":[{"type":"Ready","status":"True"}]}}]}`, config().Image)
+	}))
+	defer server.Close()
+	k := &Kubernetes{Client: server.Client(), Endpoint: server.URL, Image: config().Image}
+	if k.Ready(ctx) == nil {
+		t.Fatal("smoke admitted before worker and scheduler started")
 	}
 }
 
