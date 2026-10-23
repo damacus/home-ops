@@ -47,5 +47,10 @@ Avatar/dm+d storage and their scheduled external work are excluded initially.
 Synthetic seed acceptance covers sign-in, household selection, medication setup,
 dose recording with stock changes, and one allowed/denied care permission case.
 
+The canary omits the optional queue reaper so a job waiting through an admission
+pause cannot be claimed by another worker. After a worker crash, confirm the old
+worker has terminated before using native job recovery, or let the next weekly
+reset replace the disposable queue.
+
 Run offline behaviour checks with `task kubernetes:test-medtracker-canary`.
 Use the existing render/schema/Mondoo checks before enabling GitOps resources.

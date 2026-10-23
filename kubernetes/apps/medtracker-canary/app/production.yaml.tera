@@ -96,9 +96,6 @@ mailer:
 queue:
   kind: Postgres
   uri: <%= get_env(name="DATABASE_URL", default="") %>
-  reaper:
-    age_minutes: 10
-    interval_seconds: 60
 database:
   uri: <%= get_env(name="DATABASE_URL", default="") %>
   enable_logging: false
