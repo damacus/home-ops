@@ -23,7 +23,6 @@ This repository, `home-ops`, is a production-grade home infrastructure managemen
 - `.mise/tasks/provisioning/`: Mise entry points for image and node operations.
 - `.taskfiles/`: Modular Taskfile definitions.
 - `scripts/`: Support scripts for automation.
-- `.tasks/`: **NEW** Segregated task lists for AI agents to track progress.
 
 ## Development Workflow & Rules
 
@@ -53,8 +52,8 @@ We are building a highly resilient, automated, and observable home infrastructur
 
 When working in this repository:
 
-- Consult `.tasks/*.json` for your current objectives.
-- Update the relevant task list by setting `"passes": true` only after verifying the intended functionality with the appropriate checks.
+- Treat the current user request as the scope of work. Existing production services are not a backlog of features to implement.
+- Record scope, validation and outstanding work in the PR description. Use application READMEs for operating procedures; do not recreate generated task ledgers or session progress logs.
 - Reference `GEMINI.md` for specific maintenance commands and troubleshooting.
 - Never delete the root `docs.txt`. It is the historical field guide to the
   Armbian build system and preserves hard-won context for future engineers and

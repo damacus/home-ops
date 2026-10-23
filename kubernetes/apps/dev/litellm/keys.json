@@ -35,7 +35,9 @@
       "mcp_servers": [
         "home_assistant",
         "grafana",
-        "scrypted"
+        "scrypted",
+        "unifi_network",
+        "unifi_protect"
       ]
     },
     "user_id": "mcp-codex"
@@ -49,7 +51,9 @@
       "mcp_servers": [
         "home_assistant",
         "grafana",
-        "scrypted"
+        "scrypted",
+        "unifi_network",
+        "unifi_protect"
       ]
     },
     "user_id": "mcp-claude"

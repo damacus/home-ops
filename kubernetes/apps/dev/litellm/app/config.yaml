@@ -42,3 +42,11 @@ mcp_servers:
     token_url: https://scrypted.ironstone.casa/endpoint/scrypted-mcp/public/token
     registration_url: https://scrypted.ironstone.casa/endpoint/scrypted-mcp/public/register
     allow_all_keys: false
+  unifi_network:
+    url: http://unifi-network-mcp.dev.svc.cluster.local:3000/mcp
+    transport: http
+    allow_all_keys: false
+  unifi_protect:
+    url: http://unifi-protect-mcp.dev.svc.cluster.local:3001/mcp
+    transport: http
+    allow_all_keys: false

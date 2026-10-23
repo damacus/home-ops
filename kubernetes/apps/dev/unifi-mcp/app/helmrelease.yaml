@@ -1,0 +1,186 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: unifi-network-mcp
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    controllers:
+      unifi-network-mcp:
+        replicas: 1
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        containers:
+          app:
+            image:
+              repository: ghcr.io/sirkirby/unifi-network-mcp
+              tag: 0.39.0
+            env:
+              UNIFI_HOST: unifi.ironstone.casa
+              UNIFI_PORT: '443'
+              UNIFI_VERIFY_SSL: 'true'
+              UNIFI_MCP_HTTP_ENABLED: 'true'
+              UNIFI_MCP_HTTP_TRANSPORT: streamable-http
+              UNIFI_MCP_HOST: 0.0.0.0
+              UNIFI_MCP_PORT: '3000'
+              UNIFI_MCP_ALLOWED_HOSTS: unifi-network-mcp.dev.svc.cluster.local:3000
+              UNIFI_MCP_ENABLE_DNS_REBINDING_PROTECTION: 'true'
+              UNIFI_TOOL_REGISTRATION_MODE: lazy
+              UNIFI_TOOL_PERMISSION_MODE: confirm
+              UNIFI_POLICY_CREATE: 'false'
+              UNIFI_POLICY_UPDATE: 'false'
+              UNIFI_POLICY_DELETE: 'false'
+              UNIFI_REDACT_SENSITIVE_FIELDS: 'true'
+              HOME: /tmp
+            envFrom:
+              - secretRef:
+                  name: unifi-network-mcp
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 10m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+            probes:
+              startup:
+                enabled: true
+                type: TCP
+              readiness:
+                enabled: true
+                type: TCP
+              liveness:
+                enabled: true
+                type: TCP
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-credentials
+    service:
+      app:
+        controller: unifi-network-mcp
+        ports:
+          http:
+            port: 3000
+    persistence:
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: unifi-protect-mcp
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    controllers:
+      unifi-protect-mcp:
+        replicas: 1
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        containers:
+          app:
+            image:
+              repository: ghcr.io/sirkirby/unifi-protect-mcp
+              tag: 0.9.4
+            env:
+              UNIFI_HOST: unifi.ironstone.casa
+              UNIFI_PORT: '443'
+              UNIFI_VERIFY_SSL: 'true'
+              UNIFI_MCP_HTTP_ENABLED: 'true'
+              UNIFI_MCP_HTTP_TRANSPORT: streamable-http
+              UNIFI_MCP_HOST: 0.0.0.0
+              UNIFI_MCP_PORT: '3001'
+              UNIFI_MCP_ALLOWED_HOSTS: unifi-protect-mcp.dev.svc.cluster.local:3001
+              UNIFI_MCP_ENABLE_DNS_REBINDING_PROTECTION: 'true'
+              UNIFI_TOOL_REGISTRATION_MODE: lazy
+              UNIFI_TOOL_PERMISSION_MODE: confirm
+              UNIFI_POLICY_CREATE: 'false'
+              UNIFI_POLICY_UPDATE: 'false'
+              UNIFI_POLICY_DELETE: 'false'
+              UNIFI_REDACT_SENSITIVE_FIELDS: 'true'
+              HOME: /tmp
+            envFrom:
+              - secretRef:
+                  name: unifi-protect-mcp
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 10m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+            probes:
+              startup:
+                enabled: true
+                type: TCP
+              readiness:
+                enabled: true
+                type: TCP
+              liveness:
+                enabled: true
+                type: TCP
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-credentials
+    service:
+      app:
+        controller: unifi-protect-mcp
+        ports:
+          http:
+            port: 3001
+    persistence:
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
