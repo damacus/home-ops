@@ -117,7 +117,6 @@ spec:
         ports:
           api:
             enabled: true
-            primary: true
             protocol: TCP
             port: &port 5580
           mdns-tcp:

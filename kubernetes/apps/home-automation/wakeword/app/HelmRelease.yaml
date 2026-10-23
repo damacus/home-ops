@@ -73,7 +73,6 @@ spec:
         ports:
           whisper:
             enabled: true
-            primary: true
             port: 10400
             protocol: TCP
 
@@ -84,14 +83,3 @@ spec:
           - path: /data
         size: 1Gi
         accessMode: "ReadWriteMany"
-
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-                - key: kubernetes.io/hostname
-                  operator: In
-                  values:
-                    - "rocky"
