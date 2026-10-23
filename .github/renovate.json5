@@ -152,7 +152,6 @@
         "ghcr.io/bjw-s-labs/helm/app-template",
         "keda-add-ons-http",
         "prometheus-operator-crds",
-        "ghcr.io/grafana-community/helm-charts/tempo",
       ],
       matchUpdateTypes: ["digest", "minor", "patch", "pin", "pinDigest"],
       automerge: true,

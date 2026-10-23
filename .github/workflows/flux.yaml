@@ -79,11 +79,7 @@ jobs:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Kubernetes/Taskfile.yaml'
               - 'kubernetes/apps/home/med-tracker/**'
-              - 'kubernetes/apps/monitoring/tempo/**'
               - 'kubernetes/apps/storage/rustfs-iam/**'
-              - 'scripts/tempo_privacy_check.sh'
-              - 'scripts/tempo_trace_backend_contract.sh'
-              - 'tests/fixtures/tempo-privacy/**'
               - 'tests/mondoo/rustfs-iam.mql.yaml'
 
   yaml-lint:
@@ -159,9 +155,9 @@ jobs:
           cache: false
 
       - name: Setup Mise
-        uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
         with:
-          version: 2026.10.15
+          version: 2026.10.17
           install: false
           cache: false
 
@@ -312,9 +308,6 @@ jobs:
 
       - name: Run RustFS IAM policy
         run: task k8s:rustfs-iam-policy
-
-      - name: Run Tempo trace backend contract
-        run: task k8s:tempo-trace-backend-contract
 
   flate-test:
     name: Flate Test
