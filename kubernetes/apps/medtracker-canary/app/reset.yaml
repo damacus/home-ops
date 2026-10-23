@@ -1,0 +1,92 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: medtracker-canary-reset
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: medtracker-canary-reset
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, delete]
+  - apiGroups: [batch]
+    resources: [jobs]
+    verbs: [get, list, create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: medtracker-canary-reset
+subjects:
+  - kind: ServiceAccount
+    name: medtracker-canary-reset
+roleRef:
+  kind: Role
+  name: medtracker-canary-reset
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: medtracker-canary-reset
+spec:
+  suspend: true
+  schedule: "0 4 * * 0"
+  timeZone: Europe/London
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 1800
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 1200
+      ttlSecondsAfterFinished: 604800
+      template:
+        metadata:
+          labels:
+            app: medtracker-canary-reset
+            app.kubernetes.io/part-of: medtracker-canary
+        spec:
+          serviceAccountName: medtracker-canary-reset
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: ghcr-credentials
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            fsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: reset
+              image: ${MEDTRACKER_CANARY_RESET_IMAGE}
+              envFrom:
+                - configMapRef:
+                    name: medtracker-canary-settings
+                - secretRef:
+                    name: medtracker-canary-reset
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: "1"
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              volumeMounts:
+                - name: postgres-ca
+                  mountPath: /etc/postgres
+                  readOnly: true
+          volumes:
+            - name: postgres-ca
+              secret:
+                secretName: medtracker-canary-ca

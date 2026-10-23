@@ -105,6 +105,10 @@ tasks:
       Repeated reconciliation errors must fail even during recent retries.
     cmd: go test ./internal/clusterhealth ./cmd/cluster-health
 
+  test-medtracker-canary:
+    desc: Test canary target guards, reset failures and Kubernetes authority
+    cmd: go test ./internal/medtrackercanary ./cmd/medtracker-canary-reset
+
   health-nodes:
     desc: Report Kubernetes node readiness
     cmds:

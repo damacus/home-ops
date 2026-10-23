@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./prometheusrule.yaml
+  - ./medtracker-canary-rules.yaml
   - ./helmrelease.yaml
   - ./httproute.yaml
   - ./networkpolicy.yaml
