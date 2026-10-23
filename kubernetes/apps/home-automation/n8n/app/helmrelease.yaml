@@ -103,6 +103,9 @@ spec:
               liveness: &probes
                 enabled: true
                 spec:
+                  httpGet:
+                    path: /healthz
+                    port: *port
                   initialDelaySeconds: 30
                   periodSeconds: 10
                   timeoutSeconds: 5

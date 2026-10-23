@@ -45,6 +45,8 @@ hubble:
   relay:
     enabled: true
     rollOutPods: true
+  serviceMonitor:
+    enabled: true
   ui:
     enabled: true
     ingress:

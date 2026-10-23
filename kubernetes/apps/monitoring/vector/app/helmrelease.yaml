@@ -35,6 +35,9 @@ spec:
         - name: prometheus-exporter
           port: 9090
 
+    serviceMonitor:
+      enabled: true
+
     customConfig:
       data_dir: /vector-data
 
@@ -118,7 +121,9 @@ spec:
           address: 0.0.0.0:9090
 
     # Persistence for buffering
+    dataDir: /vector-data
     persistence:
+      enabled: true
       hostPath:
         path: /var/lib/vector-data
 

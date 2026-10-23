@@ -27,3 +27,6 @@ spec:
   values:
     controller:
       replicas: 2
+    externalSnapshotter.enabled: true
+    controller.runOnControlPlane: true
+    enableFSGroupPolicy: true

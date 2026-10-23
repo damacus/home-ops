@@ -213,3 +213,16 @@ spec:
               - path: /run
             app:
               - path: /run
+
+    affinity:
+      # Prefer to be scheduled with redis (soft affinity)
+      podAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 80
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values: [ "redis" ]
+              topologyKey: kubernetes.io/hostname

@@ -64,9 +64,15 @@ spec:
               liveness:
                 enabled: true
                 type: TCP
+                spec:
+                  tcpSocket:
+                    port: 5000
               readiness:
                 enabled: true
                 type: TCP
+                spec:
+                  tcpSocket:
+                    port: 5000
     service:
       main:
         controller: main

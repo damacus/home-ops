@@ -29,6 +29,13 @@ spec:
       imagePullSecrets:
         - dockerhub-credentials
 
+    privateRegistry:
+      registrySecret: dockerhub-credentials
+
+    monitoring:
+      enabled: true
+      createPrometheusRules: true
+
     defaultSettings:
       # Detached backup clones may have a stopped last replica; retain protection
       # for the last running replica while allowing in-place node maintenance.
@@ -38,6 +45,7 @@ spec:
       defaultClass: true
       defaultClassReplicaCount: 2
       defaultDataLocality: best-effort
+      defaultReplicaAutoBalance: best-effort
       migratable: false # ReadWriteMany doesn't work if storage is migratable
 
     ingress:
