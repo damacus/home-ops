@@ -1,0 +1,53 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: medtracker-canary
+spec:
+  instances: 1
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 18
+  storage:
+    size: 2Gi
+    storageClass: openebs-hostpath
+  bootstrap:
+    initdb:
+      database: medtracker_canary_control
+      owner: medtracker_canary_control
+      postInitApplicationSQL:
+        - CREATE ROLE medtracker_canary_status NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS
+        - REVOKE CONNECT ON DATABASE medtracker_canary_control FROM PUBLIC
+        - GRANT CONNECT ON DATABASE medtracker_canary_control TO medtracker_canary_status
+        - >-
+          CREATE TABLE canary_control (
+          scope text PRIMARY KEY CHECK (scope = 'medtracker-canary'),
+          run_id text NOT NULL DEFAULT '', phase text NOT NULL DEFAULT 'empty',
+          week text NOT NULL DEFAULT '', image text NOT NULL DEFAULT '',
+          updated_at timestamptz NOT NULL DEFAULT now(),
+          last_success timestamptz, next_reset timestamptz)
+        - INSERT INTO canary_control(scope) VALUES ('medtracker-canary')
+        - GRANT SELECT ON canary_control TO medtracker_canary_status
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: medtracker-canary-postgres
+  managed:
+    roles:
+      - name: medtracker_canary_status
+        ensure: present
+        login: true
+        superuser: false
+        bypassrls: false
+        passwordSecret:
+          name: medtracker-canary-status
+  monitoring:
+    enablePodMonitor: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi

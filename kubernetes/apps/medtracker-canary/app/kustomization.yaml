@@ -1,0 +1,30 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: medtracker-canary
+resources:
+  - cluster.yaml
+  - externalsecret.yaml
+  - workloads.yaml
+  - reset.yaml
+  - networkpolicy.yaml
+  - quota.yaml
+configMapGenerator:
+  - name: medtracker-canary-config
+    files:
+      - production.yaml=production.yaml.tera
+  - name: medtracker-canary-settings
+    literals:
+      - TZ=Europe/London
+      - BINDING=0.0.0.0
+      - PORT=5150
+      - MEDTRACKER_PUBLIC_HOST=https://med-tracker-canary.ironstone.casa
+      - MEDTRACKER_COOKIE_SECURE=true
+      - MEDTRACKER_AI_MEDICATION_HELP_ENABLED=false
+      - MEDTRACKER_CANARY=true
+      - MEDTRACKER_CANARY_SMOKE_URL=http://medtracker-canary.medtracker-canary.svc.cluster.local:5150
+      - LOCO_IMAGE=${MEDTRACKER_CANARY_IMAGE}
+      - SEED_ARGS=["task","canary-seed","--environment","production"]
+      - SMOKE_ARGS=["task","canary-smoke","--environment","production"]
+generatorOptions:
+  disableNameSuffixHash: true

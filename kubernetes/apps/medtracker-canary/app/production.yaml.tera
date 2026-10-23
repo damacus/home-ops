@@ -1,0 +1,111 @@
+logger:
+  enable: true
+  pretty_backtrace: false
+  level: info
+  format: compact
+settings:
+  canary:
+    enabled: true
+    scope: medtracker-canary
+    control_database_url: <%= get_env(name="MEDTRACKER_CANARY_CONTROL_DATABASE_URL", default="") %>
+    image: <%= get_env(name="LOCO_IMAGE", default="") %>
+    smoke_key: <%= get_env(name="MEDTRACKER_CANARY_SMOKE_KEY", default="") %>
+    run_id: <%= get_env(name="MEDTRACKER_CANARY_RUN_ID", default="") %>
+    epoch: <%= get_env(name="MEDTRACKER_CANARY_EPOCH", default="") %>
+    smoke_url: <%= get_env(name="MEDTRACKER_CANARY_SMOKE_URL", default="") %>
+    reset_time_zone: Europe/London
+    reset_schedule: "0 4 * * 0"
+  time_zone: <%= get_env(name="TZ", default="UTC") %>
+  registration:
+    invite_only: <%= get_env(name="INVITE_ONLY", default="") %>
+  session:
+    inactivity_timeout_days: <%= get_env(name="SESSION_INACTIVITY_TIMEOUT_DAYS", default="7") %>
+    max_age_days: <%= get_env(name="SESSION_MAX_AGE_DAYS", default="30") %>
+  api:
+    app_token_max_age_months: <%= get_env(name="API_APP_TOKEN_MAX_AGE_MONTHS", default="12") %>
+  rails_compat:
+    secret_key_base: <%= get_env(name="RAILS_SECRET_KEY_BASE", default="") %>
+    old_secret_key_base: <%= get_env(name="RAILS_OLD_SECRET_KEY_BASE", default="") %>
+  zitadel:
+    issuer: <%= get_env(name="MEDTRACKER_ZITADEL_ISSUER", default="") %>
+    client_id: <%= get_env(name="MEDTRACKER_ZITADEL_CLIENT_ID", default="") %>
+    client_secret: <%= get_env(name="MEDTRACKER_ZITADEL_CLIENT_SECRET", default="") %>
+  invitation_mail:
+    send_timeout_seconds: <%= get_env(name="MEDTRACKER_INVITATION_MAIL_TIMEOUT_SECONDS", default="30") %>
+  browser_push:
+    private_key: <%= get_env(name="MEDTRACKER_WEB_PUSH_PRIVATE_KEY", default="") %>
+    subject: <%= get_env(name="MEDTRACKER_WEB_PUSH_SUBJECT", default="") %>
+  avatar_storage:
+    endpoint: <%= get_env(name="ACTIVE_STORAGE_S3_ENDPOINT", default="") %>
+    bucket: <%= get_env(name="ACTIVE_STORAGE_S3_BUCKET", default="") %>
+    region: <%= get_env(name="ACTIVE_STORAGE_S3_REGION", default="") %>
+    access_key_id: <%= get_env(name="ACTIVE_STORAGE_S3_ACCESS_KEY_ID", default="") %>
+    secret_access_key: <%= get_env(name="ACTIVE_STORAGE_S3_SECRET_ACCESS_KEY", default="") %>
+    force_path_style: <%= get_env(name="ACTIVE_STORAGE_S3_FORCE_PATH_STYLE", default="true") %>
+  dmd_storage:
+    endpoint: <%= get_env(name="S3_ENDPOINT", default="") %>
+    bucket: <%= get_env(name="S3_BUCKET", default="") %>
+    region: <%= get_env(name="AWS_REGION", default="us-east-1") %>
+    access_key_id: <%= get_env(name="AWS_ACCESS_KEY_ID", default="") %>
+    secret_access_key: <%= get_env(name="AWS_SECRET_ACCESS_KEY", default="") %>
+  api_rate_limit:
+    trusted_proxy_ips: "<%= get_env(name="API_TRUSTED_PROXY_IPS", default="") %>"
+  dose_occurrences:
+    signing_key: <%= get_env(name="AUTH_SESSION_SECRET", default="") %>
+  ai_medication_help:
+    enabled: <%= get_env(name="MEDTRACKER_AI_MEDICATION_HELP_ENABLED", default="false") %>
+    model: <%= get_env(name="MEDTRACKER_AI_MEDICATION_HELP_MODEL", default="") %>
+    provider: <%= get_env(name="MEDTRACKER_AI_MEDICATION_HELP_PROVIDER", default="") %>
+    api_key: <%= get_env(name="MEDTRACKER_AI_MEDICATION_HELP_API_KEY", default="") %>
+    api_base_url: <%= get_env(name="MEDTRACKER_AI_MEDICATION_HELP_API_BASE_URL", default="") %>
+    source_proxy_origin: <%= get_env(name="MEDTRACKER_AI_MEDICATION_SOURCE_PROXY_ORIGIN", default="") %>
+    openai_api_key: <%= get_env(name="OPENAI_API_KEY", default="") %>
+    anthropic_api_key: <%= get_env(name="ANTHROPIC_API_KEY", default="") %>
+    gemini_api_key: <%= get_env(name="GEMINI_API_KEY", default="") %>
+    openrouter_api_key: <%= get_env(name="OPENROUTER_API_KEY", default="") %>
+  browser_session:
+    key: <%= get_env(name="MEDTRACKER_SESSION_KEY", default="") %>
+    secure: <%= get_env(name="MEDTRACKER_COOKIE_SECURE", default="true") %>
+server:
+  port: <%= get_env(name="PORT", default="5150") %>
+  binding: <%= get_env(name="BINDING", default="127.0.0.1") %>
+  host: <%= get_env(name="MEDTRACKER_PUBLIC_HOST", default="http://localhost") %>
+  middlewares:
+    logger:
+      enable: false
+    static:
+      enable: true
+      must_exist: true
+      folder:
+        uri: /static
+        path: assets/static
+      fallback: assets/static/404.html
+      cache_control: no-cache
+workers:
+  mode: BackgroundQueue
+scheduler:
+  jobs:
+    support_access_expiry:
+      run: support-access-expire
+      schedule: "0 * * * * *"
+    browser_reminders:
+      run: browser-reminders
+      schedule: "0 * * * * *"
+mailer:
+  stub: true
+queue:
+  kind: Postgres
+  uri: <%= get_env(name="DATABASE_URL", default="") %>
+  reaper:
+    age_minutes: 10
+    interval_seconds: 60
+database:
+  uri: <%= get_env(name="DATABASE_URL", default="") %>
+  enable_logging: false
+  connect_timeout: 5000
+  idle_timeout: 5000
+  min_connections: 1
+  max_connections: 4
+  auto_migrate: false
+  dangerously_truncate: false
+  dangerously_recreate: false

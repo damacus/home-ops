@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: medtracker-canary
+spec:
+  hard:
+    limits.cpu: "6"
+    limits.memory: 4Gi
+    requests.storage: 4Gi
+    persistentvolumeclaims: "2"
+    pods: "16"
+    count/jobs.batch: "16"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: medtracker-canary
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "1"
+        memory: 512Mi
+      defaultRequest:
+        cpu: 25m
+        memory: 64Mi

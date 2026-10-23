@@ -1,0 +1,251 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medtracker-canary-server
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: medtracker-canary-server
+  template:
+    metadata:
+      labels:
+        app: medtracker-canary-server
+        app.kubernetes.io/part-of: medtracker-canary
+        canary.medtracker.io/runtime: "true"
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: server
+          image: ${MEDTRACKER_CANARY_IMAGE}
+          args: ["start", "--environment", "production"]
+          envFrom:
+            - configMapRef:
+                name: medtracker-canary-settings
+            - secretRef:
+                name: medtracker-canary-runtime
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: config
+              mountPath: /app/config/production.yaml
+              subPath: production.yaml
+              readOnly: true
+            - name: postgres-ca
+              mountPath: /etc/postgres
+              readOnly: true
+          ports:
+            - name: http
+              containerPort: 5150
+          startupProbe:
+            httpGet: {path: /health, port: http}
+            failureThreshold: 60
+            periodSeconds: 5
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 20
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
+        - name: config
+          configMap:
+            name: medtracker-canary-config
+        - name: postgres-ca
+          secret:
+            secretName: medtracker-canary-ca
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medtracker-canary-worker
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: medtracker-canary-worker
+  template:
+    metadata:
+      labels:
+        app: medtracker-canary-worker
+        app.kubernetes.io/part-of: medtracker-canary
+        canary.medtracker.io/runtime: "true"
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: worker
+          image: ${MEDTRACKER_CANARY_IMAGE}
+          args: ["start", "--worker", "--environment", "production"]
+          envFrom:
+            - configMapRef:
+                name: medtracker-canary-settings
+            - secretRef:
+                name: medtracker-canary-runtime
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: config
+              mountPath: /app/config/production.yaml
+              subPath: production.yaml
+              readOnly: true
+            - name: postgres-ca
+              mountPath: /etc/postgres
+              readOnly: true
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
+        - name: config
+          configMap:
+            name: medtracker-canary-config
+        - name: postgres-ca
+          secret:
+            secretName: medtracker-canary-ca
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medtracker-canary-scheduler
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: medtracker-canary-scheduler
+  template:
+    metadata:
+      labels:
+        app: medtracker-canary-scheduler
+        app.kubernetes.io/part-of: medtracker-canary
+        canary.medtracker.io/runtime: "true"
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: scheduler
+          image: ${MEDTRACKER_CANARY_IMAGE}
+          args: ["scheduler", "--environment", "production"]
+          envFrom:
+            - configMapRef:
+                name: medtracker-canary-settings
+            - secretRef:
+                name: medtracker-canary-runtime
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: config
+              mountPath: /app/config/production.yaml
+              subPath: production.yaml
+              readOnly: true
+            - name: postgres-ca
+              mountPath: /etc/postgres
+              readOnly: true
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
+        - name: config
+          configMap:
+            name: medtracker-canary-config
+        - name: postgres-ca
+          secret:
+            secretName: medtracker-canary-ca
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medtracker-canary
+spec:
+  selector:
+    app: medtracker-canary-server
+  ports:
+    - name: http
+      port: 5150
+      targetPort: http
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: medtracker-canary
+spec:
+  parentRefs:
+    - name: traefik-internal
+      namespace: network
+      sectionName: websecure
+  hostnames:
+    - med-tracker-canary.ironstone.casa
+  rules:
+    - backendRefs:
+        - name: medtracker-canary
+          port: 5150

@@ -1,0 +1,40 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: medtracker-canary
+spec:
+  groups:
+    - name: medtracker-canary
+      rules:
+        - alert: MedTrackerCanaryResetFailed
+          expr: >-
+            kube_job_status_failed{namespace="medtracker-canary"} > 0
+            and on(namespace)
+            kube_cronjob_spec_suspend{namespace="medtracker-canary",cronjob="medtracker-canary-reset"} == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: MedTracker canary reset requires recovery
+        - alert: MedTrackerCanaryResetOverdue
+          expr: >-
+            time() - (kube_cronjob_status_last_successful_time{namespace="medtracker-canary",cronjob="medtracker-canary-reset"}
+            or on(namespace,cronjob) kube_cronjob_created{namespace="medtracker-canary",cronjob="medtracker-canary-reset"}) > 8 * 86400
+            and on(namespace,cronjob)
+            kube_cronjob_spec_suspend{namespace="medtracker-canary",cronjob="medtracker-canary-reset"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: MedTracker canary has not reset successfully for eight days
+        - alert: MedTrackerCanaryUnavailable
+          expr: >-
+            kube_deployment_status_replicas_available{namespace="medtracker-canary"} < 1
+            and on(namespace)
+            kube_cronjob_spec_suspend{namespace="medtracker-canary",cronjob="medtracker-canary-reset"} == 0
+          for: 25m
+          labels:
+            severity: warning
+          annotations:
+            summary: MedTracker canary unavailable beyond its reset window
