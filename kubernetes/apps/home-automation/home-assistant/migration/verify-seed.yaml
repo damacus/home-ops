@@ -18,7 +18,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: verify
-          image: quay.io/backube/volsync:0.16.0
+          image: quay.io/backube/volsync:0.17.0
           command: [/bin/bash, -c]
           args:
             - |
