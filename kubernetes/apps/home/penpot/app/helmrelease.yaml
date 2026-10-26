@@ -127,7 +127,7 @@ spec:
                 npx -y @penpot/mcp@stable
             env:
               PENPOT_MCP_REMOTE_MODE: "true"
-              PENPOT_MCP_SERVER_LISTEN_ADDRESS: 0.0.0.0
+              PENPOT_MCP_SERVER_HOST: 0.0.0.0
               PENPOT_MCP_PLUGIN_SERVER_LISTEN_ADDRESS: 0.0.0.0
               PENPOT_MCP_SERVER_ADDRESS: penpot.ironstone.casa
               PENPOT_MCP_LOG_LEVEL: info
