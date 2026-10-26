@@ -26,8 +26,6 @@ spec:
     image:
       tag: "16.0.6-rootless"
       rootless: true
-    podAnnotations:
-      reloader.stakater.com/auto: "true"
     podSecurityContext:
       fsGroup: 1000
       fsGroupChangePolicy: OnRootMismatch

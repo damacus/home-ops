@@ -29,8 +29,6 @@ spec:
   values:
     crds:
       create: true
-    config:
-      LOG_LEVEL: warn
     monitoring:
       podMonitorEnabled: true
       grafanaDashboard:
