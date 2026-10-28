@@ -7,9 +7,18 @@ database cluster, credentials and storage are separate from the existing
 MedTracker service in `home`. The existing service is never a reset or recovery
 target. There is no Rails data import or existing database adoption.
 
-The Flux Kustomization enables the isolated application resources. The weekly
-reset CronJob remains suspended until initialisation and live acceptance succeed.
+The Flux Kustomization enables the isolated application resources. Initialisation
+and live acceptance are complete; the weekly reset CronJob is enabled.
 All demo edits are disposable.
+
+The initial guarded reset completed on 28 October 2026 at 23:22 GMT, including
+capability preflight, migrations, synthetic seeding and the internal HTTP journey.
+Public HTTPS sign-in and synthetic dose recording were verified at desktop and
+mobile widths. Live probes allowed the demo database and internal smoke route;
+connections to the Kubernetes API, existing MedTracker database, shared RustFS,
+SMTP, push and AI endpoints timed out under the demo network policy. An unrelated
+pod was denied server access even with a temporary server-only egress allowance.
+The temporary probes and their policy were removed after acceptance.
 
 The application is pinned to the checked multi-architecture image from MedTracker
 commit `63a08c2f31ba350502809e8d46f06633f69005ae`:
