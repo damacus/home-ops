@@ -75,6 +75,13 @@ test("static documentation can use HTTP fetching without browser rendering", () 
   assert.deepEqual(server.calls[1].slice(-2), ["--scrape-mode", "fetch"]);
 });
 
+test("a documentation landing file can crawl its reviewed hostname", () => {
+  const server = backend();
+  syncCatalog([{ ...source, scope: "hostname" }], server.run);
+  const args = server.calls[1];
+  assert.equal(args[args.indexOf("--scope") + 1], "hostname");
+});
+
 test("a changed source URL fails before mutating an indexed version", () => {
   const server = backend([{ version: "8.1.4", sourceUrl: "https://guides.rubyonrails.org/" }]);
   assert.throws(() => syncCatalog([source], server.run), /source URL/);

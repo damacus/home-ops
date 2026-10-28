@@ -27,8 +27,8 @@ application beyond one pod. Flux pruning is disabled for the PVC; the underlying
 StorageClass uses `Delete`, so manually deleting the claim can still destroy data.
 
 The worker initially requests 250m CPU/1Gi memory and has a 2Gi memory limit.
-Each frontend requests 25m/128Mi and has a 256Mi memory limit. These are starting
-allocations, not measured requirements; observe RSS, OOMs and indexing time before
+Each frontend requests 25m/256Mi and has a 512Mi memory limit. Initial indexing
+exceeded the original 256Mi frontend limits. Observe RSS, OOMs and indexing time before
 adjusting them. Processes run as UID/GID 1000 with dropped capabilities, a
 read-only root filesystem, scratch storage and no Kubernetes API token.
 Worker liveness checks its TCP listener; HTTP readiness has a two-minute failure
@@ -195,4 +195,7 @@ confirmed successful retrievals. Queries and session contents are not copied her
 The added catalogue covers rumdl, Go PDF, go-sqlite3, Actual Budget, release-please,
 reqwest, SeaORM, tempfile, GitHub Actions, Mealie, Kubernetes, pgx, Grape, Sequel,
 Chart.js and Vite. The `mealie cli` request is mapped to Mealie documentation.
+The approved `docs.mealie.io` URL redirects to the official `mealie.io` site;
+both hosts are allowed. Sequel uses hostname scope on `sequel.jeremyevans.net`
+because its `documentation.html` landing page links to sibling guide paths.
 Deadvalues and Desloppify use their maintainer repositories. Moving sources use `current` labels.
