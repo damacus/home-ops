@@ -27,8 +27,8 @@ application beyond one pod. Flux pruning is disabled for the PVC; the underlying
 StorageClass uses `Delete`, so manually deleting the claim can still destroy data.
 
 The worker initially requests 250m CPU/1Gi memory and has a 2Gi memory limit.
-Each frontend requests 25m/128Mi and has a 256Mi memory limit. These are starting
-allocations, not measured requirements; observe RSS, OOMs and indexing time before
+Each frontend requests 25m/256Mi and has a 512Mi memory limit. Initial indexing
+exceeded the original 256Mi frontend limits. Observe RSS, OOMs and indexing time before
 adjusting them. Processes run as UID/GID 1000 with dropped capabilities, a
 read-only root filesystem, scratch storage and no Kubernetes API token.
 Worker liveness checks its TCP listener; HTTP readiness has a two-minute failure

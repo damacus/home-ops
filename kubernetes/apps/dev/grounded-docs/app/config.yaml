@@ -28,6 +28,7 @@ scraper:
         - www.sea-ql.org
         - docs.github.com
         - docs.mealie.io
+        - mealie.io
         - kubernetes.io
         - sequel.jeremyevans.net
         - www.chartjs.org
