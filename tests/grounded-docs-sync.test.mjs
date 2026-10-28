@@ -81,6 +81,12 @@ test("a changed source URL fails before mutating an indexed version", () => {
   assert.equal(server.calls.length, 1);
 });
 
+test("a failed version with old crawl settings requires explicit repair", () => {
+  const server = backend([{ version: source.version, sourceUrl: source.url, status: "failed" }]);
+  assert.throws(() => syncCatalog([{ ...source, excludePatterns: ["**/*.md"] }], server.run), /failed.*repair/);
+  assert.equal(server.calls.length, 1);
+});
+
 test("an active indexing job is left alone", () => {
   for (const status of ["running", "queued", "updating"]) {
     const server = backend([{ version: "8.1.4", sourceUrl: source.url, status }]);

@@ -77,12 +77,28 @@ be partial. Check page counts and retrieval coverage before increasing limits.
 The docs.rs sources exclude `*.md` links: crate README links resolve relative
 to the generated API documentation and can point to missing translated files.
 The rendered README and API pages remain indexed.
+These explicit API filters replace upstream's general repository exclusions;
+generated public modules named `test` or `build` remain eligible inside the
+reviewed crate/version path. Scope and page limits still apply.
 The reviewed sources use HTTP fetch mode because their documentation is served
 as static HTML or repository content. A future source that needs JavaScript
 rendering can select `auto` separately; `auto` renders every HTML page in a browser.
 Refresh uses the scrape options stored with each version, so changing catalogue
 crawl limits alone does not change an existing version's limits: review and edit
 its settings in the UI before re-indexing it.
+
+A failed version stops the sync for operator repair. Refreshing it would reuse
+its old crawl options, including broken links. Confirm no job is active, then
+re-run `scrape` for that exact library/version with the reviewed source options
+and `--no-clean`; this updates options and adds pages without clearing existing
+pages. For the initial Loco API repair:
+
+```fish
+rtk kubectl --context=ironstone -n dev exec deploy/grounded-docs -c worker -- node /app/dist/index.js scrape loco-api https://docs.rs/loco-rs/1.2.0/loco_rs/ --version 1.2.0 --max-pages 500 --max-depth 4 --max-concurrency 2 --scope subpages --ignore-errors=false --exclude-pattern '**/*.md' --scrape-mode fetch --no-clean --server-url http://localhost:8080/api --config /etc/grounded-docs/config.yaml
+```
+
+Check the repaired job completed before resuming the catalogue sync. Do not use
+`--replace` or change the source URL to bypass the guard.
 
 The CronJob runs Sundays at 03:00 UTC once enabled. `sync.mjs` lists the worker's
 catalogue, indexes missing entries, and incrementally refreshes exact existing
