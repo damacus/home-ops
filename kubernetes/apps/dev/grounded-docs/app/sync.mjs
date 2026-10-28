@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 /** Sync only reviewed sources, through the worker; never open its SQLite file. */
@@ -27,7 +27,7 @@ export function syncCatalog(sources, run) {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   try {
     const sources = JSON.parse(readFileSync(new URL("sources.json", import.meta.url), "utf8"));
     const server = process.env.GROUNDED_DOCS_SERVER_URL;

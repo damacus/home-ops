@@ -1,8 +1,8 @@
 # Grounded Docs
 
-Status: staged for review. Both Flux Kustomizations, the HelmRelease and the
-refresh CronJob are suspended. Merging this change does not start Grounded Docs
-or switch the live LiteLLM gateway. Activation requires Dan's review and approval.
+Status: activation authorised on 28 October 2026. Application and backup Flux
+Kustomizations are enabled. The refresh schedule stays suspended until initial
+indexing and gateway access have been verified. Context7 remains configured.
 
 Grounded Docs gives private Codex, Claude and cluster/VPN clients a shared index
 of Loco, Rails and Rust documentation. Search starts with full-text matching;
@@ -40,9 +40,9 @@ Every UI/API path goes through that sign-in, including WebSockets. No public
 route is created. Grounded Docs does not provide its own management authentication.
 
 Agent clients keep `https://litellm.ironstone.casa/mcp` and their existing gateway
-keys. The unreferenced `gateway/` overlay adds only the `grounded_docs` backend
-to the existing LiteLLM app. `gateway/keys.patch` stages the Codex/Claude grants;
-it does not alter active key policy files. Application keys retain no MCP grants
+keys. The active `gateway/` overlay adds only the `grounded_docs` backend
+to the existing LiteLLM app. `litellm/keys.json` includes the Codex/Claude grants;
+apply those policies to the existing live keys with the key workflow below. Application keys retain no MCP grants
 and agent keys retain their existing grants and `__mcp_only__` restriction.
 
 NetworkPolicy permits Traefik to reach the web port, LiteLLM to reach MCP, and
@@ -113,8 +113,7 @@ refresh rules; retrying an incomplete initial scrape can rebuild that version.
    `./kubernetes/apps/dev/grounded-docs/gateway`. Do not add a second Flux
    Kustomization that manages the same LiteLLM resources. Preserve all existing
    dependencies and add `grounded-docs` to that Kustomization's `dependsOn`.
-7. Run `git apply --check kubernetes/apps/dev/grounded-docs/gateway/keys.patch`,
-   then apply that patch to the policy file in the reviewed activation change.
+7. The reviewed `litellm/keys.json` already contains the Grounded Docs grants.
    Use the existing `scripts/litellm_keys.py codex` and `claude` preview/apply
    workflow with secrets injected through `op run`, as documented in the LiteLLM
    README. Do not reset spend, rotate keys or grant application keys MCP access.
@@ -158,3 +157,15 @@ not stop running pods. If application shutdown is needed, use an approved
 GitOps change to its replica count. A previous image may not understand a newer
 database schema: preserve a backup and recover into a separate claim instead of
 assuming an image downgrade reverses migrations.
+
+## Context7 source audit
+
+A local Codex log audit covered 21 October 2026 23:04 UTC through 28 October
+2026 23:04 UTC. It found 45 attempted Context7 calls in available session logs.
+These are calls recorded in local exec orchestration, not account-wide usage or
+confirmed successful retrievals. Queries and session contents are not copied here.
+
+The added catalogue covers rumdl, Go PDF, go-sqlite3, Actual Budget, release-please,
+reqwest, SeaORM, tempfile, GitHub Actions, Mealie, Kubernetes, pgx, Grape, Sequel,
+Chart.js and Vite. The `mealie cli` request is mapped to Mealie documentation.
+Deadvalues and Desloppify use their maintainer repositories. Moving sources use `current` labels.

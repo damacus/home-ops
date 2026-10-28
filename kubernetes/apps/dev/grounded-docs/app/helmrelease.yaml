@@ -4,7 +4,7 @@ kind: HelmRelease
 metadata:
   name: grounded-docs
 spec:
-  suspend: true
+  suspend: false
   interval: 30m
   chart:
     spec:
@@ -101,6 +101,7 @@ spec:
               startup:
                 enabled: true
                 type: TCP
+                custom: true
                 spec:
                   tcpSocket:
                     port: 6280
@@ -108,12 +109,14 @@ spec:
               readiness:
                 enabled: true
                 type: TCP
+                custom: true
                 spec:
                   tcpSocket:
                     port: 6280
               liveness:
                 enabled: true
                 type: TCP
+                custom: true
                 spec:
                   tcpSocket:
                     port: 6280
@@ -127,6 +130,7 @@ spec:
               startup:
                 enabled: true
                 type: TCP
+                custom: true
                 spec:
                   tcpSocket:
                     port: 6281
@@ -134,12 +138,14 @@ spec:
               readiness:
                 enabled: true
                 type: TCP
+                custom: true
                 spec:
                   tcpSocket:
                     port: 6281
               liveness:
                 enabled: true
                 type: TCP
+                custom: true
                 spec:
                   tcpSocket:
                     port: 6281

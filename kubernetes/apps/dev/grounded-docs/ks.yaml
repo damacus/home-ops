@@ -5,7 +5,7 @@ metadata:
   name: grounded-docs-backups
   namespace: flux-system
 spec:
-  suspend: true
+  suspend: false
   targetNamespace: storage
   path: ./kubernetes/apps/dev/grounded-docs/backup
   prune: true
@@ -25,7 +25,7 @@ metadata:
   name: grounded-docs
   namespace: flux-system
 spec:
-  suspend: true
+  suspend: false
   targetNamespace: dev
   path: ./kubernetes/apps/dev/grounded-docs/app
   prune: true

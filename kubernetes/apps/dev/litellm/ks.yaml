@@ -7,9 +7,10 @@ metadata:
 spec:
   suspend: false
   targetNamespace: dev
-  path: ./kubernetes/apps/dev/litellm/app
+  path: ./kubernetes/apps/dev/grounded-docs/gateway
   prune: true
   dependsOn:
+    - name: grounded-docs
     - name: litellm-db
     - name: grafana-mcp
     - name: external-secrets-stores
