@@ -7,9 +7,17 @@ database cluster, credentials and storage are separate from the existing
 MedTracker service in `home`. The existing service is never a reset or recovery
 target. There is no Rails data import or existing database adoption.
 
-The Flux Kustomization and weekly reset CronJob are suspended. Application
-resources and resets stay disabled until explicitly enabled. All canary edits
-are disposable.
+The Flux Kustomization enables the isolated application resources. The weekly
+reset CronJob remains suspended until initialisation and live acceptance succeed.
+All demo edits are disposable.
+
+The application is pinned to the checked multi-architecture image from MedTracker
+commit `63a08c2f31ba350502809e8d46f06633f69005ae`:
+`sha256:b4f81dfa49e15e41d3ed24fb9ca303131984922a467d54f90e4eb7e45ea654f4`.
+The reset runner is pinned to the image from HomeOps commit
+`051205f78449ed017dbe640e2fc9d892fc34f44b`:
+`sha256:bd6a462322ac0d7fee84e54ed0532f5e1c8aef35c33de80dd5b750e920f7edc3`.
+Both references are scoped to this demo's Flux Kustomization.
 
 Before activation:
 
@@ -22,7 +30,7 @@ Before activation:
 - The configured canary seed and journey tasks require the seed-enabled MedTracker
   image. It must implement the read-only `canary-capabilities` task, the
   `canary_seed(scope,image,complete)` completion marker and the control-state
-  admission gate. Current MedTracker main does not implement this contract.
+  admission gate. The pinned application image implements this contract.
 - The gate must close normal server requests until control phase is `ready`;
   only authenticated internal smoke can enter `verifying`; read-only health
   probes may pass while its heartbeat is fresh (maximum 30 seconds).
