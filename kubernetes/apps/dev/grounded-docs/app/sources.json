@@ -11,7 +11,10 @@
     "version": "1.2.0",
     "url": "https://docs.rs/loco-rs/1.2.0/loco_rs/",
     "maxPages": 500,
-    "maxDepth": 4
+    "maxDepth": 4,
+    "excludePatterns": [
+      "**/*.md"
+    ]
   },
   {
     "library": "rails-guides",
@@ -81,7 +84,10 @@
     "version": "0.13.5",
     "url": "https://docs.rs/reqwest/0.13.5/reqwest/",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "excludePatterns": [
+      "**/*.md"
+    ]
   },
   {
     "library": "seaorm",
@@ -95,7 +101,10 @@
     "version": "current",
     "url": "https://docs.rs/tempfile/latest/tempfile/",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "excludePatterns": [
+      "**/*.md"
+    ]
   },
   {
     "library": "github-actions",

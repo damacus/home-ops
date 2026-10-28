@@ -74,6 +74,9 @@ separate catalogue entries; never silently point a fixed version at moving docs.
 The initial crawl is deliberately bounded to 200/500 pages per source and four
 links deep, with concurrency two. The standard-library/API corpus may therefore
 be partial. Check page counts and retrieval coverage before increasing limits.
+The docs.rs sources exclude `*.md` links: crate README links resolve relative
+to the generated API documentation and can point to missing translated files.
+The rendered README and API pages remain indexed.
 Refresh uses the scrape options stored with each version, so changing catalogue
 crawl limits alone does not change an existing version's limits: review and edit
 its settings in the UI before re-indexing it.

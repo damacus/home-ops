@@ -22,6 +22,7 @@ export function syncCatalog(sources, run) {
         "scrape", source.library, source.url, "--version", source.version,
         "--max-pages", String(source.maxPages), "--max-depth", String(source.maxDepth),
         "--max-concurrency", "2", "--scope", "subpages", "--ignore-errors=false",
+        ...(source.excludePatterns ?? []).flatMap((pattern) => ["--exclude-pattern", pattern]),
       ]);
     }
   }

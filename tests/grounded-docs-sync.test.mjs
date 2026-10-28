@@ -61,6 +61,14 @@ test("a repeat sync refreshes only the exact approved version", () => {
   assert.deepEqual(server.calls[1], ["refresh", source.library, "--version", "8.1.4"]);
 });
 
+test("source-specific exclusions prevent crawling broken repository links in API docs", () => {
+  const server = backend();
+  syncCatalog([{ ...source, excludePatterns: ["**/*.md", "**/*.toml"] }], server.run);
+  assert.deepEqual(server.calls[1].slice(-4), [
+    "--exclude-pattern", "**/*.md", "--exclude-pattern", "**/*.toml",
+  ]);
+});
+
 test("a changed source URL fails before mutating an indexed version", () => {
   const server = backend([{ version: "8.1.4", sourceUrl: "https://guides.rubyonrails.org/" }]);
   assert.throws(() => syncCatalog([source], server.run), /source URL/);
