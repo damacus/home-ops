@@ -24,7 +24,7 @@ configMapGenerator:
       - MEDTRACKER_AI_MEDICATION_HELP_ENABLED=false
       - MEDTRACKER_CANARY=true
       - MEDTRACKER_CANARY_SMOKE_URL=http://medtracker-canary.medtracker-canary.svc.cluster.local:5150
-      - LOCO_IMAGE=${MEDTRACKER_CANARY_IMAGE}
+      - LOCO_IMAGE=ghcr.io/damacus/med-tracker-loco@sha256:b4f81dfa49e15e41d3ed24fb9ca303131984922a467d54f90e4eb7e45ea654f4
       - SEED_ARGS=["task","canary-seed","--environment","production"]
       - SMOKE_ARGS=["task","canary-smoke","--environment","production"]
 generatorOptions:

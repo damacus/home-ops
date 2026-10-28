@@ -64,7 +64,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: reset
-              image: ${MEDTRACKER_CANARY_RESET_IMAGE}
+              image: ghcr.io/damacus/home-ops-medtracker-canary-reset@sha256:bd6a462322ac0d7fee84e54ed0532f5e1c8aef35c33de80dd5b750e920f7edc3
               envFrom:
                 - configMapRef:
                     name: medtracker-canary-settings

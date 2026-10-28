@@ -17,13 +17,13 @@ commit `63a08c2f31ba350502809e8d46f06633f69005ae`:
 The reset runner is pinned to the image from HomeOps commit
 `051205f78449ed017dbe640e2fc9d892fc34f44b`:
 `sha256:bd6a462322ac0d7fee84e54ed0532f5e1c8aef35c33de80dd5b750e920f7edc3`.
-Both references are scoped to this demo's Flux Kustomization.
+Both images are pinned directly in the demo manifests. Keep the application
+deployment images and the reset runner's `LOCO_IMAGE` setting identical.
 
 Before activation:
 
-- Publish a checked Loco image and reset-runner image; set
-  `MEDTRACKER_CANARY_IMAGE` and `MEDTRACKER_CANARY_RESET_IMAGE` in the Flux
-  substitution source to their immutable registry digests.
+- Publish checked Loco and reset-runner images; update their existing image
+  fields and the `LOCO_IMAGE` setting to the verified immutable registry digests.
 - Create a dedicated `medtracker-canary` 1Password item with `reset_password`,
   `runtime_password`, `status_password`, `session_key`, `smoke_key` and `dose_signing_key`.
   Use independent credentials, a 64-byte Base64 session key and strong signing key.

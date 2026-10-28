@@ -6,10 +6,6 @@ metadata:
   namespace: flux-system
 spec:
   suspend: false
-  postBuild:
-    substitute:
-      MEDTRACKER_CANARY_IMAGE: ghcr.io/damacus/med-tracker-loco@sha256:b4f81dfa49e15e41d3ed24fb9ca303131984922a467d54f90e4eb7e45ea654f4
-      MEDTRACKER_CANARY_RESET_IMAGE: ghcr.io/damacus/home-ops-medtracker-canary-reset@sha256:bd6a462322ac0d7fee84e54ed0532f5e1c8aef35c33de80dd5b750e920f7edc3
   targetNamespace: medtracker-canary
   path: ./kubernetes/apps/medtracker-canary/app
   prune: true
