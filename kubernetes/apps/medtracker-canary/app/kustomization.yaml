@@ -18,7 +18,8 @@ configMapGenerator:
       - TZ=Europe/London
       - BINDING=0.0.0.0
       - PORT=5150
-      - MEDTRACKER_PUBLIC_HOST=https://med-tracker-canary.ironstone.casa
+      - MEDTRACKER_PUBLIC_HOST=https://med-tracker-loco.damacus.io
+      - MEDTRACKER_PUBLIC_ORIGIN=https://med-tracker-loco.damacus.io
       - MEDTRACKER_COOKIE_SECURE=true
       - MEDTRACKER_AI_MEDICATION_HELP_ENABLED=false
       - MEDTRACKER_CANARY=true

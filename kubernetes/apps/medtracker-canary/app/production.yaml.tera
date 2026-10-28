@@ -4,6 +4,7 @@ logger:
   level: info
   format: compact
 settings:
+  public_origin: <%= get_env(name="MEDTRACKER_PUBLIC_ORIGIN", default="") %>
   canary:
     enabled: true
     scope: medtracker-canary

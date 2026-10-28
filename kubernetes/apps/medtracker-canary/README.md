@@ -1,4 +1,11 @@
-# MedTracker canary
+# MedTracker Loco demo
+
+This public, synthetic demo uses `https://med-tracker-loco.damacus.io` and resets
+every Sunday at 04:00 Europe/London. Data and accounts entered here are disposable;
+never enter real clinical records. The dedicated `medtracker-canary` namespace,
+database cluster, credentials and storage are separate from the existing
+MedTracker service in `home`. The existing service is never a reset or recovery
+target. There is no Rails data import or existing database adoption.
 
 The Flux Kustomization and weekly reset CronJob are suspended. Application
 resources and resets stay disabled until explicitly enabled. All canary edits
@@ -21,9 +28,10 @@ Before activation:
   must stop unless ready or the verifying heartbeat is fresh (maximum 30 seconds).
   Use the read-only control URL under `settings.canary`, not setup credentials.
   Show the weekly data-loss notice and `last_success`/`next_reset` on the UI.
-- Confirm private/VPN access to `med-tracker-canary.ironstone.casa` and Sunday
-  04:00 Europe/London. Neither is an owner-approved live access/schedule decision.
-  Verify Gateway namespace admission and reject untrusted external access.
+- Verify public HTTPS access to `med-tracker-loco.damacus.io`, certificate coverage,
+  DNS ownership and Gateway namespace admission. Direct access to the server from
+  unrelated pods must remain blocked; only the gateway and internal smoke job may
+  reach it. No private/VPN restriction is intended for the demo route.
 - Check allowed gateway/smoke-to-server, app-to-canary-DB, operator-to-DB,
   CNPG-to-API and DNS traffic in isolation. Prove app-to-API, production databases,
   shared storage and Internet mail/push/AI traffic are denied.
