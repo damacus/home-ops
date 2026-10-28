@@ -1,0 +1,41 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: grounded-docs-backups
+  namespace: flux-system
+spec:
+  suspend: true
+  targetNamespace: storage
+  path: ./kubernetes/apps/dev/grounded-docs/backup
+  prune: true
+  dependsOn:
+    - name: longhorn
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: grounded-docs
+  namespace: flux-system
+spec:
+  suspend: true
+  targetNamespace: dev
+  path: ./kubernetes/apps/dev/grounded-docs/app
+  prune: true
+  dependsOn:
+    - name: grounded-docs-backups
+    - name: oauth2-proxy
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m

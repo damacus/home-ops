@@ -16,3 +16,4 @@ resources:
   - ./litellm-db/ks.yaml
   - ./litellm/ks.yaml
   - ./unifi-mcp/ks.yaml
+  - ./grounded-docs/ks.yaml

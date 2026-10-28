@@ -1,0 +1,18 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - helmrelease.yaml
+  - pvc.yaml
+  - httproute.yaml
+  - middleware.yaml
+  - networkpolicy.yaml
+  - refresh-cronjob.yaml
+configMapGenerator:
+  - name: grounded-docs-config
+    files:
+      - config.yaml
+      - sources.json
+      - sync.mjs
+generatorOptions:
+  disableNameSuffixHash: true

@@ -1,0 +1,181 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grounded-docs
+spec:
+  suspend: true
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+    controllers:
+      main:
+        type: deployment
+        replicas: 1
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        containers:
+          worker:
+            image: &image
+              repository: ghcr.io/arabold/docs-mcp-server
+              tag: 3.4.1@sha256:3176256f0716fae6052b3350795e9117bff36ef3acbe9ef5f46b2b47033f4f41
+            args: [worker, --host, 0.0.0.0, --port, '8080', --config, /etc/grounded-docs/config.yaml]
+            env: &env
+              DOCS_MCP_TELEMETRY: 'false'
+              HOME: /tmp
+              XDG_CONFIG_HOME: /tmp/config
+              OPENAI_API_KEY: ''
+            securityContext: &security
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+            resources:
+              requests:
+                cpu: 250m
+                memory: 1Gi
+              limits:
+                memory: 2Gi
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/ping
+                    port: 8080
+                  periodSeconds: 5
+                  failureThreshold: 60
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/ping
+                    port: 8080
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/ping
+                    port: 8080
+          mcp:
+            image: *image
+            args: [mcp, --protocol, http, --host, 0.0.0.0, --port, '6280', --read-only, --server-url, 'http://127.0.0.1:8080/api', --config, /etc/grounded-docs/config.yaml]
+            env: &frontend-env
+              <<: *env
+              DOCS_MCP_STORE_PATH: /tmp/data
+            securityContext: *security
+            resources: &frontend-resources
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 256Mi
+            probes:
+              startup:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: 6280
+                  failureThreshold: 60
+              readiness:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: 6280
+              liveness:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: 6280
+          web:
+            image: *image
+            args: [web, --host, 0.0.0.0, --port, '6281', --server-url, 'http://127.0.0.1:8080/api', --config, /etc/grounded-docs/config.yaml]
+            env: *frontend-env
+            securityContext: *security
+            resources: *frontend-resources
+            probes:
+              startup:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: 6281
+                  failureThreshold: 60
+              readiness:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: 6281
+              liveness:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: 6281
+    service:
+      app:
+        controller: main
+        type: ClusterIP
+        ports:
+          mcp:
+            port: 6280
+          web:
+            port: 6281
+          worker:
+            port: 8080
+    persistence:
+      config:
+        type: configMap
+        name: grounded-docs-config
+        globalMounts:
+          - path: /etc/grounded-docs
+            readOnly: true
+      data:
+        existingClaim: grounded-docs-data
+        advancedMounts:
+          main:
+            worker:
+              - path: /data
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+      shm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 256Mi
+        advancedMounts:
+          main:
+            worker:
+              - path: /dev/shm

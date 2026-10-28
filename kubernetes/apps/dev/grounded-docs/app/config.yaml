@@ -1,0 +1,25 @@
+---
+app:
+  telemetryEnabled: false
+server:
+  protocol: http
+  host: 0.0.0.0
+  publicUrl: https://grounded-docs.ironstone.casa
+  allowedOrigins:
+    - http://grounded-docs.dev.svc.cluster.local:8080
+    - http://grounded-docs.dev.svc.cluster.local:6280
+scraper:
+  maxPages: 500
+  maxDepth: 4
+  maxConcurrency: 2
+  security:
+    network:
+      mode: allowlist
+      allowPrivateNetworks: false
+      allowedHosts:
+        - loco.rs
+        - docs.rs
+        - guides.rubyonrails.org
+        - doc.rust-lang.org
+    fileAccess:
+      mode: disabled
