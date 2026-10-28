@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: server
-          image: ${MEDTRACKER_CANARY_IMAGE}
+          image: ghcr.io/damacus/med-tracker-loco@sha256:b4f81dfa49e15e41d3ed24fb9ca303131984922a467d54f90e4eb7e45ea654f4
           args: ["start", "--environment", "production"]
           envFrom:
             - configMapRef:
@@ -112,7 +112,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: worker
-          image: ${MEDTRACKER_CANARY_IMAGE}
+          image: ghcr.io/damacus/med-tracker-loco@sha256:b4f81dfa49e15e41d3ed24fb9ca303131984922a467d54f90e4eb7e45ea654f4
           args: ["start", "--worker", "--environment", "production"]
           envFrom:
             - configMapRef:
@@ -182,7 +182,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: scheduler
-          image: ${MEDTRACKER_CANARY_IMAGE}
+          image: ghcr.io/damacus/med-tracker-loco@sha256:b4f81dfa49e15e41d3ed24fb9ca303131984922a467d54f90e4eb7e45ea654f4
           args: ["scheduler", "--environment", "production"]
           envFrom:
             - configMapRef:
