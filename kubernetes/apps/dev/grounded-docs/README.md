@@ -1,8 +1,8 @@
 # Grounded Docs
 
-Status: staged for review. Both Flux Kustomizations, the HelmRelease and the
-refresh CronJob are suspended. Merging this change does not start Grounded Docs
-or switch the live LiteLLM gateway. Activation requires Dan's review and approval.
+Status: activation authorised on 28 October 2026. Application and backup Flux
+Kustomizations are enabled. The refresh schedule stays suspended until initial
+indexing and gateway access have been verified. Context7 remains configured.
 
 Grounded Docs gives private Codex, Claude and cluster/VPN clients a shared index
 of Loco, Rails and Rust documentation. Search starts with full-text matching;
@@ -158,3 +158,15 @@ not stop running pods. If application shutdown is needed, use an approved
 GitOps change to its replica count. A previous image may not understand a newer
 database schema: preserve a backup and recover into a separate claim instead of
 assuming an image downgrade reverses migrations.
+
+## Context7 source audit
+
+A local Codex log audit covered 21 October 2026 23:04 UTC through 28 October
+2026 23:04 UTC. It found 45 attempted Context7 calls in available session logs.
+These are calls recorded in local exec orchestration, not account-wide usage or
+confirmed successful retrievals. Queries and session contents are not copied here.
+
+The added catalogue covers rumdl, Go PDF, go-sqlite3, Actual Budget, release-please,
+reqwest, SeaORM, tempfile, GitHub Actions, Mealie, Kubernetes, pgx, Grape, Sequel,
+Chart.js and Vite. The `mealie cli` request is mapped to Mealie documentation.
+Deadvalues and Desloppify use their maintainer repositories. Moving sources use `current` labels.

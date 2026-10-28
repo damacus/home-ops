@@ -21,5 +21,16 @@ scraper:
         - docs.rs
         - guides.rubyonrails.org
         - doc.rust-lang.org
+        - github.com
+        - api.github.com
+        - raw.githubusercontent.com
+        - actualbudget.org
+        - www.sea-ql.org
+        - docs.github.com
+        - docs.mealie.io
+        - kubernetes.io
+        - sequel.jeremyevans.net
+        - www.chartjs.org
+        - vite.dev
     fileAccess:
       mode: disabled

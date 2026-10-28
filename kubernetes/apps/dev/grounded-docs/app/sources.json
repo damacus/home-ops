@@ -40,5 +40,131 @@
     "url": "https://doc.rust-lang.org/1.99.1/std/",
     "maxPages": 500,
     "maxDepth": 4
+  },
+  {
+    "library": "rumdl",
+    "version": "current",
+    "url": "https://github.com/rvben/rumdl",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "go-pdf",
+    "version": "current",
+    "url": "https://github.com/ledongthuc/pdf",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "go-sqlite3",
+    "version": "current",
+    "url": "https://github.com/mattn/go-sqlite3",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "actual-budget",
+    "version": "current",
+    "url": "https://actualbudget.org/docs/",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "release-please",
+    "version": "current",
+    "url": "https://github.com/googleapis/release-please",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "reqwest",
+    "version": "0.13.5",
+    "url": "https://docs.rs/reqwest/0.13.5/reqwest/",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "seaorm",
+    "version": "current",
+    "url": "https://www.sea-ql.org/SeaORM/docs/",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "tempfile",
+    "version": "current",
+    "url": "https://docs.rs/tempfile/latest/tempfile/",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "github-actions",
+    "version": "current",
+    "url": "https://docs.github.com/en/actions/",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "mealie",
+    "version": "current",
+    "url": "https://docs.mealie.io/",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "kubernetes",
+    "version": "current",
+    "url": "https://kubernetes.io/docs/concepts/",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "pgx",
+    "version": "5.11.0",
+    "url": "https://github.com/jackc/pgx/tree/v5.11.0",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "grape",
+    "version": "current",
+    "url": "https://github.com/ruby-grape/grape",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "sequel",
+    "version": "current",
+    "url": "https://sequel.jeremyevans.net/documentation.html",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "chartjs",
+    "version": "current",
+    "url": "https://www.chartjs.org/docs/latest/",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "vite",
+    "version": "current",
+    "url": "https://vite.dev/guide/",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "desloppify",
+    "version": "current",
+    "url": "https://github.com/peteromallet/desloppify",
+    "maxPages": 100,
+    "maxDepth": 3
+  },
+  {
+    "library": "deadvalues",
+    "version": "current",
+    "url": "https://github.com/guarnz/deadvalues",
+    "maxPages": 100,
+    "maxDepth": 3
   }
 ]
