@@ -4,7 +4,8 @@
     "version": "current",
     "url": "https://loco.rs/docs/",
     "maxPages": 200,
-    "maxDepth": 4
+    "maxDepth": 4,
+    "scrapeMode": "fetch"
   },
   {
     "library": "loco-api",
@@ -14,70 +15,80 @@
     "maxDepth": 4,
     "excludePatterns": [
       "**/*.md"
-    ]
+    ],
+    "scrapeMode": "fetch"
   },
   {
     "library": "rails-guides",
     "version": "8.1.4",
     "url": "https://guides.rubyonrails.org/v8.1.4/",
     "maxPages": 200,
-    "maxDepth": 4
+    "maxDepth": 4,
+    "scrapeMode": "fetch"
   },
   {
     "library": "rust-book",
     "version": "1.99.1",
     "url": "https://doc.rust-lang.org/1.99.1/book/",
     "maxPages": 200,
-    "maxDepth": 4
+    "maxDepth": 4,
+    "scrapeMode": "fetch"
   },
   {
     "library": "rust-reference",
     "version": "1.99.1",
     "url": "https://doc.rust-lang.org/1.99.1/reference/",
     "maxPages": 200,
-    "maxDepth": 4
+    "maxDepth": 4,
+    "scrapeMode": "fetch"
   },
   {
     "library": "rust-std",
     "version": "1.99.1",
     "url": "https://doc.rust-lang.org/1.99.1/std/",
     "maxPages": 500,
-    "maxDepth": 4
+    "maxDepth": 4,
+    "scrapeMode": "fetch"
   },
   {
     "library": "rumdl",
     "version": "current",
     "url": "https://github.com/rvben/rumdl",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "go-pdf",
     "version": "current",
     "url": "https://github.com/ledongthuc/pdf",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "go-sqlite3",
     "version": "current",
     "url": "https://github.com/mattn/go-sqlite3",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "actual-budget",
     "version": "current",
     "url": "https://actualbudget.org/docs/",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "release-please",
     "version": "current",
     "url": "https://github.com/googleapis/release-please",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "reqwest",
@@ -87,14 +98,16 @@
     "maxDepth": 3,
     "excludePatterns": [
       "**/*.md"
-    ]
+    ],
+    "scrapeMode": "fetch"
   },
   {
     "library": "seaorm",
     "version": "current",
     "url": "https://www.sea-ql.org/SeaORM/docs/",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "tempfile",
@@ -104,76 +117,87 @@
     "maxDepth": 3,
     "excludePatterns": [
       "**/*.md"
-    ]
+    ],
+    "scrapeMode": "fetch"
   },
   {
     "library": "github-actions",
     "version": "current",
     "url": "https://docs.github.com/en/actions/",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "mealie",
     "version": "current",
     "url": "https://docs.mealie.io/",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "kubernetes",
     "version": "current",
     "url": "https://kubernetes.io/docs/concepts/",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "pgx",
     "version": "5.11.0",
     "url": "https://github.com/jackc/pgx/tree/v5.11.0",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "grape",
     "version": "current",
     "url": "https://github.com/ruby-grape/grape",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "sequel",
     "version": "current",
     "url": "https://sequel.jeremyevans.net/documentation.html",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "chartjs",
     "version": "current",
     "url": "https://www.chartjs.org/docs/latest/",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "vite",
     "version": "current",
     "url": "https://vite.dev/guide/",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "desloppify",
     "version": "current",
     "url": "https://github.com/peteromallet/desloppify",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   },
   {
     "library": "deadvalues",
     "version": "current",
     "url": "https://github.com/guarnz/deadvalues",
     "maxPages": 100,
-    "maxDepth": 3
+    "maxDepth": 3,
+    "scrapeMode": "fetch"
   }
 ]

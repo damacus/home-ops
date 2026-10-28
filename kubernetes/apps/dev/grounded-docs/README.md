@@ -77,6 +77,9 @@ be partial. Check page counts and retrieval coverage before increasing limits.
 The docs.rs sources exclude `*.md` links: crate README links resolve relative
 to the generated API documentation and can point to missing translated files.
 The rendered README and API pages remain indexed.
+The reviewed sources use HTTP fetch mode because their documentation is served
+as static HTML or repository content. A future source that needs JavaScript
+rendering can select `auto` separately; `auto` renders every HTML page in a browser.
 Refresh uses the scrape options stored with each version, so changing catalogue
 crawl limits alone does not change an existing version's limits: review and edit
 its settings in the UI before re-indexing it.

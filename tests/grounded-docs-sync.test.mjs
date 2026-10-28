@@ -69,6 +69,12 @@ test("source-specific exclusions prevent crawling broken repository links in API
   ]);
 });
 
+test("static documentation can use HTTP fetching without browser rendering", () => {
+  const server = backend();
+  syncCatalog([{ ...source, scrapeMode: "fetch" }], server.run);
+  assert.deepEqual(server.calls[1].slice(-2), ["--scrape-mode", "fetch"]);
+});
+
 test("a changed source URL fails before mutating an indexed version", () => {
   const server = backend([{ version: "8.1.4", sourceUrl: "https://guides.rubyonrails.org/" }]);
   assert.throws(() => syncCatalog([source], server.run), /source URL/);
