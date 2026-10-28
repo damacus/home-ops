@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 
 /** Sync only reviewed sources, through the worker; never open its SQLite file. */
 export function syncCatalog(sources, run) {
-  const { libraries } = JSON.parse(run(["list", "--output", "json"]));
+  const libraries = JSON.parse(run(["list", "--output", "json"]));
   if (!Array.isArray(libraries)) throw new Error("Invalid library catalogue response");
   for (const source of sources) {
     const library = libraries.find((item) => item.name === source.library);

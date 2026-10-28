@@ -14,14 +14,14 @@ function backend(versions = []) {
     run(args) {
       calls.push(args);
       if (args[0] === "list") {
-        return JSON.stringify({ libraries: [{ name: source.library, versions }] });
+        return JSON.stringify(versions.length ? [{ name: source.library, versions }] : []);
       }
       return "done";
     },
   };
 }
 
-test("first sync indexes the approved version without replacing existing data", () => {
+test("an empty CLI catalogue indexes the approved version without replacing existing data", () => {
   const server = backend();
   syncCatalog([source], server.run);
   assert.deepEqual(server.calls[1], [
@@ -66,7 +66,7 @@ test("a failed refresh stops before starting another source", () => {
 });
 
 test("an unavailable or malformed catalogue response never starts a scrape", () => {
-  for (const response of ["not json", "{}", '{"libraries":null}']) {
+  for (const response of ["not json", "null", "{}", '{"libraries":[]}', '{"libraries":null}']) {
     let calls = 0;
     assert.throws(() => syncCatalog([source], () => { calls += 1; return response; }));
     assert.equal(calls, 1);
