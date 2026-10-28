@@ -24,8 +24,9 @@ Before activation:
   `canary_seed(scope,image,complete)` completion marker and the control-state
   admission gate. Current MedTracker main does not implement this contract.
 - The gate must close normal server requests until control phase is `ready`;
-  only authenticated internal smoke can enter `verifying`. Worker/scheduler work
-  must stop unless ready or the verifying heartbeat is fresh (maximum 30 seconds).
+  only authenticated internal smoke can enter `verifying`; read-only health
+  probes may pass while its heartbeat is fresh (maximum 30 seconds).
+  Worker/scheduler work must remain paused until the phase is `ready`.
   Use the read-only control URL under `settings.canary`, not setup credentials.
   Show the weekly data-loss notice and `last_success`/`next_reset` on the UI.
 - Verify public HTTPS access to `med-tracker-loco.damacus.io`, certificate coverage,
