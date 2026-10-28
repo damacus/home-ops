@@ -215,7 +215,7 @@ jobs:
       - name: Setup Node for documentation refresh checks
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: '22'
+          node-version: '26'
 
       - name: Verify safe documentation refresh
         run: node --test tests/grounded-docs-sync.test.mjs
