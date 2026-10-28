@@ -98,12 +98,6 @@
       automerge: false,
     },
     {
-      description: "Hold Vector below 0.57 until Loki template confinement is resolved",
-      matchDatasources: ["docker", "helm"],
-      matchPackageNames: ["timberio/vector", "vector"],
-      allowedVersions: "<0.57.0",
-    },
-    {
       description: "Auto-merge non-major updates for selected home-ops assets",
       matchPackageNames: [
         "jdx/mise",
@@ -155,6 +149,28 @@
       ],
       matchUpdateTypes: ["digest", "minor", "patch", "pin", "pinDigest"],
       automerge: true,
+    },
+    {
+      description: "Auto-merge patch updates for selected services, controllers and tools",
+      matchPackageNames: [
+        "ghcr.io/matter-js/matterjs-server",
+        "ghcr.io/berriai/litellm",
+        "ghcr.io/emberstack/helm-charts/reflector",
+        "csi-driver-nfs",
+        "csi-driver-smb",
+        "python",
+        "code.forgejo.org/forgejo/forgejo",
+        "forgejo",
+        "ghcr.io/stakater/charts/reloader",
+      ],
+      matchUpdateTypes: ["digest", "patch", "pin", "pinDigest"],
+      automerge: true,
+    },
+    {
+      description: "Keep n8n and echo-server major upgrades manual",
+      matchPackageNames: ["n8nio/n8n", "ghcr.io/mendhak/http-https-echo"],
+      matchUpdateTypes: ["major"],
+      automerge: false,
     },
     {
       description: "Keep production MedTracker upgrades manual",
