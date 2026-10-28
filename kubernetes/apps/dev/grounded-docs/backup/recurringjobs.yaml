@@ -1,0 +1,24 @@
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: grounded-docs-backup
+spec:
+  cron: '30 1 * * *'
+  task: backup
+  groups: []
+  retentionPolicy: count-based
+  retain: 7
+  concurrency: 1
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: grounded-docs-snapshot
+spec:
+  cron: '30 0 * * *'
+  task: snapshot
+  groups: []
+  retentionPolicy: count-based
+  retain: 5
+  concurrency: 1

@@ -1,0 +1,28 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: grounded-docs
+  annotations:
+    external-dns.alpha.kubernetes.io/target: traefik-int.ironstone.casa
+spec:
+  hostnames:
+    - grounded-docs.ironstone.casa
+  parentRefs:
+    - name: traefik-internal
+      namespace: network
+      sectionName: websecure
+  rules:
+    - filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: grounded-docs-forward-auth
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: grounded-docs
+          port: 6281

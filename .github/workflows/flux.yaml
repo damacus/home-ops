@@ -64,6 +64,7 @@ jobs:
               - 'tests/test_loki_alerts.py'
               - 'tests/test_ksm_secret_access.py'
               - 'tests/test_ksm_ci.py'
+              - 'tests/grounded-docs-sync.test.mjs'
             mqtt:
               - '.github/workflows/flux.yaml'
               - 'kubernetes/apps/home-automation/mosquitto/**'
@@ -210,6 +211,14 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/behaviour-tests"
           "$RUNNER_TEMP/behaviour-tests/bin/pip" install PyYAML==6.0.3
           "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_paperless_backup.py tests/test_redis_export.py
+
+      - name: Setup Node for documentation refresh checks
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+
+      - name: Verify safe documentation refresh
+        run: node --test tests/grounded-docs-sync.test.mjs
 
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml
