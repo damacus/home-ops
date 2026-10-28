@@ -195,4 +195,7 @@ confirmed successful retrievals. Queries and session contents are not copied her
 The added catalogue covers rumdl, Go PDF, go-sqlite3, Actual Budget, release-please,
 reqwest, SeaORM, tempfile, GitHub Actions, Mealie, Kubernetes, pgx, Grape, Sequel,
 Chart.js and Vite. The `mealie cli` request is mapped to Mealie documentation.
+The approved `docs.mealie.io` URL redirects to the official `mealie.io` site;
+both hosts are allowed. Sequel uses hostname scope on `sequel.jeremyevans.net`
+because its `documentation.html` landing page links to sibling guide paths.
 Deadvalues and Desloppify use their maintainer repositories. Moving sources use `current` labels.

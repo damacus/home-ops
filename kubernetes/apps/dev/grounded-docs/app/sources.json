@@ -181,7 +181,8 @@
     "url": "https://sequel.jeremyevans.net/documentation.html",
     "maxPages": 100,
     "maxDepth": 3,
-    "scrapeMode": "fetch"
+    "scrapeMode": "fetch",
+    "scope": "hostname"
   },
   {
     "library": "chartjs",
