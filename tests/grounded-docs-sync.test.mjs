@@ -61,9 +61,29 @@ test("a repeat sync refreshes only the exact approved version", () => {
   assert.deepEqual(server.calls[1], ["refresh", source.library, "--version", "8.1.4"]);
 });
 
+test("source-specific exclusions prevent crawling broken repository links in API docs", () => {
+  const server = backend();
+  syncCatalog([{ ...source, excludePatterns: ["**/*.md", "**/*.toml"] }], server.run);
+  assert.deepEqual(server.calls[1].slice(-4), [
+    "--exclude-pattern", "**/*.md", "--exclude-pattern", "**/*.toml",
+  ]);
+});
+
+test("static documentation can use HTTP fetching without browser rendering", () => {
+  const server = backend();
+  syncCatalog([{ ...source, scrapeMode: "fetch" }], server.run);
+  assert.deepEqual(server.calls[1].slice(-2), ["--scrape-mode", "fetch"]);
+});
+
 test("a changed source URL fails before mutating an indexed version", () => {
   const server = backend([{ version: "8.1.4", sourceUrl: "https://guides.rubyonrails.org/" }]);
   assert.throws(() => syncCatalog([source], server.run), /source URL/);
+  assert.equal(server.calls.length, 1);
+});
+
+test("a failed version with old crawl settings requires explicit repair", () => {
+  const server = backend([{ version: source.version, sourceUrl: source.url, status: "failed" }]);
+  assert.throws(() => syncCatalog([{ ...source, excludePatterns: ["**/*.md"] }], server.run), /failed.*repair/);
   assert.equal(server.calls.length, 1);
 });
 

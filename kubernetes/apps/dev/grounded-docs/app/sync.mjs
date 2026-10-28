@@ -16,12 +16,17 @@ export function syncCatalog(sources, run) {
       if (["running", "queued", "updating"].includes(existing.status)) {
         throw new Error(`${source.library}: indexing already active; retry after it completes`);
       }
+      if (existing.status === "failed") {
+        throw new Error(`${source.library}: failed crawl; repair stored options using the README before retrying`);
+      }
       run(["refresh", source.library, "--version", source.version]);
     } else {
       run([
         "scrape", source.library, source.url, "--version", source.version,
         "--max-pages", String(source.maxPages), "--max-depth", String(source.maxDepth),
         "--max-concurrency", "2", "--scope", "subpages", "--ignore-errors=false",
+        ...(source.excludePatterns ?? []).flatMap((pattern) => ["--exclude-pattern", pattern]),
+        ...(source.scrapeMode ? ["--scrape-mode", source.scrapeMode] : []),
       ]);
     }
   }
