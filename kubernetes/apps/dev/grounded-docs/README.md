@@ -40,9 +40,9 @@ Every UI/API path goes through that sign-in, including WebSockets. No public
 route is created. Grounded Docs does not provide its own management authentication.
 
 Agent clients keep `https://litellm.ironstone.casa/mcp` and their existing gateway
-keys. The unreferenced `gateway/` overlay adds only the `grounded_docs` backend
-to the existing LiteLLM app. `gateway/keys.patch` stages the Codex/Claude grants;
-it does not alter active key policy files. Application keys retain no MCP grants
+keys. The active `gateway/` overlay adds only the `grounded_docs` backend
+to the existing LiteLLM app. `litellm/keys.json` includes the Codex/Claude grants;
+apply those policies to the existing live keys with the key workflow below. Application keys retain no MCP grants
 and agent keys retain their existing grants and `__mcp_only__` restriction.
 
 NetworkPolicy permits Traefik to reach the web port, LiteLLM to reach MCP, and
@@ -113,8 +113,7 @@ refresh rules; retrying an incomplete initial scrape can rebuild that version.
    `./kubernetes/apps/dev/grounded-docs/gateway`. Do not add a second Flux
    Kustomization that manages the same LiteLLM resources. Preserve all existing
    dependencies and add `grounded-docs` to that Kustomization's `dependsOn`.
-7. Run `git apply --check kubernetes/apps/dev/grounded-docs/gateway/keys.patch`,
-   then apply that patch to the policy file in the reviewed activation change.
+7. The reviewed `litellm/keys.json` already contains the Grounded Docs grants.
    Use the existing `scripts/litellm_keys.py codex` and `claude` preview/apply
    workflow with secrets injected through `op run`, as documented in the LiteLLM
    README. Do not reset spend, rotate keys or grant application keys MCP access.

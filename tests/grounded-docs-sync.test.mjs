@@ -1,11 +1,31 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, symlinkSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { syncCatalog } from "../kubernetes/apps/dev/grounded-docs/app/sync.mjs";
 
 const source = {
   library: "rails-guides", version: "8.1.4",
   url: "https://guides.rubyonrails.org/v8.1.4/", maxPages: 500, maxDepth: 4,
 };
+
+test("a ConfigMap-style symlink executes the entry point", () => {
+  const dir = mkdtempSync(join(tmpdir(), "grounded-docs-test-"));
+  try {
+    const link = join(dir, "sync.mjs");
+    symlinkSync(fileURLToPath(new URL("../kubernetes/apps/dev/grounded-docs/app/sync.mjs", import.meta.url)), link);
+    const result = spawnSync(process.execPath, [link], {
+      encoding: "utf8", env: { ...process.env, GROUNDED_DOCS_SERVER_URL: "" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /GROUNDED_DOCS_SERVER_URL is required/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 function backend(versions = []) {
   const calls = [];
