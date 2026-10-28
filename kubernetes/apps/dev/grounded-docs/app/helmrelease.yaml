@@ -77,13 +77,16 @@ spec:
                   httpGet:
                     path: /api/ping
                     port: 8080
+                  timeoutSeconds: 5
+                  failureThreshold: 12
               liveness:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /api/ping
+                  tcpSocket:
                     port: 8080
+                  timeoutSeconds: 5
+                  failureThreshold: 12
           mcp:
             image: *image
             args: [mcp, --protocol, http, --host, 0.0.0.0, --port, '6280', --read-only, --server-url, 'http://127.0.0.1:8080/api', --config, /etc/grounded-docs/config.yaml]

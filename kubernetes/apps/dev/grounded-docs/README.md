@@ -31,6 +31,8 @@ Each frontend requests 25m/128Mi and has a 256Mi memory limit. These are startin
 allocations, not measured requirements; observe RSS, OOMs and indexing time before
 adjusting them. Processes run as UID/GID 1000 with dropped capabilities, a
 read-only root filesystem, scratch storage and no Kubernetes API token.
+Worker liveness checks its TCP listener; HTTP readiness has a two-minute failure
+window. CPU-heavy page parsing must not trigger repeated liveness restarts.
 
 ## Access
 
@@ -80,6 +82,9 @@ The rendered README and API pages remain indexed.
 These explicit API filters replace upstream's general repository exclusions;
 generated public modules named `test` or `build` remain eligible inside the
 reviewed crate/version path. Scope and page limits still apply.
+API-wide `all.html` indexes and whole-book `print.html` copies are excluded to
+avoid duplicate large documents. The Rails catalogue excludes the obsolete
+classic-autoloader guide, which redirects outside the pinned release.
 The reviewed sources use HTTP fetch mode because their documentation is served
 as static HTML or repository content. A future source that needs JavaScript
 rendering can select `auto` separately; `auto` renders every HTML page in a browser.

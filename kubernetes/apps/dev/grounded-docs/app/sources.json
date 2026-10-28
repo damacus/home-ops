@@ -14,7 +14,8 @@
     "maxPages": 500,
     "maxDepth": 4,
     "excludePatterns": [
-      "**/*.md"
+      "**/*.md",
+      "**/all.html"
     ],
     "scrapeMode": "fetch"
   },
@@ -24,7 +25,10 @@
     "url": "https://guides.rubyonrails.org/v8.1.4/",
     "maxPages": 200,
     "maxDepth": 4,
-    "scrapeMode": "fetch"
+    "scrapeMode": "fetch",
+    "excludePatterns": [
+      "**/autoloading_and_reloading_constants_classic_mode.html"
+    ]
   },
   {
     "library": "rust-book",
@@ -32,7 +36,10 @@
     "url": "https://doc.rust-lang.org/1.99.1/book/",
     "maxPages": 200,
     "maxDepth": 4,
-    "scrapeMode": "fetch"
+    "scrapeMode": "fetch",
+    "excludePatterns": [
+      "**/print.html"
+    ]
   },
   {
     "library": "rust-reference",
@@ -40,7 +47,10 @@
     "url": "https://doc.rust-lang.org/1.99.1/reference/",
     "maxPages": 200,
     "maxDepth": 4,
-    "scrapeMode": "fetch"
+    "scrapeMode": "fetch",
+    "excludePatterns": [
+      "**/print.html"
+    ]
   },
   {
     "library": "rust-std",
@@ -48,7 +58,10 @@
     "url": "https://doc.rust-lang.org/1.99.1/std/",
     "maxPages": 500,
     "maxDepth": 4,
-    "scrapeMode": "fetch"
+    "scrapeMode": "fetch",
+    "excludePatterns": [
+      "**/all.html"
+    ]
   },
   {
     "library": "rumdl",
@@ -97,7 +110,8 @@
     "maxPages": 100,
     "maxDepth": 3,
     "excludePatterns": [
-      "**/*.md"
+      "**/*.md",
+      "**/all.html"
     ],
     "scrapeMode": "fetch"
   },
@@ -116,7 +130,8 @@
     "maxPages": 100,
     "maxDepth": 3,
     "excludePatterns": [
-      "**/*.md"
+      "**/*.md",
+      "**/all.html"
     ],
     "scrapeMode": "fetch"
   },
