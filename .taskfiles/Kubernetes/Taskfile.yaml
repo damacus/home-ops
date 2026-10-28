@@ -109,6 +109,13 @@ tasks:
     desc: Test canary target guards, reset failures and Kubernetes authority
     cmd: go test ./internal/medtrackercanary ./cmd/medtracker-canary-reset
 
+  medtracker-canary-reset:
+    desc: Run the guarded reset for only the isolated disposable Loco demo
+    cmd: >-
+      kubectl --namespace medtracker-canary create job
+      --from=cronjob/medtracker-canary-reset
+      medtracker-canary-reset-{{now | date "20060102-150405"}}
+
   health-nodes:
     desc: Report Kubernetes node readiness
     cmds:

@@ -60,5 +60,22 @@ pause cannot be claimed by another worker. After a worker crash, confirm the old
 worker has terminated before using native job recovery, or let the next weekly
 reset replace the disposable queue.
 
+## First initialisation
+
+Pin the verified application and runner digests, then enable the demo Flux
+Kustomization through GitOps while keeping the weekly CronJob suspended. Wait
+for the dedicated CNPG cluster and ExternalSecrets to be ready. Initialise the
+empty demo through the same guarded runner used for weekly resets:
+
+```fish
+task kubernetes:medtracker-canary-reset
+```
+
+Require the reset Job to complete, verify public HTTPS sign-in and a synthetic
+dose, and check the allowed and denied network cases above. Then enable the
+weekly CronJob through GitOps. Its first scheduled run is not the initialisation
+step. Failed or interrupted runs require the recovery procedure above; do not
+clear state or retry around a failed seed.
+
 Run offline behaviour checks with `task kubernetes:test-medtracker-canary`.
 Use the existing render/schema/Mondoo checks before enabling GitOps resources.
