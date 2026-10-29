@@ -63,7 +63,9 @@ spec:
       replicaCount: 1
       privileged:
         runtime:
-          hostUsers: false
+          # host userns: rk35xx 6.1 vendor kernel cannot idmap-mount tmpfs
+          # secrets, so pod userns (hostUsers: false) fails MOUNT_ATTR_IDMAP
+          hostUsers: null
       dockerConfig:
         existingSecret: dockerhub-credentials
       dockerDataRoot:
