@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - externalsecret.yaml
   - helmrelease.yaml
+  - sandbox-externalsecret.yaml
   - networkpolicy-ingress.yaml
   - networkpolicy.yaml
   - pvc.yaml

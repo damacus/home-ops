@@ -1,0 +1,78 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: n8n-sandbox-service
+spec:
+  interval: 30m
+  chartRef:
+    kind: OCIRepository
+    name: n8n-sandbox-service
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  uninstall:
+    keepHistory: false
+  values:
+    fullnameOverride: n8n-sandbox
+
+    auth:
+      existingSecret: n8n-sandbox-auth
+
+    tls:
+      mode: certManager
+      certManager:
+        issuerRef:
+          name: n8n-sandbox-ca
+          kind: Issuer
+          group: cert-manager.io
+
+    networkPolicy:
+      enabled: true
+      api:
+        httpIngressFrom:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: home-automation
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/instance: n8n
+                app.kubernetes.io/name: n8n
+
+    api:
+      replicaCount: 1
+      persistence:
+        enabled: true
+        size: 1Gi
+      resources:
+        requests:
+          cpu: 25m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    runner:
+      isolation: privileged
+      acknowledgePrivileged: true
+      replicaCount: 1
+      privileged:
+        runtime:
+          hostUsers: false
+      dockerConfig:
+        existingSecret: dockerhub-credentials
+      dockerDataRoot:
+        emptyDir:
+          sizeLimit: 32Gi
+      resources:
+        requests:
+          cpu: 100m
+          memory: 1Gi
+        limits:
+          cpu: "2"
+          memory: 4Gi

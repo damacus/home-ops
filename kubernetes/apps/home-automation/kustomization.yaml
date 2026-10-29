@@ -11,6 +11,7 @@ resources:
   - ./mosquitto/ks.yaml
   - ./n8n-db/ks.yaml
   - ./n8n/ks.yaml
+  - ./searxng/ks.yaml
   - ./frigate/ks.yaml
   - ./scrypted/ks.yaml
   - ./namespace.yaml
