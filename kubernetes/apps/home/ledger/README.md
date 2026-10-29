@@ -11,3 +11,5 @@ The Mac LaunchAgent `io.damacus.usage-ledger.cluster-sync` uploads new and corre
 Before restoring a cluster backup, pause the uploader and reconcile its acknowledgement state with the restored database; do not reuse acknowledgements for records absent from the restore. A fresh acknowledgement state can replay an empty database. Do not overwrite the original collector database.
 
 The PVC is excluded from Flux pruning: removing the app from Git preserves the ledger data. Default live jobs are `snapshot` at 00:00 daily (five retained) and `ghtlyin` backup at 01:00 daily (two retained), in group `default`; verify these live schedules before relying on coverage.
+
+Dashboard reads intentionally use the trusted private network without a login gate. This is the selected access policy; ingestion still requires its dedicated bearer credential. There is no public Gateway route. Live checks confirmed the private HTTPS route works, unauthenticated ingestion returns 401, and a different home-namespace pod cannot reach the service directly.
