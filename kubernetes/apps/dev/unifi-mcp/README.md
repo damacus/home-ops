@@ -1,9 +1,9 @@
 # UniFi MCP through LiteLLM
 
-Staged: the Flux Kustomization is suspended. Network and Protect are independent
-controllers and ClusterIP services in `dev`; Access is omitted. Upstream release
-images 0.39.0 and 0.9.4 are version-pinned. Upstream release workflows build both
-linux/arm64 and linux/amd64; registry manifests and startup still need verification.
+Active: the Flux Kustomization is unsuspended. Network and Protect are
+independent controllers and ClusterIP services in `dev`; Access is omitted.
+Upstream release images 0.40.0 and 0.9.5 are version-pinned and publish both
+linux/arm64 and linux/amd64 manifests.
 
 Traffic: existing authenticated LiteLLM `/mcp` → private ClusterIP `/mcp` → local
 UniFi controller. No HTTPRoute, NodePort, cloud relay or additional DNS is needed.
