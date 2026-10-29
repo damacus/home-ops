@@ -4,10 +4,42 @@ model_list:
     litellm_params:
       model: openai/*
       api_key: os.environ/OPENAI_API_KEY
+  - model_name: gpt-6.1-terra
+    litellm_params:
+      model: openai/gpt-6.1-terra
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: gpt-6.1-sol
+    litellm_params:
+      model: openai/gpt-6.1-sol
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: gpt-6-luna
+    litellm_params:
+      model: openai/gpt-6-luna
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: gpt-6-astra
+    litellm_params:
+      model: openai/gpt-6-astra
+      api_key: os.environ/OPENAI_API_KEY
   - model_name: jev-latest
     litellm_params:
       model: typesafe/jev-latest
       api_key: os.environ/TYPESAFE_API_KEY
+  - model_name: smart-router
+    litellm_params:
+      model: auto_router/complexity_router
+      drop_params: true
+      complexity_router_config:
+        tiers:
+          SIMPLE: gpt-6-luna
+          MEDIUM: gpt-6.1-sol
+          COMPLEX: gpt-6.1-terra
+          REASONING: gpt-6-astra
+        classifier_type: jev
+        jev_classifier_config:
+          model: jev-latest
+          timeout_ms: 3000
+        classifier_fallback: heuristic
+      complexity_router_default_model: gpt-6.1-sol
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
@@ -52,5 +84,9 @@ mcp_servers:
     allow_all_keys: false
   unifi_protect:
     url: http://unifi-protect-mcp.dev.svc.cluster.local:3001/mcp
+    transport: http
+    allow_all_keys: false
+  grounded_docs:
+    url: http://grounded-docs.dev.svc.cluster.local:6280/mcp
     transport: http
     allow_all_keys: false
