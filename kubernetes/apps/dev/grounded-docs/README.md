@@ -1,8 +1,8 @@
 # Grounded Docs
 
-Status: activation authorised on 28 October 2026. Application and backup Flux
-Kustomizations are enabled. The refresh schedule stays suspended until initial
-indexing and gateway access have been verified. Context7 remains configured.
+Status: active. Initial indexing completed for all 24 reviewed collections, and
+Codex/Claude search and page reads through LiteLLM passed. Weekly refresh runs
+Sundays at 03:00 UTC. Context7 remains configured as a fallback.
 
 Grounded Docs gives private Codex, Claude and cluster/VPN clients a shared index
 of Loco, Rails and Rust documentation. Search starts with full-text matching;
