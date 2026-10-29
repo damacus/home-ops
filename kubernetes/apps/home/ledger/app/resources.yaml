@@ -44,7 +44,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: ledger
-          image: forgejo.ironstone.casa/damacus/usage-ledger@sha256:d6882f5127555f0b18a740fc3833c6b3f823b32d509ac61bcff545fe7c7d6844
+          image: forgejo.ironstone.casa/damacus/usage-ledger@sha256:0857be38c06600cccc02903f672630c594108cffa12ad559197271ca4da8d8e5
           ports:
             - name: http
               containerPort: 8080
