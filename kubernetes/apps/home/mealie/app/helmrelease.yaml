@@ -72,6 +72,8 @@ spec:
                   secretKeyRef:
                     name: mealie-secret
                     key: OPENAI_API_KEY
+              OPENAI_BASE_URL: "https://litellm.ironstone.casa/v1"
+              OPENAI_MODEL: "gpt-6.1-terra"
               PGID: 1000
               POSTGRES_DB: "{{ .Release.Name }}"
               POSTGRES_PORT: "5432"
