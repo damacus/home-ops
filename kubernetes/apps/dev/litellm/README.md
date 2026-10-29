@@ -44,6 +44,14 @@ the gateway. OpenAI account access still applies. Mealie retains its configured
 models; Frigate and Paperless initially use `gpt-4.1-mini`, with
 `text-embedding-3-small` for Paperless embeddings.
 
+The `jev-latest` deployment routes TypeSafe AI's Jev decision model through the
+gateway (`typesafe/jev-latest`), shadowing the wildcard for that name. Its
+credential is the shared `JEV_API_KEY` 1Password item surfaced as
+`TYPESAFE_API_KEY`, which also enables LiteLLM's `/typesafe` pass-through to
+`api.typesafe.ai`. Jev is billed per input token under the calling key's budget;
+there is no output charge. Callers still need a gateway key — no Jev route is
+anonymous.
+
 App keys have no MCP grants. The Codex and Claude keys have Home Assistant and
 Grafana grants, and only the deliberately nonexistent `__mcp_only__` model, so
 they cannot perform model inference. Their existing subscription login remains
@@ -68,6 +76,7 @@ containing keys.
 | `litellm-db` | `password` |
 | `litellm` (UI) | `oidc-client-id`, `oidc-client-secret` |
 | `rustfs-cnpg-litellm` | `username`, `password` |
+| `JEV_API_KEY` (shared item) | `credential` |
 | `litellm-mealie`, `litellm-frigate`, `litellm-paperless` | `key` |
 | `litellm-codex`, `litellm-claude` | `key` |
 
