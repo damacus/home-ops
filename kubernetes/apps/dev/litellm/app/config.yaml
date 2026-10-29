@@ -4,6 +4,10 @@ model_list:
     litellm_params:
       model: openai/*
       api_key: os.environ/OPENAI_API_KEY
+  - model_name: jev-latest
+    litellm_params:
+      model: typesafe/jev-latest
+      api_key: os.environ/TYPESAFE_API_KEY
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
