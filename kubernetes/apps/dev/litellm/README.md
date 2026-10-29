@@ -29,8 +29,8 @@ creates no LiteLLM user record. Confirm both `/login` and `/v2/login` reject
 passwords (including the master key) with HTTP 403, while authenticated API and
 MCP requests still work. Never record credentials or session tokens as evidence.
 
-OpenAI API usage is billed separately from ChatGPT subscriptions. Each of
-Mealie, Frigate and Paperless has a **$10 USD calendar-month budget** in
+OpenAI API usage is billed separately from ChatGPT subscriptions. Frigate and
+Paperless each have a **$10 USD calendar-month budget** and Mealie has **$5** in
 `keys.json`. Paperless generation and embeddings share its budget. Concurrent
 requests and delayed accounting can slightly exceed the limit. Exhaustion stops
 new AI requests; it must not stop recording, ingestion or ordinary recipe use.
@@ -38,11 +38,16 @@ Keep a single gateway replica initially so there is no distributed accounting
 dependency. Do not add another replica without configuring shared rate/budget
 coordination. Do not reset spend during key reconciliation or rotation.
 
-One wildcard route forwards model names to OpenAI. App keys have no model
-allowlist (`models: []`), so models can be changed in each app without editing
-the gateway. OpenAI account access still applies. Mealie retains its configured
-models; Frigate and Paperless initially use `gpt-4.1-mini`, with
-`text-embedding-3-small` for Paperless embeddings.
+One wildcard route forwards model names to OpenAI. Explicit deployments also
+exist for the v6 family (`gpt-6.1-terra`, `gpt-6.1-sol`, `gpt-6-luna`,
+`gpt-6-astra`), `jev-latest` and `smart-router`, an auto-router whose TypeSafe
+Jev classifier picks a complexity tier per request. Mealie's key is restricted
+to its v6 models plus `gpt-4o-mini-transcribe` for audio transcription; other
+app keys have
+no model allowlist (`models: []`), so their models can be changed in each app
+without editing the gateway. OpenAI account access still applies. Frigate and
+Paperless initially use `gpt-4.1-mini`, with `text-embedding-3-small` for
+Paperless embeddings.
 
 The `jev-latest` deployment routes TypeSafe AI's Jev decision model through the
 gateway (`typesafe/jev-latest`), shadowing the wildcard for that name. Its
