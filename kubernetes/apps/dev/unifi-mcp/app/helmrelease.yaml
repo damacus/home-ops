@@ -122,7 +122,7 @@ spec:
           app:
             image:
               repository: ghcr.io/sirkirby/unifi-protect-mcp
-              tag: 0.9.5
+              tag: 0.10.0
             env:
               UNIFI_HOST: unifi.ironstone.casa
               UNIFI_PORT: '443'
