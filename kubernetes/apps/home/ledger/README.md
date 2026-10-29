@@ -9,3 +9,5 @@ The externally provisioned `home/ledger-collector` Secret contains a `token` key
 The Mac LaunchAgent `io.damacus.usage-ledger.cluster-sync` uploads new and corrected typed observations every minute while the Mac is awake and connected. Its owner-private token and acknowledgement database live in `~/Library/Application Support/UsageLedgerRust/`. Failed uploads remain pending and retry on the next run. The original collector database stays local.
 
 Before restoring a cluster backup, pause the uploader and reconcile its acknowledgement state with the restored database; do not reuse acknowledgements for records absent from the restore. A fresh acknowledgement state can replay an empty database. Do not overwrite the original collector database.
+
+The PVC is excluded from Flux pruning: removing the app from Git preserves the ledger data. Default live jobs are `snapshot` at 00:00 daily (five retained) and `ghtlyin` backup at 01:00 daily (two retained), in group `default`; verify these live schedules before relying on coverage.

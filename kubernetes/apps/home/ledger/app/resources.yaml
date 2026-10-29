@@ -4,6 +4,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: ledger-data
   namespace: home
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
   labels:
     app: ledger
     recurring-job-group.longhorn.io/default: enabled
