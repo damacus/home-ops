@@ -83,6 +83,15 @@ spec:
               N8N_PROTOCOL: "https"
               N8N_TEMPLATES_ENABLED: "false"
               N8N_RUNNERS_ENABLED: "true"
+              N8N_INSTANCE_AI_SANDBOX_ENABLED: "true"
+              N8N_INSTANCE_AI_SANDBOX_PROVIDER: "n8n-sandbox"
+              N8N_SANDBOX_SERVICE_URL: "http://n8n-sandbox-api.n8n-sandbox.svc.cluster.local:8080"
+              N8N_SANDBOX_SERVICE_API_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-sandbox-auth
+                    key: api-keys
+              N8N_INSTANCE_AI_SEARXNG_URL: "http://searxng.home-automation.svc.cluster.local:8080"
               WEBHOOK_URL: &webhooks "https://n8n-webhooks.damacus.io"
               N8N_PROXY_HOPS: "1"
               OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"

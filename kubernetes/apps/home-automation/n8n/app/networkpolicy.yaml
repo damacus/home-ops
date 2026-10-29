@@ -48,6 +48,20 @@ spec:
             - port: "6379"
               protocol: TCP
 
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: n8n-sandbox
+            k8s:app.kubernetes.io/instance: n8n-sandbox-service
+            k8s:app.kubernetes.io/component: api
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: home-automation
+            k8s:app.kubernetes.io/instance: searxng
+            k8s:app.kubernetes.io/name: searxng
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+
     - toFQDNs:
         - matchName: slack.com
         - matchName: api.slack.com
