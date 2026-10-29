@@ -213,7 +213,7 @@ jobs:
           "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_paperless_backup.py tests/test_redis_export.py
 
       - name: Setup Node for documentation refresh checks
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '26'
 
