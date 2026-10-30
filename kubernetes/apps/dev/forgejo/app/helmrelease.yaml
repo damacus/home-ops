@@ -24,7 +24,7 @@ spec:
     keepHistory: false
   values:
     image:
-      tag: "16.0.7-rootless"
+      tag: "17.0.1-rootless"
       rootless: true
     podAnnotations:
       reloader.stakater.com/auto: "true"
