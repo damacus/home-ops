@@ -1,8 +1,13 @@
 {
   "mealie": {
     "key_alias": "mealie",
-    "models": [],
-    "max_budget": 10,
+    "models": [
+      "gpt-6.1-terra",
+      "gpt-6.1-sol",
+      "gpt-6-luna",
+      "gpt-4o-mini-transcribe"
+    ],
+    "max_budget": 5,
     "budget_duration": "1mo",
     "object_permission": {
       "mcp_servers": []
