@@ -28,7 +28,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: reconciler
-              image: docker.io/library/ruby:4.0-alpine@sha256:ca8b5f9a8b6533925dfa355f7fbadb64cbfd801cb7e8fa87260ef8a2eae964cc
+              image: docker.io/library/ruby:4.0-alpine@sha256:f1e530793cc09e1093417a4c9956069407155e1883d02beb30bda35ae54a47a3
               command:
                 - ruby
                 - /config/reconcile-access-policy.rb
