@@ -60,7 +60,6 @@ serviceAccount:
 
 service:
   app:
-    controller: system-upgrade-controller
     enabled: false
 
 persistence:

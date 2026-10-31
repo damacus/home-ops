@@ -52,8 +52,6 @@ spec:
         type: s3
         bucketNames:
           chunks: loki-chunks
-          ruler: loki-data
-          admin: loki-data
         s3:
           endpoint: http://rustfs.storage.svc.cluster.local:9000
           region: us-east-1
@@ -123,16 +121,12 @@ spec:
     # Disable Microservices
     write:
       replicas: 0
-      persistence:
-        enabled: false
 
     read:
       replicas: 0
 
     backend:
       replicas: 0
-      persistence:
-        enabled: false
 
     # Gateway configuration (nginx) - Keep enabled for stable endpoint
     gateway:
@@ -172,9 +166,6 @@ spec:
         enabled: false
         grafanaAgent:
           installOperator: false
-
-      lokiCanary:
-        enabled: false
 
     # Discover chart-generated rule ConfigMaps without access to Secrets.
     sidecar:
