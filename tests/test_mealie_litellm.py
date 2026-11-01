@@ -9,11 +9,23 @@ spec.loader.exec_module(module)
 
 
 class ProviderMigrationTest(unittest.TestCase):
-    def test_preserves_model_name_and_timeout(self) -> None:
-        original = {"id": "existing", "name": "GPT-5", "model": "future-openai-model", "timeout": 400,
+    def test_maps_legacy_models_to_v6(self) -> None:
+        original = {"id": "existing", "name": "GPT-5", "model": "gpt-5", "timeout": 400,
                     "baseUrl": "https://api.openai.com/v1", "requestHeaders": {}, "requestParams": {}}
         update = module.provider_update(original, "sk-client", "http://gateway/v1")
-        self.assertEqual(update["model"], original["model"])
+        self.assertEqual(update["model"], "gpt-6.1-terra")
+
+    def test_maps_whisper_to_current_transcription_model(self) -> None:
+        original = {"id": "existing", "name": "Whisper", "model": "whisper-1", "timeout": 400,
+                    "baseUrl": "https://api.openai.com/v1", "requestHeaders": {}, "requestParams": {}}
+        update = module.provider_update(original, "sk-client", "http://gateway/v1")
+        self.assertEqual(update["model"], "gpt-4o-mini-transcribe")
+
+    def test_preserves_unmapped_model_name_and_timeout(self) -> None:
+        original = {"id": "existing", "name": "Future", "model": "future-openai-model", "timeout": 400,
+                    "baseUrl": "https://api.openai.com/v1", "requestHeaders": {}, "requestParams": {}}
+        update = module.provider_update(original, "sk-client", "http://gateway/v1")
+        self.assertEqual(update["model"], "future-openai-model")
         self.assertEqual(update["name"], original["name"])
         self.assertEqual(update["timeout"], 400)
         self.assertEqual(update["apiKey"], "sk-client")

@@ -13,11 +13,14 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+MODEL_MAP = {"gpt-5": "gpt-6.1-terra", "gpt-4o": "gpt-6.1-sol",
+             "whisper-1": "gpt-4o-mini-transcribe"}
+
 def provider_update(provider: dict[str, Any], key: str, endpoint: str) -> dict[str, Any]:
     # Custom authentication could override the gateway key; stop for review.
     if provider.get("requestHeaders") or provider.get("requestParams"):
         raise ValueError("Custom provider headers or parameters require review before cutover")
-    return {"name": provider["name"], "model": provider["model"],
+    return {"name": provider["name"], "model": MODEL_MAP.get(provider["model"], provider["model"]),
             "timeout": provider["timeout"], "baseUrl": endpoint, "apiKey": key,
             "requestHeaders": {}, "requestParams": {}}
 
