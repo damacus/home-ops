@@ -119,16 +119,18 @@ spec:
             command: ["/bin/sh", "-c"]
             args:
               - |
+                set -eu
+                npm install --prefix /tmp/mcp-runtime --no-audit --no-fund corepack@0.36.0
                 mkdir -p /tmp/bin
                 printf '#!/bin/sh\nexec corepack pnpm "$@"\n' > /tmp/bin/pnpm
                 chmod +x /tmp/bin/pnpm
-                export PATH="/tmp/bin:$PATH"
+                export PATH="/tmp/bin:/tmp/mcp-runtime/node_modules/.bin:$PATH"
                 corepack prepare pnpm@11.3.0 --activate
-                npx -y @penpot/mcp@stable
+                exec npx -y @penpot/mcp@2.15.4
             env:
               PENPOT_MCP_REMOTE_MODE: "true"
               PENPOT_MCP_SERVER_HOST: 0.0.0.0
-              PENPOT_MCP_PLUGIN_SERVER_LISTEN_ADDRESS: 0.0.0.0
+              PENPOT_MCP_PLUGIN_SERVER_HOST: 0.0.0.0
               PENPOT_MCP_SERVER_ADDRESS: penpot.ironstone.casa
               PENPOT_MCP_LOG_LEVEL: info
               PNPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS: "true"
