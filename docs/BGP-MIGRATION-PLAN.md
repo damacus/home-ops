@@ -41,7 +41,9 @@ only with 192.168.1.200. Keep its backup outside Git for rollback.
 
 ## Validation and rollout
 
-1. Run `python3 -m unittest discover -s tests -p test_bgp_migration.py`.
+1. Run `task flux:flate-test` and `task k8s:yayamlls` for rendering and
+   schema validation. These checks do not prove BGP routing or authentication;
+   use the router and service checks below for that evidence.
 2. Validate `kubectl --context ironstone apply --server-side --dry-run=server
    --force-conflicts --field-manager=bgp-validation -k
    kubernetes/apps/kube-system/cilium/config`. Conflict resolution here is

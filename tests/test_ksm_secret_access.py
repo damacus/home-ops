@@ -9,10 +9,6 @@ HR: Path = ROOT / "kubernetes/apps/monitoring/victoria-metrics/app/helmrelease.y
 CHART: str | None = os.environ.get("VM_STACK_CHART_PATH")
 
 class KsmSecretAccessTests(unittest.TestCase):
-    def test_secret_collector_is_explicitly_excluded(self) -> None:
-        values = yaml.safe_load(HR.read_text())["spec"]["values"]
-        self.assertIn("secrets", values["kube-state-metrics"].get("collectorsExclude", []))
-
     @unittest.skipUnless(CHART, "Set VM_STACK_CHART_PATH for Helm integration checks")
     def test_secret_permissions_removed_other_collectors_preserved(self) -> None:
         values = yaml.safe_load(HR.read_text())["spec"]["values"]

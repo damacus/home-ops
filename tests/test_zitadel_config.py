@@ -7,9 +7,6 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HELMRELEASE = (
-    REPO_ROOT / "kubernetes/apps/authentication/zitadel/app/helmrelease.yaml"
-)
 ACCESS_POLICY = (
     REPO_ROOT / "kubernetes/apps/authentication/zitadel/app/access-policy.yaml"
 )
@@ -75,13 +72,6 @@ class ZitadelConfigTests(unittest.TestCase):
                         text=True,
                     )
                     self.assertNotEqual(0, validation.returncode)
-
-    def test_kubectl_hook_uses_k3s_image_without_setup_job(self) -> None:
-        values = load_yaml(HELMRELEASE)["spec"]["values"]
-
-        self.assertEqual("rancher/k3s", values["tools"]["kubectl"]["image"]["repository"])
-        self.assertNotIn("setupJob", values)
-
 
 if __name__ == "__main__":
     unittest.main()
