@@ -7,7 +7,7 @@ spec:
   interval: 1h
   url: oci://ghcr.io/emberstack/helm-charts/reflector
   ref:
-    tag: 10.0.71
+    tag: 10.0.72
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
