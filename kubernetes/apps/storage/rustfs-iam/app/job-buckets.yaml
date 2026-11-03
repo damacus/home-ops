@@ -18,7 +18,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: rc
-          image: rustfs/rc:v0.1.36
+          image: rustfs/rc:v0.1.37
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
