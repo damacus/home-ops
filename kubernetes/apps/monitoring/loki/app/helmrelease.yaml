@@ -182,7 +182,7 @@ spec:
       image:
         registry: ghcr.io
         repository: damacus/k8s-sideca-rs
-        tag: "0.2.5"
+        tag: "0.2.6"
         sha: ""
         pullPolicy: IfNotPresent
       rules:
