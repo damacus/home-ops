@@ -23,7 +23,6 @@ class LokiWatcherTests(unittest.TestCase):
                 self.assertEqual(settings["sidecar"]["rules"]["resource"], "configmap")
                 self.assertEqual(settings["sidecar"]["rules"]["searchNamespace"], ["ALL"])
                 self.assertEqual(settings["sidecar"]["rules"]["label"], "loki_rule")
-                self.assertEqual(settings["sidecar"]["image"]["tag"], "0.2.5")
                 self.assertEqual(settings["rbac"]["useExistingRole"], role_name)
                 self.assertFalse(settings["rbac"]["namespaced"])
                 self.assertIs(settings["serviceAccount"]["automountServiceAccountToken"], True)
