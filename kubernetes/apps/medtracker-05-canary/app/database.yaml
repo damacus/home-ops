@@ -39,6 +39,14 @@ spec:
         inRoles: [med_tracker_owner, med_tracker_app]
         passwordSecret:
           name: medtracker-05-db
+      - name: medtracker_05_web
+        ensure: present
+        login: true
+        superuser: false
+        bypassrls: false
+        inRoles: [med_tracker_app]
+        passwordSecret:
+          name: medtracker-05-web-db
   enableSuperuserAccess: false
   resources:
     requests: {cpu: 100m, memory: 128Mi}
