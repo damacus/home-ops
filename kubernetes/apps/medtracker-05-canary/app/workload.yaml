@@ -1,0 +1,158 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medtracker-05-settings
+data:
+  RAILS_ENV: production
+  RAILS_FORCE_SSL: 'false'
+  RAILS_LOG_LEVEL: info
+  TZ: Europe/London
+  APP_URL: https://med-tracker-05-canary.damacus.io
+  DEMO_MODE: 'true'
+  SMTP_ENABLED: 'false'
+  OTEL_TRACES_EXPORTER: none
+  ACTIVE_STORAGE_SERVICE: persistent
+  ACTIVE_STORAGE_ROOT: /app/storage
+  DEMO_RESET_EXPECTED_APPLICATION_HOST: med-tracker-05-canary.damacus.io
+  DEMO_RESET_EXPECTED_DATABASE_HOST: medtracker-05-rw.medtracker-05-canary.svc.cluster.local
+  DEMO_RESET_EXPECTED_STORAGE_SERVICE: persistent
+  DEMO_RESET_EXPECTED_STORAGE_ROOT: /app/storage
+  DEMO_RESET_EXPECTED_DATABASE_ROLE: med_tracker_owner
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medtracker-05
+spec:
+  replicas: 0
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: medtracker-05}
+  template:
+    metadata:
+      labels: {app: medtracker-05, app.kubernetes.io/part-of: medtracker-05}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000}
+      containers:
+        - name: app
+          image: ghcr.io/damacus/med-tracker:0.5.35@sha256:f47f317657236675427f6b60761858f8203c0f44c1755ea16b5f926058c73925
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          envFrom:
+            - configMapRef: {name: medtracker-05-settings}
+            - secretRef: {name: medtracker-05-runtime}
+          env:
+            - {name: DATABASE_ROLE, value: med_tracker_app}
+          ports: [{name: http, containerPort: 80}]
+          readinessProbe:
+            httpGet: {path: /up, port: http}
+            initialDelaySeconds: 10
+          livenessProbe:
+            httpGet: {path: /up, port: http}
+            initialDelaySeconds: 30
+          resources:
+            requests: {cpu: 10m, memory: 256Mi}
+            limits: {cpu: '1', memory: 1Gi}
+          volumeMounts:
+            - {name: storage, mountPath: /app/storage}
+      volumes:
+        - name: storage
+          persistentVolumeClaim: {claimName: medtracker-05-storage}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: medtracker-05-initialise
+spec:
+  suspend: true
+  schedule: '0 0 1 1 *'
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels: {app.kubernetes.io/part-of: medtracker-05}
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000}
+          containers:
+            - name: initialise
+              image: ghcr.io/damacus/med-tracker:0.5.35@sha256:f47f317657236675427f6b60761858f8203c0f44c1755ea16b5f926058c73925
+              securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+              command: ["/bin/sh", "-ec"]
+              args:
+                - >-
+                  bin/rails db:prepare &&
+                  bin/rails runner 'ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).reject { |c| c.name == "primary" }.each { |c| ActiveRecord::Base.establish_connection(c.configuration_hash); db = ActiveRecord::Base.connection; db.execute("GRANT USAGE ON SCHEMA public TO med_tracker_app"); db.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO med_tracker_app"); db.execute("GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO med_tracker_app") }' &&
+                  bin/rails canary:demo_reset
+              envFrom:
+                - configMapRef: {name: medtracker-05-settings}
+                - secretRef: {name: medtracker-05-initialise}
+              env:
+                - {name: DATABASE_ROLE, value: med_tracker_owner}
+              resources:
+                requests: {cpu: 10m, memory: 256Mi}
+                limits: {cpu: '1', memory: 1Gi}
+              volumeMounts:
+                - {name: storage, mountPath: /app/storage}
+          volumes:
+            - name: storage
+              persistentVolumeClaim: {claimName: medtracker-05-storage}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: medtracker-05-inspect-storage
+spec:
+  suspend: true
+  schedule: '0 0 1 1 *'
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 300
+      template:
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000}
+          containers:
+            - name: inspect
+              image: ghcr.io/damacus/med-tracker:0.5.35@sha256:f47f317657236675427f6b60761858f8203c0f44c1755ea16b5f926058c73925
+              securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+              command: ["/bin/sh", "-ec"]
+              args: ['test -d /app/storage; contents=$(ls -A /app/storage); test -z "$contents"; echo storage-empty']
+              resources:
+                requests: {cpu: 10m, memory: 64Mi}
+                limits: {cpu: 100m, memory: 128Mi}
+              volumeMounts:
+                - {name: storage, mountPath: /app/storage, readOnly: true}
+          volumes:
+            - name: storage
+              persistentVolumeClaim: {claimName: medtracker-05-storage, readOnly: true}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medtracker-05
+spec:
+  selector: {app: medtracker-05}
+  ports:
+    - {name: http, port: 80, targetPort: http}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: medtracker-05
+  annotations:
+    external-dns.alpha.kubernetes.io/target: traefik-ext.damacus.io
+spec:
+  parentRefs:
+    - {name: traefik-internal, namespace: network, sectionName: websecure}
+  hostnames: [med-tracker-05-canary.damacus.io]
+  rules:
+    - backendRefs:
+        - {name: medtracker-05, port: 80}
