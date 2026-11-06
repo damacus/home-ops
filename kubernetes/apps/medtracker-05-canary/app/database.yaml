@@ -1,0 +1,72 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: medtracker-05
+spec:
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 18
+  instances: 1
+  storage:
+    size: 5Gi
+    storageClass: openebs-hostpath
+  bootstrap:
+    initdb:
+      database: medtracker_05
+      owner: medtracker_05
+      secret:
+        name: medtracker-05-db
+      postInitApplicationSQL:
+        - CREATE ROLE med_tracker_owner NOLOGIN NOSUPERUSER NOBYPASSRLS
+        - CREATE ROLE med_tracker_app NOLOGIN NOSUPERUSER NOBYPASSRLS
+        - GRANT med_tracker_owner, med_tracker_app TO medtracker_05
+        - ALTER DATABASE medtracker_05 OWNER TO med_tracker_owner
+        - ALTER SCHEMA public OWNER TO med_tracker_owner
+  managed:
+    roles:
+      - name: med_tracker_owner
+        ensure: present
+        login: false
+      - name: med_tracker_app
+        ensure: present
+        login: false
+      - name: medtracker_05
+        ensure: present
+        login: true
+        inRoles: [med_tracker_owner, med_tracker_app]
+        passwordSecret:
+          name: medtracker-05-db
+  enableSuperuserAccess: false
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: '1', memory: 512Mi}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: medtracker-05-cache
+spec:
+  name: medtracker_production_cache
+  owner: medtracker_05
+  cluster: {name: medtracker-05}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: medtracker-05-queue
+spec:
+  name: medtracker_production_queue
+  owner: medtracker_05
+  cluster: {name: medtracker-05}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: medtracker-05-cable
+spec:
+  name: medtracker_production_cable
+  owner: medtracker_05
+  cluster: {name: medtracker-05}

@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: medtracker-05-canary
+  labels:
+    kustomize.toolkit.fluxcd.io/prune: disabled
