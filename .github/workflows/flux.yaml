@@ -38,6 +38,7 @@ jobs:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Flux/**'
               - 'kubernetes/**'
+              - 'tests/spamhaus/**'
             go:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Kubernetes/Taskfile.yaml'
@@ -113,6 +114,24 @@ jobs:
 
       - name: Run yayamlls rendered validation
         run: yayamlls validate --render ./kubernetes
+
+  spamhaus-publisher:
+    name: Spamhaus publisher
+    needs: changes
+    if: ${{ needs.changes.outputs.kubernetes == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - run: python3 -m unittest discover -s tests/spamhaus -v
+      - name: Test alert behaviour
+        run: |
+          mkdir -p "$RUNNER_TEMP/spamhaus-alert-test"
+          cp tests/spamhaus/alerts.test.yaml "$RUNNER_TEMP/spamhaus-alert-test/test.yaml"
+          ruby -e 'require "yaml"; d=YAML.load_file("kubernetes/apps/monitoring/victoria-metrics/app/prometheusrule.yaml"); g=d.fetch("spec").fetch("groups").select { |x| x["name"] == "spamhaus" }; raise "missing spamhaus group" unless g.length == 1; File.write(ARGV.fetch(0), {"groups" => g}.to_yaml)' "$RUNNER_TEMP/spamhaus-alert-test/rules.yaml"
+          docker run --rm --network none --read-only --tmpfs /tmp \
+            -v "$RUNNER_TEMP/spamhaus-alert-test:/data:ro" \
+            victoriametrics/vmalert-tool:v1.155.0@sha256:b03d29d0a11b906a85879a6a4009c9d0a9d5a8b9a744ebb7dd3a7721f1e78f36 \
+            unittest -files=/data/test.yaml
 
   mqtt-access:
     name: MQTT Access
@@ -422,7 +441,7 @@ jobs:
 
   flate-success:
     if: ${{ always() }}
-    needs: ["changes", "flate-diff", "flate-test", "mondoo", "rustfs-iam-policy", "mqtt-access", "redis-access"]
+    needs: ["changes", "flate-diff", "flate-test", "mondoo", "rustfs-iam-policy", "mqtt-access", "redis-access", "spamhaus-publisher"]
     name: Flate Successful
     runs-on: ubuntu-slim
     steps:

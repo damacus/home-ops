@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: spamhaus
+  namespace: flux-system
+spec:
+  targetNamespace: network
+  path: ./kubernetes/apps/network/spamhaus/app
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
