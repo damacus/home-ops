@@ -240,6 +240,16 @@ jobs:
           helm pull oci://ghcr.io/grafana/helm-charts/loki --version "$loki_version" --untar --untardir "$LOKI_CHARTS_PATH"
           "$RUNNER_TEMP/loki-test-env/bin/python" -m unittest tests/test_loki_rule_watchers.py tests/test_loki_alerts.py
 
+      - name: Verify rendered Grafana provisioning
+        env:
+          GRAFANA_CHART_PATH: ${{ runner.temp }}/grafana-chart/grafana
+        run: |
+          set -euo pipefail
+          chart_version=$(yq '.spec.ref.tag' kubernetes/apps/monitoring/grafana/app/oci-repository.yaml)
+          mkdir -p "$RUNNER_TEMP/grafana-chart"
+          helm pull oci://ghcr.io/grafana/helm-charts/grafana --version "$chart_version" --untar --untardir "$RUNNER_TEMP/grafana-chart"
+          "$RUNNER_TEMP/loki-test-env/bin/python" -m unittest tests/test_grafana_provisioning.py
+
       - name: Verify rendered maintenance safety
         env:
           MAINTENANCE_CHARTS_PATH: ${{ runner.temp }}/maintenance-charts
