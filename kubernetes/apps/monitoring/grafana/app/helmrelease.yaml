@@ -570,11 +570,6 @@ spec:
           gnetId: 15759
           revision: 37
           datasource: Prometheus
-        kubernetes-pods:
-          # renovate: depName="Kubernetes / Views / Pods"
-          gNetId: 15760
-          revision: 36
-          datasource: Prometheus
 
       storage:
         longhorn:
@@ -848,20 +843,6 @@ spec:
         readOnly: true
 
     plugins: []
-
-    pluginManagement:
-      plugins.yaml:
-        apiVersion: 1
-        apps:
-          - type: grafana-oncall-app
-            org_id: 1
-            disabled: false
-            jsonData:
-              stackId: 1
-              orgId: 1
-              onCallApiUrl: $GF_PLUGIN_GRAFANA_ONCALL_APP_ONCALL_API_URL
-            secureJsonData:
-              grafanaToken: $GF_PLUGIN_GRAFANA_ONCALL_APP_ONCALL_TOKEN
 
     serviceMonitor:
       enabled: true

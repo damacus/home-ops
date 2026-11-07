@@ -62,5 +62,3 @@ spec:
         - name: redis-users
           mountPath: /opt/bitnami/redis/acl
           readOnly: true
-    replica:
-      replicaCount: 0
