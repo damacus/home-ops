@@ -728,31 +728,6 @@ spec:
                   - key: kubelet.json
                     path: kubelet.json
             - configMap:
-                name: vm-dashboard-kubernetes-system-api-server
-                items:
-                  - key: kubernetes-system-api-server.json
-                    path: kubernetes-system-api-server.json
-            - configMap:
-                name: vm-dashboard-kubernetes-system-coredns
-                items:
-                  - key: kubernetes-system-coredns.json
-                    path: kubernetes-system-coredns.json
-            - configMap:
-                name: vm-dashboard-kubernetes-views-global
-                items:
-                  - key: kubernetes-views-global.json
-                    path: kubernetes-views-global.json
-            - configMap:
-                name: vm-dashboard-kubernetes-views-namespaces
-                items:
-                  - key: kubernetes-views-namespaces.json
-                    path: kubernetes-views-namespaces.json
-            - configMap:
-                name: vm-dashboard-kubernetes-views-nodes
-                items:
-                  - key: kubernetes-views-nodes.json
-                    path: kubernetes-views-nodes.json
-            - configMap:
                 name: vm-dashboard-kubernetes-views-pods
                 items:
                   - key: kubernetes-views-pods.json
