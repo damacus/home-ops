@@ -76,3 +76,16 @@ tests:
               assert_eq!(.raw, "not syslog\nsecond line")
               assert_eq!(.severity, "unknown")
               assert_eq!(.timestamp, t'2026-11-07T00:00:00Z')
+  - name: preserve UDM kernel timestamp without PRI
+    inputs:
+      - insert_at: parse
+        type: vrl
+        source: |
+          . = {"message": "2026-11-07T08:09:34+00:00 Ironstone kernel: al_eth eth9: SRAM parity error", "timestamp": t'2026-11-07T10:00:00Z'}
+    outputs:
+      - extract_from: parse
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.timestamp, t'2026-11-07T08:09:34Z')
+              assert_eq!(.raw, "2026-11-07T08:09:34+00:00 Ironstone kernel: al_eth eth9: SRAM parity error")
