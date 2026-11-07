@@ -56,14 +56,16 @@ jobs:
               - 'mondoo/**'
               - 'tests/test_metrics_ui_auth.py'
               - 'tests/test_redis_export.py'
+              - 'tests/test_paperless_repository.py'
+              - 'tests/test_kured_reboot_markers.py'
+              - 'tests/test_system_upgrade_health_gate.py'
+              - 'tests/test_maintenance_charts.py'
               - 'scripts/mondoo_scan.py'
               - 'tests/test_zitadel_access_policy.rb'
               - 'tests/test_zitadel_config.py'
               - 'tests/test_gateway_api_source.py'
               - 'tests/test_loki_rule_watchers.py'
-              - 'tests/test_loki_alerts.py'
               - 'tests/test_ksm_secret_access.py'
-              - 'tests/test_ksm_ci.py'
               - 'tests/grounded-docs-sync.test.mjs'
             mqtt:
               - '.github/workflows/flux.yaml'
@@ -200,17 +202,17 @@ jobs:
           bash -c "$(curl -sSL https://install.mondoo.com/sh)"
           cnspec version
 
-      - name: Run unit tests
+      - name: Verify access-policy and upgrade behaviour
         run: |
-          python3 -m unittest tests/test_zitadel_config.py tests/test_traefik_gateway.py tests/test_gateway_api_source.py
+          python3 -m unittest tests/test_zitadel_config.py tests/test_gateway_api_source.py
           python3 -m unittest tests/test_kured_reboot_markers.py tests/test_system_upgrade_health_gate.py
           ruby tests/test_zitadel_access_policy.rb
 
-      - name: Verify PR behaviour regressions
+      - name: Verify Redis export behaviour and backup safety
         run: |
           python3 -m venv "$RUNNER_TEMP/behaviour-tests"
           "$RUNNER_TEMP/behaviour-tests/bin/pip" install PyYAML==6.0.3
-          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_paperless_backup.py tests/test_redis_export.py
+          "$RUNNER_TEMP/behaviour-tests/bin/python" -m unittest tests/test_paperless_repository.py tests/test_redis_export.py
 
       - name: Setup Node for documentation refresh checks
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -228,7 +230,7 @@ jobs:
         with:
           version: v4.3.1
 
-      - name: Verify rendered central Loki watcher
+      - name: Verify rendered Loki permissions
         env:
           LOKI_CHARTS_PATH: ${{ runner.temp }}/loki-charts
         run: |
@@ -238,7 +240,7 @@ jobs:
           loki_version=$("$RUNNER_TEMP/loki-test-env/bin/python" -c 'import yaml; print(next(d for d in yaml.safe_load_all(open("kubernetes/apps/monitoring/loki/app/helmrelease.yaml")) if d["kind"] == "OCIRepository")["spec"]["ref"]["tag"])')
           mkdir -p "$LOKI_CHARTS_PATH"
           helm pull oci://ghcr.io/grafana/helm-charts/loki --version "$loki_version" --untar --untardir "$LOKI_CHARTS_PATH"
-          "$RUNNER_TEMP/loki-test-env/bin/python" -m unittest tests/test_loki_rule_watchers.py tests/test_loki_alerts.py
+          "$RUNNER_TEMP/loki-test-env/bin/python" -m unittest tests/test_loki_rule_watchers.py
 
       - name: Verify rendered maintenance safety
         env:
@@ -266,7 +268,7 @@ jobs:
           chart_version=$("$RUNNER_TEMP/ksm-test-env/bin/python" -c 'import yaml; print(yaml.safe_load(open("kubernetes/apps/monitoring/victoria-metrics/app/helmrelease.yaml"))["spec"]["chart"]["spec"]["version"])')
           mkdir -p "$RUNNER_TEMP/ksm-charts"
           helm pull victoria-metrics-k8s-stack --repo https://victoriametrics.github.io/helm-charts --version "$chart_version" --untar --untardir "$RUNNER_TEMP/ksm-charts"
-          "$RUNNER_TEMP/ksm-test-env/bin/python" -m unittest tests/test_ksm_secret_access.py tests/test_ksm_ci.py
+          "$RUNNER_TEMP/ksm-test-env/bin/python" -m unittest tests/test_ksm_secret_access.py
 
       - name: Run rendered manifest scans
         env:

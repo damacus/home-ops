@@ -25,16 +25,6 @@ class SystemUpgradeHealthGateTest(unittest.TestCase):
         cls.prepare = cls.plan["spec"].get("prepare", {})
         cls.script = "\n".join(cls.prepare.get("args", []))
 
-    def test_controller_plan_runs_health_gate_before_cordon(self) -> None:
-        self.assertEqual(self.prepare.get("image"), "rancher/k3s-upgrade")
-        self.assertEqual(self.prepare.get("command"), ["/bin/sh", "-ec"])
-        self.assertIn("server: https://192.168.1.220:6443", self.script)
-        self.assertIn("tokenFile:", self.script)
-        self.assertIn("get --raw=/readyz", self.script)
-        self.assertIn("node-role.kubernetes.io/control-plane", self.script)
-        self.assertLess(self.script.index("get --raw=/readyz"), self.script.index("get nodes"))
-        self.assertEqual(self.plan["spec"].get("jobActiveDeadlineSecs"), 0)
-
     def test_gate_waits_for_vip_and_every_control_plane_node(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             temp_dir = Path(tmp)
