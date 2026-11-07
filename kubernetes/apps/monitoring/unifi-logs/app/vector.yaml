@@ -1,0 +1,91 @@
+---
+data_dir: /vector-data
+sources:
+  unifi:
+    type: socket
+    mode: udp
+    address: 0.0.0.0:5514
+    framing:
+      method: bytes
+    max_length: 65535
+  internal_metrics:
+    type: internal_metrics
+transforms:
+  parse:
+    type: remap
+    inputs: [unifi]
+    source: |
+      .raw = .message
+      parsed, err = parse_syslog(string!(.message))
+      .severity = "unknown"
+      if err == null {
+        if is_string(parsed.severity) {
+          .severity = parsed.severity
+        }
+        if is_timestamp(parsed.timestamp) {
+          .timestamp = parsed.timestamp
+        }
+      }
+sinks:
+  loki:
+    type: loki
+    inputs: [parse]
+    endpoint: http://loki-gateway.monitoring.svc.cluster.local
+    encoding:
+      codec: json
+    labels:
+      job: unifi-os
+      device: udm-pro
+      source: syslog
+      severity: '{{ severity }}'
+      log_origin: live
+    buffer:
+      type: disk
+      max_size: 536870912
+      when_full: block
+  metrics:
+    type: prometheus_exporter
+    inputs: [internal_metrics]
+    address: 0.0.0.0:9090
+tests:
+  - name: preserve syslog timestamp and severity
+    inputs:
+      - insert_at: parse
+        type: vrl
+        source: |
+          . = {"message": "<3>1 2026-11-06T12:34:56Z udm kernel - - - I/O error", "timestamp": t'2026-11-07T00:00:00Z'}
+    outputs:
+      - extract_from: parse
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.timestamp, t'2026-11-06T12:34:56Z')
+              assert_eq!(.severity, "err")
+              assert_eq!(.raw, "<3>1 2026-11-06T12:34:56Z udm kernel - - - I/O error")
+  - name: preserve malformed multiline message
+    inputs:
+      - insert_at: parse
+        type: vrl
+        source: |
+          . = {"message": "not syslog\nsecond line", "timestamp": t'2026-11-07T00:00:00Z'}
+    outputs:
+      - extract_from: parse
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.raw, "not syslog\nsecond line")
+              assert_eq!(.severity, "unknown")
+              assert_eq!(.timestamp, t'2026-11-07T00:00:00Z')
+  - name: preserve UDM kernel timestamp without PRI
+    inputs:
+      - insert_at: parse
+        type: vrl
+        source: |
+          . = {"message": "2026-11-07T08:09:34+00:00 Ironstone kernel: al_eth eth9: SRAM parity error", "timestamp": t'2026-11-07T10:00:00Z'}
+    outputs:
+      - extract_from: parse
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.timestamp, t'2026-11-07T08:09:34Z')
+              assert_eq!(.raw, "2026-11-07T08:09:34+00:00 Ironstone kernel: al_eth eth9: SRAM parity error")

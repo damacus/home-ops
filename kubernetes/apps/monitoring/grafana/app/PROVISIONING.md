@@ -19,6 +19,7 @@ Migration removes discovery only. Existing dashboard JSON, folders, datasource U
 | cnpg-grafana-dashboard | CloudNativePG | General |
 | med-tracker-logs-dashboard | Med Tracker Logs | Home |
 | unifi-radio-dashboard | UniFi Radio Health | Network |
+| unifi-os-dashboard | UniFi OS Logs | Network |
 | vm-dashboard-alertmanager-overview | Alertmanager / Overview | General |
 | vm-dashboard-apiserver | Kubernetes / API server | General |
 | vm-dashboard-cluster-total | Kubernetes / Networking / Cluster | General |
