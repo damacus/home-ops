@@ -607,7 +607,8 @@ spec:
         enabled: false
       notifiers:
         enabled: false
-    extraVolumes:
+    # extraVolumes does not support projected sources in this chart.
+    extraContainerVolumes:
       - name: provisioned-dashboards
         projected:
           sources:

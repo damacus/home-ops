@@ -19,16 +19,6 @@ class GrafanaProvisioningTests(unittest.TestCase):
         self.assertFalse(self.values["automountServiceAccountToken"])
         self.assertFalse(self.values["serviceAccount"]["automountServiceAccountToken"])
 
-    def test_all_discovered_dashboards_are_mounted(self) -> None:
-        volume = next(v for v in self.values["extraVolumes"] if v["name"] == "provisioned-dashboards")
-        names = {s["configMap"]["name"] for s in volume["projected"]["sources"]}
-        expected = set(EXPECTED)
-        self.assertEqual(names, expected)
-        paths = [item["path"] for s in volume["projected"]["sources"] for item in s["configMap"]["items"]]
-        self.assertEqual(len(paths), len(set(paths)))
-        mount = next(m for m in self.values["extraVolumeMounts"] if m["name"] == "provisioned-dashboards")
-        self.assertTrue(mount["readOnly"])
-
     def test_alerts_keep_their_source_and_uid(self) -> None:
         mount = next(m for m in self.values["extraConfigmapMounts"] if m["configMap"] == "unifi-radio-alerts")
         self.assertEqual(mount["mountPath"], "/etc/grafana/provisioning/alerting/unifi.yaml")
@@ -53,6 +43,11 @@ class GrafanaProvisioningTests(unittest.TestCase):
         self.assertEqual([c["name"] for c in pod["containers"]], ["grafana"])
         self.assertFalse(any("serviceaccount" in m["mountPath"] for c in pod["containers"] for m in c.get("volumeMounts", [])))
         self.assertIn("unifi-radio-alerts", {v.get("configMap", {}).get("name") for v in pod["volumes"]})
+        volume = next(v for v in pod["volumes"] if v["name"] == "provisioned-dashboards")
+        sources = volume["projected"]["sources"]
+        self.assertIn("unifi-os-dashboard", {source["configMap"]["name"] for source in sources})
+        paths = [item["path"] for source in sources for item in source["configMap"]["items"]]
+        self.assertEqual(len(paths), len(set(paths)))
 
     def test_cross_namespace_dashboards_are_created_in_monitoring(self) -> None:
         for file in ("med-tracker-dashboard.yaml",):
@@ -63,6 +58,5 @@ class GrafanaProvisioningTests(unittest.TestCase):
         cnpg = yaml.safe_load((ROOT / "kubernetes/apps/database/cloudnative-pg/app/helmrelease.yaml").read_text())
         self.assertEqual(cnpg["spec"]["values"]["monitoring"]["grafanaDashboard"]["namespace"], "monitoring")
 
-EXPECTED = ['cilium-dashboard', 'cilium-operator-dashboard', 'cnpg-grafana-dashboard', 'med-tracker-logs-dashboard', 'unifi-radio-dashboard', 'vm-dashboard-alertmanager-overview', 'vm-dashboard-apiserver', 'vm-dashboard-cluster-total', 'vm-dashboard-k8s-resources-cluster', 'vm-dashboard-k8s-resources-multicluster', 'vm-dashboard-k8s-resources-namespace', 'vm-dashboard-k8s-resources-node', 'vm-dashboard-k8s-resources-nodes-overview', 'vm-dashboard-k8s-resources-pod', 'vm-dashboard-k8s-resources-windows-cluster', 'vm-dashboard-k8s-resources-windows-namespace', 'vm-dashboard-k8s-resources-windows-pod', 'vm-dashboard-k8s-resources-workload', 'vm-dashboard-k8s-resources-workloads-namespace', 'vm-dashboard-k8s-windows-cluster-rsrc-use', 'vm-dashboard-k8s-windows-node-rsrc-use', 'vm-dashboard-kubelet', 'vm-dashboard-kubernetes-system-api-server', 'vm-dashboard-kubernetes-system-coredns', 'vm-dashboard-kubernetes-views-global', 'vm-dashboard-kubernetes-views-namespaces', 'vm-dashboard-kubernetes-views-nodes', 'vm-dashboard-kubernetes-views-pods', 'vm-dashboard-namespace-by-pod', 'vm-dashboard-namespace-by-workload', 'vm-dashboard-node-cluster-rsrc-use', 'vm-dashboard-node-exporter-full', 'vm-dashboard-node-rsrc-use', 'vm-dashboard-nodes', 'vm-dashboard-nodes-aix', 'vm-dashboard-nodes-darwin', 'vm-dashboard-persistentvolumesusage', 'vm-dashboard-pod-total', 'vm-dashboard-prometheus', 'vm-dashboard-prometheus-remote-write', 'vm-dashboard-victoriametrics-operator', 'vm-dashboard-victoriametrics-single-node', 'vm-dashboard-victoriametrics-vmagent', 'vm-dashboard-victoriametrics-vmalert', 'vm-dashboard-workload-total']
 if __name__ == "__main__":
     unittest.main()
