@@ -250,6 +250,12 @@ jobs:
           helm pull oci://ghcr.io/grafana/helm-charts/grafana --version "$chart_version" --untar --untardir "$RUNNER_TEMP/grafana-chart"
           "$RUNNER_TEMP/loki-test-env/bin/python" -m unittest tests/test_grafana_provisioning.py
 
+      - name: Verify UniFi receiver parsing
+        run: |
+          set -euo pipefail
+          image=$(yq 'select(.kind == "StatefulSet") | .spec.template.spec.containers[0].image' kubernetes/apps/monitoring/unifi-logs/app/receiver.yaml)
+          docker run --rm -v "$PWD/kubernetes/apps/monitoring/unifi-logs/app/vector.yaml:/etc/vector/vector.yaml:ro" "$image" test /etc/vector/vector.yaml
+
       - name: Verify rendered maintenance safety
         env:
           MAINTENANCE_CHARTS_PATH: ${{ runner.temp }}/maintenance-charts

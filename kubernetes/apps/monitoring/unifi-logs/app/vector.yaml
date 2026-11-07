@@ -18,12 +18,26 @@ transforms:
       .raw = .message
       parsed, err = parse_syslog(string!(.message))
       .severity = "unknown"
+      .source_kind = "syslog"
       if err == null {
         if is_string(parsed.severity) {
           .severity = parsed.severity
         }
         if is_timestamp(parsed.timestamp) {
           .timestamp = parsed.timestamp
+        }
+      }
+      cef, cef_err = parse_cef(string!(.message), strict: false)
+      if cef_err == null {
+        .source_kind = "cef"
+        if is_string(cef.severity) && match(string!(cef.severity), r'^(10|[0-9])$') {
+          .severity = "cef_" + string!(cef.severity)
+        }
+        if is_string(cef.UNIFIutcTime) {
+          source_time, time_err = parse_timestamp(string!(cef.UNIFIutcTime), format: "%+")
+          if time_err == null {
+            .timestamp = source_time
+          }
         }
       }
 sinks:
@@ -36,7 +50,7 @@ sinks:
     labels:
       job: unifi-os
       device: udm-pro
-      source: syslog
+      source: '{{ source_kind }}'
       severity: '{{ severity }}'
       log_origin: live
     buffer:
@@ -89,3 +103,31 @@ tests:
             source: |
               assert_eq!(.timestamp, t'2026-11-07T08:09:34Z')
               assert_eq!(.raw, "2026-11-07T08:09:34+00:00 Ironstone kernel: al_eth eth9: SRAM parity error")
+  - name: preserve UniFi CEF source timestamp and severity
+    inputs:
+      - insert_at: parse
+        type: vrl
+        source: |
+          . = {"message": "CEF:0|Ubiquiti|UniFi Network|11|1|Test event|2|UNIFIutcTime=2026-11-07T11:14:24.599Z msg=Test", "timestamp": t'2026-11-07T11:20:00Z'}
+    outputs:
+      - extract_from: parse
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.timestamp, t'2026-11-07T11:14:24.599Z')
+              assert_eq!(.severity, "cef_2")
+              assert_eq!(.source_kind, "cef")
+              assert_eq!(.raw, "CEF:0|Ubiquiti|UniFi Network|11|1|Test event|2|UNIFIutcTime=2026-11-07T11:14:24.599Z msg=Test")
+  - name: bound invalid CEF severity and retain receipt time
+    inputs:
+      - insert_at: parse
+        type: vrl
+        source: |
+          . = {"message": "CEF:0|Ubiquiti|UniFi Network|11|1|Test event|42|UNIFIutcTime=invalid msg=Test", "timestamp": t'2026-11-07T11:20:00Z'}
+    outputs:
+      - extract_from: parse
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.timestamp, t'2026-11-07T11:20:00Z')
+              assert_eq!(.severity, "unknown")

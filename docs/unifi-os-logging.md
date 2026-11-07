@@ -17,6 +17,9 @@ The receiver exposes UDP syslog on `192.168.3.10:514`, restricted to
 `192.168.1.254`, and buffers up to 512 MiB on a persistent 1 GiB volume. UDP
 can lose messages before they reach Vector, including during outages or when
 the buffer is full. Vector exports internal error and drop metrics on port 9090.
+UniFi CEF events use their `UNIFIutcTime` source time and a bounded `cef_0` to
+`cef_10` severity label. When a message has no valid source time or severity,
+Vector retains its receipt time or the `unknown` severity label.
 Five-minute alerts cover storage I/O, filesystem corruption and journal failures,
 Ethernet SRAM parity and out-of-memory kills. MDIO messages remain searchable
 but do not alert. No log contents are copied into alert labels.
