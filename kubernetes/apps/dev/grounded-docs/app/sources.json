@@ -1,5 +1,29 @@
 [
   {
+    "library": "unifi-siem-logging",
+    "version": "current",
+    "url": "https://help.ui.com/api/v2/help_center/en-us/articles/33349041044119.json",
+    "maxPages": 1,
+    "maxDepth": 0,
+    "scrapeMode": "fetch"
+  },
+  {
+    "library": "unifi-advanced-logging",
+    "version": "current",
+    "url": "https://help.ui.com/api/v2/help_center/en-us/articles/204959834.json",
+    "maxPages": 1,
+    "maxDepth": 0,
+    "scrapeMode": "fetch"
+  },
+  {
+    "library": "unifi-support-logs",
+    "version": "current",
+    "url": "https://help.ui.com/api/v2/help_center/en-us/articles/360049956374.json",
+    "maxPages": 1,
+    "maxDepth": 0,
+    "scrapeMode": "fetch"
+  },
+  {
     "library": "loco-guides",
     "version": "current",
     "url": "https://loco.rs/docs/",

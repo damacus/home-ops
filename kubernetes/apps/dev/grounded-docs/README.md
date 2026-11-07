@@ -58,6 +58,11 @@ are not a general pod egress firewall.
 
 `app/sources.json` is the reviewed source list:
 
+The UniFi logging entries index three individual Ubiquiti Help Center articles
+through its public JSON API. The rendered article pages return HTTP 403 to the
+scraper. Search results contain the article body as HTML within JSON; these
+moving `current` articles do not establish raw kernel forwarding coverage.
+
 | Library | Version | Source |
 | --- | --- | --- |
 | loco-guides | current | `https://loco.rs/docs/` |

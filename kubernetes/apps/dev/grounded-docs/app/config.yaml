@@ -17,6 +17,7 @@ scraper:
       mode: allowlist
       allowPrivateNetworks: false
       allowedHosts:
+        - help.ui.com
         - loco.rs
         - docs.rs
         - guides.rubyonrails.org
