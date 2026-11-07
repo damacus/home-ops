@@ -637,6 +637,11 @@ spec:
                   - key: unifi-radio.json
                     path: Network/unifi-radio.json
             - configMap:
+                name: unifi-os-dashboard
+                items:
+                  - key: unifi-os.json
+                    path: Network/unifi-os.json
+            - configMap:
                 name: vm-dashboard-alertmanager-overview
                 items:
                   - key: alertmanager-overview.json

@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unifi-os-dashboard
+data:
+  unifi-os.json: |
+    {
+      "uid": "unifi-os-logs",
+      "title": "UniFi OS Logs",
+      "tags": ["network", "unifi", "logs"],
+      "schemaVersion": 39,
+      "version": 1,
+      "timezone": "browser",
+      "time": {"from": "now-6h", "to": "now"},
+      "panels": [
+        {
+          "id": 1, "title": "OS and kernel errors", "type": "logs",
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [{"refId": "A", "expr": "{job=\"unifi-os\"} |~ \"(?i)(kernel|error|failure|critical|panic)\""}]
+        },
+        {
+          "id": 2, "title": "Filesystem errors", "type": "logs",
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [{"refId": "A", "expr": "{job=\"unifi-os\"} |~ \"(?i)(filesystem|ext4|i/o error|read-only|journal)\""}]
+        },
+        {
+          "id": 3, "title": "Application failures", "type": "logs",
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [{"refId": "A", "expr": "{job=\"unifi-os\"} |~ \"(?i)(failed|failure|crash|exited|error)\""}]
+        },
+        {
+          "id": 4, "title": "Recent restarts", "type": "logs",
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [{"refId": "A", "expr": "{job=\"unifi-os\"} |~ \"(?i)(restart|reboot|starting|started)\""}]
+        },
+        {
+          "id": 5, "title": "MDIO messages (investigation only)", "type": "logs",
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [{"refId": "A", "expr": "{job=\"unifi-os\"} |~ \"(?i)mdio\""}]
+        },
+        {
+          "id": 6, "title": "All UniFi OS logs", "type": "logs",
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 24},
+          "targets": [{"refId": "A", "expr": "{job=\"unifi-os\"}"}]
+        }
+      ]
+    }
