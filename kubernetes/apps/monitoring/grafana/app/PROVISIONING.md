@@ -2,7 +2,7 @@
 
 Grafana has no Kubernetes API permissions or service-account token. Dashboards and alerts are mounted from named ConfigMaps in monitoring. Its own credentials continue to use explicit Secret references.
 
-The existing reloader auto annotation rolls Grafana when referenced ConfigMaps change. This reloads the UniFi alert file mounted with subPath; preserve this behaviour because subPath mounts do not receive live file updates. Dashboard directories are polled every 30 seconds.
+The existing reloader auto annotation rolls Grafana when referenced ConfigMaps change. This reloads the UniFi alert and Network dashboard files mounted with subPath; preserve this behaviour because subPath mounts do not receive live file updates. Other dashboard directories are polled every 30 seconds. The Network dashboard files are mounted directly because Grafana's file walker does not traverse the directory symlinks produced by a projected Kubernetes volume.
 
 Cilium and CloudNativePG create dashboard ConfigMaps directly in monitoring. Med Tracker dashboard manifests are managed by the Grafana Flux Kustomization. No Secret or ConfigMap mirroring is needed.
 

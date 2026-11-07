@@ -24,7 +24,7 @@ spec:
         - dockerhub-credentials
 
     replicas: 1
-    podAnnotations:
+    annotations:
       reloader.stakater.com/auto: "true"
     env:
       GF_DATE_FORMATS_USE_BROWSER_LOCALE: true
@@ -633,16 +633,6 @@ spec:
                   - key: med-tracker-logs.json
                     path: Home/med-tracker-logs.json
             - configMap:
-                name: unifi-radio-dashboard
-                items:
-                  - key: unifi-radio.json
-                    path: Network/unifi-radio.json
-            - configMap:
-                name: unifi-os-dashboard
-                items:
-                  - key: unifi-os.json
-                    path: Network/unifi-os.json
-            - configMap:
                 name: vm-dashboard-alertmanager-overview
                 items:
                   - key: alertmanager-overview.json
@@ -822,6 +812,17 @@ spec:
         mountPath: /var/lib/grafana/provisioned-dashboards
         readOnly: true
     extraConfigmapMounts:
+      # Projected directory symlinks are not traversed by Grafana's file walker.
+      - name: unifi-os-dashboard-file
+        configMap: unifi-os-dashboard
+        mountPath: /var/lib/grafana/dashboards/network/unifi-os.json
+        subPath: unifi-os.json
+        readOnly: true
+      - name: unifi-radio-dashboard-file
+        configMap: unifi-radio-dashboard
+        mountPath: /var/lib/grafana/dashboards/network/unifi-radio.json
+        subPath: unifi-radio.json
+        readOnly: true
       - name: unifi-alert-provisioning
         configMap: unifi-radio-alerts
         mountPath: /etc/grafana/provisioning/alerting/unifi.yaml
