@@ -38,16 +38,27 @@ class GrafanaProvisioningTests(unittest.TestCase):
         )
         resources = [r for r in yaml.safe_load_all(result.stdout) if r]
         self.assertFalse(any(r["kind"] in {"Role", "RoleBinding", "ClusterRole", "ClusterRoleBinding"} for r in resources))
-        pod = next(r for r in resources if r["kind"] == "Deployment")["spec"]["template"]["spec"]
+        deployment = next(r for r in resources if r["kind"] == "Deployment")
+        self.assertEqual(deployment["metadata"]["annotations"]["reloader.stakater.com/auto"], "true")
+        pod = deployment["spec"]["template"]["spec"]
         self.assertFalse(pod["automountServiceAccountToken"])
         self.assertEqual([c["name"] for c in pod["containers"]], ["grafana"])
         self.assertFalse(any("serviceaccount" in m["mountPath"] for c in pod["containers"] for m in c.get("volumeMounts", [])))
         self.assertIn("unifi-radio-alerts", {v.get("configMap", {}).get("name") for v in pod["volumes"]})
         volume = next(v for v in pod["volumes"] if v["name"] == "provisioned-dashboards")
         sources = volume["projected"]["sources"]
-        self.assertIn("unifi-os-dashboard", {source["configMap"]["name"] for source in sources})
         paths = [item["path"] for source in sources for item in source["configMap"]["items"]]
         self.assertEqual(len(paths), len(set(paths)))
+        volumes = {v["name"]: v for v in pod["volumes"]}
+        mounts = {m["name"]: m for m in pod["containers"][0]["volumeMounts"]}
+        for name, configmap, filename in (
+            ("unifi-os-dashboard-file", "unifi-os-dashboard", "unifi-os.json"),
+            ("unifi-radio-dashboard-file", "unifi-radio-dashboard", "unifi-radio.json"),
+        ):
+            self.assertEqual(volumes[name]["configMap"]["name"], configmap)
+            self.assertEqual(mounts[name]["mountPath"], f"/var/lib/grafana/dashboards/network/{filename}")
+            self.assertEqual(mounts[name]["subPath"], filename)
+            self.assertTrue(mounts[name]["readOnly"])
 
     def test_cross_namespace_dashboards_are_created_in_monitoring(self) -> None:
         for file in ("med-tracker-dashboard.yaml",):
