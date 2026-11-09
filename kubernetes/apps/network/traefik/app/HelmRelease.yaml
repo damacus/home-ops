@@ -97,7 +97,6 @@ spec:
     # Service configuration
     service:
       enabled: true
-      type: LoadBalancer
       labels:
         network.ironstone.casa/advertisement: bgp
       annotations:
@@ -121,7 +120,6 @@ spec:
     # Metrics
     metrics:
       prometheus:
-        enabled: true
         disableAPICheck: true
         serviceMonitor:
           enabled: true
