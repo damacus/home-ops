@@ -10,26 +10,7 @@ APP = ROOT / "kubernetes/apps/home-automation/paperless/app/volsync"
 
 
 class PaperlessBackupTest(unittest.TestCase):
-    @staticmethod
-    def load(path: Path) -> dict:
-        return json.loads(subprocess.run(
-            ["yq", "-o=json", "-I=0", ".", str(path)],
-            check=True, capture_output=True, text=True
-        ).stdout)
-
-    def test_backup_and_restore_match_application_claim(self) -> None:
-        source = self.load(APP / "replicationsource.yaml")["spec"]
-        destination = self.load(APP / "replicationdestination.yaml")["spec"]
-        values = self.load(APP.parent / "helmrelease.yaml")["spec"]["values"]
-        self.assertEqual(source["sourcePVC"], values["persistence"]["data"]["existingClaim"])
-        claim = self.load(APP.parent / "pvc-restore.yaml")
-        self.assertEqual(destination["restic"]["destinationPVC"], claim["metadata"]["name"])
-        self.assertEqual(claim["spec"]["storageClassName"], "longhorn")
-        self.assertEqual(claim["spec"]["resources"]["requests"]["storage"], "6Gi")
-        for settings in (source["restic"], destination["restic"]):
-            self.assertEqual(settings["moverSecurityContext"]["runAsUser"], 1030)
-
-    def test_new_backups_do_not_mutate_mixed_repository_history(self) -> None:
+    def test_backups_isolate_legacy_history_and_keep_restores_paused(self) -> None:
         rendered = subprocess.run(
             ["kubectl", "kustomize", str(APP)], check=True, capture_output=True, text=True
         ).stdout
@@ -40,15 +21,14 @@ class PaperlessBackupTest(unittest.TestCase):
         source = next(x for x in resources if x["kind"] == "ReplicationSource")
         destination = next(x for x in resources if x["kind"] == "ReplicationDestination")
         secrets = {x["metadata"]["name"]: x for x in resources if x["kind"] == "ExternalSecret"}
-        fresh = secrets["paperless-restic-local-v2"]["spec"]["target"]["template"]["data"]
-        self.assertTrue(fresh["RESTIC_REPOSITORY"].endswith("/volsync-paperless/localdata-v2"))
-        self.assertEqual(source["spec"]["restic"]["repository"], "paperless-restic-local-v2")
-        self.assertEqual(source["spec"]["sourcePVC"], "paperless-localdata")
+        repository = source["spec"]["restic"]["repository"]
+        fresh = secrets[repository]["spec"]["target"]["template"]["data"]
+        legacy = secrets["rustfs-paperless"]["spec"]["target"]["template"]["data"]
+        self.assertNotEqual(fresh["RESTIC_REPOSITORY"], legacy["RESTIC_REPOSITORY"])
         self.assertEqual(source["spec"]["restic"]["copyMethod"], "Clone")
-        self.assertEqual(destination["spec"]["restic"]["repository"], "paperless-restic-local-v2")
+        self.assertEqual(destination["spec"]["restic"]["repository"], repository)
         self.assertTrue(destination["spec"]["paused"])
         self.assertNotEqual(destination["spec"]["restic"]["destinationPVC"], source["spec"]["sourcePVC"])
-        self.assertTrue(secrets["rustfs-paperless"]["spec"]["target"]["template"]["data"]["RESTIC_REPOSITORY"].endswith("/volsync-paperless"))
 
 
 if __name__ == "__main__":

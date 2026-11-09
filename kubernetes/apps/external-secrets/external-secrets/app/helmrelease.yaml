@@ -28,9 +28,6 @@ spec:
       enabled: true
       interval: 1m
     webhook:
-      serviceMonitor:
-        enabled: true
-        interval: 1m
       resources:
         requests:
           cpu: 25m
@@ -39,9 +36,6 @@ spec:
           cpu: 200m
           memory: 256Mi
     certController:
-      serviceMonitor:
-        enabled: true
-        interval: 1m
       resources:
         requests:
           cpu: 25m

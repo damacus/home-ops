@@ -78,7 +78,6 @@ spec:
         ports:
           whisper:
             enabled: true
-            primary: true
             port: 10200
             protocol: TCP
 
@@ -89,25 +88,3 @@ spec:
           - path: /data
         size: 15Gi
         accessMode: "ReadWriteMany"
-
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            preference:
-              matchExpressions:
-                - key: rockchip.feature.node.kubernetes.io/rk3588-npu
-                  operator: In
-                  values:
-                    - "true"
-      # Prefer to avoid home-assistant pods (soft anti-affinity)
-      podAntiAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values: ["home-assistant"]
-              topologyKey: kubernetes.io/hostname

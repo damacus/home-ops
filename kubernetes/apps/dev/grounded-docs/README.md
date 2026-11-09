@@ -58,6 +58,22 @@ are not a general pod egress firewall.
 
 `app/sources.json` is the reviewed source list:
 
+`gitlab-admin@current` indexes `https://docs.gitlab.com/administration/`
+using static HTTP fetches, subpage scope, a 500-page limit and four links of
+depth. It is first in the weekly refresh list. This moving source covers
+administration documentation, not a pinned GitLab release or the full GitLab
+documentation site. Links outside `/administration/` are not followed, but
+upstream redirects can store a destination elsewhere on the allowed host.
+The scraper allows `docs.gitlab.com`; private-network and file ingestion remain
+disabled. Repair an existing failed entry with the exact source options and
+`--no-clean` as described below before running the scheduled sync.
+
+The 9 November 2026 repair completed with 358 pages and 3,358 chunks. Searches
+returned backup/restore, LDAP and Prometheus guides, and the restore guide could
+be read through MCP. One administration URL redirected to
+`/user/duo_agent_platform/agents/external`; 38 stored pages reached depth four.
+The page limit was not reached, but the depth limit can omit deeper guides.
+
 The UniFi logging entries index three individual Ubiquiti Help Center articles
 through its public JSON API. The rendered article pages return HTTP 403 to the
 scraper. Search results contain the article body as HTML within JSON; these

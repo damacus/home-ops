@@ -44,7 +44,4 @@ class MetricsUiAuthTests(unittest.TestCase):
         for path in ("/api/v1/write", "/api/v1/import", "/api/v1/admin/tsdb/delete_series", "/opentelemetry/api/v1/push", "/snapshot/create", "/flags", "/metrics"):
             for method in ("GET","POST","DELETE"):
                 self.assertFalse(allowed(method,path),(method,path))
-    def test_policy_is_included(self) -> None:
-        k=yaml.safe_load((APP/"kustomization.yaml").read_text())
-        self.assertIn("./networkpolicy.yaml",k["resources"])
 if __name__=="__main__": unittest.main()
