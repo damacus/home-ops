@@ -1,0 +1,128 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spamhaus-data
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: nfs-csi-ssd
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: spamhaus-publisher
+spec:
+  schedule: '0 3 * * *'
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
+            seccompProfile: {type: RuntimeDefault}
+          containers:
+            - name: publisher
+              image: python:3.13-alpine@sha256:1e1f6334529d1fb26a2ef619d7cffb30a7c7d7cc1cc7338ebee283a58d1aeaca
+              command: [python, /scripts/publish.py]
+              resources:
+                requests: {cpu: 10m, memory: 32Mi}
+                limits: {memory: 128Mi}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: data, mountPath: /data}
+                - {name: script, mountPath: /scripts, readOnly: true}
+          volumes:
+            - name: data
+              persistentVolumeClaim: {claimName: spamhaus-data}
+            - name: script
+              configMap: {name: spamhaus-publisher}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spamhaus-http
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: spamhaus-http}
+  template:
+    metadata:
+      labels: {app: spamhaus-http}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: http
+          image: busybox:1.36.1@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+          command: [httpd, -f, -p, '8080', -h, /data]
+          ports:
+            - {name: http, containerPort: 8080}
+          resources:
+            requests: {cpu: 5m, memory: 8Mi}
+            limits: {memory: 32Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: data, mountPath: /data, readOnly: true}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: spamhaus-data}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spamhaus-http
+  labels: {app: spamhaus-http}
+spec:
+  selector: {app: spamhaus-http}
+  ports:
+    - {name: http, port: 8080, targetPort: http}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: spamhaus
+  annotations:
+    external-dns.alpha.kubernetes.io/target: traefik-int.ironstone.casa
+spec:
+  hostnames: [spamhaus.ironstone.casa]
+  parentRefs:
+    - {name: traefik-internal, namespace: network, sectionName: websecure}
+  rules:
+    - backendRefs:
+        - {name: spamhaus-http, port: 8080}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: spamhaus
+spec:
+  selector:
+    matchLabels: {app: spamhaus-http}
+  endpoints:
+    - {port: http, path: /current/metrics.txt, interval: 5m}

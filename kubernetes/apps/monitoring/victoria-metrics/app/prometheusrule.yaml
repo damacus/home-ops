@@ -5,6 +5,29 @@ metadata:
   name: miscellaneous-rules
 spec:
   groups:
+    - name: spamhaus
+      rules:
+        - alert: SpamhausFeedStale
+          expr: |
+            time() - (
+              max(spamhaus_last_success_timestamp_seconds)
+              or max(kube_cronjob_status_last_successful_time{namespace="network",cronjob="spamhaus-publisher"})
+              or max(kube_cronjob_created{namespace="network",cronjob="spamhaus-publisher"})
+            ) > 48 * 60 * 60
+          labels: {severity: warning}
+          annotations:
+            summary: Spamhaus feed has not been updated for 48 hours
+        - alert: SpamhausFeedUnavailable
+          expr: |
+            absent(spamhaus_last_success_timestamp_seconds)
+            and on() (
+              kube_cronjob_status_last_schedule_time{namespace="network",cronjob="spamhaus-publisher"} > 0
+              or absent(kube_cronjob_created{namespace="network",cronjob="spamhaus-publisher"})
+            )
+          for: 15m
+          labels: {severity: warning}
+          annotations:
+            summary: Spamhaus feed metrics are unavailable
     - name: image-pulls
       rules:
         - alert: ImagePullErrors
