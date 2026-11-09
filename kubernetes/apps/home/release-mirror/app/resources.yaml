@@ -1,0 +1,154 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: release-mirror-data
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  labels:
+    app: release-mirror
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-mirror
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: release-mirror
+  template:
+    metadata:
+      labels:
+        app: release-mirror
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: catalogue
+          # Deliberately unavailable: replace with a verified multi-arch digest
+          # before reviewing any change to the suspended Flux Kustomization.
+          image: ghcr.io/damacus/release-mirror:pending-publication
+          ports:
+            - name: http
+              containerPort: 9292
+          env:
+            - name: CONFIG_FILE
+              value: /config/config.json
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: release-mirror
+                  key: SESSION_SECRET
+            - name: BROWSER_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: release-mirror
+                  key: BROWSER_CLIENT_SECRET
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: releases.damacus.io
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: releases.damacus.io
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: releases.damacus.io
+            periodSeconds: 30
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: release-mirror-data
+        - name: config
+          secret:
+            secretName: release-mirror
+            items:
+              - key: config.json
+                path: config.json
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-mirror
+spec:
+  selector:
+    app: release-mirror
+  ports:
+    - name: http
+      port: 9292
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: release-mirror
+spec:
+  podSelector:
+    matchLabels:
+      app: release-mirror
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 9292
