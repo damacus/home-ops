@@ -9,7 +9,7 @@ The reusable application is maintained in
 
 The deployment runs one non-root instance on port 9292, with SQLite stored on a Longhorn volume at `/data`. The PVC is protected from Flux pruning. The health check requires the public Host header and confirms only that the application responds.
 
-The image is pinned to [v0.1.0](https://github.com/damacus/release-mirror/releases/tag/v0.1.0). Its published image index supports AMD64 and ARM64. Test the pinned image in the cluster before activation.
+The image is pinned to [v0.1.1](https://github.com/damacus/release-mirror/releases/tag/v0.1.1). Its published image index supports AMD64 and ARM64.
 
 ## Identity and secrets
 

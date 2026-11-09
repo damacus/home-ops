@@ -43,7 +43,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: catalogue
-          image: ghcr.io/damacus/release-mirror:v0.1.0@sha256:558b61016f2faac4e4308c4bf907974e5ab7e2a5d0f87e7b6c7b2a9fd352654e
+          image: ghcr.io/damacus/release-mirror:v0.1.1@sha256:6af0b5f0c3c16caf39868a1166b1a1925fa408c34611098c8c513864e193e43a
           ports:
             - name: http
               containerPort: 9292
