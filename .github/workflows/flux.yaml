@@ -122,6 +122,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.kubernetes == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - run: python3 -m unittest discover -s tests/spamhaus -v
