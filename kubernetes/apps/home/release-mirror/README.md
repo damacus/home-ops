@@ -5,28 +5,11 @@ Public release metadata for private container images at
 The reusable application is maintained in
 [damacus/release-mirror](https://github.com/damacus/release-mirror).
 
-## Deployment state
+## Deployment
 
-This deployment is staged, not activated. Its Flux Kustomization has
-`suspend: true`. Do not resume reconciliation or apply the application directory
-manually. No credentials or identity-provider settings were provisioned as part
-of this change.
+Flux reconciliation is suspended. The deployment runs one non-root instance on port 9292, with SQLite stored on a Longhorn volume at `/data`. The PVC is protected from Flux pruning. The health check requires the public Host header and confirms only that the application responds.
 
-The deployment pins [v0.1.0](https://github.com/damacus/release-mirror/releases/tag/v0.1.0)
-to OCI image-index digest
-`sha256:558b61016f2faac4e4308c4bf907974e5ab7e2a5d0f87e7b6c7b2a9fd352654e`.
-The [publishing run](https://github.com/damacus/release-mirror/actions/runs/42651570066)
-passed, and anonymous registry inspection confirmed `linux/arm64` and
-`linux/amd64` in that index. No registry credential was needed to read the
-manifest. Run the application contract against this exact published image
-before activation. Cluster image pulls and runtime behaviour remain unverified.
-
-One non-root Puma process listens on port 9292. SQLite and its WAL live on one
-Longhorn RWO PVC at `/data`; `/tmp` is ephemeral. Recreate upgrades prevent two
-instances from sharing the database. The PVC is protected from Flux pruning.
-Do not increase replicas or mount the volume into another application writer.
-The health probes send the required public Host header. `/health` only proves
-the application responds, not successful database writes or identity access.
+The image is pinned to [v0.1.0](https://github.com/damacus/release-mirror/releases/tag/v0.1.0). Its published image index supports AMD64 and ARM64. Test the pinned image in the cluster before activation.
 
 ## Identity and secrets
 
@@ -64,52 +47,24 @@ creation or administration. Other producers need their own immutable repository
 IDs and service grants. Ledger's Forgejo release/package credentials belong in
 its Actions settings, not in the catalogue pod.
 
-## Public routing and activation gates
+## Routing and checks
 
-The HTTPRoute uses the existing wildcard Cloudflare Tunnel, Traefik HTTPS
-listener and `damacus.io` certificate. There is no shared forward-auth gate:
-anonymous catalogue reads must remain available, while the application checks
-credentials on writes. NetworkPolicy permits application ingress only from
-Traefik pods in `network`. Egress is not restricted by this application policy;
-the pod needs DNS, Forgejo signing keys and Zitadel HTTPS access.
+Cloudflare Tunnel and Traefik route `releases.damacus.io` to the service. Reads are anonymous; writes require authentication. The network policy permits ingress from Traefik. Middleware removes `Forwarded` and `X-Forwarded-Host` and limits request bodies to 1 MiB.
 
-Route middleware removes caller-supplied `Forwarded` and `X-Forwarded-Host` and
-limits request bodies to 1 MiB. Preserve `Host: releases.damacus.io` through the
-complete proxy chain. This is declarative configuration, not proof of live
-header handling or routing.
+Before activation, configure the secrets and identity providers above. Confirm proxy logs exclude OAuth callback queries, credentials, cookies and request bodies. Traefik access logging is enabled; the route does not suppress it. Set up and test backups and a restore.
 
-**Proxy logging is an unresolved activation gate.** Traefik currently enables
-access logging. Before exposing login, ensure the full Cloudflare/Traefik path
-does not log OAuth callback query strings, authorization headers, cookies or
-request bodies. The route middleware does not suppress access logs. Review a
-supported route-specific logging configuration or a separately scoped shared
-proxy change; this deployment does not change logging for existing services.
+Test with synthetic metadata:
 
-Before any approved activation, verify the pinned image at runtime, 1Password fields,
-Zitadel registration, actual Forgejo claims and proxy logging. Then validate:
+- Anonymous reads succeed; anonymous and invalid-token writes fail.
+- The bootstrap administrator can create services and grants; a new user cannot administer them.
+- Ledger repository 534 can publish to `usage-ledger`, but cannot delete releases or publish to another service. Another repository cannot publish to `usage-ledger`.
+- Unrelated pods cannot reach the service directly; wrong Host headers and oversized requests are rejected.
 
-| Case | Expected result |
-| --- | --- |
-| Anonymous directory, service JSON and Renovate feed | Read succeeds without cookies or credentials |
-| Anonymous or invalid-token write | Rejected |
-| New Zitadel user | Can read; cannot administer or delete |
-| Explicit bootstrap administrator | Can create aliases and grant permissions |
-| Ledger repository 534 publishing to `usage-ledger` | Succeeds with valid issuer/audience/lifetime |
-| Different repository or Ledger writing another service | Rejected |
-| Publisher deleting releases or managing grants | Rejected |
-| Direct access from an unrelated pod | Denied by NetworkPolicy |
-| Wrong Host or oversized request | Rejected |
-
-Use synthetic metadata first. Inspect sanitized diagnostics without exporting
-tokens or callback URLs. Populate all six aliases required by home-ops PR
-#4738, including currently deployed tags, before activating its Renovate rules.
-Changing suspension, merging, Flux reconciliation and production publication
-remain separate owner-approved actions.
+Populate the six feeds needed by [PR #4738](https://github.com/damacus/home-ops/pull/4738), including deployed tags, before activating its Renovate rules.
 
 ## Backup and recovery
 
-Scheduled backup automation and a restore rehearsal remain activation gates.
-The PVC alone is not a backup. Use SQLite's online backup facility or
+Set up scheduled backups and test a restore before activation. Use SQLite's online backup facility or
 `VACUUM INTO` from the application image to create a new consistent file on
 `/data`; copy only that completed backup to the approved backup destination.
 Do not copy only the live main SQLite file while WAL writes are active. Protect
