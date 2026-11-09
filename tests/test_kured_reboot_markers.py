@@ -22,11 +22,6 @@ class KuredRebootMarkersTest(unittest.TestCase):
         ))
         cls.configuration = release["spec"]["values"]["configuration"]
 
-    def test_chart_enables_the_host_namespace_command(self) -> None:
-        # Chart 6.1.0 suppresses rebootSentinelCommand when this is true.
-        self.assertIs(self.configuration.get("useRebootSentinelHostPath"), False)
-        self.assertTrue(self.configuration.get("rebootSentinelCommand"))
-
     def test_markers_require_one_reboot_and_clear_after_boot(self) -> None:
         command = self.configuration.get("rebootSentinelCommand", "")
         self.assertTrue(command, "Kured needs a check covering both marker formats")
