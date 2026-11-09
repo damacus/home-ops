@@ -50,8 +50,8 @@ and agent keys retain their existing grants and `__mcp_only__` restriction.
 NetworkPolicy permits Traefik to reach the web port, LiteLLM to reach MCP, and
 labelled refresh Jobs in `dev` to reach the worker. Other pod ingress is denied.
 The unauthenticated worker API is never exposed through the HTTPRoute.
-Application-level scraper restrictions allow only the reviewed documentation
-hosts and disable local-file ingestion/private-network crawling. These restrictions
+Application-level scraper restrictions permit public sites and disable local-file
+ingestion and private-network crawling. These restrictions
 are not a general pod egress firewall.
 
 ## Catalogue and refresh
@@ -63,9 +63,8 @@ using static HTTP fetches, subpage scope, a 500-page limit and four links of
 depth. It is first in the weekly refresh list. This moving source covers
 administration documentation, not a pinned GitLab release or the full GitLab
 documentation site. Links outside `/administration/` are not followed, but
-upstream redirects can store a destination elsewhere on the allowed host.
-The scraper allows `docs.gitlab.com`; private-network and file ingestion remain
-disabled. Repair an existing failed entry with the exact source options and
+upstream redirects can store a destination elsewhere. Private-network and file
+ingestion remain disabled. Repair an existing failed entry with the exact source options and
 `--no-clean` as described below before running the scheduled sync.
 
 The 9 November 2026 repair completed with 358 pages and 3,358 chunks. Searches
