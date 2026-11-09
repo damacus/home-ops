@@ -9,5 +9,6 @@ resources:
   - ./loki/ks.yaml
   - ./unpoller/ks.yaml
   - ./vector/ks.yaml
+  - ./unifi-logs/ks.yaml
   - ./victoria-metrics/ks.yaml
   - ./grafana-mcp/ks.yaml

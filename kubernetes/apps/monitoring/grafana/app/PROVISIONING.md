@@ -2,7 +2,7 @@
 
 Grafana has no Kubernetes API permissions or service-account token. Dashboards and alerts are mounted from named ConfigMaps in monitoring. Its own credentials continue to use explicit Secret references.
 
-The existing reloader auto annotation rolls Grafana when referenced ConfigMaps change. This reloads the UniFi alert file mounted with subPath; preserve this behaviour because subPath mounts do not receive live file updates. Dashboard directories are polled every 30 seconds.
+The existing reloader auto annotation rolls Grafana when referenced ConfigMaps change. This reloads the UniFi alert and Network dashboard files mounted with subPath; preserve this behaviour because subPath mounts do not receive live file updates. Other dashboard directories are polled every 30 seconds. The Network dashboard files are mounted directly because Grafana's file walker does not traverse the directory symlinks produced by a projected Kubernetes volume.
 
 Cilium and CloudNativePG create dashboard ConfigMaps directly in monitoring. Med Tracker dashboard manifests are managed by the Grafana Flux Kustomization. No Secret or ConfigMap mirroring is needed.
 
@@ -19,6 +19,7 @@ Migration removes discovery only. Existing dashboard JSON, folders, datasource U
 | cnpg-grafana-dashboard | CloudNativePG | General |
 | med-tracker-logs-dashboard | Med Tracker Logs | Home |
 | unifi-radio-dashboard | UniFi Radio Health | Network |
+| unifi-os-dashboard | UniFi OS Logs | Network |
 | vm-dashboard-alertmanager-overview | Alertmanager / Overview | General |
 | vm-dashboard-apiserver | Kubernetes / API server | General |
 | vm-dashboard-cluster-total | Kubernetes / Networking / Cluster | General |
@@ -36,11 +37,6 @@ Migration removes discovery only. Existing dashboard JSON, folders, datasource U
 | vm-dashboard-k8s-windows-cluster-rsrc-use | Kubernetes / USE Method / Cluster(Windows) | General |
 | vm-dashboard-k8s-windows-node-rsrc-use | Kubernetes / USE Method / Node(Windows) | General |
 | vm-dashboard-kubelet | Kubernetes / Kubelet | General |
-| vm-dashboard-kubernetes-system-api-server | Kubernetes / System / API Server | General |
-| vm-dashboard-kubernetes-system-coredns | Kubernetes / System / CoreDNS | General |
-| vm-dashboard-kubernetes-views-global | Kubernetes / Views / Global | General |
-| vm-dashboard-kubernetes-views-namespaces | Kubernetes / Views / Namespaces | General |
-| vm-dashboard-kubernetes-views-nodes | Kubernetes / Views / Nodes | General |
 | vm-dashboard-kubernetes-views-pods | Kubernetes / Views / Pods | General |
 | vm-dashboard-namespace-by-pod | Kubernetes / Networking / Namespace (Pods) | General |
 | vm-dashboard-namespace-by-workload | Kubernetes / Networking / Namespace (Workload) | General |
@@ -60,7 +56,7 @@ Migration removes discovery only. Existing dashboard JSON, folders, datasource U
 | vm-dashboard-victoriametrics-vmalert | VictoriaMetrics - vmalert | General |
 | vm-dashboard-workload-total | Kubernetes / Networking / Workload | General |
 
-Eight existing chart-downloaded dashboards remain: API server, CoreDNS, Kubernetes global/namespaces/nodes/pods, Longhorn and Node Exporter Full. Some duplicate the VictoriaMetrics collection.
+Eight existing chart-downloaded dashboards remain: API server, CoreDNS, Kubernetes global/namespaces/nodes/pods, Longhorn and Node Exporter Full. The five matching VictoriaMetrics ConfigMaps are deliberately not mounted: the downloaded dashboards use the same UIDs, and Grafana blocks both providers from writing when UIDs collide.
 
 ## Alerts
 

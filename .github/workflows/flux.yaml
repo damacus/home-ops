@@ -158,9 +158,9 @@ jobs:
           cache: false
 
       - name: Setup Mise
-        uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
+        uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
-          version: 2026.11.0
+          version: 2026.11.4
           install: false
           cache: false
 
@@ -241,6 +241,22 @@ jobs:
           mkdir -p "$LOKI_CHARTS_PATH"
           helm pull oci://ghcr.io/grafana/helm-charts/loki --version "$loki_version" --untar --untardir "$LOKI_CHARTS_PATH"
           "$RUNNER_TEMP/loki-test-env/bin/python" -m unittest tests/test_loki_rule_watchers.py
+
+      - name: Verify rendered Grafana provisioning
+        env:
+          GRAFANA_CHART_PATH: ${{ runner.temp }}/grafana-chart/grafana
+        run: |
+          set -euo pipefail
+          chart_version=$(yq '.spec.ref.tag' kubernetes/apps/monitoring/grafana/app/oci-repository.yaml)
+          mkdir -p "$RUNNER_TEMP/grafana-chart"
+          helm pull oci://ghcr.io/grafana/helm-charts/grafana --version "$chart_version" --untar --untardir "$RUNNER_TEMP/grafana-chart"
+          "$RUNNER_TEMP/loki-test-env/bin/python" -m unittest tests/test_grafana_provisioning.py
+
+      - name: Verify UniFi receiver parsing
+        run: |
+          set -euo pipefail
+          image=$(yq 'select(.kind == "StatefulSet") | .spec.template.spec.containers[0].image' kubernetes/apps/monitoring/unifi-logs/app/receiver.yaml)
+          docker run --rm -v "$PWD/kubernetes/apps/monitoring/unifi-logs/app/vector.yaml:/etc/vector/vector.yaml:ro" "$image" test /etc/vector/vector.yaml
 
       - name: Verify rendered maintenance safety
         env:

@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unifi-os-alert-rules
+  labels:
+    loki_rule: "true"
+data:
+  unifi-os.yaml: |
+    groups:
+      - name: unifi-os-failures
+        interval: 1m
+        rules:
+          - alert: UnifiStorageIOFailure
+            expr: |
+              sum by (device) (count_over_time({job="unifi-os",log_origin="live"} |~ "(?i)(I/O error|input/output error|blk_update_request.*error)" [5m])) > 0
+            labels:
+              severity: critical
+              category: storage_io
+              alertgroup: home-ops-logs
+            annotations:
+              summary: "UniFi storage I/O failure on {{ $labels.device }}"
+              description: "A storage I/O error was logged in the last five minutes. Inspect the device and its storage."
+          - alert: UnifiFilesystemCorruption
+            expr: |
+              sum by (device) (count_over_time({job="unifi-os",log_origin="live"} |~ "(?i)(abort(ed|ing)? journal|journal.*abort|filesystem.*corrupt|corrupt.*filesystem|EXT4-fs error|remounting filesystem read-only|remounted.*read.only)" [5m])) > 0
+            labels:
+              severity: critical
+              category: filesystem
+              alertgroup: home-ops-logs
+            annotations:
+              summary: "UniFi filesystem failure on {{ $labels.device }}"
+              description: "A filesystem corruption, journal abort or read-only remount was logged in the last five minutes."
+          - alert: UnifiEthernetSramParity
+            expr: |
+              sum by (device) (count_over_time({job="unifi-os",log_origin="live"} |~ "(?i)(ethernet|eth[0-9]|nic).*sram.*parity|sram.*parity.*(ethernet|eth[0-9]|nic)" [5m])) > 0
+            labels:
+              severity: warning
+              category: ethernet_sram
+              alertgroup: home-ops-logs
+            annotations:
+              summary: "UniFi Ethernet SRAM parity error on {{ $labels.device }}"
+              description: "An Ethernet SRAM parity error was logged in the last five minutes."
+          - alert: UnifiOutOfMemoryKill
+            expr: |
+              sum by (device) (count_over_time({job="unifi-os",log_origin="live"} |~ "(?i)(out of memory: kill|out of memory: killed|oom.kill|killed process.*total-vm)" [5m])) > 0
+            labels:
+              severity: warning
+              category: oom_kill
+              alertgroup: home-ops-logs
+            annotations:
+              summary: "UniFi out-of-memory kill on {{ $labels.device }}"
+              description: "An out-of-memory kill was logged in the last five minutes."

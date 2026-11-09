@@ -24,7 +24,7 @@ spec:
         - dockerhub-credentials
 
     replicas: 1
-    podAnnotations:
+    annotations:
       reloader.stakater.com/auto: "true"
     env:
       GF_DATE_FORMATS_USE_BROWSER_LOCALE: true
@@ -607,7 +607,8 @@ spec:
         enabled: false
       notifiers:
         enabled: false
-    extraVolumes:
+    # extraVolumes does not support projected sources in this chart.
+    extraContainerVolumes:
       - name: provisioned-dashboards
         projected:
           sources:
@@ -631,11 +632,6 @@ spec:
                 items:
                   - key: med-tracker-logs.json
                     path: Home/med-tracker-logs.json
-            - configMap:
-                name: unifi-radio-dashboard
-                items:
-                  - key: unifi-radio.json
-                    path: Network/unifi-radio.json
             - configMap:
                 name: vm-dashboard-alertmanager-overview
                 items:
@@ -721,31 +717,6 @@ spec:
                 items:
                   - key: kubelet.json
                     path: kubelet.json
-            - configMap:
-                name: vm-dashboard-kubernetes-system-api-server
-                items:
-                  - key: kubernetes-system-api-server.json
-                    path: kubernetes-system-api-server.json
-            - configMap:
-                name: vm-dashboard-kubernetes-system-coredns
-                items:
-                  - key: kubernetes-system-coredns.json
-                    path: kubernetes-system-coredns.json
-            - configMap:
-                name: vm-dashboard-kubernetes-views-global
-                items:
-                  - key: kubernetes-views-global.json
-                    path: kubernetes-views-global.json
-            - configMap:
-                name: vm-dashboard-kubernetes-views-namespaces
-                items:
-                  - key: kubernetes-views-namespaces.json
-                    path: kubernetes-views-namespaces.json
-            - configMap:
-                name: vm-dashboard-kubernetes-views-nodes
-                items:
-                  - key: kubernetes-views-nodes.json
-                    path: kubernetes-views-nodes.json
             - configMap:
                 name: vm-dashboard-kubernetes-views-pods
                 items:
@@ -841,6 +812,17 @@ spec:
         mountPath: /var/lib/grafana/provisioned-dashboards
         readOnly: true
     extraConfigmapMounts:
+      # Projected directory symlinks are not traversed by Grafana's file walker.
+      - name: unifi-os-dashboard-file
+        configMap: unifi-os-dashboard
+        mountPath: /var/lib/grafana/dashboards/network/unifi-os.json
+        subPath: unifi-os.json
+        readOnly: true
+      - name: unifi-radio-dashboard-file
+        configMap: unifi-radio-dashboard
+        mountPath: /var/lib/grafana/dashboards/network/unifi-radio.json
+        subPath: unifi-radio.json
+        readOnly: true
       - name: unifi-alert-provisioning
         configMap: unifi-radio-alerts
         mountPath: /etc/grafana/provisioning/alerting/unifi.yaml

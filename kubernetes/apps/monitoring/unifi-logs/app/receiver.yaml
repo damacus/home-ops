@@ -1,0 +1,138 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-logs
+  labels:
+    network.ironstone.casa/advertisement: bgp
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.3.10
+  loadBalancerSourceRanges: [192.168.1.254/32]
+  externalTrafficPolicy: Local
+  selector:
+    app.kubernetes.io/name: unifi-logs
+  ports:
+    - name: syslog
+      port: 514
+      targetPort: 5514
+      protocol: UDP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-logs-metrics
+  labels:
+    app.kubernetes.io/name: unifi-logs
+spec:
+  selector:
+    app.kubernetes.io/name: unifi-logs
+  ports:
+    - name: metrics
+      port: 9090
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: unifi-logs
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: unifi-logs
+  endpoints:
+    - port: metrics
+      interval: 30s
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: unifi-logs
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: unifi-logs
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 192.168.1.254/32
+      ports:
+        - {protocol: UDP, port: 5514}
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vmagent
+      ports:
+        - {protocol: TCP, port: 9090}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: loki
+              app.kubernetes.io/component: gateway
+      ports:
+        - {protocol: TCP, port: 8080}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: unifi-logs
+spec:
+  serviceName: unifi-logs-metrics
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: unifi-logs
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: unifi-logs
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: vector
+          image: timberio/vector:0.61.0-debian
+          args: ["--config", "/etc/vector/vector.yaml"]
+          ports:
+            - {name: syslog, containerPort: 5514, protocol: UDP}
+            - {name: metrics, containerPort: 9090, protocol: TCP}
+          readinessProbe:
+            tcpSocket: {port: metrics}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - {name: config, mountPath: /etc/vector, readOnly: true}
+            - {name: data, mountPath: /vector-data}
+      volumes:
+        - name: config
+          configMap:
+            name: unifi-vector-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: longhorn
+        resources:
+          requests:
+            storage: 1Gi

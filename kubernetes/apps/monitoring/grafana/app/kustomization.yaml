@@ -8,3 +8,4 @@ resources:
   - ./oci-repository.yaml
   - ./helmrelease.yaml
   - ./med-tracker-dashboard.yaml
+  - ./unifi-os-dashboard.yaml
