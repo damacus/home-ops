@@ -11,6 +11,12 @@
     "github>damacus/renovate-config:packageRules.json5",
     "github>damacus/renovate-config:autoMergeSelect.json5",
   ],
+  customDatasources: {
+    "release-mirror": {
+      defaultRegistryUrlTemplate: "https://releases.damacus.io/api/v1/services/{{packageName}}/renovate",
+      format: "json",
+    },
+  },
   customManagers: [
     {
       customType: "regex",
@@ -33,6 +39,72 @@
     },
   ],
   packageRules: [
+    // Keep native manifest parsing/replacement, but never query these registries
+    // for the managed images. Public aliases belong only in the feed URL.
+    {
+      description: "Read Ironbridge versions and digests from Release Mirror",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["forgejo.ironstone.casa/damacus/ironbridge"],
+      overrideDatasource: "custom.release-mirror",
+      overridePackageName: "ironbridge",
+      versioning: "semver",
+    },
+    {
+      description: "Track the actual Ledger main tag through Release Mirror",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["forgejo.ironstone.casa/damacus/usage-ledger"],
+      overrideDatasource: "custom.release-mirror",
+      overridePackageName: "usage-ledger",
+      versioning: "regex:^(?<major>0)?main$",
+    },
+    {
+      description: "Track the actual NorthBot main tag through Release Mirror",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["forgejo.ironstone.casa/damacus/northbot"],
+      overrideDatasource: "custom.release-mirror",
+      overridePackageName: "northbot",
+      versioning: "regex:^(?<major>0)?main$",
+    },
+    {
+      description: "Read production MedTracker image metadata from Release Mirror",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/damacus/med-tracker"],
+      overrideDatasource: "custom.release-mirror",
+      overridePackageName: "med-tracker",
+      versioning: "semver",
+    },
+    {
+      description: "Read Unifi release announcer metadata from Release Mirror",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/damacus/unifi-release-announcer"],
+      overrideDatasource: "custom.release-mirror",
+      overridePackageName: "unifi-release-announcer",
+      versioning: "semver",
+    },
+    {
+      description: "Read reflector image metadata from Release Mirror",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/damacus/k8s-reflecto-rs"],
+      overrideDatasource: "custom.release-mirror",
+      overridePackageName: "k8s-reflecto-rs",
+      versioning: "semver",
+    },
+    {
+      description: "Pin catalogue image digests and retain manual deployment review",
+      matchDatasources: ["custom.release-mirror"],
+      pinDigests: true,
+      digest: { enabled: true },
+      automerge: false,
+    },
+    {
+      description: "Keep checked MedTracker trial images immutable; do not look for latest",
+      matchDatasources: ["docker"],
+      matchPackageNames: [
+        "ghcr.io/damacus/med-tracker-loco",
+        "ghcr.io/damacus/home-ops-medtracker-canary-reset",
+      ],
+      enabled: false,
+    },
     {
       description: "Review Forgejo image updates separately from chart updates",
       matchDatasources: ["docker"],

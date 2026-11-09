@@ -13,7 +13,7 @@ class DashboardActivationTest(unittest.TestCase):
         self.assertEqual(env["MODERATION_NOTIFICATIONS_ENABLED"], "false")
         self.assertIn({"secretRef": {"name": "ironbridge-dashboard"}}, container["envFrom"])
         self.assertIn({"secretRef": {"name": "ironbridge-moderation", "optional": True}}, container["envFrom"])
-        self.assertRegex(container["image"], r"^forgejo\.ironstone\.casa/damacus/ironbridge@sha256:[0-9a-f]{64}$")
+        self.assertRegex(container["image"], r"^forgejo\.ironstone\.casa/damacus/ironbridge(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?@sha256:[0-9a-f]{64}$")
         self.assertEqual({r["metadata"]["name"] for r in resources if r["kind"] == "ExternalSecret"}, {"ironbridge", "ironbridge-dashboard", "ironbridge-moderation"})
 
     def test_tls_auth_and_no_direct_ingress(self) -> None:

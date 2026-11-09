@@ -169,9 +169,11 @@ class IronBridgeDeploymentTest(unittest.TestCase):
         self.assertGreaterEqual(readiness["timeoutSeconds"], 10)
         digest = container["image"].split("@sha256:")[-1]
         self.assertRegex(digest, re.compile(r"^[0-9a-f]{64}$"))
-        self.assertTrue(container["image"].startswith(
-            "forgejo.ironstone.casa/damacus/ironbridge@sha256:"
-        ))
+        self.assertRegex(
+            container["image"],
+            r"^forgejo\.ironstone\.casa/damacus/ironbridge"
+            r"(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?@sha256:[0-9a-f]{64}$",
+        )
         self.assertNotEqual(digest, "0" * 64, "active bridge needs a published image")
         env = {entry["name"]: entry["value"] for entry in container["env"]}
         self.assertEqual(env["BRIDGE_ENABLED"], "true")
