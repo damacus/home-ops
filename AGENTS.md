@@ -27,6 +27,8 @@ This repository, `home-ops`, is a production-grade home infrastructure managemen
 ## Development Workflow & Rules
 
 1. **Proportionate Verification**: Choose checks that demonstrate the intended behaviour or catch a specific plausible regression.
+   - Keep Kubernetes and GitOps verification simple. Reuse existing validation and real tool dry runs; do not add dedicated workflows, bespoke integration harnesses, simulated services or per-resource tests for routine configuration changes.
+   - Add a new test only when it covers a concrete, significant risk that existing checks cannot cover. Prefer one focused check and remove temporary fixtures or duplicated checks when they are no longer needed.
    - For scripts, application logic and health checkers, add a failing behavioural regression test when fixing a defect.
    - For declarative manifests, use the existing render, schema and security-policy checks. Do not add per-application tests that merely repeat YAML values, file layout, image versions or object ordering.
    - Keep focused safety assertions where they protect an independent invariant, such as denying Secret reads or preventing CRD pruning. Prefer checking rendered resources when chart behaviour matters.
