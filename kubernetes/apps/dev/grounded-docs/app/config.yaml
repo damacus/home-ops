@@ -17,6 +17,7 @@ scraper:
       mode: allowlist
       allowPrivateNetworks: false
       allowedHosts:
+        - docs.gitlab.com
         - help.ui.com
         - loco.rs
         - docs.rs

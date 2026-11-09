@@ -1,5 +1,14 @@
 [
   {
+    "library": "gitlab-admin",
+    "version": "current",
+    "url": "https://docs.gitlab.com/administration/",
+    "maxPages": 500,
+    "maxDepth": 4,
+    "scope": "subpages",
+    "scrapeMode": "fetch"
+  },
+  {
     "library": "unifi-siem-logging",
     "version": "current",
     "url": "https://help.ui.com/api/v2/help_center/en-us/articles/33349041044119.json",
