@@ -50,8 +50,8 @@ and agent keys retain their existing grants and `__mcp_only__` restriction.
 NetworkPolicy permits Traefik to reach the web port, LiteLLM to reach MCP, and
 labelled refresh Jobs in `dev` to reach the worker. Other pod ingress is denied.
 The unauthenticated worker API is never exposed through the HTTPRoute.
-Application-level scraper restrictions allow only the reviewed documentation
-hosts and disable local-file ingestion/private-network crawling. These restrictions
+Application-level scraper restrictions permit public sites and disable local-file
+ingestion and private-network crawling. These restrictions
 are not a general pod egress firewall.
 
 ## Catalogue and refresh
@@ -63,9 +63,8 @@ using static HTTP fetches, subpage scope, a 500-page limit and four links of
 depth. It is first in the weekly refresh list. This moving source covers
 administration documentation, not a pinned GitLab release or the full GitLab
 documentation site. Links outside `/administration/` are not followed, but
-upstream redirects can store a destination elsewhere on the allowed host.
-The scraper allows `docs.gitlab.com`; private-network and file ingestion remain
-disabled. Repair an existing failed entry with the exact source options and
+upstream redirects can store a destination elsewhere. Private-network and file
+ingestion remain disabled. Repair an existing failed entry with the exact source options and
 `--no-clean` as described below before running the scheduled sync.
 
 The 9 November 2026 repair completed with 358 pages and 3,358 chunks. Searches
@@ -216,7 +215,7 @@ confirmed successful retrievals. Queries and session contents are not copied her
 The added catalogue covers rumdl, Go PDF, go-sqlite3, Actual Budget, release-please,
 reqwest, SeaORM, tempfile, GitHub Actions, Mealie, Kubernetes, pgx, Grape, Sequel,
 Chart.js and Vite. The `mealie cli` request is mapped to Mealie documentation.
-The approved `docs.mealie.io` URL redirects to the official `mealie.io` site;
-both hosts are allowed. Sequel uses hostname scope on `sequel.jeremyevans.net`
+The `docs.mealie.io` URL redirects to the official `mealie.io` site.
+Sequel uses hostname scope on `sequel.jeremyevans.net`
 because its `documentation.html` landing page links to sibling guide paths.
 Deadvalues and Desloppify use their maintainer repositories. Moving sources use `current` labels.
