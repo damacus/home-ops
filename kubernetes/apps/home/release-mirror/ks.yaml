@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: release-mirror
+  namespace: flux-system
+spec:
+  # Publication, identity setup and public-proxy verification are not complete.
+  suspend: true
+  targetNamespace: home
+  path: ./kubernetes/apps/home/release-mirror/app
+  prune: true
+  dependsOn:
+    - name: longhorn
+    - name: external-secrets-stores
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
