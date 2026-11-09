@@ -8,16 +8,18 @@ The reusable application is maintained in
 ## Deployment state
 
 This deployment is staged, not activated. Its Flux Kustomization has
-`suspend: true`. The image tag `pending-publication` is an explicit unavailable
-placeholder, not a published version. Do not resume reconciliation or apply the
-application directory manually. No credentials or identity-provider settings
-were provisioned as part of this change.
+`suspend: true`. Do not resume reconciliation or apply the application directory
+manually. No credentials or identity-provider settings were provisioned as part
+of this change.
 
-Before activation, replace the placeholder with a reviewed published tag and
-OCI image-index digest. Verify the index contains `linux/arm64` and `linux/amd64`
-and run the application contract against that exact image. The public GHCR
-image should require no pull credential. Image publication is being prepared in
-the application repository separately.
+The deployment pins [v0.1.0](https://github.com/damacus/release-mirror/releases/tag/v0.1.0)
+to OCI image-index digest
+`sha256:558b61016f2faac4e4308c4bf907974e5ab7e2a5d0f87e7b6c7b2a9fd352654e`.
+The [publishing run](https://github.com/damacus/release-mirror/actions/runs/42651570066)
+passed, and anonymous registry inspection confirmed `linux/arm64` and
+`linux/amd64` in that index. No registry credential was needed to read the
+manifest. Run the application contract against this exact published image
+before activation. Cluster image pulls and runtime behaviour remain unverified.
 
 One non-root Puma process listens on port 9292. SQLite and its WAL live on one
 Longhorn RWO PVC at `/data`; `/tmp` is ephemeral. Recreate upgrades prevent two
@@ -83,7 +85,7 @@ request bodies. The route middleware does not suppress access logs. Review a
 supported route-specific logging configuration or a separately scoped shared
 proxy change; this deployment does not change logging for existing services.
 
-Before any approved activation, resolve image publication, 1Password fields,
+Before any approved activation, verify the pinned image at runtime, 1Password fields,
 Zitadel registration, actual Forgejo claims and proxy logging. Then validate:
 
 | Case | Expected result |

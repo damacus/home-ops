@@ -43,9 +43,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: catalogue
-          # Deliberately unavailable: replace with a verified multi-arch digest
-          # before reviewing any change to the suspended Flux Kustomization.
-          image: ghcr.io/damacus/release-mirror:pending-publication
+          image: ghcr.io/damacus/release-mirror:v0.1.0@sha256:558b61016f2faac4e4308c4bf907974e5ab7e2a5d0f87e7b6c7b2a9fd352654e
           ports:
             - name: http
               containerPort: 9292
