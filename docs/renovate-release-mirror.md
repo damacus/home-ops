@@ -34,17 +34,9 @@ existing checked canary procedure, not an automatic latest-image update.
 
 ## Verify the consumer
 
-Install Renovate 44.222.5 in an isolated directory, then run:
-
-```text
-node tests/check_release_mirror.mjs --renovate-dir <directory>/node_modules/renovate
-```
-
-The contract reads the actual manifests, runs Renovate extraction and lookup
-against a loopback catalogue, and exercises Renovate's replacement engine. It
-checks numbered updates, moving tags, digest pins, anchored Helm values,
-third-party Docker handling and fixed trial images. It never applies manifests
-or reads registry credentials. The GitHub workflow runs the same contract.
+Run the existing Renovate workflow with its dry-run option after the catalogue
+feeds are available. Check that it finds the expected images and proposed
+updates, and that the fixed trial images remain unchanged.
 
 ## Rollout requirements
 
@@ -55,7 +47,6 @@ the alias feeds anonymously and run the real Renovate job in lookup-only mode.
 Missing feeds must remain visible as lookup failures; there is no fallback to
 private registry access and no automatic deployment merge for these packages.
 
-At preparation time, the public endpoint returned HTTP 404. The local contract
-proves consumer behaviour; it does not establish live feed availability,
-publisher authentication or hosted Renovate success. No Flux reconciliation or
-production rollout is part of this change.
+At preparation time, the public endpoint returned HTTP 404. Feed availability,
+publisher authentication and the hosted Renovate dry run still need checking.
+No Flux reconciliation or production rollout is part of this change.
