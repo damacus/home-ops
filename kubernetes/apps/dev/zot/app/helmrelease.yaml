@@ -44,7 +44,7 @@ spec:
           app:
             image:
               repository: ghcr.io/project-zot/zot-linux-arm64
-              tag: v2.1.22@sha256:920e3e327a73513643c67d14f54092c45ece6d29660bff7e898107e00b49fa03
+              tag: v2.1.23@sha256:14006bb4ca46e1bc250f3fc227b850fe1f7a9f5a751869af684f3b65cdb2c713
             args:
             - serve
             - "/etc/zot/config.json"
