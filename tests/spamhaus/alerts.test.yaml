@@ -1,0 +1,113 @@
+---
+rule_files:
+  - /data/rules.yaml
+evaluation_interval: 1m
+tests:
+  - name: last publication remains fresh through 48 hours
+    interval: 1h
+    input_series:
+      - series: spamhaus_last_success_timestamp_seconds
+        values: '946684800+0x50'
+    alert_rule_test:
+      - eval_time: 47h
+        groupname: spamhaus
+        alertname: SpamhausFeedStale
+        exp_alerts: []
+      - eval_time: 48h
+        groupname: spamhaus
+        alertname: SpamhausFeedStale
+        exp_alerts: []
+      - eval_time: 48h1m
+        groupname: spamhaus
+        alertname: SpamhausFeedStale
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: Spamhaus feed has not been updated for 48 hours
+      - eval_time: 49h
+        groupname: spamhaus
+        alertname: SpamhausFeedStale
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: Spamhaus feed has not been updated for 48 hours
+  - name: missing metrics become unavailable
+    interval: 1m
+    input_series: []
+    alert_rule_test:
+      - eval_time: 14m
+        groupname: spamhaus
+        alertname: SpamhausFeedUnavailable
+        exp_alerts: []
+      - eval_time: 16m
+        groupname: spamhaus
+        alertname: SpamhausFeedUnavailable
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: Spamhaus feed metrics are unavailable
+  - name: a new CronJob has time for its first scheduled run
+    interval: 1m
+    input_series:
+      - series: 'kube_cronjob_created{namespace="network",cronjob="spamhaus-publisher"}'
+        values: '946684800+0x3000'
+    alert_rule_test:
+      - eval_time: 16m
+        groupname: spamhaus
+        alertname: SpamhausFeedUnavailable
+        exp_alerts: []
+      - eval_time: 48h1m
+        groupname: spamhaus
+        alertname: SpamhausFeedStale
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: Spamhaus feed has not been updated for 48 hours
+  - name: a scheduled job with missing metrics alerts
+    interval: 1m
+    input_series:
+      - series: 'kube_cronjob_created{namespace="network",cronjob="spamhaus-publisher"}'
+        values: '946684800+0x30'
+      - series: 'kube_cronjob_status_last_schedule_time{namespace="network",cronjob="spamhaus-publisher"}'
+        values: '946684800+0x30'
+    alert_rule_test:
+      - eval_time: 16m
+        groupname: spamhaus
+        alertname: SpamhausFeedUnavailable
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: Spamhaus feed metrics are unavailable
+  - name: a recent successful job prevents a false stale alert when metrics are unavailable
+    interval: 1m
+    input_series:
+      - series: 'kube_cronjob_created{namespace="network",cronjob="spamhaus-publisher"}'
+        values: '946684800+0x3000'
+      - series: 'kube_cronjob_status_last_successful_time{namespace="network",cronjob="spamhaus-publisher"}'
+        values: '946857600+0x3000'
+    alert_rule_test:
+      - eval_time: 48h1m
+        groupname: spamhaus
+        alertname: SpamhausFeedStale
+        exp_alerts: []
+  - name: a stale published timestamp takes precedence over job status
+    interval: 1m
+    input_series:
+      - series: spamhaus_last_success_timestamp_seconds
+        values: '946684800+0x3000'
+      - series: 'kube_cronjob_status_last_successful_time{namespace="network",cronjob="spamhaus-publisher"}'
+        values: '946857600+0x3000'
+    alert_rule_test:
+      - eval_time: 48h1m
+        groupname: spamhaus
+        alertname: SpamhausFeedStale
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: Spamhaus feed has not been updated for 48 hours
