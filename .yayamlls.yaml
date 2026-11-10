@@ -3,7 +3,6 @@ catalog: false
 
 kubernetes:
   enabled: true
-  schemaUrl: "https://kubernetes-schemas.pages.dev/{groupSeg}{kindLower}_{versionLower}.json"
 
 renderers:
   flate:
