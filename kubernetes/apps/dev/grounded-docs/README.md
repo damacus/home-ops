@@ -59,8 +59,11 @@ are not a general pod egress firewall.
 `app/sources.json` is the reviewed source list:
 
 `gitlab-docs@current` crawls the GitLab documentation homepage with a limit of
-500 pages and four links of depth. It is a moving, partial index of the site;
-the separate administration collection remains first in the refresh list.
+6,000 pages and 12 links of depth, excluding Japanese pages. It follows moving
+documentation; compare indexed URLs with GitLab's English sitemap to assess
+coverage. The separate administration collection remains first in the refresh
+list. Existing versions need their stored crawl settings updated with the
+documented `--no-clean` repair procedure when these limits change.
 
 `gitlab-admin@current` indexes `https://docs.gitlab.com/administration/`
 using static HTTP fetches, subpage scope, a 500-page limit and four links of
