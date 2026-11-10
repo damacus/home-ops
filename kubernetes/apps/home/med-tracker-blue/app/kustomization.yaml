@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: home
 resources:
   - cluster.yaml
-  - credentials.sops.yaml
-  - migration-credentials.sops.yaml
+  - externalsecret.yaml
   - objectstore.yaml
   - scheduledbackup.yaml

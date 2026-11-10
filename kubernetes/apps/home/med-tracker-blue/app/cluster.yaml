@@ -47,7 +47,7 @@ spec:
       owner: med_tracker_bootstrap
   enableSuperuserAccess: true
   superuserSecret:
-    name: med-tracker-blue-migration
+    name: med-tracker-blue-superuser
   postgresql:
     parameters:
       max_connections: "100"
