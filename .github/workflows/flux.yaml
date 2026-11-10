@@ -37,6 +37,9 @@ jobs:
             kubernetes:
               - '.github/workflows/flux.yaml'
               - '.taskfiles/Flux/**'
+              - 'scripts/flate-snapshots.mjs'
+              - 'scripts/flate-entry.yaml'
+              - 'tests/flate-source-selection.test.mjs'
               - 'kubernetes/**'
               - 'tests/spamhaus/**'
             go:
@@ -380,9 +383,12 @@ jobs:
         env:
           FLATE_BASE: ""
         run: >-
-          flate --no-progress test all
+          node scripts/flate-snapshots.mjs test
           --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule"
           --path ./kubernetes
+
+      - name: Verify local source selection
+        run: node --test tests/flate-source-selection.test.mjs
 
   flate-diff:
     name: Flate Diff
@@ -420,7 +426,7 @@ jobs:
           FLATE_BASE: origin/pr-base
         run: |
           set -euo pipefail
-          flate --no-progress diff all \
+          node scripts/flate-snapshots.mjs diff \
             --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" \
             --path ./kubernetes \
             -o github > flate.diff

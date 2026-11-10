@@ -81,7 +81,7 @@ tasks:
 
       Args:
         path: Path to test (default: ./kubernetes)
-    cmd: flate --no-progress test all --api-versions "{{.FLATE_API_VERSIONS}}" --path {{.path}}
+    cmd: node scripts/flate-snapshots.mjs test --api-versions "{{.FLATE_API_VERSIONS}}" --path {{.path | shellQuote}}
     vars:
       path: '{{.path | default "./kubernetes"}}'
     preconditions:
@@ -94,7 +94,7 @@ tasks:
 
       Args:
         path: Path to build (default: ./kubernetes)
-    cmd: flate --no-progress build all --api-versions "{{.FLATE_API_VERSIONS}}" --path {{.path}}
+    cmd: node scripts/flate-snapshots.mjs build --api-versions "{{.FLATE_API_VERSIONS}}" --path {{.path | shellQuote}}
     vars:
       path: '{{.path | default "./kubernetes"}}'
     preconditions:
@@ -104,27 +104,19 @@ tasks:
     desc: Diff rendered Flux resources with flate
     summary: |
       Diffs rendered resources against either a supplied path_orig directory or
-      a temporary worktree for the supplied base ref.
+      an isolated snapshot for the supplied base ref.
 
       Args:
         path: Path to render (default: ./kubernetes)
-        path_orig: Existing baseline path; skips worktree creation when set
-        base: Git ref for the temporary baseline worktree (default: origin/main)
+        path_orig: Existing baseline Git checkout
+        base: Git ref for the baseline snapshot (default: origin/main)
         output: flate diff output style (default: human)
-    cmd: |
-      set -eu
-      path="{{.path}}"
-      output="{{.output}}"
-      if [ -n "{{.path_orig}}" ]; then
-        flate --no-progress diff all --api-versions "{{.FLATE_API_VERSIONS}}" --path "$path" --path-orig "{{.path_orig}}" -o "$output"
-        exit 0
-      fi
-
-      tmp_dir="$(mktemp -d)"
-      trap 'git worktree remove --force "$tmp_dir/base" >/dev/null 2>&1 || rm -rf "$tmp_dir"' EXIT
-      git worktree add --detach "$tmp_dir/base" "{{.base}}"
-      orig_path="$tmp_dir/base/${path#./}"
-      flate --no-progress diff all --api-versions "{{.FLATE_API_VERSIONS}}" --path "$path" --path-orig "$orig_path" -o "$output"
+    cmd: >-
+      node scripts/flate-snapshots.mjs diff
+      --api-versions "{{.FLATE_API_VERSIONS}}"
+      --path {{.path | shellQuote}}
+      {{if .path_orig}}--path-orig {{.path_orig | shellQuote}}{{else}}--base {{.base | shellQuote}}{{end}}
+      -o {{.output | shellQuote}}
     vars:
       path: '{{.path | default "./kubernetes"}}'
       path_orig: '{{.path_orig | default ""}}'
@@ -133,3 +125,7 @@ tasks:
     preconditions:
       - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
       - { msg: "Missing git", sh: "command -v git >/dev/null" }
+
+  flate-source-test:
+    desc: Verify Flate uses each compared checkout and rejects broken paths
+    cmd: node --test tests/flate-source-selection.test.mjs
