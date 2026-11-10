@@ -30,6 +30,7 @@ spec:
     image:
       repository: ghcr.io/damacus/med-tracker-loco
       tag: 0.6.0
+      digest: sha256:0ebdc7a5566751d63da93b04c8ec0ffda5ed4a266fd15c3b16bfc6a4f30cdb5d
     imagePullSecrets:
       - name: ghcr-credentials
     deploymentAnnotations:
