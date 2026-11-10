@@ -5,6 +5,7 @@ metadata:
   name: med-tracker-loco-integrations
   namespace: home
 spec:
+  # Resolve the existing 1Password items through HomeOps' shared ExternalSecrets store.
   secretStoreRef:
     kind: ClusterSecretStore
     name: onepassword-connect
@@ -15,13 +16,18 @@ spec:
       engineVersion: v2
       mergePolicy: Replace
       data:
+        # Map the existing Resend key to the SMTP setting names read by Loco.
         MEDTRACKER_SMTP_USER: resend
         MEDTRACKER_SMTP_PASSWORD: "{{ .RESEND_API_KEY }}"
+        # Reuse the existing Web Push signing key rather than creating a new identity.
         MEDTRACKER_WEB_PUSH_PRIVATE_KEY: "{{ .VAPID_PRIVATE_KEY }}"
         MEDTRACKER_WEB_PUSH_SUBJECT: mailto:notifications@damacus.io
+        # Reuse the same OIDC client and Secret under Loco's Zitadel-specific setting names.
+        # The provider now allows /auth/zitadel/callback alongside both legacy callbacks.
         MEDTRACKER_ZITADEL_CLIENT_ID: "{{ .client_id }}"
         MEDTRACKER_ZITADEL_CLIENT_SECRET: "{{ .client_secret }}"
   dataFrom:
+    # Integration material stays in its existing items; no Rails database credentials leak in.
     - extract:
         key: med-tracker
     - extract:

@@ -6,6 +6,7 @@ metadata:
   namespace: home
 spec:
   interval: 15m
+  # Keep the existing BJW chart and Helm release; only its application values change.
   chart:
     spec:
       chart: app-template
@@ -21,11 +22,13 @@ spec:
       retries: 3
   upgrade:
     cleanupOnFail: true
+    # Retry failed upgrades without rolling back to Rails and its separate database.
     strategy:
       name: RetryOnFailure
   uninstall:
     keepHistory: false
   values:
+    # Match the Loco image's non-root UID; these processes need no Kubernetes API token.
     defaultPodOptions:
       automountServiceAccountToken: false
       imagePullSecrets:
@@ -39,6 +42,7 @@ spec:
           type: RuntimeDefault
 
     controllers:
+      # Retain the existing web Deployment; Loco serves HTTP on 5150 instead of Rails on 80.
       med-tracker:
         type: deployment
         strategy: Recreate
@@ -48,32 +52,44 @@ spec:
           reloader.stakater.com/auto: "true"
         containers:
           app:
+            # All processes and database Jobs use the same immutable 0.6.0 image.
             image: &image
               repository: ghcr.io/damacus/med-tracker-loco
               tag: 0.6.0@sha256:0ebdc7a5566751d63da93b04c8ec0ffda5ed4a266fd15c3b16bfc6a4f30cdb5d
             args: [start, --environment, production]
+            # Runtime gets only the restricted blue database login and integration settings.
+            # The old Rails Secret remains retained, but no Loco process consumes it.
             envFrom: &runtimeSecrets
               - secretRef:
                   name: med-tracker-blue-runtime
               - secretRef:
                   name: med-tracker-loco-integrations
             env: &runtimeEnvironment
-              TZ: Europe/London
+              TZ: "Europe/London"
+              # Bind inside the Pod; keep generated links and secure cookies on public HTTPS.
               BINDING: 0.0.0.0
               PORT: "5150"
               MEDTRACKER_PUBLIC_HOST: https://med-tracker.damacus.io
               MEDTRACKER_PUBLIC_ORIGIN: https://med-tracker.damacus.io
               MEDTRACKER_COOKIE_SECURE: "true"
+              # Loco reads this instead of Rails' OIDC_ISSUER_URL.
+              # It derives /auth/zitadel/callback from the public origin, replacing
+              # OIDC_REDIRECT_URI. Provider ID and button label are fixed in Rust;
+              # OIDC_PROVIDER_NAME has no equivalent setting in the current application.
+              # Client ID/Secret come from the existing Zitadel item via envFrom above.
               MEDTRACKER_ZITADEL_ISSUER: https://zitadel.damacus.io
+              # Loco needs explicit SMTP transport settings for account and recovery mail.
               MEDTRACKER_SMTP_ENABLED: "true"
               MEDTRACKER_SMTP_HOST: smtp.resend.com
               MEDTRACKER_SMTP_PORT: "587"
               MEDTRACKER_MAIL_FROM: MedTracker <notifications@damacus.io>
+            # Keep privilege escalation, Linux capabilities and writes to the image disabled.
             securityContext: &containerSecurity
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities:
                 drop: [ALL]
+            # Use Loco's /health endpoint; the startup probe allows up to five minutes to boot.
             probes:
               liveness: &healthProbe
                 enabled: true
@@ -96,6 +112,7 @@ spec:
                   periodSeconds: 5
                   timeoutSeconds: 5
                   failureThreshold: 60
+            # Reserve scheduling capacity and cap process memory; share these limits below.
             resources: &resources
               requests:
                 cpu: 10m
@@ -103,6 +120,7 @@ spec:
               limits:
                 memory: 1Gi
 
+      # Retain the worker Deployment, replacing Rails jobs with Loco's background worker.
       med-tracker-worker:
         type: deployment
         strategy: Recreate
@@ -119,6 +137,7 @@ spec:
             securityContext: *containerSecurity
             resources: *resources
 
+      # Loco's scheduler is a separate process that runs the configured scheduled tasks.
       med-tracker-scheduler:
         type: deployment
         strategy: Recreate
@@ -131,15 +150,21 @@ spec:
             <<: *backgroundContainer
             args: [scheduler, --environment, production]
 
+      # First cutover only: initialise the empty blue database using the native Loco task.
+      # This Job's container exits on completion; it is not a permanent application process.
+      # Remove this controller after successful setup, before subsequent release upgrades.
       med-tracker-setup:
         type: job
         serviceAccount:
           identifier: med-tracker-app
         annotations:
+          # The existing Helm release is upgraded, so pre-install alone would skip setup.
+          # Weight -10 runs setup before the restricted migration Job at weight -5.
           helm.sh/hook: pre-install,pre-upgrade
           helm.sh/hook-weight: "-10"
           helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
         job: &jobOptions
+          # Surface failures without repeated database attempts; retain failed Job logs.
           backoffLimit: 0
           activeDeadlineSeconds: 600
         containers:
@@ -147,6 +172,7 @@ spec:
             image: *image
             args: [task, database-setup, --environment, production]
             env:
+              # Only initial setup receives administrator access to create roles and RLS.
               DATABASE_URL:
                 valueFrom:
                   secretKeyRef:
@@ -165,6 +191,9 @@ spec:
             securityContext: *containerSecurity
             resources: *resources
 
+      # Run native db migrate before each Helm upgrade, using the non-superuser update login.
+      # Unlike the former Rails initContainers, this runs per release, not per Pod restart.
+      # Loco runtime auto_migrate stays false because this Job owns schema updates.
       med-tracker-update:
         type: job
         serviceAccount:
@@ -184,6 +213,7 @@ spec:
             securityContext: *containerSecurity
             resources: *resources
 
+    # Preserve both existing routes and hostnames; their Service backend remains port 80.
     route:
       app:
         parentRefs:
@@ -191,7 +221,7 @@ spec:
             namespace: network
             sectionName: websecure
         hostnames:
-          - med-tracker.ironstone.casa
+          - "med-tracker.ironstone.casa"
         rules:
           - matches:
               - path:
@@ -205,13 +235,13 @@ spec:
                 weight: 1
       external:
         annotations:
-          external-dns.alpha.kubernetes.io/target: traefik-ext.damacus.io
+          external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
         parentRefs:
           - name: traefik-internal
             namespace: network
             sectionName: websecure
         hostnames:
-          - med-tracker.damacus.io
+          - "med-tracker.damacus.io"
         rules:
           - matches:
               - path:
@@ -223,14 +253,17 @@ spec:
                 namespace: home
                 port: 80
                 weight: 1
+
     service:
       app:
         controller: med-tracker
         ports:
           http:
             port: 80
+            # Keep the existing Service/route port while forwarding to Loco's HTTP listener.
             targetPort: 5150
 
+    # Preserve existing ServiceAccount names used by the retained Deployments.
     serviceAccount:
       med-tracker:
         annotations:
@@ -239,9 +272,12 @@ spec:
       med-tracker-app:
         forceRename: med-tracker-app
 
+    # Read-only application containers get writable scratch space only at /tmp.
+    # The Rails PVC is retained by storage-pvc.yaml; it is not mounted by the fresh app.
     persistence:
       tmp:
         type: emptyDir
         globalMounts:
           - path: /tmp
+  # Allow database hooks and application readiness to finish within one Helm operation.
   timeout: 10m
