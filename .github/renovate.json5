@@ -13,7 +13,7 @@
   ],
   customDatasources: {
     "release-mirror": {
-      defaultRegistryUrlTemplate: "https://releases.damacus.io/api/v1/services/{{packageName}}/renovate",
+      defaultRegistryUrlTemplate: "file://.renovate-feeds/{{packageName}}.json",
       format: "json",
     },
   },

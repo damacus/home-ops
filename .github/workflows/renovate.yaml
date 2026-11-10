@@ -53,11 +53,33 @@ jobs:
         with:
           token: "${{ steps.app-token.outputs.token }}"
 
+      - name: Prepare Release Mirror feeds
+        env:
+          RENOVATE_REPO_DIR: /tmp/renovate/repos/github/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Renovate only reads file datasources inside its own checkout and cleans untracked files.
+          mkdir -p "$(dirname "$RENOVATE_REPO_DIR")"
+          git clone --local --no-hardlinks "$GITHUB_WORKSPACE" "$RENOVATE_REPO_DIR"
+          echo '/.renovate-feeds/' >> "$RENOVATE_REPO_DIR/.git/info/exclude"
+          mkdir -p "$RENOVATE_REPO_DIR/.renovate-feeds"
+          curl --fail --silent --show-error --location --retry 4 --retry-all-errors --retry-max-time 90 \
+            --connect-timeout 10 --max-time 30 \
+            --user-agent 'Renovate/44.226.0 (https://github.com/renovatebot/renovate)' \
+            --output "$RUNNER_TEMP/release-mirror.json" https://releases.damacus.io/api/v1/export
+          jq -e '.schemaVersion == 1 and (.services | type == "array")' "$RUNNER_TEMP/release-mirror.json" > /dev/null
+          for service in ironbridge usage-ledger northbot med-tracker unifi-release-announcer k8s-reflecto-rs; do
+            jq --arg service "$service" '{releases: [.services[] | select(.name == $service) | .releases[] | {version, digest, releaseTimestamp: .publishedAt}]}' \
+              "$RUNNER_TEMP/release-mirror.json" > "$RENOVATE_REPO_DIR/.renovate-feeds/$service.json"
+          done
+          chmod -R a+rwX /tmp/renovate
+
       - name: Run Renovate
         uses: renovatebot/github-action@266fef21329c44765ad42f9dea1f01f5d2d91084 # v46.3.13
         env:
           LOG_LEVEL: "${{ inputs.logLevel || 'debug' }}"
           RENOVATE_AUTODISCOVER: true
+          RENOVATE_BASE_DIR: /tmp/renovate
           RENOVATE_AUTODISCOVER_FILTER: "${{ github.repository }}"
           RENOVATE_DRY_RUN: "${{ inputs.dryRun }}"
           RENOVATE_INTERNAL_CHECKS_FILTER: strict
