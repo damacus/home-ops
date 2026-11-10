@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
@@ -27,9 +27,10 @@ const temporary = mkdtempSync(join(tmpdir(), 'home-ops-flate-'));
 try {
   if (!['test', 'build', 'diff'].includes(mode)) throw new Error('Expected test, build or diff');
   const root = git(process.cwd(), ['rev-parse', '--show-toplevel']).trim();
-  const scan = inside(root, resolve(take('--path') || process.env.FLATE_PATH || 'kubernetes'));
+  const scan = inside(root, realpathSync(resolve(take('--path') || process.env.FLATE_PATH || 'kubernetes')));
   const baseRef = take('--base') || process.env.FLATE_BASE || 'origin/main';
-  const pathOrig = take('--path-orig');
+  const original = take('--path-orig');
+  const pathOrig = original ? realpathSync(resolve(original)) : undefined;
   const head = git(root, ['rev-parse', 'HEAD']).trim();
   const entry = readFileSync(join(root, 'scripts/flate-entry.yaml'));
   const snapshot = (name, source, revision, working) => {
@@ -38,7 +39,11 @@ try {
     git(directory, ['init', '--quiet', '--initial-branch=main']);
     git(directory, ['fetch', '--quiet', '--no-tags', '--depth=1', source, revision]);
     git(directory, ['checkout', '--quiet', '--detach', 'FETCH_HEAD']);
-    git(directory, ['remote', 'add', 'origin', git(source, ['remote', 'get-url', 'origin']).trim()]);
+    const remotes = git(source, ['remote']).trim().split(/\s+/);
+    const sourceURL = remotes.includes('origin')
+      ? git(source, ['remote', 'get-url', 'origin']).trim()
+      : process.env.FLATE_SELF_URL || 'https://github.com/damacus/home-ops';
+    git(directory, ['remote', 'add', 'origin', sourceURL]);
     git(directory, ['update-ref', 'refs/heads/main', revision]);
     if (working) {
       const patch = git(source, ['diff', '--binary', 'HEAD']);
@@ -50,7 +55,8 @@ try {
       }
     }
     const rootEntry = join(directory, 'kubernetes/kustomization.yaml');
-    if (!existsSync(rootEntry)) writeFileSync(rootEntry, entry);
+    const snapshotEntry = join(directory, 'scripts/flate-entry.yaml');
+    if (!existsSync(rootEntry)) writeFileSync(rootEntry, existsSync(snapshotEntry) ? readFileSync(snapshotEntry) : entry);
     return directory;
   };
   const current = snapshot('current', root, head, true);

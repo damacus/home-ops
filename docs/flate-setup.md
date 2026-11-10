@@ -9,6 +9,13 @@ This repository uses [flate](https://github.com/home-operations/flate) to render
 - `task flux:flate-test`: validate all Kustomizations and HelmReleases render successfully.
 - `task flux:flate-build`: build rendered Flux resources locally.
 - `task flux:flate-diff`: diff rendered resources against a baseline checkout or supplied baseline path.
+- `task flux:flate-source-test`: verify candidate/baseline source selection and failure on missing manifests.
+
+These commands use `scripts/flate-snapshots.mjs`. The helper creates ordinary Git snapshots so Flate can read the repository metadata, including when the original checkout uses Git worktrees. Each snapshot's `main` reference selects its own files, and the current snapshot includes local edits.
+
+`scripts/flate-entry.yaml` places Flux configuration, the application controller and repository definitions in one render graph. Each snapshot uses its own version of this entry. Older commits that predate the entry use the current entry as a compatibility fallback.
+
+A checkout without `origin` uses the canonical HomeOps source URL. Set `FLATE_SELF_URL` when testing another repository. `FLATE_BINARY` can select a specific installed Flate binary.
 
 ### Validation
 
@@ -54,7 +61,7 @@ task flux:flate-diff path_orig=./default/kubernetes
 
 ## GitHub Actions
 
-The workflow in `.github/workflows/flux.yaml` installs `home-operations/flate/action` and runs `flate test all` plus `flate diff all` directly.
+The workflow in `.github/workflows/flux.yaml` installs the pinned `home-operations/flate/action` release and runs `scripts/flate-snapshots.mjs` in `test` and `diff` modes. The helper invokes Flate with the same API-version configuration as the local Task commands and preserves failures from the renderer. CI also runs the source-selection regression.
 
 ## Missing CRD Errors
 

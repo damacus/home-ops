@@ -45,6 +45,9 @@ test('diff renders the candidate source with worktree metadata and rejects missi
     put('kubernetes/apps/existing/app/config.yaml', cm('existing', 'before'));
     commit('test: baseline');
     const base = git('rev-parse', 'HEAD');
+    put('scripts/flate-entry.yaml', Buffer.concat([entry, Buffer.from('  - flux/extra\n')]));
+    put('kubernetes/flux/extra/kustomization.yaml', pkg(['config.yaml']));
+    put('kubernetes/flux/extra/config.yaml', cm('entry-only', 'new'));
     put('kubernetes/apps/kustomization.yaml', pkg(['existing/ks.yaml', 'candidate/ks.yaml']));
     put('kubernetes/apps/existing/app/config.yaml', cm('existing', 'after'));
     put('kubernetes/apps/candidate/ks.yaml', ks('candidate', './kubernetes/apps/candidate/app'));
@@ -53,15 +56,29 @@ test('diff renders the candidate source with worktree metadata and rejects missi
     commit('test: candidate');
     git('config', 'core.repositoryformatversion', '1');
     git('config', 'extensions.worktreeConfig', 'true');
-    const run = () => spawnSync(process.execPath, [helper, 'diff', '--base', base, '--path', 'kubernetes', '-o', 'json'], {
-      cwd: repo, encoding: 'utf8', env: { ...process.env, FLATE_BASE: '' },
+    const run = (args = ['diff', '--base', base, '--path', 'kubernetes', '-o', 'json']) => spawnSync(process.execPath, [helper, ...args], {
+      cwd: repo, encoding: 'utf8', env: { ...process.env, FLATE_BASE: '', FLATE_SELF_URL: 'https://fixture.invalid/home-ops' },
     });
     const valid = run();
     assert.equal(valid.status, 0, valid.stderr);
     const parsed = JSON.parse(valid.stdout);
     const changes = (Array.isArray(parsed) ? parsed : [parsed]).flatMap(result => result.changes);
     assert.ok(changes.some(change => change.kind === 'ConfigMap' && change.name === 'candidate-only' && change.status === 'added'));
+    assert.ok(changes.some(change => change.kind === 'ConfigMap' && change.name === 'entry-only' && change.status === 'added'));
     assert.ok(changes.some(change => change.kind === 'ConfigMap' && change.name === 'existing' && change.old?.data.value === 'before' && change.new?.data.value === 'after'), JSON.stringify(changes));
+    git('remote', 'remove', 'origin');
+    for (const mode of ['test', 'build']) {
+      const local = run([mode, '--path', 'kubernetes']);
+      assert.equal(local.status, 0, local.stderr);
+    }
+    const baseline = mkdtempSync(join(tmpdir(), 'flate-independent-base-'));
+    try {
+      git('worktree', 'add', '--detach', baseline, base);
+      const independent = run(['diff', '--path-orig', join(baseline, 'kubernetes'), '--path', 'kubernetes', '-o', 'json']);
+      assert.equal(independent.status, 0, independent.stderr);
+    } finally {
+      git('worktree', 'remove', '--force', baseline);
+    }
     put('kubernetes/apps/candidate/ks.yaml', ks('candidate', './kubernetes/apps/missing/app'));
     commit('test: missing manifest');
     const invalid = run();
