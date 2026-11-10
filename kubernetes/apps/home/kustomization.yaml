@@ -10,6 +10,7 @@ resources:
   - ./release-mirror/ks.yaml
   - ./memos/ks.yaml
   - ./med-tracker-db/ks.yaml
+  - ./med-tracker-blue/ks.yaml
   - ./med-tracker/ks.yaml
   - ./namespace.yaml
   - ./penpot-db/ks.yaml
