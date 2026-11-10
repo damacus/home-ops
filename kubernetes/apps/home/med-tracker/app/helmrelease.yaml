@@ -8,58 +8,182 @@ spec:
   interval: 15m
   chart:
     spec:
-      chart: ./charts/med-tracker
-      reconcileStrategy: Revision
+      chart: app-template
+      version: 5.3.0
       sourceRef:
-        kind: GitRepository
-        name: med-tracker
-        namespace: home
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
   maxHistory: 3
   install:
     createNamespace: true
     remediation:
       retries: 3
   upgrade:
-    chartNameChangeStrategy: InPlaceUpdate
     cleanupOnFail: true
     strategy:
       name: RetryOnFailure
   uninstall:
     keepHistory: false
   values:
-    image:
-      repository: ghcr.io/damacus/med-tracker-loco
-      tag: 0.6.0
-      digest: sha256:0ebdc7a5566751d63da93b04c8ec0ffda5ed4a266fd15c3b16bfc6a4f30cdb5d
-    imagePullSecrets:
-      - name: ghcr-credentials
-    deploymentAnnotations:
-      reloader.stakater.com/auto: "true"
-    database:
-      host: med-tracker-blue-rw.home.svc.cluster.local
-      name: medtracker
-      bootstrap:
-        existingSecret: med-tracker-blue-superuser
-      runtime:
-        existingSecret: med-tracker-blue-runtime
-      update:
-        existingSecret: med-tracker-blue-update
-    setup:
-      bootstrapOnUpgrade: true
-    env:
-      TZ: Europe/London
-      BINDING: 0.0.0.0
-      PORT: "5150"
-      MEDTRACKER_PUBLIC_HOST: https://med-tracker.damacus.io
-      MEDTRACKER_PUBLIC_ORIGIN: https://med-tracker.damacus.io
-      MEDTRACKER_COOKIE_SECURE: "true"
-      MEDTRACKER_SMTP_ENABLED: "true"
-      MEDTRACKER_SMTP_HOST: smtp.resend.com
-      MEDTRACKER_SMTP_PORT: "587"
-      MEDTRACKER_MAIL_FROM: MedTracker <notifications@damacus.io>
-    envFrom:
-      - secretRef:
-          name: med-tracker-loco-integrations
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+
+    controllers:
+      med-tracker:
+        type: deployment
+        strategy: Recreate
+        serviceAccount:
+          identifier: med-tracker-app
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image: &image
+              repository: ghcr.io/damacus/med-tracker-loco
+              tag: 0.6.0@sha256:0ebdc7a5566751d63da93b04c8ec0ffda5ed4a266fd15c3b16bfc6a4f30cdb5d
+            args: [start, --environment, production]
+            envFrom: &runtimeSecrets
+              - secretRef:
+                  name: med-tracker-blue-runtime
+              - secretRef:
+                  name: med-tracker-loco-integrations
+            env: &runtimeEnvironment
+              TZ: Europe/London
+              BINDING: 0.0.0.0
+              PORT: "5150"
+              MEDTRACKER_PUBLIC_HOST: https://med-tracker.damacus.io
+              MEDTRACKER_PUBLIC_ORIGIN: https://med-tracker.damacus.io
+              MEDTRACKER_COOKIE_SECURE: "true"
+              MEDTRACKER_ZITADEL_ISSUER: https://zitadel.damacus.io
+              MEDTRACKER_SMTP_ENABLED: "true"
+              MEDTRACKER_SMTP_HOST: smtp.resend.com
+              MEDTRACKER_SMTP_PORT: "587"
+              MEDTRACKER_MAIL_FROM: MedTracker <notifications@damacus.io>
+            securityContext: &containerSecurity
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+            probes:
+              liveness: &healthProbe
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 5150
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *healthProbe
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 5150
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                  failureThreshold: 60
+            resources: &resources
+              requests:
+                cpu: 10m
+                memory: 128Mi
+              limits:
+                memory: 1Gi
+
+      med-tracker-worker:
+        type: deployment
+        strategy: Recreate
+        serviceAccount:
+          identifier: med-tracker-app
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          worker: &backgroundContainer
+            image: *image
+            args: [start, --worker, --environment, production]
+            envFrom: *runtimeSecrets
+            env: *runtimeEnvironment
+            securityContext: *containerSecurity
+            resources: *resources
+
+      med-tracker-scheduler:
+        type: deployment
+        strategy: Recreate
+        serviceAccount:
+          identifier: med-tracker-app
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          scheduler:
+            <<: *backgroundContainer
+            args: [scheduler, --environment, production]
+
+      med-tracker-setup:
+        type: job
+        serviceAccount:
+          identifier: med-tracker-app
+        annotations:
+          helm.sh/hook: pre-install,pre-upgrade
+          helm.sh/hook-weight: "-10"
+          helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        job: &jobOptions
+          backoffLimit: 0
+          activeDeadlineSeconds: 600
+        containers:
+          setup:
+            image: *image
+            args: [task, database-setup, --environment, production]
+            env:
+              DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-blue-superuser
+                    key: DATABASE_URL
+              MEDTRACKER_RUNTIME_DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-blue-runtime
+                    key: DATABASE_URL
+              MEDTRACKER_UPDATE_DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-blue-update
+                    key: DATABASE_URL
+            securityContext: *containerSecurity
+            resources: *resources
+
+      med-tracker-update:
+        type: job
+        serviceAccount:
+          identifier: med-tracker-app
+        annotations:
+          helm.sh/hook: pre-install,pre-upgrade
+          helm.sh/hook-weight: "-5"
+          helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        job: *jobOptions
+        containers:
+          update:
+            image: *image
+            args: [db, migrate, --environment, production]
+            envFrom:
+              - secretRef:
+                  name: med-tracker-blue-update
+            securityContext: *containerSecurity
+            resources: *resources
+
     route:
       app:
         parentRefs:
@@ -100,11 +224,24 @@ spec:
                 port: 80
                 weight: 1
     service:
-      port: 80
-    resources:
-      requests:
-        cpu: 10m
-        memory: 128Mi
-      limits:
-        memory: 1Gi
+      app:
+        controller: med-tracker
+        ports:
+          http:
+            port: 80
+            targetPort: 5150
+
+    serviceAccount:
+      med-tracker:
+        annotations:
+          helm.sh/resource-policy: keep
+        forceRename: med-tracker
+      med-tracker-app:
+        forceRename: med-tracker-app
+
+    persistence:
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
   timeout: 10m

@@ -19,6 +19,10 @@ spec:
         MEDTRACKER_SMTP_PASSWORD: "{{ .RESEND_API_KEY }}"
         MEDTRACKER_WEB_PUSH_PRIVATE_KEY: "{{ .VAPID_PRIVATE_KEY }}"
         MEDTRACKER_WEB_PUSH_SUBJECT: mailto:notifications@damacus.io
+        MEDTRACKER_ZITADEL_CLIENT_ID: "{{ .client_id }}"
+        MEDTRACKER_ZITADEL_CLIENT_SECRET: "{{ .client_secret }}"
   dataFrom:
     - extract:
         key: med-tracker
+    - extract:
+        key: zitadel-med-tracker-oidc
