@@ -307,6 +307,9 @@ jobs:
           helm pull victoria-metrics-k8s-stack --repo https://victoriametrics.github.io/helm-charts --version "$chart_version" --untar --untardir "$RUNNER_TEMP/ksm-charts"
           "$RUNNER_TEMP/ksm-test-env/bin/python" -m unittest tests/test_ksm_secret_access.py
 
+      - name: Select checked-out Flux source
+        run: git update-ref refs/heads/main HEAD
+
       - name: Run rendered manifest scans
         env:
           FLATE_BASE: ""
