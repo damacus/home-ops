@@ -18,6 +18,15 @@
     "scrapeMode": "fetch"
   },
   {
+    "library": "fish-shell",
+    "version": "current",
+    "url": "https://fishshell.com/docs/current/",
+    "maxPages": 500,
+    "maxDepth": 4,
+    "scope": "subpages",
+    "scrapeMode": "fetch"
+  },
+  {
     "library": "unifi-siem-logging",
     "version": "current",
     "url": "https://help.ui.com/api/v2/help_center/en-us/articles/33349041044119.json",
