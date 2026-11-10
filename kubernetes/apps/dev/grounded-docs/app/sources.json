@@ -1,5 +1,14 @@
 [
   {
+    "library": "bjw-s-app-template",
+    "version": "current",
+    "url": "https://bjw-s-labs.github.io/helm-charts/docs/app-template/",
+    "maxPages": 500,
+    "maxDepth": 8,
+    "scope": "subpages",
+    "scrapeMode": "fetch"
+  },
+  {
     "library": "gitlab-admin",
     "version": "current",
     "url": "https://docs.gitlab.com/administration/",
