@@ -376,6 +376,9 @@ jobs:
           token: ${{ github.token }}
           cache: "true"
 
+      - name: Select checked-out Flux source
+        run: git update-ref refs/heads/main HEAD
+
       - name: Run flate test
         env:
           FLATE_BASE: ""
@@ -405,24 +408,33 @@ jobs:
           token: ${{ github.token }}
           cache: "true"
 
-      - name: Fetch PR Base
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      - name: Checkout PR base
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .flate-base
+
+      - name: Select each checked-out Flux source
         run: |
           set -euo pipefail
-          git fetch --no-tags --depth=1 origin "+${BASE_SHA}:refs/remotes/origin/pr-base"
-          git rev-parse --verify "refs/remotes/origin/pr-base^{commit}"
+          git update-ref refs/heads/main HEAD
+          git -C .flate-base update-ref refs/heads/main HEAD
+          # Older base commits predate the render entry; retain their manifests.
+          if [[ ! -f .flate-base/kubernetes/kustomization.yaml ]]; then
+            cp kubernetes/kustomization.yaml .flate-base/kubernetes/kustomization.yaml
+          fi
 
       - name: Run flate diff
         id: diff
         shell: bash
         env:
-          FLATE_BASE: origin/pr-base
+          FLATE_BASE: ""
         run: |
           set -euo pipefail
           flate --no-progress diff all \
             --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" \
             --path ./kubernetes \
+            --path-orig ./.flate-base/kubernetes \
             -o github > flate.diff
           if [[ -s flate.diff ]]; then
             {
