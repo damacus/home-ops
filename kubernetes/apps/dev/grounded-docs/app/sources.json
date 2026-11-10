@@ -12,9 +12,10 @@
     "library": "gitlab-docs",
     "version": "current",
     "url": "https://docs.gitlab.com/",
-    "maxPages": 500,
-    "maxDepth": 4,
+    "maxPages": 6000,
+    "maxDepth": 12,
     "scope": "subpages",
+    "excludePatterns": ["**/ja-jp/**"],
     "scrapeMode": "fetch"
   },
   {
