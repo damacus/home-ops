@@ -8,166 +8,57 @@ spec:
   interval: 15m
   chart:
     spec:
-      chart: app-template
-      version: 5.3.0
+      chart: ./charts/med-tracker
+      reconcileStrategy: Revision
       sourceRef:
-        kind: HelmRepository
-        name: bjw-s
-        namespace: flux-system
+        kind: GitRepository
+        name: med-tracker
+        namespace: home
   maxHistory: 3
   install:
     createNamespace: true
     remediation:
       retries: 3
   upgrade:
+    chartNameChangeStrategy: InPlaceUpdate
     cleanupOnFail: true
-    remediation:
-      retries: 3
+    strategy:
+      name: RetryOnFailure
   uninstall:
     keepHistory: false
   values:
-    defaultPodOptions:
-      imagePullSecrets:
-        - name: ghcr-credentials
-
-    controllers:
-      med-tracker:
-        type: deployment
-        strategy: Recreate
-        serviceAccount:
-          identifier: med-tracker-app
-        # TODO: Needs a RWX PVC
-        # replicas: 2
-        # rollingUpdate:
-        #   maxSurge: 1
-        #   maxUnavailable: 0
-
-        annotations:
-          reloader.stakater.com/auto: "true"
-        initContainers:
-          migrate:
-            image:
-              repository: &repository ghcr.io/damacus/med-tracker
-              tag: &tag 0.5.35@sha256:f47f317657236675427f6b60761858f8203c0f44c1755ea16b5f926058c73925
-            command: ["bin/rails", "db:prepare"]
-            envFrom:
-              - secretRef:
-                  name: med-tracker-secret
-            env:
-              OTEL_TRACES_EXPORTER: none
-              RAILS_ENV: production
-              TZ: "Europe/London"
-        containers:
-          app:
-            image:
-              repository: *repository
-              tag: *tag
-
-            envFrom: &appEnvFrom
-              - secretRef:
-                  name: med-tracker-secret
-            env: &appEnvironment
-              RAILS_ENV: production
-              RAILS_FORCE_SSL: "false"
-              RAILS_LOG_LEVEL: info
-              OTEL_TRACES_EXPORTER: none
-              TZ: "Europe/London"
-              APP_URL: "https://med-tracker.damacus.io"
-              OIDC_ISSUER_URL: "https://zitadel.damacus.io"
-              OIDC_REDIRECT_URI: "https://med-tracker.damacus.io/auth/oidc/callback"
-              OIDC_PROVIDER_NAME: "Zitadel"
-
-            probes:
-              liveness:
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /up
-                    port: &port 80
-                  initialDelaySeconds: 30
-                  periodSeconds: 10
-                  timeoutSeconds: 5
-                  failureThreshold: 3
-              readiness:
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /up
-                    port: *port
-                  initialDelaySeconds: 10
-                  periodSeconds: 10
-                  timeoutSeconds: 5
-                  failureThreshold: 3
-              startup:
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /up
-                    port: *port
-                  initialDelaySeconds: 10
-                  periodSeconds: 5
-                  timeoutSeconds: 5
-                  failureThreshold: 30
-
-            resources:
-              requests:
-                cpu: 10m
-                memory: 256Mi
-              limits:
-                memory: 1Gi
-        pod:
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-            fsGroup: 1000
-            fsGroupChangePolicy: OnRootMismatch
-
-      med-tracker-worker:
-        type: deployment
-        strategy: Recreate
-        serviceAccount:
-          identifier: med-tracker-app
-        annotations:
-          reloader.stakater.com/auto: "true"
-        initContainers:
-          migrate:
-            image:
-              repository: *repository
-              tag: *tag
-            command: ["bin/rails", "db:prepare"]
-            envFrom:
-              - secretRef:
-                  name: med-tracker-secret
-            env:
-              OTEL_TRACES_EXPORTER: none
-              RAILS_ENV: production
-              TZ: "Europe/London"
-        containers:
-          worker:
-            image:
-              repository: *repository
-              tag: *tag
-            command: ["bin/jobs"]
-            args: ["--mode", "async"]
-            envFrom: *appEnvFrom
-            env: *appEnvironment
-            resources:
-              requests:
-                memory: 256Mi
-              limits:
-                memory: 1Gi
-        pod:
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-            fsGroup: 1000
-            fsGroupChangePolicy: OnRootMismatch
-
+    image:
+      repository: ghcr.io/damacus/med-tracker-loco
+      tag: 0.6.0
+    imagePullSecrets:
+      - name: ghcr-credentials
+    deploymentAnnotations:
+      reloader.stakater.com/auto: "true"
+    database:
+      host: med-tracker-blue-rw.home.svc.cluster.local
+      name: medtracker
+      bootstrap:
+        existingSecret: med-tracker-blue-superuser
+      runtime:
+        existingSecret: med-tracker-blue-runtime
+      update:
+        existingSecret: med-tracker-blue-update
+    setup:
+      bootstrapOnUpgrade: true
+    env:
+      TZ: Europe/London
+      BINDING: 0.0.0.0
+      PORT: "5150"
+      MEDTRACKER_PUBLIC_HOST: https://med-tracker.damacus.io
+      MEDTRACKER_PUBLIC_ORIGIN: https://med-tracker.damacus.io
+      MEDTRACKER_COOKIE_SECURE: "true"
+      MEDTRACKER_SMTP_ENABLED: "true"
+      MEDTRACKER_SMTP_HOST: smtp.resend.com
+      MEDTRACKER_SMTP_PORT: "587"
+      MEDTRACKER_MAIL_FROM: MedTracker <notifications@damacus.io>
+    envFrom:
+      - secretRef:
+          name: med-tracker-loco-integrations
     route:
       app:
         parentRefs:
@@ -175,7 +66,7 @@ spec:
             namespace: network
             sectionName: websecure
         hostnames:
-          - "med-tracker.ironstone.casa"
+          - med-tracker.ironstone.casa
         rules:
           - matches:
               - path:
@@ -189,13 +80,13 @@ spec:
                 weight: 1
       external:
         annotations:
-          external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
+          external-dns.alpha.kubernetes.io/target: traefik-ext.damacus.io
         parentRefs:
           - name: traefik-internal
             namespace: network
             sectionName: websecure
         hostnames:
-          - "med-tracker.damacus.io"
+          - med-tracker.damacus.io
         rules:
           - matches:
               - path:
@@ -207,24 +98,12 @@ spec:
                 namespace: home
                 port: 80
                 weight: 1
-
     service:
-      app:
-        controller: med-tracker
-        ports:
-          http:
-            port: 80
-
-    serviceAccount:
-      med-tracker:
-        annotations:
-          helm.sh/resource-policy: keep
-        forceRename: med-tracker
-      med-tracker-app:
-        forceRename: med-tracker-app
-
-    persistence:
-      storage:
-        existingClaim: med-tracker-storage
-        globalMounts:
-          - path: /app/storage
+      port: 80
+    resources:
+      requests:
+        cpu: 10m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+  timeout: 10m

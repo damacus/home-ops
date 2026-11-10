@@ -1,0 +1,14 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: med-tracker
+  namespace: home
+spec:
+  interval: 1h
+  url: https://github.com/damacus/med-tracker.git
+  ref:
+    tag: v0.6.0
+  ignore: |
+    /*
+    !/charts/

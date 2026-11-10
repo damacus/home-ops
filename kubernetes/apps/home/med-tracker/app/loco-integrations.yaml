@@ -1,0 +1,24 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: med-tracker-loco-integrations
+  namespace: home
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: onepassword-connect
+  target:
+    name: med-tracker-loco-integrations
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      mergePolicy: Replace
+      data:
+        MEDTRACKER_SMTP_USER: resend
+        MEDTRACKER_SMTP_PASSWORD: "{{ .RESEND_API_KEY }}"
+        MEDTRACKER_WEB_PUSH_PRIVATE_KEY: "{{ .VAPID_PRIVATE_KEY }}"
+        MEDTRACKER_WEB_PUSH_SUBJECT: mailto:notifications@damacus.io
+  dataFrom:
+    - extract:
+        key: med-tracker

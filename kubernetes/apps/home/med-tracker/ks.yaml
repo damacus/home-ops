@@ -10,7 +10,7 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: med-tracker-db
+    - name: med-tracker-blue
   path: ./kubernetes/apps/home/med-tracker/app
   prune: true
   sourceRef:
