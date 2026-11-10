@@ -9,6 +9,15 @@
     "scrapeMode": "fetch"
   },
   {
+    "library": "fish-shell",
+    "version": "current",
+    "url": "https://fishshell.com/docs/current/",
+    "maxPages": 500,
+    "maxDepth": 4,
+    "scope": "subpages",
+    "scrapeMode": "fetch"
+  },
+  {
     "library": "gitlab-docs",
     "version": "current",
     "url": "https://docs.gitlab.com/",
@@ -16,15 +25,6 @@
     "maxDepth": 12,
     "scope": "subpages",
     "excludePatterns": ["**/ja-jp/**"],
-    "scrapeMode": "fetch"
-  },
-  {
-    "library": "fish-shell",
-    "version": "current",
-    "url": "https://fishshell.com/docs/current/",
-    "maxPages": 500,
-    "maxDepth": 4,
-    "scope": "subpages",
     "scrapeMode": "fetch"
   },
   {
