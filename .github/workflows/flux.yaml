@@ -379,10 +379,11 @@ jobs:
       - name: Run flate test
         env:
           FLATE_BASE: ""
-        run: >-
-          flate --no-progress test all
-          --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule"
-          --path ./kubernetes
+        run: |
+          git update-ref refs/heads/main "$GITHUB_SHA"
+          flate --no-progress test all \
+            --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" \
+            --path .
 
   flate-diff:
     name: Flate Diff
@@ -405,24 +406,30 @@ jobs:
           token: ${{ github.token }}
           cache: "true"
 
-      - name: Fetch PR Base
+      - name: Prepare PR snapshots
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
           git fetch --no-tags --depth=1 origin "+${BASE_SHA}:refs/remotes/origin/pr-base"
           git rev-parse --verify "refs/remotes/origin/pr-base^{commit}"
+          git clone --no-hardlinks --no-checkout . "$RUNNER_TEMP/flate-base"
+          git -C "$RUNNER_TEMP/flate-base" remote set-url origin "$(git remote get-url origin)"
+          git -C "$RUNNER_TEMP/flate-base" checkout --detach "$BASE_SHA"
+          git -C "$RUNNER_TEMP/flate-base" update-ref refs/heads/main "$BASE_SHA"
+          git update-ref refs/heads/main "$GITHUB_SHA"
 
       - name: Run flate diff
         id: diff
         shell: bash
         env:
-          FLATE_BASE: origin/pr-base
+          FLATE_BASE: ""
         run: |
           set -euo pipefail
           flate --no-progress diff all \
             --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" \
-            --path ./kubernetes \
+            --path . \
+            --path-orig "$RUNNER_TEMP/flate-base" \
             -o github > flate.diff
           if [[ -s flate.diff ]]; then
             {

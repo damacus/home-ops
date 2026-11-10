@@ -80,10 +80,10 @@ tasks:
       can be rendered successfully.
 
       Args:
-        path: Path to test (default: ./kubernetes)
+        path: Path to test (default: .)
     cmd: flate --no-progress test all --api-versions "{{.FLATE_API_VERSIONS}}" --path {{.path}}
     vars:
-      path: '{{.path | default "./kubernetes"}}'
+      path: '{{.path | default "."}}'
     preconditions:
       - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
 
@@ -93,10 +93,10 @@ tasks:
       Builds all Kustomizations in the cluster to verify they are valid.
 
       Args:
-        path: Path to build (default: ./kubernetes)
+        path: Path to build (default: .)
     cmd: flate --no-progress build all --api-versions "{{.FLATE_API_VERSIONS}}" --path {{.path}}
     vars:
-      path: '{{.path | default "./kubernetes"}}'
+      path: '{{.path | default "."}}'
     preconditions:
       - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
 
@@ -107,7 +107,7 @@ tasks:
       a temporary worktree for the supplied base ref.
 
       Args:
-        path: Path to render (default: ./kubernetes)
+        path: Path to render (default: .)
         path_orig: Existing baseline path; skips worktree creation when set
         base: Git ref for the temporary baseline worktree (default: origin/main)
         output: flate diff output style (default: human)
@@ -126,7 +126,7 @@ tasks:
       orig_path="$tmp_dir/base/${path#./}"
       flate --no-progress diff all --api-versions "{{.FLATE_API_VERSIONS}}" --path "$path" --path-orig "$orig_path" -o "$output"
     vars:
-      path: '{{.path | default "./kubernetes"}}'
+      path: '{{.path | default "."}}'
       path_orig: '{{.path_orig | default ""}}'
       base: '{{.base | default "origin/main"}}'
       output: '{{.output | default "human"}}'

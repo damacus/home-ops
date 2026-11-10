@@ -5,5 +5,6 @@ namespace: home
 resources:
   - cluster.yaml
   - credentials.sops.yaml
+  - migration-credentials.sops.yaml
   - objectstore.yaml
   - scheduledbackup.yaml
