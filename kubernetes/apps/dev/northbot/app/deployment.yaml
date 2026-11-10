@@ -28,7 +28,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: init-db
-          image: forgejo.ironstone.casa/damacus/northbot:main
+          image: forgejo.ironstone.casa/damacus/northbot:v0.3.2@sha256:d95ddcfad1acc13734590d664c338e3cd46c30c6fab4621237e98eb39f0ed5cf
           imagePullPolicy: Always
           command: [/northbot, init-db]
           env:
@@ -56,7 +56,7 @@ spec:
               mountPath: /tmp
       containers:
         - name: northbot
-          image: forgejo.ironstone.casa/damacus/northbot:main
+          image: forgejo.ironstone.casa/damacus/northbot:v0.3.2@sha256:d95ddcfad1acc13734590d664c338e3cd46c30c6fab4621237e98eb39f0ed5cf
           imagePullPolicy: Always
           envFrom:
             - secretRef:
