@@ -50,20 +50,21 @@
       versioning: "semver",
     },
     {
-      description: "Track the actual Ledger main tag through Release Mirror",
+      description: "Track Ledger releases through Release Mirror, including the move from main",
       matchDatasources: ["docker"],
       matchPackageNames: ["forgejo.ironstone.casa/damacus/usage-ledger"],
       overrideDatasource: "custom.release-mirror",
       overridePackageName: "usage-ledger",
-      versioning: "regex:^(?<major>0)?main$",
+      // Treat the current main tag as 0.0.0 so Renovate can propose the first stable release.
+      versioning: "regex:^(?:main|v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+))$",
     },
     {
-      description: "Track the actual NorthBot main tag through Release Mirror",
+      description: "Track NorthBot releases through Release Mirror, including the move from main",
       matchDatasources: ["docker"],
       matchPackageNames: ["forgejo.ironstone.casa/damacus/northbot"],
       overrideDatasource: "custom.release-mirror",
       overridePackageName: "northbot",
-      versioning: "regex:^(?<major>0)?main$",
+      versioning: "regex:^(?:main|v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+))$",
     },
     {
       description: "Read production MedTracker image metadata from Release Mirror",
