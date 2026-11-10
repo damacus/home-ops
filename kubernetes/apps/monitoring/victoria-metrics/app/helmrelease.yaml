@@ -55,6 +55,11 @@ spec:
       enabled: true
       spec:
         scrapeInterval: 30s
+        # Select all ServiceMonitors to capture existing KPS targets + new ones
+        serviceMonitorSelector: {}
+        podMonitorSelector: {}
+        selectAllServiceMonitors: true
+        selectAllPodMonitors: true
         # Disk buffering configuration
         extraArgs:
           remoteWrite.tmpDataPath: /var/lib/vmagent-data
@@ -93,6 +98,7 @@ spec:
               operator: In
               values: [monitoring, cert-manager, home-automation, kube-system]
         ruleSelector: {}
+        selectAllRules: true
 
     alertmanager:
       enabled: true
