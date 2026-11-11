@@ -1,0 +1,160 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-triage
+  namespace: dev
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: git-triage
+  template:
+    metadata:
+      labels:
+        app: git-triage
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 40
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: private-secret-files
+          image: ghcr.io/damacus/git-triage@sha256:6ea9c4f7238c4f00bbc027dad1162447ba95c76dae3abf6f1b489adf4e013dc9
+          command: [/bin/sh, -ec]
+          args:
+            - umask 077; for source in /source/*; do cp "$source" "/run/private/$(basename "$source")"; done
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: source-secrets
+              mountPath: /source
+              readOnly: true
+            - name: private-secrets
+              mountPath: /run/private
+      containers:
+        - name: app
+          image: ghcr.io/damacus/git-triage@sha256:6ea9c4f7238c4f00bbc027dad1162447ba95c76dae3abf6f1b489adf4e013dc9
+          env:
+            - {name: PHX_SERVER, value: "true"}
+            - {name: ERL_FLAGS, value: "+S 2:2 +Q 65536"}
+            - {name: PHX_HOST, value: git-triage.ironstone.casa}
+            - {name: PORT, value: "4000"}
+            - {name: APP_BIND_IP, value: 0.0.0.0}
+            - {name: CONTAINER_PROXY_ONLY, value: "true"}
+            - {name: DATABASE_URL_FILE, value: /run/private/database_url}
+            - {name: SECRET_KEY_BASE_FILE, value: /run/private/secret_key_base}
+            - {name: APP_BASIC_AUTH_USERNAME_FILE, value: /run/private/basic_auth_username}
+            - {name: APP_BASIC_AUTH_PASSWORD_FILE, value: /run/private/basic_auth_password}
+            - {name: PROVIDER_TOKEN_ENCRYPTION_KEYS_FILE, value: /run/private/provider_token_encryption_keys}
+            - {name: PROVIDER_TOKEN_ENCRYPTION_CURRENT_VERSION, value: "1"}
+            - {name: PAYLOAD_ENCRYPTION_KEYS_FILE, value: /run/private/payload_encryption_keys}
+            - {name: PAYLOAD_ENCRYPTION_CURRENT_VERSION, value: "1"}
+            - {name: FORGEJO_PROVIDER_ALLOWED_ORIGINS, value: '["https://forgejo.ironstone.casa"]'}
+            - {name: ERL_CRASH_DUMP, value: /tmp/erl_crash.dump}
+          ports:
+            - {name: http, containerPort: 4000}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+              httpHeaders:
+                - {name: X-Forwarded-Proto, value: https}
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+              httpHeaders:
+                - {name: X-Forwarded-Proto, value: https}
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+              httpHeaders:
+                - {name: X-Forwarded-Proto, value: https}
+          volumeMounts:
+            - {name: private-secrets, mountPath: /run/private, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: source-secrets
+          secret:
+            secretName: git-triage-runtime
+            defaultMode: 0440
+        - name: private-secrets
+          emptyDir:
+            medium: Memory
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: git-triage
+  namespace: dev
+spec:
+  selector:
+    app: git-triage
+  ports:
+    - {name: http, port: 4000, targetPort: http}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: git-triage
+  namespace: dev
+  annotations:
+    external-dns.alpha.kubernetes.io/target: traefik-int.ironstone.casa
+spec:
+  hostnames: [git-triage.ironstone.casa]
+  parentRefs:
+    - {name: traefik-internal, namespace: network, sectionName: websecure}
+  rules:
+    - backendRefs:
+        - {name: git-triage, port: 4000}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: git-triage
+  namespace: dev
+spec:
+  podSelector:
+    matchLabels:
+      app: git-triage
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - {port: 4000, protocol: TCP}
