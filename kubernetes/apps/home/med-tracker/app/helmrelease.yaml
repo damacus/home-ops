@@ -52,10 +52,10 @@ spec:
           reloader.stakater.com/auto: "true"
         containers:
           app:
-            # All processes and database Jobs use the same immutable 0.6.1 image.
+            # All processes and database Jobs use the same immutable 0.6.2 image.
             image: &image
               repository: ghcr.io/damacus/med-tracker-loco
-              tag: 0.6.1@sha256:48f2c1676b43a63d458921975413f29e5801c8f0cb8dcdc684fc0f067790bc1f
+              tag: 0.6.2@sha256:559d602e152eb43d04f9bede811fecadf9cb30d00f1af49e57546d2a7f552a43
             args: [start, --environment, production]
             # Runtime gets only the restricted blue database login and integration settings.
             # The old Rails Secret remains retained, but no Loco process consumes it.
