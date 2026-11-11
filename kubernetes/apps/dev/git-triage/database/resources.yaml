@@ -1,0 +1,85 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: git-triage
+  namespace: dev
+spec:
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 18
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  enableSuperuserAccess: true
+  bootstrap:
+    initdb:
+      database: git_triage
+      owner: git_triage_migrator
+  managed:
+    roles:
+      - name: git_triage_runtime
+        ensure: present
+        login: true
+        superuser: false
+        bypassrls: false
+        passwordSecret:
+          name: git-triage-runtime-db
+  storage:
+    size: 5Gi
+    storageClass: longhorn
+  monitoring:
+    enablePodMonitor: true
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: git-triage-store
+        serverName: git-triage
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: git-triage-store
+  namespace: dev
+spec:
+  retentionPolicy: 30d
+  configuration:
+    destinationPath: s3://cnpg-northops-postgres/git-triage/
+    endpointURL: http://rustfs.storage.svc.cluster.local:9000
+    s3Credentials:
+      accessKeyId:
+        name: rustfs-cnpg-northops-postgres
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: rustfs-cnpg-northops-postgres
+        key: SECRET_ACCESS_KEY
+    data:
+      compression: bzip2
+    wal:
+      compression: bzip2
+      maxParallel: 2
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: git-triage
+  namespace: dev
+spec:
+  schedule: "0 15 1 * * *"
+  backupOwnerReference: self
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+    parameters:
+      objectStore: git-triage-store
+  cluster:
+    name: git-triage

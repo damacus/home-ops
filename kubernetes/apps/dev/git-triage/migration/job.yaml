@@ -1,0 +1,64 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: git-triage-migrate-21b4ac7d
+  namespace: dev
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: private-secret-files
+          image: ghcr.io/damacus/git-triage@sha256:6ea9c4f7238c4f00bbc027dad1162447ba95c76dae3abf6f1b489adf4e013dc9
+          command: [/bin/sh, -ec]
+          args:
+            - umask 077; for source in /source/*; do cp "$source" "/run/private/$(basename "$source")"; done
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - {name: source-secrets, mountPath: /source, readOnly: true}
+            - {name: private-secrets, mountPath: /run/private}
+      containers:
+        - name: migrate
+          image: ghcr.io/damacus/git-triage@sha256:6ea9c4f7238c4f00bbc027dad1162447ba95c76dae3abf6f1b489adf4e013dc9
+          args: [eval, GitTriage.Release.migrate()]
+          env:
+            - {name: GIT_TRIAGE_RUNTIME_MODE, value: migrate}
+            - {name: ERL_FLAGS, value: "+S 2:2 +Q 65536"}
+            - {name: DATABASE_URL_FILE, value: /run/private/database_url}
+            - {name: PAYLOAD_ENCRYPTION_KEYS_FILE, value: /run/private/payload_encryption_keys}
+            - {name: PAYLOAD_ENCRYPTION_CURRENT_VERSION, value: "1"}
+            - {name: ERL_CRASH_DUMP, value: /tmp/erl_crash.dump}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - {name: private-secrets, mountPath: /run/private, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: source-secrets
+          secret:
+            secretName: git-triage-migration
+            defaultMode: 0440
+        - name: private-secrets
+          emptyDir:
+            medium: Memory
+        - name: tmp
+          emptyDir: {}
