@@ -10,7 +10,8 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: med-tracker-db
+    # The fresh PostgreSQL 18 cluster replaces the Rails database as this app's dependency.
+    - name: med-tracker-blue
   path: ./kubernetes/apps/home/med-tracker/app
   prune: true
   sourceRef:

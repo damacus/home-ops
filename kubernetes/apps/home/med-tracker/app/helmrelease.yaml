@@ -6,6 +6,7 @@ metadata:
   namespace: home
 spec:
   interval: 15m
+  # Keep the existing BJW chart and Helm release; only its application values change.
   chart:
     spec:
       chart: app-template
@@ -21,111 +22,105 @@ spec:
       retries: 3
   upgrade:
     cleanupOnFail: true
-    remediation:
-      retries: 3
+    # Retry failed upgrades without rolling back to Rails and its separate database.
+    strategy:
+      name: RetryOnFailure
   uninstall:
     keepHistory: false
   values:
+    # Match the Loco image's non-root UID; these processes need no Kubernetes API token.
     defaultPodOptions:
+      automountServiceAccountToken: false
       imagePullSecrets:
         - name: ghcr-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
 
     controllers:
+      # Retain the existing web Deployment; Loco serves HTTP on 5150 instead of Rails on 80.
       med-tracker:
         type: deployment
         strategy: Recreate
         serviceAccount:
           identifier: med-tracker-app
-        # TODO: Needs a RWX PVC
-        # replicas: 2
-        # rollingUpdate:
-        #   maxSurge: 1
-        #   maxUnavailable: 0
-
         annotations:
           reloader.stakater.com/auto: "true"
-        initContainers:
-          migrate:
-            image:
-              repository: &repository ghcr.io/damacus/med-tracker
-              tag: &tag 0.5.35@sha256:f47f317657236675427f6b60761858f8203c0f44c1755ea16b5f926058c73925
-            command: ["bin/rails", "db:prepare"]
-            envFrom:
-              - secretRef:
-                  name: med-tracker-secret
-            env:
-              OTEL_TRACES_EXPORTER: none
-              RAILS_ENV: production
-              TZ: "Europe/London"
         containers:
           app:
-            image:
-              repository: *repository
-              tag: *tag
-
-            envFrom: &appEnvFrom
+            # All processes and database Jobs use the same immutable 0.6.1 image.
+            image: &image
+              repository: ghcr.io/damacus/med-tracker-loco
+              tag: 0.6.1@sha256:48f2c1676b43a63d458921975413f29e5801c8f0cb8dcdc684fc0f067790bc1f
+            args: [start, --environment, production]
+            # Runtime gets only the restricted blue database login and integration settings.
+            # The old Rails Secret remains retained, but no Loco process consumes it.
+            envFrom: &runtimeSecrets
               - secretRef:
-                  name: med-tracker-secret
-            env: &appEnvironment
-              RAILS_ENV: production
-              RAILS_FORCE_SSL: "false"
-              RAILS_LOG_LEVEL: info
-              OTEL_TRACES_EXPORTER: none
+                  name: med-tracker-blue-runtime
+              - secretRef:
+                  name: med-tracker-loco-integrations
+            env: &runtimeEnvironment
               TZ: "Europe/London"
-              APP_URL: "https://med-tracker.damacus.io"
+              # Bind inside the Pod; keep generated links and secure cookies on public HTTPS.
+              BINDING: 0.0.0.0
+              PORT: "5150"
+              MEDTRACKER_PUBLIC_HOST: https://med-tracker.damacus.io
+              MEDTRACKER_PUBLIC_ORIGIN: https://med-tracker.damacus.io
+              MEDTRACKER_COOKIE_SECURE: "true"
+              # Configure the generic Better Auth OIDC integration using the standard settings.
+              # Branding is independent of the stored provider identity and callback route.
+              # Client ID/Secret come from the existing 1Password item via envFrom above.
               OIDC_ISSUER_URL: "https://zitadel.damacus.io"
               OIDC_REDIRECT_URI: "https://med-tracker.damacus.io/auth/oidc/callback"
               OIDC_PROVIDER_NAME: "Zitadel"
-
+              # Loco needs explicit SMTP transport settings for account and recovery mail.
+              MEDTRACKER_SMTP_ENABLED: "true"
+              MEDTRACKER_SMTP_HOST: smtp.resend.com
+              MEDTRACKER_SMTP_PORT: "587"
+              MEDTRACKER_MAIL_FROM: MedTracker <notifications@damacus.io>
+            # Keep privilege escalation, Linux capabilities and writes to the image disabled.
+            securityContext: &containerSecurity
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+            # Use Loco's /health endpoint; the startup probe allows up to five minutes to boot.
             probes:
-              liveness:
+              liveness: &healthProbe
                 enabled: true
                 custom: true
                 spec:
                   httpGet:
-                    path: /up
-                    port: &port 80
-                  initialDelaySeconds: 30
+                    path: /health
+                    port: 5150
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 3
-              readiness:
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /up
-                    port: *port
-                  initialDelaySeconds: 10
-                  periodSeconds: 10
-                  timeoutSeconds: 5
-                  failureThreshold: 3
+              readiness: *healthProbe
               startup:
                 enabled: true
                 custom: true
                 spec:
                   httpGet:
-                    path: /up
-                    port: *port
-                  initialDelaySeconds: 10
+                    path: /health
+                    port: 5150
                   periodSeconds: 5
                   timeoutSeconds: 5
-                  failureThreshold: 30
-
-            resources:
+                  failureThreshold: 60
+            # Reserve scheduling capacity and cap process memory; share these limits below.
+            resources: &resources
               requests:
                 cpu: 10m
-                memory: 256Mi
+                memory: 128Mi
               limits:
                 memory: 1Gi
-        pod:
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-            fsGroup: 1000
-            fsGroupChangePolicy: OnRootMismatch
 
+      # Retain the worker Deployment, replacing Rails jobs with Loco's background worker.
       med-tracker-worker:
         type: deployment
         strategy: Recreate
@@ -133,41 +128,92 @@ spec:
           identifier: med-tracker-app
         annotations:
           reloader.stakater.com/auto: "true"
-        initContainers:
-          migrate:
-            image:
-              repository: *repository
-              tag: *tag
-            command: ["bin/rails", "db:prepare"]
+        containers:
+          worker: &backgroundContainer
+            image: *image
+            args: [start, --worker, --environment, production]
+            envFrom: *runtimeSecrets
+            env: *runtimeEnvironment
+            securityContext: *containerSecurity
+            resources: *resources
+
+      # Loco's scheduler is a separate process that runs the configured scheduled tasks.
+      med-tracker-scheduler:
+        type: deployment
+        strategy: Recreate
+        serviceAccount:
+          identifier: med-tracker-app
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          scheduler:
+            <<: *backgroundContainer
+            args: [scheduler, --environment, production]
+
+      # First cutover only: initialise the empty blue database using the native Loco task.
+      # This Job's container exits on completion; it is not a permanent application process.
+      # Remove this controller after successful setup, before subsequent release upgrades.
+      med-tracker-setup:
+        type: job
+        serviceAccount:
+          identifier: med-tracker-app
+        annotations:
+          # The existing Helm release is upgraded, so pre-install alone would skip setup.
+          # Weight -10 runs setup before the restricted migration Job at weight -5.
+          helm.sh/hook: pre-install,pre-upgrade
+          helm.sh/hook-weight: "-10"
+          helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        job: &jobOptions
+          # Surface failures without repeated database attempts; retain failed Job logs.
+          backoffLimit: 0
+          activeDeadlineSeconds: 600
+        containers:
+          setup:
+            image: *image
+            args: [task, database-setup, --environment, production]
+            env:
+              # Only initial setup receives administrator access to create roles and RLS.
+              DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-blue-superuser
+                    key: DATABASE_URL
+              MEDTRACKER_RUNTIME_DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-blue-runtime
+                    key: DATABASE_URL
+              MEDTRACKER_UPDATE_DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-blue-update
+                    key: DATABASE_URL
+            securityContext: *containerSecurity
+            resources: *resources
+
+      # Run native db migrate before each Helm upgrade, using the non-superuser update login.
+      # Unlike the former Rails initContainers, this runs per release, not per Pod restart.
+      # Loco runtime auto_migrate stays false because this Job owns schema updates.
+      med-tracker-update:
+        type: job
+        serviceAccount:
+          identifier: med-tracker-app
+        annotations:
+          helm.sh/hook: pre-install,pre-upgrade
+          helm.sh/hook-weight: "-5"
+          helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        job: *jobOptions
+        containers:
+          update:
+            image: *image
+            args: [db, migrate, --environment, production]
             envFrom:
               - secretRef:
-                  name: med-tracker-secret
-            env:
-              OTEL_TRACES_EXPORTER: none
-              RAILS_ENV: production
-              TZ: "Europe/London"
-        containers:
-          worker:
-            image:
-              repository: *repository
-              tag: *tag
-            command: ["bin/jobs"]
-            args: ["--mode", "async"]
-            envFrom: *appEnvFrom
-            env: *appEnvironment
-            resources:
-              requests:
-                memory: 256Mi
-              limits:
-                memory: 1Gi
-        pod:
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-            fsGroup: 1000
-            fsGroupChangePolicy: OnRootMismatch
+                  name: med-tracker-blue-update
+            securityContext: *containerSecurity
+            resources: *resources
 
+    # Preserve both existing routes and hostnames; their Service backend remains port 80.
     route:
       app:
         parentRefs:
@@ -214,7 +260,10 @@ spec:
         ports:
           http:
             port: 80
+            # Keep the existing Service/route port while forwarding to Loco's HTTP listener.
+            targetPort: 5150
 
+    # Preserve existing ServiceAccount names used by the retained Deployments.
     serviceAccount:
       med-tracker:
         annotations:
@@ -223,8 +272,12 @@ spec:
       med-tracker-app:
         forceRename: med-tracker-app
 
+    # Read-only application containers get writable scratch space only at /tmp.
+    # The Rails PVC is retained by storage-pvc.yaml; it is not mounted by the fresh app.
     persistence:
-      storage:
-        existingClaim: med-tracker-storage
+      tmp:
+        type: emptyDir
         globalMounts:
-          - path: /app/storage
+          - path: /tmp
+  # Allow database hooks and application readiness to finish within one Helm operation.
+  timeout: 10m
