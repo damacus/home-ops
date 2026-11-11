@@ -100,18 +100,21 @@ boundary. Do not add Python or duplicate lifecycle logic in task files.
     task k8s:yayamlls
     ```
 
-4. Apply the changes manually to test (optional):
+4. Check the existing local Docker Kubernetes stack:
 
     ```bash
-    task flux:apply path=<category>/<app-name>
+    kubectl --context docker-desktop get nodes --request-timeout=10s
     ```
 
-5. Commit and push changes.
-6. Reconcile Flux to sync immediately:
+   When available, exercise the existing chart with the proposed values in a
+   dedicated development namespace using an explicit local context and
+   synthetic data. Verify the requested service behaviour and clean up only
+   resources created for this check. Record unavailable production dependencies.
+   Do not use `task flux:apply` against the current context as a development shortcut.
 
-    ```bash
-    task flux:reconcile
-    ```
+5. Record the verification evidence and prepare the scoped change for review.
+6. Publish, merge and reconcile production only with the corresponding owner
+   authorisation. Local success does not establish production deployment.
 
 ### Troubleshooting Flux Issues
 

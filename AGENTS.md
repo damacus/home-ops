@@ -29,12 +29,14 @@ This repository, `home-ops`, is a production-grade home infrastructure managemen
 1. **Proportionate Verification**: Choose checks that demonstrate the intended behaviour or catch a specific plausible regression.
    - Keep Kubernetes and GitOps verification simple. Reuse existing validation and real tool dry runs; do not add dedicated workflows, bespoke integration harnesses, simulated services or per-resource tests for routine configuration changes.
    - Add a new test only when it covers a concrete, significant risk that existing checks cannot cover. Prefer one focused check and remove temporary fixtures or duplicated checks when they are no longer needed.
-   - For scripts, application logic and health checkers, add a failing behavioural regression test when fixing a defect.
+   - For scripts, application logic and health checkers, verify observable behaviour. Add regression coverage when it catches a concrete failure that existing checks do not cover.
    - For declarative manifests, use the existing render, schema and security-policy checks. Do not add per-application tests that merely repeat YAML values, file layout, image versions or object ordering.
    - Keep focused safety assertions where they protect an independent invariant, such as denying Secret reads or preventing CRD pruning. Prefer checking rendered resources when chart behaviour matters.
    - For authentication, routing and network-policy changes, record the allowed and denied access cases and verify them in an isolated environment or after an approved rollout. Static checks do not prove live access.
    - Retain tests of executable behaviour. Remove stale migration snapshots and duplicated checks when their original risk has passed or another maintained check covers it.
-   - State what was verified and what remains unverified. Do not create a new test solely to satisfy a test-count or failure-first requirement.
+   - State what was verified and what remains unverified. Judge verification by the behaviour and risks it covers, not the number or ordering of tests.
+   - For deployment changes, use the existing local Docker Kubernetes stack when available. Check `kubectl --context docker-desktop get nodes --request-timeout=10s`, then use an explicit context and a dedicated namespace with synthetic data for development verification. Do not switch the global context or use production as a fallback.
+   - Render and validate the existing pinned chart and proposed values, then exercise the relevant install, upgrade and application behaviour locally before proposing production rollout. Record any cluster-specific behaviour the local stack cannot reproduce. If the stack is unavailable, report the verification gap; do not substitute extra static assertions for runtime evidence.
 2. **Conventional Commits**: All commits must follow the `feat:`, `fix:`, `refactor:`, `test:` format.
 3. **Small, Atomic Changes**: Avoid monolithic PRs. Each change should be verifiable.
 4. **Repository Automation**: Prefer `task <command>` for cluster operations and `mise run provisioning:<command>` for host provisioning.
@@ -62,3 +64,4 @@ When working in this repository:
   LLMs. Correct or rewrite stale sections while retaining the file and its
   useful history.
 - Maintain consistency with existing architecture and naming conventions.
+- Before changing a Helm deployment, identify the existing chart, pinned version, values, rendered resources and relevant upstream documentation. Extend the existing chart through supported configuration. If its behaviour is unclear, investigate or report the blocker. Creating a replacement chart or wrapper requires explicit owner agreement.
