@@ -52,10 +52,10 @@ spec:
           reloader.stakater.com/auto: "true"
         containers:
           app:
-            # All processes and database Jobs use the same immutable 0.6.0 image.
+            # All processes and database Jobs use the same immutable 0.6.1 image.
             image: &image
               repository: ghcr.io/damacus/med-tracker-loco
-              tag: 0.6.0@sha256:0ebdc7a5566751d63da93b04c8ec0ffda5ed4a266fd15c3b16bfc6a4f30cdb5d
+              tag: 0.6.1@sha256:48f2c1676b43a63d458921975413f29e5801c8f0cb8dcdc684fc0f067790bc1f
             args: [start, --environment, production]
             # Runtime gets only the restricted blue database login and integration settings.
             # The old Rails Secret remains retained, but no Loco process consumes it.
@@ -72,12 +72,12 @@ spec:
               MEDTRACKER_PUBLIC_HOST: https://med-tracker.damacus.io
               MEDTRACKER_PUBLIC_ORIGIN: https://med-tracker.damacus.io
               MEDTRACKER_COOKIE_SECURE: "true"
-              # Loco reads this instead of Rails' OIDC_ISSUER_URL.
-              # It derives /auth/zitadel/callback from the public origin, replacing
-              # OIDC_REDIRECT_URI. Provider ID and button label are fixed in Rust;
-              # OIDC_PROVIDER_NAME has no equivalent setting in the current application.
-              # Client ID/Secret come from the existing Zitadel item via envFrom above.
-              MEDTRACKER_ZITADEL_ISSUER: https://zitadel.damacus.io
+              # Configure the generic Better Auth OIDC integration using the standard settings.
+              # Branding is independent of the stored provider identity and callback route.
+              # Client ID/Secret come from the existing 1Password item via envFrom above.
+              OIDC_ISSUER_URL: "https://zitadel.damacus.io"
+              OIDC_REDIRECT_URI: "https://med-tracker.damacus.io/auth/oidc/callback"
+              OIDC_PROVIDER_NAME: "Zitadel"
               # Loco needs explicit SMTP transport settings for account and recovery mail.
               MEDTRACKER_SMTP_ENABLED: "true"
               MEDTRACKER_SMTP_HOST: smtp.resend.com

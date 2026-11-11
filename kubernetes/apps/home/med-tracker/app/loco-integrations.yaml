@@ -22,10 +22,10 @@ spec:
         # Reuse the existing Web Push signing key rather than creating a new identity.
         MEDTRACKER_WEB_PUSH_PRIVATE_KEY: "{{ .VAPID_PRIVATE_KEY }}"
         MEDTRACKER_WEB_PUSH_SUBJECT: mailto:notifications@damacus.io
-        # Reuse the same OIDC client and Secret under Loco's Zitadel-specific setting names.
-        # The provider now allows /auth/zitadel/callback alongside both legacy callbacks.
-        MEDTRACKER_ZITADEL_CLIENT_ID: "{{ .client_id }}"
-        MEDTRACKER_ZITADEL_CLIENT_SECRET: "{{ .client_secret }}"
+        # Reuse the same OIDC client and Secret under the generic integration settings.
+        # The existing provider already allows /auth/oidc/callback; retain all registered URLs.
+        OIDC_CLIENT_ID: "{{ .client_id }}"
+        OIDC_CLIENT_SECRET: "{{ .client_secret }}"
   dataFrom:
     # Integration material stays in its existing items; no Rails database credentials leak in.
     - extract:
