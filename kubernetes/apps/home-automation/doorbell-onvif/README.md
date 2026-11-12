@@ -13,6 +13,7 @@ PVC is deleted or moved. Birdy remains active.
 The Reolink and test Scrypted HA integrations, talkback dashboard, HACS integration
 and card are removed. The obsolete restricted account is revoked; its 1Password
 item is retained pending archival because desktop authorisation timed out. The original Reolink credential is retained for device return/reset.
-Scrypted and its MCP gateway remain available as independent shared services.
+Scrypted and its MCP gateway are also removed, including the unused 10 GiB
+configuration PVC. Frigate and UniFi recording storage are unaffected.
 
 See [Nest restoration plan](../home-assistant/NEST-RESTORATION.md).
