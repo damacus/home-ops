@@ -195,6 +195,7 @@ budgets before directing clients to the recovered gateway.
 ## MCP service identities
 
 The Codex and Claude keys belong to dedicated non-admin identities
-`mcp-codex` and `mcp-claude`. Provision them as `internal_user_viewer` without
-a generated key before applying key policies. Preserve their `__mcp_only__`
-model restriction and remaining MCP grants.
+`mcp-codex` and `mcp-claude`, respectively. Provision them as
+`internal_user_viewer` without a generated key before applying key policies.
+Do not attach these service keys to the interactive proxy administrator.
+Preserve their `__mcp_only__` model restriction and remaining MCP grants.

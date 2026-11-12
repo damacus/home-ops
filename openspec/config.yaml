@@ -18,7 +18,7 @@ rules:
   design:
     - Record rejected alternatives, dependency order, GitOps rollout, and rollback.
   tasks:
-    - Use existing render, schema and security checks, then verify deployment behaviour on docker-desktop with an explicit context and synthetic data. Do not add or run Python tests. Record runtime verification gaps.
+    - Use existing render, schema and security checks, then verify deployment behaviour on docker-desktop with an explicit context and synthetic data when available. Do not add or run Python tests or invent duplicate static checks. Record runtime verification gaps.
     - Bound every change and route discovered platform expansion into a separate change.
 
 operations:

@@ -2,6 +2,10 @@
 
 Use the existing Docker Desktop Kubernetes cluster for deployment checks. Do not
 add or run Python tests or replace them with another custom test framework.
+Test observable behaviour: run the script, call the public interface or exercise
+the service in an isolated environment. Add a regression test only when it catches
+a concrete failure that existing checks do not cover. Changing an image tag, chart version,
+resource name or file layout should not require updating an assertion.
 
 Start with `kubectl --context docker-desktop get nodes --request-timeout=10s`.
 Use an explicit context, a dedicated namespace and synthetic data and credentials.
