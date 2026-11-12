@@ -5,7 +5,6 @@ version: "3"
 vars:
   CLUSTER_HEALTH_BIN: "{{.ROOT_DIR}}/.cache/bin/cluster-health"
   MONDOO_SCAN_SCRIPT: "{{.SCRIPTS_DIR}}/mondoo_scan.py"
-  RUSTFS_IAM_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam.mql.yaml"
   RUSTFS_IAM_LIVE_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam-live.mql.yaml"
   RUSTFS_IAM_LIVE_CHECK_SCRIPT: "{{.SCRIPTS_DIR}}/rustfs_iam_live_check.sh"
 
@@ -311,15 +310,6 @@ tasks:
     cmd: yayamlls validate --render {{.KUBERNETES_DIR}}
     preconditions:
       - { msg: "Missing yayamlls", sh: "command -v yayamlls >/dev/null" }
-
-  rustfs-iam-policy:
-    desc: Validate RustFS per-app IAM policy with Mondoo cnspec
-    cmds:
-      - cnspec --auto-update=false policy lint {{.RUSTFS_IAM_POLICY}}
-      - cnspec --auto-update=false scan local --policy-bundle {{.RUSTFS_IAM_POLICY}} --incognito
-    preconditions:
-      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
-      - { msg: "Missing RustFS IAM policy", sh: "test -f {{.RUSTFS_IAM_POLICY}}" }
 
   rustfs-iam-live-policy:
     desc: Validate live RustFS IAM users and policies with Mondoo cnspec

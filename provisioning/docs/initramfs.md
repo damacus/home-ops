@@ -2,7 +2,6 @@
 
 Crucial P310 NVMe drives don't auto-enumerate namespaces at boot. This causes boot failures on Rock 5B+ nodes.
 
-For detailed investigation and session logs, see [initramfs-investigation.md](initramfs-investigation.md).
 
 ## Quick Fix (at initramfs prompt)
 

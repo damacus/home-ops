@@ -14,7 +14,8 @@ provide authentication and command restrictions, not isolation between apps.
 Do not claim that numbered Redis databases provide a security boundary.
 
 The image is pinned to the multi-architecture digest of the currently deployed
-Redis 8.4.0. The chart is pinned to 28.2.0. Runtime configuration sets 32 MiB
+Redis 8.4.0. The chart version is pinned in the HelmRelease.
+Runtime configuration sets 32 MiB
 `maxmemory` with `noeviction`; the container has a 128 MiB limit to leave room
 for allocator overhead and persistence. Queued work must never be silently
 evicted. Watch memory use and rejected writes before lowering either limit.
@@ -24,8 +25,8 @@ The unused search/JSON modules are not loaded by this queue configuration.
 
 The owner has explicitly chosen a fresh Redis start and declined migration of
 existing queue/cache contents. The old Redis `emptyDir` is disposable for this
-cutover. Replacing the pod discards those contents. The unused export helper
-remains available for a future migration but must not be activated here.
+cutover. Replacing the pod discarded those contents. The old export helper is
+removed; recover data from verified backups when needed.
 
 1. Create and verify the four credentials in the home-ops 1Password vault.
 2. Deploy prerequisite PR #4432 and verify all four ExternalSecrets are Ready

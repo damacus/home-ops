@@ -38,8 +38,9 @@ The final GitOps change replaced the inline broker configuration with
 checked first. The isolated broker checks cover rejected anonymous connections,
 wrong passwords, forbidden cross-client reads/publishes and allowed access.
 
-Run `rtk proxy python3 tests/check_mqtt_acl.py` for isolated broker checks.
-The harness uses dummy credentials and does not expose a host port.
+Use the existing pinned chart in a dedicated `docker-desktop` namespace with
+synthetic passwords. Verify allowed and denied publish/subscribe using
+`mosquitto_pub` and `mosquitto_sub`; see `tests/README.md` for the required cases.
 
 ## Live rollout verification
 
