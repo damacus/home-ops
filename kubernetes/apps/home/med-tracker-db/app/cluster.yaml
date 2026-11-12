@@ -58,8 +58,6 @@ spec:
     initdb:
       database: *name
       owner: *name
-      secret:
-        name: med-tracker-db
 
   enableSuperuserAccess: true
   superuserSecret:

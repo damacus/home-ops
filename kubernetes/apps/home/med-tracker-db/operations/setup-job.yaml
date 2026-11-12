@@ -25,21 +25,51 @@ spec:
           image: ghcr.io/damacus/med-tracker-loco:0.6.4@sha256:bb4f8275250efe65a9496527db412682c5a963ae09adc4069fa8ca772b5f2404
           args: [task, database-setup, --environment, production]
           env:
-            - name: DATABASE_URL
+            - name: PGHOST
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-app
+                  key: host
+            - name: PGPORT
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-app
+                  key: port
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-app
+                  key: dbname
+            - name: PGUSER
               valueFrom:
                 secretKeyRef:
                   name: med-tracker-db-superuser
-                  key: DATABASE_URL
-            - name: MEDTRACKER_RUNTIME_DATABASE_URL
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-superuser
+                  key: password
+            - name: MEDTRACKER_RUNTIME_PGUSER
               valueFrom:
                 secretKeyRef:
                   name: med-tracker-db-runtime
-                  key: DATABASE_URL
-            - name: MEDTRACKER_UPDATE_DATABASE_URL
+                  key: username
+            - name: MEDTRACKER_RUNTIME_PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-runtime
+                  key: password
+            - name: MEDTRACKER_UPDATE_PGUSER
               valueFrom:
                 secretKeyRef:
                   name: med-tracker-db-update
-                  key: DATABASE_URL
+                  key: username
+            - name: MEDTRACKER_UPDATE_PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-update
+                  key: password
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

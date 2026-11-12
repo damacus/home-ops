@@ -1,7 +1,7 @@
 # MedTracker database
 
 `med-tracker-db` owns the existing PostgreSQL 18 cluster named `med-tracker`,
-its credentials, monitoring and backups. MedTracker 0.6.4 uses one database,
+its credentials, monitoring and backups. MedTracker uses one database,
 `med-tracker`, for application records and its PostgreSQL background queue.
 The former Rails cache, queue and cable databases are retired.
 
@@ -14,11 +14,17 @@ neither login has PostgreSQL's `SUPERUSER` or `BYPASSRLS` attributes. The update
 login inherits table ownership and can alter or disable row-level security;
 treat it as a privileged schema-maintenance credential.
 
-All database credentials come from the existing `med-tracker-db` 1Password item:
+CNPG's generated `med-tracker-app` Secret supplies `host`, `port` and `dbname`.
+Each process reads `username` and `password` from its own credential Secret using
+the standard PostgreSQL environment fields. The generated owner password is not
+given to the application. No connection URLs are constructed in HomeOps.
+
+The application, administrator and retained credentials below come from the
+existing `med-tracker-db` 1Password item:
 
 | Field | Use |
 | --- | --- |
-| `password` | Retained bootstrap credential; not consumed by the Rust app |
+| `password` | Retained original login credential for backup recovery |
 | `superuser_password` | Existing cluster administrator; keep unchanged |
 | `runtime_password` | Restricted runtime login |
 | `update_password` | Restricted migration login |
@@ -44,6 +50,10 @@ alone does not prove restoreability. Check any bucket-level lifecycle separately
 Keep that recovery information with the retained backup, outside Git if sensitive.
 
 ## One-time cutover from blue
+
+Before merging or starting this procedure, pin both the HelmRelease and
+`operations/setup-job.yaml` to the same published image with PostgreSQL
+connection-field support. The current 0.6.4 pin does not support these fields.
 
 This procedure discards all live MedTracker data and accounts, as approved by
 the owner. It retains the original cluster, volumes and backup archive. Run it
@@ -98,7 +108,8 @@ or its volumes. No additional production app or database is needed.
    report Ready. After setup succeeds, remove `spec.suspend: true` from the
    application HelmRelease through the delivery controller. Resume the app Flux
    Kustomization and HelmRelease. The existing release's migration Job, web,
-   worker and scheduler must all use the same immutable 0.6.4 image.
+   worker and scheduler must all use the same immutable released image with
+   PostgreSQL connection-field support. Version 0.6.4 does not support these fields.
 8. Verify startup, sign-up/sign-in, household creation, queue processing and
    scheduler operation, and allowed and denied database access. Confirm the
    Service and both existing hostnames route to the replacement. Confirm a new

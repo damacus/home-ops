@@ -65,6 +65,31 @@ spec:
               - secretRef:
                   name: med-tracker-loco-integrations
             env: &runtimeEnvironment
+              PGHOST: &postgresHost
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-app
+                    key: host
+              PGPORT: &postgresPort
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-app
+                    key: port
+              PGDATABASE: &postgresDatabase
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-app
+                    key: dbname
+              PGUSER:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-db-runtime
+                    key: username
+              PGPASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-db-runtime
+                    key: password
               TZ: "Europe/London"
               # Bind inside the Pod; keep generated links and secure cookies on public HTTPS.
               BINDING: 0.0.0.0
@@ -168,9 +193,20 @@ spec:
           update:
             image: *image
             args: [db, migrate, --environment, production]
-            envFrom:
-              - secretRef:
-                  name: med-tracker-db-update
+            env:
+              PGHOST: *postgresHost
+              PGPORT: *postgresPort
+              PGDATABASE: *postgresDatabase
+              PGUSER:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-db-update
+                    key: username
+              PGPASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: med-tracker-db-update
+                    key: password
             securityContext: *containerSecurity
             resources: *resources
 
