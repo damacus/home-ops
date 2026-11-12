@@ -18,6 +18,13 @@ keys, Basic Auth credentials and migration login. Secret values are not committe
 CNPG also owns the generated `git-triage-app` and `git-triage-superuser` Secrets.
 Migration credentials are never mounted into the application container.
 
+GitHub OAuth uses the `github_client_id` and `github_client_secret` keys in the
+runtime Secret, read through private files. The OAuth app callback is
+`https://git-triage.ironstone.casa/auth/github/callback`. Keep token expiration
+enabled; the application rotates the encrypted token pair before expiry. An
+interrupted or failed refresh requires reconnecting through Settings rather than
+replaying the refresh token. Existing PAT connections remain supported.
+
 Keep `+Q 65536` in `ERL_FLAGS`: the container runtime's large file-descriptor
 limit can otherwise make Erlang reserve more than 1.5 GB for the port table.
 

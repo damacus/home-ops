@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: private-secret-files
-          image: ghcr.io/damacus/git-triage@sha256:6ea9c4f7238c4f00bbc027dad1162447ba95c76dae3abf6f1b489adf4e013dc9
+          image: ghcr.io/damacus/git-triage@sha256:c6e1b07222e8902f5da37586cdcf04a0332fdd52d7a622bdcb45ba9574d0337d
           command: [/bin/sh, -ec]
           args:
             - umask 077; for source in /source/*; do cp "$source" "/run/private/$(basename "$source")"; done
@@ -46,7 +46,7 @@ spec:
               mountPath: /run/private
       containers:
         - name: app
-          image: ghcr.io/damacus/git-triage@sha256:6ea9c4f7238c4f00bbc027dad1162447ba95c76dae3abf6f1b489adf4e013dc9
+          image: ghcr.io/damacus/git-triage@sha256:c6e1b07222e8902f5da37586cdcf04a0332fdd52d7a622bdcb45ba9574d0337d
           env:
             - {name: PHX_SERVER, value: "true"}
             - {name: ERL_FLAGS, value: "+S 2:2 +Q 65536"}
@@ -58,6 +58,8 @@ spec:
             - {name: SECRET_KEY_BASE_FILE, value: /run/private/secret_key_base}
             - {name: APP_BASIC_AUTH_USERNAME_FILE, value: /run/private/basic_auth_username}
             - {name: APP_BASIC_AUTH_PASSWORD_FILE, value: /run/private/basic_auth_password}
+            - {name: GITHUB_CLIENT_ID_FILE, value: /run/private/github_client_id}
+            - {name: GITHUB_CLIENT_SECRET_FILE, value: /run/private/github_client_secret}
             - {name: PROVIDER_TOKEN_ENCRYPTION_KEYS_FILE, value: /run/private/provider_token_encryption_keys}
             - {name: PROVIDER_TOKEN_ENCRYPTION_CURRENT_VERSION, value: "1"}
             - {name: PAYLOAD_ENCRYPTION_KEYS_FILE, value: /run/private/payload_encryption_keys}
