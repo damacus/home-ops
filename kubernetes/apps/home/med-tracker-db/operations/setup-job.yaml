@@ -1,0 +1,89 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: med-tracker-db-setup
+  namespace: home
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: setup
+          image: ghcr.io/damacus/med-tracker-loco:0.6.5@sha256:39500ce49e139080c7bebe2b7ee6667788c511d51061e1dc9fd3097d10637d00
+          args: [task, database-setup, --environment, production]
+          env:
+            - name: PGHOST
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-app
+                  key: host
+            - name: PGPORT
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-app
+                  key: port
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-app
+                  key: dbname
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-superuser
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-superuser
+                  key: password
+            - name: MEDTRACKER_RUNTIME_PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-runtime
+                  key: username
+            - name: MEDTRACKER_RUNTIME_PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-runtime
+                  key: password
+            - name: MEDTRACKER_UPDATE_PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-update
+                  key: username
+            - name: MEDTRACKER_UPDATE_PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-update
+                  key: password
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

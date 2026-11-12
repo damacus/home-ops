@@ -16,6 +16,27 @@ spec:
   primaryUpdateStrategy: unsupervised
   managed:
     roles:
+      # Retain database ownership, but disable the old application login.
+      - name: med-tracker
+        login: false
+      # Permission groups; neither can connect directly.
+      - name: med_tracker_owner
+        login: false
+      - name: med_tracker_app
+        login: false
+      # Runtime accesses records; migrations can change the schema.
+      - name: med_tracker_runtime
+        login: true
+        inRoles:
+          - med_tracker_app
+        passwordSecret:
+          name: med-tracker-db-runtime
+      - name: med_tracker_update
+        login: true
+        inRoles:
+          - med_tracker_owner
+        passwordSecret:
+          name: med-tracker-db-update
       - name: med_tracker_audit_exporter
         ensure: present
         login: false
@@ -37,8 +58,6 @@ spec:
     initdb:
       database: *name
       owner: *name
-      secret:
-        name: med-tracker-db
 
   enableSuperuserAccess: true
   superuserSecret:

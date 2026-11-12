@@ -4,9 +4,6 @@ kind: Kustomization
 namespace: home
 resources:
   - helmrelease.yaml
-  - externalsecret.yaml
-  # Create the integration and restricted migration Secrets alongside the release.
   - loco-integrations.yaml
-  - update-credentials.yaml
   - networkpolicy.yaml
   - storage-pvc.yaml
