@@ -58,6 +58,15 @@ are not a general pod egress firewall.
 
 `app/sources.json` is the reviewed source list:
 
+`bjw-s-app-template@current` indexes the official app-template documentation at
+`https://bjw-s-labs.github.io/helm-charts/docs/app-template/`, including its values
+reference, deployment examples and upgrade guides. The initial 10 November 2026
+crawl completed with 147 pages. It uses static fetching, subpage scope, a
+500-page limit and eight links of depth. Search and page reads through MCP were
+verified. This is moving documentation, not a pinned chart release: check the
+published chart's schema and Common Library templates for version-specific
+behaviour. HomeOps currently pins app-template 5.3.0.
+
 `gitlab-docs@current` crawls the GitLab documentation homepage with a limit of
 6,000 pages and 12 links of depth, excluding Japanese pages. It follows moving
 documentation; compare indexed URLs with GitLab's English sitemap to assess
