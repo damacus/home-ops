@@ -38,6 +38,7 @@ spec:
       # off (it gates setuid-bit binaries, not the setuid(2) syscall S6 uses)
       # and drop every capability bar the minimum nginx/S6 require.
       frontend:
+        replicas: null
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -67,7 +68,7 @@ spec:
                 custom: true
                 spec:
                   httpGet:
-                    path: /
+                    path: /api/rpc/command/get-profile
                     port: 8080
                   initialDelaySeconds: 5
                   periodSeconds: 10
@@ -111,6 +112,7 @@ spec:
 
       # ── MCP Server ─────────────────────────────────────────────────────────
       mcp:
+        replicas: null
         containers:
           app:
             image:
@@ -156,6 +158,7 @@ spec:
 
       # ── Backend ─────────────────────────────────────────────────────────────
       backend:
+        replicas: null
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -254,6 +257,7 @@ spec:
       # ── Exporter ────────────────────────────────────────────────────────────
       # Node.js + headless Chromium. Chromium requires --no-sandbox in containers.
       exporter:
+        replicas: null
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -346,9 +350,9 @@ spec:
                   value: /
             backendRefs:
               - kind: Service
-                name: penpot-frontend
-                namespace: home
-                port: 80
+                name: keda-add-ons-http-interceptor-proxy
+                namespace: keda
+                port: 8080
                 weight: 1
 
     persistence:

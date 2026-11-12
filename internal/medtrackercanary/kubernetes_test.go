@@ -79,3 +79,28 @@ func TestPreflightRejectsOldImageAndOrphanJobs(t *testing.T) {
 		server.Close()
 	}
 }
+
+func TestReadyAcceptsConsolidatedRuntimeOnlyWithAllRoles(t *testing.T) {
+	for _, test := range []struct {
+		name, args, ready, image string
+		wantReady                bool
+	}{
+		{"all roles", `["start","--all","--environment","production"]`, "True", config().Image, true},
+		{"server only", `["start","--environment","production"]`, "True", config().Image, false},
+		{"unready", `["start","--all"]`, "False", config().Image, false},
+		{"wrong image", `["start","--all"]`, "True", "old", false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+			defer cancel()
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintf(w, `{"items":[{"metadata":{"labels":{"app":"medtracker-canary-server"}},"spec":{"containers":[{"image":%q,"args":%s}]},"status":{"conditions":[{"type":"Ready","status":%q}]}}]}`, test.image, test.args, test.ready)
+			}))
+			defer server.Close()
+			k := &Kubernetes{Client: server.Client(), Endpoint: server.URL, Image: config().Image}
+			if got := k.Ready(ctx) == nil; got != test.wantReady {
+				t.Fatalf("Ready() success = %v, want %v", got, test.wantReady)
+			}
+		})
+	}
+}

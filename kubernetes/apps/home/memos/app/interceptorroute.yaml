@@ -1,0 +1,19 @@
+---
+apiVersion: http.keda.sh/v1beta1
+kind: InterceptorRoute
+metadata:
+  name: memos
+spec:
+  target:
+    service: memos
+    port: 5230
+  rules:
+    - hosts:
+        - notes.ironstone.casa
+  scalingMetric:
+    concurrency:
+      targetValue: 10
+  timeouts:
+    readiness: 180s
+    request: 240s
+    responseHeader: 120s

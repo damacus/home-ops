@@ -1,0 +1,64 @@
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: penpot-frontend
+spec:
+  scaleTargetRef:
+    name: penpot-frontend
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  cooldownPeriod: 1800
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+        interceptorRoute: penpot
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: penpot-backend
+spec:
+  scaleTargetRef:
+    name: penpot-backend
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  cooldownPeriod: 1800
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+        interceptorRoute: penpot
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: penpot-exporter
+spec:
+  scaleTargetRef:
+    name: penpot-exporter
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  cooldownPeriod: 1800
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+        interceptorRoute: penpot
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: penpot-mcp
+spec:
+  scaleTargetRef:
+    name: penpot-mcp
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  cooldownPeriod: 1800
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+        interceptorRoute: penpot

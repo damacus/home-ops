@@ -15,6 +15,17 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: keda
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: interceptor
+              app.kubernetes.io/instance: keda-http-add-on
+      ports:
+        - port: 5230
+          protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: network
           podSelector:
             matchLabels:

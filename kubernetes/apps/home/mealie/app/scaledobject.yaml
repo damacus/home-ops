@@ -1,0 +1,20 @@
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: mealie
+spec:
+  scaleTargetRef:
+    name: mealie
+    kind: StatefulSet
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  pollingInterval: 30
+  cooldownPeriod: 0
+  triggers:
+    - type: cron
+      metadata:
+        timezone: Europe/London
+        start: "0 8 * * *"
+        end: "0 23 * * *"
+        desiredReplicas: "1"

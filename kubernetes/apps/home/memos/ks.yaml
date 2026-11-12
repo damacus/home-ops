@@ -9,6 +9,7 @@ spec:
   path: ./kubernetes/apps/home/memos/app
   prune: true
   dependsOn:
+    - name: keda-http-add-on
     - name: longhorn
   sourceRef:
     kind: GitRepository
