@@ -40,7 +40,6 @@
       "mcp_servers": [
         "home_assistant",
         "grafana",
-        "scrypted",
         "unifi_network",
         "unifi_protect",
         "grounded_docs"
@@ -57,7 +56,6 @@
       "mcp_servers": [
         "home_assistant",
         "grafana",
-        "scrypted",
         "unifi_network",
         "unifi_protect",
         "grounded_docs"

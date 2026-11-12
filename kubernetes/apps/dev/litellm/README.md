@@ -196,31 +196,10 @@ work around exhaustion. For disaster recovery, restore CNPG from the dedicated
 ObjectStore to a separate cluster, supply the original salt and test keys and
 budgets before directing clients to the recovered gateway.
 
-## Scrypted MCP
+## MCP service identities
 
-Scrypted uses its native OAuth authorization-code flow with PKCE and rotating
-refresh tokens. The gateway backend is
-`https://scrypted.ironstone.casa/endpoint/scrypted-mcp/public/mcp`.
-Do not use the advertised node IP: the TLS certificate covers the hostname.
-
-Only Codex and Claude receive Scrypted grants, with all plugin-exposed tools
-as approved by the owner. Application keys retain no MCP grants. Complete
-Scrypted OAuth for the gateway identity before expecting tool calls to work;
-no short-lived access token is stored in Git or treated as a static API key.
-
-The private Scrypted MCP HTTPRoute covers only the plugin public endpoint
-prefix. Its OAuth handler protects MCP calls; the management console keeps
-SSO and native login. OAuth discovery and registration must be reachable
-without browser SSO for machine clients. No internet-facing route is added.
-
-Validation before gateway rollout: TLS discovery returned HTTP 200 from the
-LiteLLM pod and advertised the hostname-based OAuth endpoints. An anonymous
-MCP POST returned HTTP 401. Authenticated tool listing, a harmless tool call,
-client grant enforcement and refresh-token operation remain rollout checks.
-
-OAuth ownership: the Codex and Claude keys belong to dedicated non-admin
-identities `mcp-codex` and `mcp-claude` respectively. Provision these as
+The Codex and Claude keys belong to dedicated non-admin identities
+`mcp-codex` and `mcp-claude` respectively. Provision these as
 `internal_user_viewer` with no generated key before applying key policies.
-Complete a separate Scrypted OAuth connection for each identity. Do not attach
-these service keys to the interactive proxy administrator. Preserve their
-`__mcp_only__` model restriction and existing MCP grants.
+Do not attach these service keys to the interactive proxy administrator.
+Preserve their `__mcp_only__` model restriction and remaining MCP grants.
