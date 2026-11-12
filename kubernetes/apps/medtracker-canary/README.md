@@ -7,6 +7,12 @@ database cluster, credentials and storage are separate from the existing
 MedTracker service in `home`. The existing service is never a reset or recovery
 target. There is no Rails data import or existing database adoption.
 
+The application runs as one Deployment and one process using `start --all`:
+the web server, background worker and scheduler share that process. Its
+PostgreSQL database remains separate. The compatible reset runner waits for
+this combined runtime and still accepts the earlier three-deployment layout
+during upgrades.
+
 The Flux Kustomization enables the isolated application resources. Initialisation
 and live acceptance are complete; the weekly reset CronJob is enabled.
 All demo edits are disposable.
@@ -24,10 +30,10 @@ The application is pinned to the checked multi-architecture image from MedTracke
 commit `63a08c2f31ba350502809e8d46f06633f69005ae`:
 `sha256:b4f81dfa49e15e41d3ed24fb9ca303131984922a467d54f90e4eb7e45ea654f4`.
 The reset runner is pinned to the image from HomeOps commit
-`051205f78449ed017dbe640e2fc9d892fc34f44b`:
-`sha256:bd6a462322ac0d7fee84e54ed0532f5e1c8aef35c33de80dd5b750e920f7edc3`.
+`6baca143f8d651108618b59a0c3490d2e80d7dd9`:
+`sha256:886eea5c41386a5c144c987fd5051cbc2b7628623a1e19c19f53cfe4631fc24e`.
 Both images are pinned directly in the demo manifests. Keep the application
-deployment images and the reset runner's `LOCO_IMAGE` setting identical.
+deployment image and the reset runner's `LOCO_IMAGE` setting identical.
 
 Before activation:
 
