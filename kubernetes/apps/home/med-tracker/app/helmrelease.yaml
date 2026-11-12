@@ -56,7 +56,7 @@ spec:
             # All processes and database Jobs use the same release image.
             image: &image
               repository: ghcr.io/damacus/med-tracker-loco
-              tag: 0.6.4@sha256:bb4f8275250efe65a9496527db412682c5a963ae09adc4069fa8ca772b5f2404
+              tag: 0.6.5@sha256:39500ce49e139080c7bebe2b7ee6667788c511d51061e1dc9fd3097d10637d00
             args: [start, --environment, production]
             # Runtime gets only the restricted database login and integration settings.
             envFrom: &runtimeSecrets

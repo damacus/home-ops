@@ -51,9 +51,8 @@ Keep that recovery information with the retained backup, outside Git if sensitiv
 
 ## One-time cutover from blue
 
-Before merging or starting this procedure, pin both the HelmRelease and
-`operations/setup-job.yaml` to the same published image with PostgreSQL
-connection-field support. The current 0.6.4 pin does not support these fields.
+The HelmRelease and `operations/setup-job.yaml` use the same immutable 0.6.5
+image, which supports the PostgreSQL connection fields supplied by CNPG Secrets.
 
 This procedure discards all live MedTracker data and accounts, as approved by
 the owner. It retains the original cluster, volumes and backup archive. Run it
@@ -108,8 +107,7 @@ or its volumes. No additional production app or database is needed.
    report Ready. After setup succeeds, remove `spec.suspend: true` from the
    application HelmRelease through the delivery controller. Resume the app Flux
    Kustomization and HelmRelease. The existing release's migration Job, web,
-   worker and scheduler must all use the same immutable released image with
-   PostgreSQL connection-field support. Version 0.6.4 does not support these fields.
+   worker and scheduler must all use the same immutable 0.6.5 image.
 8. Verify startup, sign-up/sign-in, household creation, queue processing and
    scheduler operation, and allowed and denied database access. Confirm the
    Service and both existing hostnames route to the replacement. Confirm a new

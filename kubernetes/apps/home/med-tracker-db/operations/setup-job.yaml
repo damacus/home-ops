@@ -22,7 +22,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: setup
-          image: ghcr.io/damacus/med-tracker-loco:0.6.4@sha256:bb4f8275250efe65a9496527db412682c5a963ae09adc4069fa8ca772b5f2404
+          image: ghcr.io/damacus/med-tracker-loco:0.6.5@sha256:39500ce49e139080c7bebe2b7ee6667788c511d51061e1dc9fd3097d10637d00
           args: [task, database-setup, --environment, production]
           env:
             - name: PGHOST
