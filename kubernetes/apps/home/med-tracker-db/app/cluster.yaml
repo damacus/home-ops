@@ -16,6 +16,45 @@ spec:
   primaryUpdateStrategy: unsupervised
   managed:
     roles:
+      - name: med-tracker
+        ensure: present
+        login: false
+      - name: med_tracker_owner
+        ensure: present
+        login: false
+        superuser: false
+        bypassrls: false
+      - name: med_tracker_app
+        ensure: present
+        login: false
+        superuser: false
+        bypassrls: false
+      - name: med_tracker_runtime
+        ensure: present
+        login: true
+        inherit: true
+        superuser: false
+        createdb: false
+        createrole: false
+        replication: false
+        bypassrls: false
+        inRoles:
+          - med_tracker_app
+        passwordSecret:
+          name: med-tracker-db-runtime
+      - name: med_tracker_update
+        ensure: present
+        login: true
+        inherit: true
+        superuser: false
+        createdb: false
+        createrole: false
+        replication: false
+        bypassrls: false
+        inRoles:
+          - med_tracker_owner
+        passwordSecret:
+          name: med-tracker-db-update
       - name: med_tracker_audit_exporter
         ensure: present
         login: false

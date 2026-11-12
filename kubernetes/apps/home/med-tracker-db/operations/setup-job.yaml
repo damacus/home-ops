@@ -1,0 +1,59 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: med-tracker-db-setup
+  namespace: home
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: setup
+          image: ghcr.io/damacus/med-tracker-loco:0.6.4@sha256:bb4f8275250efe65a9496527db412682c5a963ae09adc4069fa8ca772b5f2404
+          args: [task, database-setup, --environment, production]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-superuser
+                  key: DATABASE_URL
+            - name: MEDTRACKER_RUNTIME_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-runtime
+                  key: DATABASE_URL
+            - name: MEDTRACKER_UPDATE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: med-tracker-db-update
+                  key: DATABASE_URL
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

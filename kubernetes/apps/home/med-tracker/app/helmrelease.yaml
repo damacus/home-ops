@@ -5,6 +5,7 @@ metadata:
   name: med-tracker
   namespace: home
 spec:
+  suspend: true
   interval: 15m
   # Keep the existing BJW chart and Helm release; only its application values change.
   chart:
@@ -52,16 +53,15 @@ spec:
           reloader.stakater.com/auto: "true"
         containers:
           app:
-            # All processes and database Jobs use the same immutable 0.6.2 image.
+            # All processes and database Jobs use the same release image.
             image: &image
               repository: ghcr.io/damacus/med-tracker-loco
-              tag: 0.6.2@sha256:559d602e152eb43d04f9bede811fecadf9cb30d00f1af49e57546d2a7f552a43
+              tag: 0.6.4@sha256:bb4f8275250efe65a9496527db412682c5a963ae09adc4069fa8ca772b5f2404
             args: [start, --environment, production]
-            # Runtime gets only the restricted blue database login and integration settings.
-            # The old Rails Secret remains retained, but no Loco process consumes it.
+            # Runtime gets only the restricted database login and integration settings.
             envFrom: &runtimeSecrets
               - secretRef:
-                  name: med-tracker-blue-runtime
+                  name: med-tracker-db-runtime
               - secretRef:
                   name: med-tracker-loco-integrations
             env: &runtimeEnvironment
@@ -150,47 +150,6 @@ spec:
             <<: *backgroundContainer
             args: [scheduler, --environment, production]
 
-      # First cutover only: initialise the empty blue database using the native Loco task.
-      # This Job's container exits on completion; it is not a permanent application process.
-      # Remove this controller after successful setup, before subsequent release upgrades.
-      med-tracker-setup:
-        type: job
-        serviceAccount:
-          identifier: med-tracker-app
-        annotations:
-          # The existing Helm release is upgraded, so pre-install alone would skip setup.
-          # Weight -10 runs setup before the restricted migration Job at weight -5.
-          helm.sh/hook: pre-install,pre-upgrade
-          helm.sh/hook-weight: "-10"
-          helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
-        job: &jobOptions
-          # Surface failures without repeated database attempts; retain failed Job logs.
-          backoffLimit: 0
-          activeDeadlineSeconds: 600
-        containers:
-          setup:
-            image: *image
-            args: [task, database-setup, --environment, production]
-            env:
-              # Only initial setup receives administrator access to create roles and RLS.
-              DATABASE_URL:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-blue-superuser
-                    key: DATABASE_URL
-              MEDTRACKER_RUNTIME_DATABASE_URL:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-blue-runtime
-                    key: DATABASE_URL
-              MEDTRACKER_UPDATE_DATABASE_URL:
-                valueFrom:
-                  secretKeyRef:
-                    name: med-tracker-blue-update
-                    key: DATABASE_URL
-            securityContext: *containerSecurity
-            resources: *resources
-
       # Run native db migrate before each Helm upgrade, using the non-superuser update login.
       # Unlike the former Rails initContainers, this runs per release, not per Pod restart.
       # Loco runtime auto_migrate stays false because this Job owns schema updates.
@@ -202,14 +161,16 @@ spec:
           helm.sh/hook: pre-install,pre-upgrade
           helm.sh/hook-weight: "-5"
           helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
-        job: *jobOptions
+        job:
+          backoffLimit: 0
+          activeDeadlineSeconds: 600
         containers:
           update:
             image: *image
             args: [db, migrate, --environment, production]
             envFrom:
               - secretRef:
-                  name: med-tracker-blue-update
+                  name: med-tracker-db-update
             securityContext: *containerSecurity
             resources: *resources
 
