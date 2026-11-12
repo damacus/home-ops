@@ -46,7 +46,7 @@ spec:
               repository: penpotapp/frontend
               tag: 2.19.1
             env:
-              PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration enable-mcp disable-registration disable-email-verification disable-onboarding disable-onboarding-team
+              PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration enable-mcp disable-registration disable-email-verification disable-onboarding disable-onboarding-team disable-admin-console
               PENPOT_BACKEND_URI: http://penpot-backend.home.svc.cluster.local:6060
               PENPOT_EXPORTER_URI: http://penpot-exporter.home.svc.cluster.local:6061
               PENPOT_MCP_URI: http://penpot-mcp.home.svc.cluster.local:4401
@@ -164,7 +164,7 @@ spec:
               repository: penpotapp/backend
               tag: 2.19.1
             env:
-              PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team
+              PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team disable-admin-console
               PENPOT_PUBLIC_URI: https://penpot.ironstone.casa
               PENPOT_DATABASE_URI: postgresql://penpot-rw.home.svc.cluster.local/penpot
               PENPOT_DATABASE_USERNAME: app
@@ -262,7 +262,7 @@ spec:
               repository: penpotapp/exporter
               tag: 2.19.1
             env:
-              PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team
+              PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team disable-admin-console
               # Exporter loads pages via headless Chromium; use the internal frontend service
               PENPOT_PUBLIC_URI: http://penpot-frontend.home.svc.cluster.local
               PENPOT_REDIS_URI:
