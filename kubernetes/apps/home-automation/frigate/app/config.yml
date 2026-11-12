@@ -81,26 +81,6 @@ go2rtc:
       - "ffmpeg:birdy_sub#video=h264#audio=aac/16000"
 
 cameras:
-  # Retired camera: keep its identity for historical recordings; never reconnect.
-  doorbell:
-    enabled: false
-    ffmpeg:
-      # Share one H.264/AAC substream for recording and detection.
-      output_args:
-        record: preset-record-generic-audio-copy
-      inputs:
-        - path: rtsp://127.0.0.1:8554/doorbell
-          input_args: preset-rtsp-restream
-          roles: [record, detect]
-    detect:
-      width: 720
-      height: 720
-      fps: 5
-    live:
-      streams:
-        Sub: doorbell
-    objects:
-      track: [person]
   birdy:
     ffmpeg:
       inputs:

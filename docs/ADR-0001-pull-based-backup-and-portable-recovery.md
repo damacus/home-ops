@@ -164,7 +164,8 @@ and the tested RPO/RTO are documented.
 
 ## Open decisions
 
-- NAS operating system, storage layout, and pull transport.
+- DSM is the current NAS operating system. Confirm its model/release support,
+  storage layout, garage placement and pull transport before enrolment.
 - Exact local and cold-cloud retention schedules after measuring archive size.
 - Cold-storage provider and monthly spending ceiling.
 - Encryption-key escrow and secrets-manager recovery procedure.

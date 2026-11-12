@@ -160,15 +160,11 @@ Existing cloud-chat clients are outside this rollout.
 
 ## Verification and recovery
 
-Use the existing repository manifest checks and the small, offline script tests:
-
-```sh
-python3 -m unittest tests/test_litellm_keys.py tests/test_mealie_litellm.py
-```
-
-The script tests check budget preservation and safe Mealie provider updates.
-They require no containers, credentials or network access. There is no dedicated
-gateway integration environment or CI workflow.
+Use the existing render, schema and security checks, then exercise the pinned
+chart in a dedicated namespace on `docker-desktop` with synthetic credentials.
+Check authentication, allowed and denied MCP access, key rotation without budget
+reset, and provider updates that preserve existing application settings. Never
+use production credentials or application documents for local verification.
 
 The gateway deployments are enabled and the client overlays are inactive. Check real
 application and MCP connectivity during the approved rollout. Static checks do
@@ -199,7 +195,7 @@ budgets before directing clients to the recovered gateway.
 ## MCP service identities
 
 The Codex and Claude keys belong to dedicated non-admin identities
-`mcp-codex` and `mcp-claude` respectively. Provision these as
-`internal_user_viewer` with no generated key before applying key policies.
+`mcp-codex` and `mcp-claude`, respectively. Provision them as
+`internal_user_viewer` without a generated key before applying key policies.
 Do not attach these service keys to the interactive proxy administrator.
 Preserve their `__mcp_only__` model restriction and remaining MCP grants.

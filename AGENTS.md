@@ -26,17 +26,14 @@ This repository, `home-ops`, is a production-grade home infrastructure managemen
 
 ## Development Workflow & Rules
 
-1. **Proportionate Verification**: Choose checks that demonstrate the intended behaviour or catch a specific plausible regression.
-   - Keep Kubernetes and GitOps verification simple. Reuse existing validation and real tool dry runs; do not add dedicated workflows, bespoke integration harnesses, simulated services or per-resource tests for routine configuration changes.
-   - Add a new test only when it covers a concrete, significant risk that existing checks cannot cover. Prefer one focused check and remove temporary fixtures or duplicated checks when they are no longer needed.
-   - For scripts, application logic and health checkers, verify observable behaviour. Add regression coverage when it catches a concrete failure that existing checks do not cover.
-   - For declarative manifests, use the existing render, schema and security-policy checks. Do not add per-application tests that merely repeat YAML values, file layout, image versions or object ordering.
-   - Keep focused safety assertions where they protect an independent invariant, such as denying Secret reads or preventing CRD pruning. Prefer checking rendered resources when chart behaviour matters.
-   - For authentication, routing and network-policy changes, record the allowed and denied access cases and verify them in an isolated environment or after an approved rollout. Static checks do not prove live access.
-   - Retain tests of executable behaviour. Remove stale migration snapshots and duplicated checks when their original risk has passed or another maintained check covers it.
-   - State what was verified and what remains unverified. Judge verification by the behaviour and risks it covers, not the number or ordering of tests.
-   - For deployment changes, use the existing local Docker Kubernetes stack when available. Check `kubectl --context docker-desktop get nodes --request-timeout=10s`, then use an explicit context and a dedicated namespace with synthetic data for development verification. Do not switch the global context or use production as a fallback.
-   - Render and validate the existing pinned chart and proposed values, then exercise the relevant install, upgrade and application behaviour locally before proposing production rollout. Record any cluster-specific behaviour the local stack cannot reproduce. If the stack is unavailable, report the verification gap; do not substitute extra static assertions for runtime evidence.
+1. **Verification**: Exercise deployment behaviour on the existing Docker Desktop Kubernetes cluster.
+   - Check availability with `kubectl --context docker-desktop get nodes --request-timeout=10s`.
+   - Use an explicit `--context docker-desktop`, a dedicated namespace and synthetic data and credentials. Never switch the global context or use production as a development fallback.
+   - Use the existing pinned Helm chart and supported values. Reuse render, schema and Mondoo checks before install or upgrade checks.
+   - Keep verification proportionate to the risk. Add tests only for concrete, significant risks that existing checks cannot cover; do not invent duplicate static checks or bespoke harnesses for routine configuration changes.
+   - Do not add or run Python tests. Do not replace removed tests with another custom framework or assertions that repeat YAML values.
+   - Verify the relevant behaviour with real tools: startup, restart, persistence, authentication and allowed and denied access. Keep native Go, JavaScript, Ruby and alert-rule tests only where they exercise executable behaviour or a significant independent safety condition.
+   - Record the commands, results and gaps. Docker Desktop does not prove production Cilium policies, Rockchip devices or NAS behaviour. Remove only local verification resources you created.
 2. **Conventional Commits**: All commits must follow the `feat:`, `fix:`, `refactor:`, `test:` format.
 3. **Small, Atomic Changes**: Avoid monolithic PRs. Each change should be verifiable.
 4. **Repository Automation**: Prefer `task <command>` for cluster operations and `mise run provisioning:<command>` for host provisioning.
@@ -58,10 +55,5 @@ When working in this repository:
 
 - Treat the current user request as the scope of work. Existing production services are not a backlog of features to implement.
 - Record scope, validation and outstanding work in the PR description. Use application READMEs for operating procedures; do not recreate generated task ledgers or session progress logs.
-- Reference `GEMINI.md` for specific maintenance commands and troubleshooting.
-- Never delete the root `docs.txt`. It is the historical field guide to the
-  Armbian build system and preserves hard-won context for future engineers and
-  LLMs. Correct or rewrite stale sections while retaining the file and its
-  useful history.
 - Maintain consistency with existing architecture and naming conventions.
 - Before changing a Helm deployment, identify the existing chart, pinned version, values, rendered resources and relevant upstream documentation. Extend the existing chart through supported configuration. If its behaviour is unclear, investigate or report the blocker. Creating a replacement chart or wrapper requires explicit owner agreement.

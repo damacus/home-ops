@@ -2,7 +2,7 @@
 
 ## Agreed scope
 
-Receive only Nest Hello doorbell presses in Home Assistant and reconnect the existing hall-light automation. The owner has reinstalled the doorbell; the physical press test through this relay remains pending. Keep Gmail Advanced Protection enabled. Laura's doorbell notifications remain disabled. Video, snapshots, talkback and Scrypted forwarding are outside this setup.
+Receive only Nest Hello doorbell presses in Home Assistant and reconnect the existing hall-light automation. The owner has reinstalled the doorbell; the physical press test through this relay remains pending. Keep Gmail Advanced Protection enabled. Laura's doorbell notifications remain disabled. Video, snapshots and talkback are outside this setup.
 
 ## Native Nest block
 

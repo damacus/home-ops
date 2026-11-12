@@ -7,7 +7,7 @@ Homelab Kubernetes using Flux.
 ## 📖 Project Documentation
 
 - **[AGENTS.md](AGENTS.md)**: Comprehensive project specification and AI agent instructions.
-- **[GEMINI.md](GEMINI.md)**: Maintenance guide and common automation tasks.
+- Use application READMEs for operating procedures and `task --list` for automation.
 
 ## 🚀 Getting Started
 

@@ -18,13 +18,13 @@ rules:
   design:
     - Record rejected alternatives, dependency order, GitOps rollout, and rollback.
   tasks:
-    - Verify requested behaviour with existing render, schema and security checks, then exercise deployment changes in the local Docker Kubernetes stack when available. Record runtime verification gaps without inventing duplicate static tests.
+    - Use existing render, schema and security checks, then verify deployment behaviour on docker-desktop with an explicit context and synthetic data when available. Do not add or run Python tests or invent duplicate static checks. Record runtime verification gaps.
     - Bound every change and route discovered platform expansion into a separate change.
 
 operations:
   apply:
     guidance:
-      - Read AGENTS.md and GEMINI.md before implementation.
+      - Read AGENTS.md and the affected application's operating instructions before implementation.
       - Work in a dedicated branch and use task commands for repository verification.
       - Stage production changes through an isolated canary and preserve fail-open application behavior.
   archive:
