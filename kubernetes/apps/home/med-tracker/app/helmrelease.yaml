@@ -209,26 +209,7 @@ spec:
             securityContext: *containerSecurity
             resources: *resources
 
-    # Preserve both existing routes and hostnames; their Service backend remains port 80.
     route:
-      app:
-        parentRefs:
-          - name: traefik-internal
-            namespace: network
-            sectionName: websecure
-        hostnames:
-          - "med-tracker.ironstone.casa"
-        rules:
-          - matches:
-              - path:
-                  type: PathPrefix
-                  value: /
-            backendRefs:
-              - kind: Service
-                name: med-tracker
-                namespace: home
-                port: 80
-                weight: 1
       external:
         annotations:
           external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
