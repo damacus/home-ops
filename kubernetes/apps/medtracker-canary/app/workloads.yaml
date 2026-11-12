@@ -30,7 +30,7 @@ spec:
       containers:
         - name: server
           image: ghcr.io/damacus/med-tracker-loco@sha256:b4f81dfa49e15e41d3ed24fb9ca303131984922a467d54f90e4eb7e45ea654f4
-          args: ["start", "--environment", "production"]
+          args: ["start", "--all", "--environment", "production"]
           envFrom:
             - configMapRef:
                 name: medtracker-canary-settings
@@ -43,11 +43,11 @@ spec:
               drop: [ALL]
           resources:
             requests:
-              cpu: 25m
-              memory: 64Mi
+              cpu: 50m
+              memory: 128Mi
             limits:
-              cpu: 500m
-              memory: 256Mi
+              cpu: "1"
+              memory: 512Mi
           volumeMounts:
             - name: tmp
               mountPath: /tmp
@@ -71,146 +71,6 @@ spec:
           livenessProbe:
             httpGet: {path: /health, port: http}
             periodSeconds: 20
-      volumes:
-        - name: tmp
-          emptyDir:
-            sizeLimit: 128Mi
-        - name: config
-          configMap:
-            name: medtracker-canary-config
-        - name: postgres-ca
-          secret:
-            secretName: medtracker-canary-ca
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: medtracker-canary-worker
-spec:
-  replicas: 1
-  strategy:
-    type: Recreate
-  selector:
-    matchLabels:
-      app: medtracker-canary-worker
-  template:
-    metadata:
-      labels:
-        app: medtracker-canary-worker
-        app.kubernetes.io/part-of: medtracker-canary
-        canary.medtracker.io/runtime: "true"
-    spec:
-      automountServiceAccountToken: false
-      imagePullSecrets:
-        - name: ghcr-credentials
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 65532
-        runAsGroup: 65532
-        fsGroup: 65532
-        seccompProfile:
-          type: RuntimeDefault
-      containers:
-        - name: worker
-          image: ghcr.io/damacus/med-tracker-loco@sha256:b4f81dfa49e15e41d3ed24fb9ca303131984922a467d54f90e4eb7e45ea654f4
-          args: ["start", "--worker", "--environment", "production"]
-          envFrom:
-            - configMapRef:
-                name: medtracker-canary-settings
-            - secretRef:
-                name: medtracker-canary-runtime
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: [ALL]
-          resources:
-            requests:
-              cpu: 25m
-              memory: 64Mi
-            limits:
-              cpu: 500m
-              memory: 256Mi
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            - name: config
-              mountPath: /app/config/production.yaml
-              subPath: production.yaml
-              readOnly: true
-            - name: postgres-ca
-              mountPath: /etc/postgres
-              readOnly: true
-      volumes:
-        - name: tmp
-          emptyDir:
-            sizeLimit: 128Mi
-        - name: config
-          configMap:
-            name: medtracker-canary-config
-        - name: postgres-ca
-          secret:
-            secretName: medtracker-canary-ca
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: medtracker-canary-scheduler
-spec:
-  replicas: 1
-  strategy:
-    type: Recreate
-  selector:
-    matchLabels:
-      app: medtracker-canary-scheduler
-  template:
-    metadata:
-      labels:
-        app: medtracker-canary-scheduler
-        app.kubernetes.io/part-of: medtracker-canary
-        canary.medtracker.io/runtime: "true"
-    spec:
-      automountServiceAccountToken: false
-      imagePullSecrets:
-        - name: ghcr-credentials
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 65532
-        runAsGroup: 65532
-        fsGroup: 65532
-        seccompProfile:
-          type: RuntimeDefault
-      containers:
-        - name: scheduler
-          image: ghcr.io/damacus/med-tracker-loco@sha256:b4f81dfa49e15e41d3ed24fb9ca303131984922a467d54f90e4eb7e45ea654f4
-          args: ["scheduler", "--environment", "production"]
-          envFrom:
-            - configMapRef:
-                name: medtracker-canary-settings
-            - secretRef:
-                name: medtracker-canary-runtime
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: [ALL]
-          resources:
-            requests:
-              cpu: 25m
-              memory: 64Mi
-            limits:
-              cpu: 500m
-              memory: 256Mi
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            - name: config
-              mountPath: /app/config/production.yaml
-              subPath: production.yaml
-              readOnly: true
-            - name: postgres-ca
-              mountPath: /etc/postgres
-              readOnly: true
       volumes:
         - name: tmp
           emptyDir:
