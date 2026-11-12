@@ -1,0 +1,19 @@
+---
+apiVersion: http.keda.sh/v1beta1
+kind: InterceptorRoute
+metadata:
+  name: hubble-ui
+spec:
+  target:
+    service: hubble-ui
+    port: 80
+  rules:
+    - hosts:
+        - hubble.ironstone.casa
+  scalingMetric:
+    concurrency:
+      targetValue: 10
+  timeouts:
+    readiness: 180s
+    request: 240s
+    responseHeader: 120s

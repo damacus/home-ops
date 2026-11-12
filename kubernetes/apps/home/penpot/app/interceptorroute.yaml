@@ -1,0 +1,19 @@
+---
+apiVersion: http.keda.sh/v1beta1
+kind: InterceptorRoute
+metadata:
+  name: penpot
+spec:
+  target:
+    service: penpot-frontend
+    port: 80
+  rules:
+    - hosts:
+        - penpot.ironstone.casa
+  scalingMetric:
+    concurrency:
+      targetValue: 10
+  timeouts:
+    readiness: 180s
+    request: 240s
+    responseHeader: 120s

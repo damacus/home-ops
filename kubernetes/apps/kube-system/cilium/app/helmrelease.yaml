@@ -22,6 +22,18 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+  # Only the UI is scaled; preserve KEDA's replica count during chart upgrades.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: hubble-ui
+            patch: |-
+              - op: remove
+                path: /spec/replicas
   valuesFrom:
     - kind: ConfigMap
       name: cilium-helm-values

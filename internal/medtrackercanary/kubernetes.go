@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -34,7 +35,12 @@ type pod struct {
 		Labels            map[string]string
 		DeletionTimestamp *string
 	}
-	Spec   struct{ Containers []struct{ Image string } }
+	Spec struct {
+		Containers []struct {
+			Image string
+			Args  []string
+		}
+	}
 	Status struct {
 		Conditions []struct{ Type, Status string }
 	}
@@ -168,6 +174,7 @@ func (k *Kubernetes) Ready(ctx context.Context) error {
 			return false, err
 		}
 		ready := make(map[string]bool)
+		consolidated := false
 		for _, pod := range pods {
 			if pod.Metadata.DeletionTimestamp != nil {
 				continue
@@ -180,10 +187,17 @@ func (k *Kubernetes) Ready(ctx context.Context) error {
 			for _, condition := range pod.Status.Conditions {
 				if condition.Type == "Ready" && condition.Status == "True" {
 					ready[pod.Metadata.Labels["app"]] = true
+					if pod.Metadata.Labels["app"] == "medtracker-canary-server" && len(pod.Spec.Containers) == 1 {
+						container := pod.Spec.Containers[0]
+						consolidated = consolidated || (len(container.Args) > 1 &&
+							container.Args[0] == "start" && slices.Contains(container.Args[1:], "--all"))
+					}
 				}
 			}
 		}
-		return ready["medtracker-canary-server"] && ready["medtracker-canary-worker"] && ready["medtracker-canary-scheduler"], nil
+		legacyReady := ready["medtracker-canary-server"] &&
+			ready["medtracker-canary-worker"] && ready["medtracker-canary-scheduler"]
+		return consolidated || legacyReady, nil
 	})
 }
 
