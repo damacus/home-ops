@@ -10,7 +10,9 @@ The existing `med-tracker` database owner has login disabled. Only the manually
 run installation Job receives the PostgreSQL administrator credential. Normal
 Helm upgrades run `db migrate` with the restricted update credential.
 CloudNativePG manages both login passwords from their respective Secrets;
-neither login is a superuser or can bypass row-level security.
+neither login has PostgreSQL's `SUPERUSER` or `BYPASSRLS` attributes. The update
+login inherits table ownership and can alter or disable row-level security;
+treat it as a privileged schema-maintenance credential.
 
 All database credentials come from the existing `med-tracker-db` 1Password item:
 
@@ -59,16 +61,19 @@ or its volumes. No additional production app or database is needed.
    `med-tracker-rustfs-store` before resetting anything, and confirm the retained
    backup and WAL. Leave the original backup credentials unchanged.
 3. Merge the consolidation through the delivery controller. Reconcile
-   `med-tracker-db` and wait for its ExternalSecrets to be Ready. The application
+   `med-tracker-db` and wait for its ExternalSecrets to be Ready. Before setup,
+   wait for every role declared in `cluster.yaml` to appear in
+   `status.managedRolesStatus.byStatus.reconciled` on the `med-tracker` Cluster,
+   with no entries in `status.managedRolesStatus.cannotReconcile`. The application
    HelmRelease in Git is deliberately suspended. The removed blue Kustomization
    may prune its Secrets and backup schedule; its Cluster has pruning disabled
    and must be deleted explicitly only after the replacement works.
 4. Pause `med-tracker-db` reconciliation. Remove the `med-tracker-app` Database
-   resource temporarily, leaving its
-   PostgreSQL database retained. Confirm the old `med-tracker-cache`,
+   resource temporarily, leaving its PostgreSQL database retained. Confirm the old
+   `med-tracker-cache`,
    `med-tracker-queue` and `med-tracker-cable` Database resources have been pruned.
-   Removing the old Database resources does not drop their PostgreSQL databases because
-   their reclaim policy is `retain`.
+   Removing the old Database resources does not drop their PostgreSQL databases:
+   CNPG's default reclaim policy is `retain`.
 5. Open an administrator `psql` session to the **current primary** of cluster
    `med-tracker`, connected to maintenance database `postgres`. Use local peer
    authentication in the database Pod; do not print or pass passwords in command

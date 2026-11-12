@@ -7,6 +7,5 @@ metadata:
 spec:
   name: med-tracker
   owner: med-tracker
-  databaseReclaimPolicy: retain
   cluster:
     name: med-tracker
