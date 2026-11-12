@@ -5,7 +5,6 @@ metadata:
   name: med-tracker
   namespace: home
 spec:
-  suspend: true
   interval: 15m
   # Keep the existing BJW chart and Helm release; only its application values change.
   chart:
