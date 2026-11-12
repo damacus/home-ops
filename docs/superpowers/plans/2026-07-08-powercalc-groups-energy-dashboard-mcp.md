@@ -57,83 +57,16 @@
 
 ## Task 1: Add the Power Group Tool Skeleton
 
-**Files:**
-- Create: `scripts/home_assistant_power_groups.py`
-- Test: `tests/test_home_assistant_power_groups.py`
+Inspect the existing `scripts/home_assistant_power_groups.py` and extend it
+using repository patterns; create it only if it is absent. The examples below
+use the existing `PowerGroupConfigTest` and `load_module` harness in
+`tests/test_home_assistant_power_groups.py`; reuse existing coverage rather
+than adding duplicates. Implement the command behaviour described in Tasks 2–4,
+then verify its public interface with representative configuration and registry
+fixtures. Do not retain an import-only test or an assertion that merely freezes
+a header.
 
-- [ ] **Step 1: Write the failing import test**
-
-Create `tests/test_home_assistant_power_groups.py` with this content:
-
-```python
-from __future__ import annotations
-
-import importlib.util
-import pathlib
-import sys
-import unittest
-
-
-SCRIPT_PATH = pathlib.Path(__file__).resolve().parents[1] / "scripts" / "home_assistant_power_groups.py"
-
-
-def load_module():
-    spec = importlib.util.spec_from_file_location("home_assistant_power_groups", SCRIPT_PATH)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"unable to load {SCRIPT_PATH}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["home_assistant_power_groups"] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-class PowerGroupConfigTest(unittest.TestCase):
-    def test_module_loads(self) -> None:
-        module = load_module()
-
-        self.assertEqual(module.PACKAGE_HEADER, "powercalc:")
-
-
-if __name__ == "__main__":
-    unittest.main()
-```
-
-- [ ] **Step 2: Run the test to verify it fails**
-
-Run:
-
-```bash
-python -m unittest tests/test_home_assistant_power_groups.py
-```
-
-Expected: FAIL with `FileNotFoundError` for `scripts/home_assistant_power_groups.py`.
-
-- [ ] **Step 3: Create the minimal script**
-
-Create `scripts/home_assistant_power_groups.py` with this content:
-
-```python
-from __future__ import annotations
-
-PACKAGE_HEADER = "powercalc:"
-```
-
-- [ ] **Step 4: Run the test to verify it passes**
-
-Run:
-
-```bash
-python -m unittest tests/test_home_assistant_power_groups.py
-```
-
-Expected: PASS with `Ran 1 test`.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add scripts/home_assistant_power_groups.py tests/test_home_assistant_power_groups.py
-git commit -m "test: start home assistant power group tooling"
-```
+---
 
 ## Task 2: Define and Validate the Group Source of Truth
 
@@ -221,7 +154,75 @@ Create `docs/home-assistant/power/powercalc-groups.json` with this content:
 }
 ```
 
-- [ ] **Step 2: Add failing validation tests**
+- [ ] **Step 2: Implement validation**
+
+Replace `scripts/home_assistant_power_groups.py` with this content:
+
+```python
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+PACKAGE_HEADER = "powercalc:"
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    with path.open("r", encoding="utf-8") as handle:
+        data = json.load(handle)
+    if not isinstance(data, dict):
+        raise ValueError(f"{path} must contain a JSON object")
+    return data
+
+
+def validate_config(config: dict[str, Any]) -> None:
+    room_groups = config.get("room_groups")
+    area_groups = config.get("area_groups")
+    if not isinstance(room_groups, list):
+        raise ValueError("room_groups must be a list")
+    if not isinstance(area_groups, list):
+        raise ValueError("area_groups must be a list")
+
+    room_names: set[str] = set()
+    for room in room_groups:
+        if not isinstance(room, dict):
+            raise ValueError("room group entries must be objects")
+        name = room.get("name")
+        power_sensor_id = room.get("power_sensor_id")
+        energy_sensor_id = room.get("energy_sensor_id")
+        if not isinstance(name, str) or not name:
+            raise ValueError("room group name must be a non-empty string")
+        if name in room_names:
+            raise ValueError(f"Duplicate room group: {name}")
+        if not isinstance(power_sensor_id, str) or not power_sensor_id.startswith("sensor."):
+            raise ValueError(f"{name} power_sensor_id must be a sensor entity")
+        if not isinstance(energy_sensor_id, str) or not energy_sensor_id.startswith("sensor."):
+            raise ValueError(f"{name} energy_sensor_id must be a sensor entity")
+        room_names.add(name)
+
+    dashboard_members: dict[str, str] = {}
+    for area in area_groups:
+        if not isinstance(area, dict):
+            raise ValueError("area group entries must be objects")
+        area_name = area.get("name")
+        members = area.get("members")
+        dashboard = area.get("dashboard", False)
+        if not isinstance(area_name, str) or not area_name:
+            raise ValueError("area group name must be a non-empty string")
+        if not isinstance(members, list) or not members:
+            raise ValueError(f"{area_name} members must be a non-empty list")
+        for member in members:
+            if member not in room_names:
+                raise ValueError(f"Unknown room group {member!r} in area {area_name!r}")
+            if dashboard is True and member in dashboard_members:
+                other = dashboard_members[member]
+                raise ValueError(f"Dashboard double count: {member!r} is in {other!r} and {area_name!r}")
+            if dashboard is True:
+                dashboard_members[member] = area_name
+```
+
+- [ ] **Step 3: Add behavioural validation coverage**
 
 Append these tests to `PowerGroupConfigTest` in `tests/test_home_assistant_power_groups.py`:
 
@@ -297,7 +298,7 @@ Append these tests to `PowerGroupConfigTest` in `tests/test_home_assistant_power
             module.validate_config(config)
 ```
 
-- [ ] **Step 3: Run tests to verify they fail**
+- [ ] **Step 4: Run tests to verify they pass**
 
 Run:
 
@@ -305,92 +306,16 @@ Run:
 python -m unittest tests/test_home_assistant_power_groups.py
 ```
 
-Expected: FAIL with `AttributeError: module 'home_assistant_power_groups' has no attribute 'validate_config'`.
+Expected: the relevant behavioural checks pass.
 
-- [ ] **Step 4: Implement validation**
-
-Replace `scripts/home_assistant_power_groups.py` with this content:
-
-```python
-from __future__ import annotations
-
-import json
-from pathlib import Path
-from typing import Any
-
-PACKAGE_HEADER = "powercalc:"
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} must contain a JSON object")
-    return data
-
-
-def validate_config(config: dict[str, Any]) -> None:
-    room_groups = config.get("room_groups")
-    area_groups = config.get("area_groups")
-    if not isinstance(room_groups, list):
-        raise ValueError("room_groups must be a list")
-    if not isinstance(area_groups, list):
-        raise ValueError("area_groups must be a list")
-
-    room_names: set[str] = set()
-    for room in room_groups:
-        if not isinstance(room, dict):
-            raise ValueError("room group entries must be objects")
-        name = room.get("name")
-        power_sensor_id = room.get("power_sensor_id")
-        energy_sensor_id = room.get("energy_sensor_id")
-        if not isinstance(name, str) or not name:
-            raise ValueError("room group name must be a non-empty string")
-        if name in room_names:
-            raise ValueError(f"Duplicate room group: {name}")
-        if not isinstance(power_sensor_id, str) or not power_sensor_id.startswith("sensor."):
-            raise ValueError(f"{name} power_sensor_id must be a sensor entity")
-        if not isinstance(energy_sensor_id, str) or not energy_sensor_id.startswith("sensor."):
-            raise ValueError(f"{name} energy_sensor_id must be a sensor entity")
-        room_names.add(name)
-
-    dashboard_members: dict[str, str] = {}
-    for area in area_groups:
-        if not isinstance(area, dict):
-            raise ValueError("area group entries must be objects")
-        area_name = area.get("name")
-        members = area.get("members")
-        dashboard = area.get("dashboard", False)
-        if not isinstance(area_name, str) or not area_name:
-            raise ValueError("area group name must be a non-empty string")
-        if not isinstance(members, list) or not members:
-            raise ValueError(f"{area_name} members must be a non-empty list")
-        for member in members:
-            if member not in room_names:
-                raise ValueError(f"Unknown room group {member!r} in area {area_name!r}")
-            if dashboard is True and member in dashboard_members:
-                other = dashboard_members[member]
-                raise ValueError(f"Dashboard double count: {member!r} is in {other!r} and {area_name!r}")
-            if dashboard is True:
-                dashboard_members[member] = area_name
-```
-
-- [ ] **Step 5: Run tests to verify they pass**
-
-Run:
-
-```bash
-python -m unittest tests/test_home_assistant_power_groups.py
-```
-
-Expected: PASS with `Ran 4 tests`.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add docs/home-assistant/power/powercalc-groups.json scripts/home_assistant_power_groups.py tests/test_home_assistant_power_groups.py
 git commit -m "feat: define home assistant power group hierarchy"
 ```
+
+---
 
 ## Task 3: Render the PowerCalc Package
 
@@ -398,7 +323,53 @@ git commit -m "feat: define home assistant power group hierarchy"
 - Modify: `scripts/home_assistant_power_groups.py`
 - Modify: `tests/test_home_assistant_power_groups.py`
 
-- [ ] **Step 1: Add failing render tests**
+- [ ] **Step 1: Implement package rendering**
+
+Append this code to `scripts/home_assistant_power_groups.py`:
+
+```python
+
+def slugify(name: str) -> str:
+    slug = []
+    previous_underscore = False
+    for char in name.lower():
+        if char.isalnum():
+            slug.append(char)
+            previous_underscore = False
+        elif not previous_underscore:
+            slug.append("_")
+            previous_underscore = True
+    return "".join(slug).strip("_")
+
+
+def render_package(config: dict[str, Any]) -> str:
+    validate_config(config)
+    room_by_name = {room["name"]: room for room in config["room_groups"]}
+    lines = [
+        "powercalc:",
+        "  create_utility_meters: true",
+        "  sensors:",
+    ]
+    for area in config["area_groups"]:
+        lines.append(f"    - create_group: {area['name']}")
+        lines.append("      entities:")
+        for member_name in area["members"]:
+            member = room_by_name[member_name]
+            lines.append(f"        - power_sensor_id: {member['power_sensor_id']}")
+            lines.append(f"          energy_sensor_id: {member['energy_sensor_id']}")
+    return "\n".join(lines) + "\n"
+
+
+def dashboard_energy_sensors(config: dict[str, Any]) -> list[str]:
+    validate_config(config)
+    return [
+        f"sensor.{slugify(area['name'])}_energy"
+        for area in config["area_groups"]
+        if area.get("dashboard") is True
+    ]
+```
+
+- [ ] **Step 2: Add behavioural rendering coverage**
 
 Append these tests to `PowerGroupConfigTest`:
 
@@ -465,7 +436,7 @@ Append these tests to `PowerGroupConfigTest`:
         self.assertEqual(sensors, ["sensor.downstairs_lights_energy"])
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [ ] **Step 3: Run tests to verify they pass**
 
 Run:
 
@@ -473,65 +444,9 @@ Run:
 python -m unittest tests/test_home_assistant_power_groups.py
 ```
 
-Expected: FAIL with missing `render_package` and `dashboard_energy_sensors`.
+Expected: the relevant behavioural checks pass.
 
-- [ ] **Step 3: Implement package rendering**
-
-Append this code to `scripts/home_assistant_power_groups.py`:
-
-```python
-
-def slugify(name: str) -> str:
-    slug = []
-    previous_underscore = False
-    for char in name.lower():
-        if char.isalnum():
-            slug.append(char)
-            previous_underscore = False
-        elif not previous_underscore:
-            slug.append("_")
-            previous_underscore = True
-    return "".join(slug).strip("_")
-
-
-def render_package(config: dict[str, Any]) -> str:
-    validate_config(config)
-    room_by_name = {room["name"]: room for room in config["room_groups"]}
-    lines = [
-        "powercalc:",
-        "  create_utility_meters: true",
-        "  sensors:",
-    ]
-    for area in config["area_groups"]:
-        lines.append(f"    - create_group: {area['name']}")
-        lines.append("      entities:")
-        for member_name in area["members"]:
-            member = room_by_name[member_name]
-            lines.append(f"        - power_sensor_id: {member['power_sensor_id']}")
-            lines.append(f"          energy_sensor_id: {member['energy_sensor_id']}")
-    return "\n".join(lines) + "\n"
-
-
-def dashboard_energy_sensors(config: dict[str, Any]) -> list[str]:
-    validate_config(config)
-    return [
-        f"sensor.{slugify(area['name'])}_energy"
-        for area in config["area_groups"]
-        if area.get("dashboard") is True
-    ]
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-Run:
-
-```bash
-python -m unittest tests/test_home_assistant_power_groups.py
-```
-
-Expected: PASS with `Ran 6 tests`.
-
-- [ ] **Step 5: Render the package locally**
+- [ ] **Step 4: Render the package locally**
 
 Run:
 
@@ -557,12 +472,14 @@ sensor.outdoor_lights_energy
 sensor.loft_lights_area_energy
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add scripts/home_assistant_power_groups.py tests/test_home_assistant_power_groups.py
 git commit -m "feat: render powercalc area groups"
 ```
+
+---
 
 ## Task 4: Add Registry Coverage Reporting
 
@@ -570,7 +487,53 @@ git commit -m "feat: render powercalc area groups"
 - Modify: `scripts/home_assistant_power_groups.py`
 - Modify: `tests/test_home_assistant_power_groups.py`
 
-- [ ] **Step 1: Add failing coverage tests**
+- [ ] **Step 1: Implement coverage reporting**
+
+Append this code to `scripts/home_assistant_power_groups.py`:
+
+```python
+
+def active_entities(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [entity for entity in entities if entity.get("disabled_by") is None]
+
+
+def device_by_id(devices: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {device["id"]: device for device in devices if isinstance(device.get("id"), str)}
+
+
+def powercalc_device_ids(entities: list[dict[str, Any]]) -> set[str]:
+    return {
+        entity["device_id"]
+        for entity in active_entities(entities)
+        if entity.get("platform") == "powercalc"
+        and isinstance(entity.get("entity_id"), str)
+        and entity["entity_id"].endswith("_power")
+        and isinstance(entity.get("device_id"), str)
+    }
+
+
+def uncovered_lights(entities: list[dict[str, Any]], devices: list[dict[str, Any]]) -> list[str]:
+    devices_by_id = device_by_id(devices)
+    covered_devices = powercalc_device_ids(entities)
+    rows: list[str] = []
+    for entity in active_entities(entities):
+        entity_id = entity.get("entity_id")
+        if not isinstance(entity_id, str) or not entity_id.startswith("light."):
+            continue
+        device_id = entity.get("device_id")
+        if isinstance(device_id, str) and device_id in covered_devices:
+            continue
+        device = devices_by_id.get(device_id, {})
+        if device.get("entry_type") == "service":
+            continue
+        name = device.get("name_by_user") or device.get("name") or entity.get("name") or entity.get("original_name") or ""
+        manufacturer = device.get("manufacturer") or ""
+        model = device.get("model") or ""
+        rows.append(f"{entity_id}\t{name}\t{manufacturer}\t{model}")
+    return sorted(rows)
+```
+
+- [ ] **Step 2: Add registry reporting coverage**
 
 Append this test to `PowerGroupConfigTest`:
 
@@ -635,7 +598,7 @@ Append this test to `PowerGroupConfigTest`:
         self.assertEqual(uncovered, ["light.unity_light_2\tUnity Office\tLoopOn\tUnity"])
 ```
 
-- [ ] **Step 2: Run tests to verify failure**
+- [ ] **Step 3: Run tests to verify they pass**
 
 Run:
 
@@ -643,65 +606,9 @@ Run:
 python -m unittest tests/test_home_assistant_power_groups.py
 ```
 
-Expected: FAIL with missing `uncovered_lights`.
+Expected: the relevant behavioural checks pass.
 
-- [ ] **Step 3: Implement coverage reporting**
-
-Append this code to `scripts/home_assistant_power_groups.py`:
-
-```python
-
-def active_entities(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [entity for entity in entities if entity.get("disabled_by") is None]
-
-
-def device_by_id(devices: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    return {device["id"]: device for device in devices if isinstance(device.get("id"), str)}
-
-
-def powercalc_device_ids(entities: list[dict[str, Any]]) -> set[str]:
-    return {
-        entity["device_id"]
-        for entity in active_entities(entities)
-        if entity.get("platform") == "powercalc"
-        and isinstance(entity.get("entity_id"), str)
-        and entity["entity_id"].endswith("_power")
-        and isinstance(entity.get("device_id"), str)
-    }
-
-
-def uncovered_lights(entities: list[dict[str, Any]], devices: list[dict[str, Any]]) -> list[str]:
-    devices_by_id = device_by_id(devices)
-    covered_devices = powercalc_device_ids(entities)
-    rows: list[str] = []
-    for entity in active_entities(entities):
-        entity_id = entity.get("entity_id")
-        if not isinstance(entity_id, str) or not entity_id.startswith("light."):
-            continue
-        device_id = entity.get("device_id")
-        if isinstance(device_id, str) and device_id in covered_devices:
-            continue
-        device = devices_by_id.get(device_id, {})
-        if device.get("entry_type") == "service":
-            continue
-        name = device.get("name_by_user") or device.get("name") or entity.get("name") or entity.get("original_name") or ""
-        manufacturer = device.get("manufacturer") or ""
-        model = device.get("model") or ""
-        rows.append(f"{entity_id}\t{name}\t{manufacturer}\t{model}")
-    return sorted(rows)
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-Run:
-
-```bash
-python -m unittest tests/test_home_assistant_power_groups.py
-```
-
-Expected: PASS with `Ran 7 tests`.
-
-- [ ] **Step 5: Run the live read-only coverage report**
+- [ ] **Step 4: Run the live read-only coverage report**
 
 Run:
 
@@ -733,14 +640,22 @@ light.hue_ambiance_lamp_1	ambiance lamp	Signify Netherlands B.V.	Hue ambiance la
 light.unity_light_2	Unity Office	LoopOn	Unity
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add scripts/home_assistant_power_groups.py tests/test_home_assistant_power_groups.py
 git commit -m "feat: report home assistant light power coverage"
 ```
 
+---
+
 ## Task 5: Apply the PowerCalc Package to Live Home Assistant
+
+Before any live change, verify the generated package with a disposable Home
+Assistant instance in the local Docker Kubernetes stack when available, using
+an explicit `--context docker-desktop`, a dedicated namespace and synthetic
+data. Record integration gaps for real devices and production dependencies.
+The live operations below require separate owner authorisation.
 
 **Files:**
 - Live create: `/config/packages/powercalc_groups.yaml`

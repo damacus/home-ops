@@ -18,7 +18,7 @@ rules:
   design:
     - Record rejected alternatives, dependency order, GitOps rollout, and rollback.
   tasks:
-    - Use failing contract validation before manifest implementation.
+    - Verify requested behaviour with existing render, schema and security checks, then exercise deployment changes in the local Docker Kubernetes stack when available. Record runtime verification gaps without inventing duplicate static tests.
     - Bound every change and route discovered platform expansion into a separate change.
 
 operations:
