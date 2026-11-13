@@ -19,7 +19,6 @@ REPO_ROOT="${ROOT_DIR:-$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd)}"
 
 if [[ -f "${REPO_ROOT}/.env" ]]; then
   set -a
-  # shellcheck disable=SC1091
   . "${REPO_ROOT}/.env"
   set +a
 fi
@@ -34,7 +33,6 @@ if [[ -n "${PG_PROFILE}" ]]; then
     exit 1
   }
   set -a
-  # shellcheck disable=SC1090
   . "${profile_file}"
   set +a
 fi

@@ -8,7 +8,6 @@
 #USAGE flag "--dry-run" help="Perform read-only discovery and print redacted actions"
 set -euo pipefail
 # Variables are supplied by Mise's usage parser.
-# shellcheck disable=SC2154
 
 args=("${usage_host}")
 [[ -n "${usage_source_node:-}" ]] && args+=(--source-node "${usage_source_node}")
