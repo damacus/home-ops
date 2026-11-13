@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: "YAML, Flate & Mondoo"
+name: "YAML, Flate & Ruby"
 
 on:
   pull_request:
@@ -19,8 +19,8 @@ jobs:
     outputs:
       yaml: ${{ steps.filter.outputs.yaml }}
       kubernetes: ${{ steps.filter.outputs.kubernetes }}
-      go: ${{ steps.filter.outputs.go }}
-      mondoo: ${{ steps.filter.outputs.mondoo }}
+      ruby: ${{ steps.filter.outputs.ruby }}
+      operational: ${{ steps.filter.outputs.operational }}
     steps:
       - name: Classify changed paths
         id: filter
@@ -36,23 +36,21 @@ jobs:
               - '.taskfiles/Flux/**'
               - 'kubernetes/**'
               - 'tests/spamhaus/**'
-            go:
+            ruby:
               - '.github/workflows/flux.yaml'
-              - '.taskfiles/Kubernetes/Taskfile.yaml'
-              - 'cmd/cluster-health/**'
-              - 'internal/clusterhealth/**'
-              - 'cmd/provisioning/**'
-              - 'internal/provisioning/**'
+              - '.taskfiles/**'
+              - '**/*.rb'
               - '.mise/tasks/provisioning/**'
               - 'provisioning/**'
-              - 'go.mod'
+              - 'Gemfile'
+              - 'Gemfile.lock'
+              - '.ruby-version'
               - 'mise.lock'
               - 'mise.toml'
-            mondoo:
+            operational:
               - '.github/workflows/flux.yaml'
               - 'kubernetes/**'
               - 'mondoo/**'
-              - 'scripts/mondoo_scan.py'
               - 'tests/test_zitadel_access_policy.rb'
               - 'tests/grounded-docs-sync.test.mjs'
 
@@ -106,42 +104,27 @@ jobs:
             victoriametrics/vmalert-tool:v1.155.0@sha256:b03d29d0a11b906a85879a6a4009c9d0a9d5a8b9a744ebb7dd3a7721f1e78f36 \
             unittest -files=/data/test.yaml
 
-  cluster-health:
-    name: Cluster Health CLI
+  ruby-tools:
+    name: Ruby tooling
     needs: changes
-    if: ${{ needs.changes.outputs.go == 'true' }}
+    if: ${{ needs.changes.outputs.ruby == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1
         with:
-          go-version-file: go.mod
-          cache: false
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Check Ruby syntax
+        run: git ls-files -z '*.rb' | xargs -0 -n1 ruby -c
+      - name: Audit gem dependencies
+        run: bundle exec bundle-audit check --update
 
-      - name: Setup Mise
-        uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
-        with:
-          version: 2026.11.8
-          install: false
-          cache: false
-
-      - name: Test
-        run: go test ./...
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Build
-        run: go build ./cmd/...
-
-  mondoo:
-    name: Mondoo
+  operational:
+    name: Operational checks
     needs: [changes, yaml-lint, yayamlls, flate-test]
     if: >-
-      ${{ always() && needs.changes.outputs.mondoo == 'true' &&
+      ${{ always() && needs.changes.outputs.operational == 'true' &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
@@ -185,26 +168,6 @@ jobs:
           set -euo pipefail
           image=$(yq 'select(.kind == "StatefulSet") | .spec.template.spec.containers[0].image' kubernetes/apps/monitoring/unifi-logs/app/receiver.yaml)
           docker run --rm -v "$PWD/kubernetes/apps/monitoring/unifi-logs/app/vector.yaml:/etc/vector/vector.yaml:ro" "$image" test /etc/vector/vector.yaml
-
-      - name: Select checked-out Flux source
-        run: git update-ref refs/heads/main HEAD
-
-      - name: Run rendered manifest scans
-        env:
-          FLATE_BASE: ""
-        run: >-
-          python3 scripts/mondoo_scan.py
-          --output junit
-          --report-dir mondoo-reports
-          k8s-manifests --path ./kubernetes --include-posture
-
-      - name: Upload Mondoo reports
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: mondoo-reports
-          path: mondoo-reports
-          if-no-files-found: ignore
 
   flate-test:
     name: Flate Test
@@ -306,7 +269,7 @@ jobs:
 
   flate-success:
     if: ${{ always() }}
-    needs: ["changes", "flate-diff", "flate-test", "mondoo", "spamhaus-publisher"]
+    needs: ["changes", "flate-diff", "flate-test", "operational", "ruby-tools", "spamhaus-publisher"]
     name: Flate Successful
     runs-on: ubuntu-slim
     steps:

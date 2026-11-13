@@ -75,3 +75,11 @@ scripts/__pycache__/
 
 # Local env overrides for the pg-bluegreen Taskfile.
 .env
+
+# Ruby documentation build artifacts
+output/
+site/
+node_modules/
+.bridgetown-cache/
+.bridgetown-metadata
+.bundle/

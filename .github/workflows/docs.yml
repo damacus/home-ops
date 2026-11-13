@@ -5,16 +5,35 @@ on:
     branches: [main]
     paths:
       - "site_docs/**"
-      - "zensical.toml"
+      - "docs/**/*.md"
+      - "provisioning/**/*.md"
+      - "kubernetes/apps/**/README.md"
+      - "config/**"
+      - "plugins/**"
+      - "frontend/**"
+      - "bin/bridgetown"
+      - "Gemfile*"
+      - "package*.json"
+      - "*config.js"
+      - "Rakefile"
+      - ".ruby-version"
       - ".github/workflows/docs.yml"
-      - "README.md"
-      - "CHANGELOG.md"
-      - "LICENSE"
   pull_request:
     branches: [main]
     paths:
       - "site_docs/**"
-      - "zensical.toml"
+      - "docs/**/*.md"
+      - "provisioning/**/*.md"
+      - "kubernetes/apps/**/README.md"
+      - "config/**"
+      - "plugins/**"
+      - "frontend/**"
+      - "bin/bridgetown"
+      - "Gemfile*"
+      - "package*.json"
+      - "*config.js"
+      - "Rakefile"
+      - ".ruby-version"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
@@ -24,7 +43,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -33,27 +52,31 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          fetch-depth: 0
+          ruby-version: "4.0.9"
+          bundler-cache: true
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - name: Set up Node
+        uses: actions/setup-node@v6
         with:
-          python-version: 3.x
+          node-version: "26.13.1"
+          cache: npm
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v10.3.3
-
-      - name: Install dependencies
-        run: uv pip install --system zensical
+      - name: Install frontend dependencies
+        run: npm ci
 
       - name: Build documentation
-        run: zensical build --clean
+        env:
+          BRIDGETOWN_ENV: production
+        run: bundle exec bin/bridgetown deploy
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./site
+          path: ./output
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

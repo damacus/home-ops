@@ -1,32 +1,55 @@
+---
+title: "Flashing Radxa 5B+ Nodes"
+layout: documentation
+---
+
 # Flashing Radxa 5B+ Nodes
 
-This guide explains how to flash the Armbian image to a new Radxa 5B+ node using the provided script.
+Use the Mise provisioning tasks to verify and flash a **local, verified Armbian
+artifact set**. Flashing does not download an image or enrol the node into K3s.
 
-## Prerequisites
+## Prepare the image and target
 
-- A computer with an SD card reader.
-- A microSD card (at least 16GB recommended).
-- The `flash-radxa.sh` script located in `scripts/`.
+Install the pinned tools with `mise install`. Obtain a verified release, or
+follow the [provisioning guide](../provisioning/README.md) to build one. Keep the
+three release files together:
 
-## Steps
+- `<release-id>.img.xz`
+- `<release-id>.img.xz.sha256`
+- `<release-id>.manifest.json`
 
-1.  **Insert the SD Card**: Insert your microSD card into your computer.
-2.  **Run the Script**:
-    Navigate to the root of the repository and run:
-    ```bash
-    ./scripts/flash-radxa.sh
-    ```
-3.  **Follow Prompts**:
-    - The script will download the image if it's not already present.
-    - It will list available drives. **Carefully identify your SD card.**
-    - Enter the device name (e.g., `sdb` or `mmcblk0`).
-    - Confirm the action by typing `flash`.
-4.  **Wait for Completion**: The flashing process may take several minutes.
-5.  **Boot the Node**:
-    - Remove the SD card and insert it into the Radxa 5B+.
-    - Power on the node.
+Insert the target card or disk and identify its **whole-disk device path** using
+`diskutil list` on macOS or `lsblk` on Linux. Confirm its identity and capacity.
+Do not select a partition or a disk containing data you need.
 
-## Troubleshooting
+## Verify and flash
 
-- **Permission Denied**: Ensure the script is executable (`chmod +x scripts/flash-radxa.sh`) and you have `sudo` privileges.
-- **Wrong Drive**: Double-check the drive size and name using `lsblk` before confirming.
+Run these commands from the repository root, substituting the actual release
+file and device path:
+
+```console
+mise run provisioning:verify provisioning/artifacts/<release-id>.img.xz
+mise run provisioning:flash provisioning/artifacts/<release-id>.img.xz /dev/<device> --dry-run
+mise run provisioning:flash provisioning/artifacts/<release-id>.img.xz /dev/<device>
+```
+
+The dry run prints the selected local artifact and target; it does not establish
+that the physical disk is safe to overwrite. The live command validates the
+artifact set, checks the whole disk, rejects the running system's disk and
+mounted child filesystems, checks capacity and displays the target identity.
+It requires you to type the exact validated device path before writing.
+
+Verification also checks the hardened image and the NVMe workaround inside its
+root filesystem and generated initramfs. A checksum alone is not the complete
+image verification.
+
+## Boot and enrol separately
+
+After flashing completes, eject the media if required, insert it into the Radxa
+and boot it. The image deliberately contains no cluster token and does not start
+K3s. Follow the [host lifecycle procedure](../provisioning/README.md#host-lifecycle)
+to enrol the node explicitly using a healthy control-plane source.
+
+If verification or disk inspection fails, resolve that failure before flashing.
+Do not bypass the verified artifact workflow with the legacy
+`scripts/flash-radxa.sh` helper.

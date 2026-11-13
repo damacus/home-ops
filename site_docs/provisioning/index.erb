@@ -1,0 +1,12 @@
+---
+title: Provisioning
+layout: documentation
+permalink: /provisioning/
+---
+
+<h1>Provisioning</h1>
+<ul>
+<% collections.provisioning.resources.sort_by { |guide| guide.data.title.to_s }.each do |guide| %>
+  <li><a href="<%= guide.relative_url %>"><%= ERB::Util.html_escape(guide.data.title) %></a></li>
+<% end %>
+</ul>

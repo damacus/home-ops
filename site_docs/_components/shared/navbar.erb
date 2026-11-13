@@ -1,0 +1,6 @@
+<header slot="header">
+  <%= dsd do %><%= render Willamette::HeaderNavbar.new %><% end %>
+  <a slot="logo" href="<%= relative_url "/" %>"><strong><%= metadata.title %></strong></a>
+  <a slot="search" href="<%= relative_url "/search/" %>">Search</a>
+  <%= strategy.nav_links %>
+</header>

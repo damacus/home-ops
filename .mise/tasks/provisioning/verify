@@ -11,4 +11,4 @@ args=()
 [[ -n "${usage_rootfs:-}" ]] && args+=(--rootfs "${usage_rootfs}")
 [[ "${usage_raw:-false}" == "true" ]] && args+=(--raw)
 cd "${MISE_PROJECT_ROOT}"
-exec go run ./cmd/provisioning verify "${args[@]}"
+exec ruby scripts/provisioning.rb verify "${args[@]}"

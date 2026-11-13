@@ -10,4 +10,4 @@ set -euo pipefail
 args=("${usage_artifact}" "${usage_device}")
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
 cd "${MISE_PROJECT_ROOT}"
-exec go run ./cmd/provisioning flash "${args[@]}"
+exec ruby scripts/provisioning.rb flash "${args[@]}"

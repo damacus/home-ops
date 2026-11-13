@@ -38,11 +38,5 @@ k0sctl completion --shell fish > ~/.config/fish/completions/k0sctl.fish
 stern --completion fish > ~/.config/fish/completions/stern.fish
 yq shell-completion fish > ~/.config/fish/completions/yq.fish
 
-# Create/update virtual environment
-if ! grep -q "venv /workspaces/" .venv/pyvenv.cfg; then
-    rm -rf .venv
-fi
-task workstation:venv
-
 # Export the direnv environment variables
 task workstation:direnv

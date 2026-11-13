@@ -37,8 +37,8 @@ spec:
             seccompProfile: {type: RuntimeDefault}
           containers:
             - name: publisher
-              image: python:3.15-alpine@sha256:0f9552bb28711333da16915ec146f5e6bb44a7fdac9ced15dc17c2e0206346dd
-              command: [python, /scripts/publish.py]
+              image: ruby:4.0.9-alpine@sha256:8ad6909db16ad53b5dc90bb8cc157e5fdd89ba1172798316b95cfd2a61f14b1e
+              command: [ruby, /scripts/publish.rb]
               resources:
                 requests: {cpu: 10m, memory: 32Mi}
                 limits: {memory: 128Mi}

@@ -1,172 +1,89 @@
+---
+title: "Zitadel OIDC Migration Guide"
+layout: documentation
+---
+
 # Zitadel OIDC Migration Guide
 
-## Overview
+## Historical migration context
 
-This guide documents the migration from Dex to Zitadel for OIDC authentication across Grafana, Paperless, and Mealie.
+This page records the earlier move from Dex to Zitadel for Grafana, Paperless
+and Mealie. It is not a procedure to rerun that migration. The old Fish setup
+scripts and `kubernetes:test-app` task are not available, and the repository no
+longer has a Dex application deployment.
 
-## Prerequisites
+For new clients and current account-admission policy, use the
+[Zitadel setup guide](../zitadel-setup.md). Current manifests and application
+operating guides take precedence over the historical migration descriptions.
 
-1. Zitadel instance running at `https://zitadel.damacus.io`
-2. Google OAuth configured in Zitadel
-3. Admin user with IAM_OWNER role in Zitadel
-4. 1Password items created for each OIDC client
+## Current integration sources
 
-## Migration Steps
+| Application | Current configuration | Secret wiring |
+| --- | --- | --- |
+| Grafana | [Helm release](../../kubernetes/apps/monitoring/grafana/app/helmrelease.yaml) | ExternalSecret `zitadel-grafana-oidc` in `monitoring`, reading the same-named 1Password item |
+| Paperless | [Helm release](../../kubernetes/apps/home-automation/paperless/app/helmrelease.yaml) | ExternalSecret `paperless` in `home-automation` creates `paperless-secret` and includes the `zitadel-paperless-oidc` item |
+| Mealie | [Helm release](../../kubernetes/apps/home/mealie/app/helmrelease.yaml) | ExternalSecret `mealie-zitadel-oidc` in `home`, reading the `zitadel-mealie-oidc` item |
 
-### 1. Create OIDC Clients in Zitadel
+The current templates use 1Password properties `client_id` and
+`client_secret`. Mealie's current configuration consumes both; the old
+description of a public client without a secret does not match these manifests.
 
-Run the setup script to create OIDC clients for all applications:
+Existing client IDs and secrets should be preserved during maintenance. Use the
+console or the supported API for the installed Zitadel version when a client
+needs updating; no repository script creates them automatically.
 
-```bash
-./scripts/zitadel-setup-oidc.fish
+## Validate a configuration change
+
+Run the maintained render/schema command before proposing a manifest change:
+
+```console
+task kubernetes:yayamlls
 ```
 
-This script will:
-- Create OIDC clients for Grafana, Paperless, and Mealie
-- Store credentials in Kubernetes secrets in the `authentication` namespace
-- Output client IDs and secrets for 1Password storage
+This checks configuration structure. It does not test an OIDC login or prove
+allowed and denied access. After an approved rollout, inspect ExternalSecret
+status without decoding credentials:
 
-### 2. Store Credentials in 1Password
-
-Create the following 1Password items in the `home-ops` vault:
-
-**zitadel-grafana-oidc:**
-- `client-id`: [from script output]
-- `client-secret`: [from script output]
-
-**zitadel-paperless-oidc:**
-- `client-id`: [from script output]
-- `client-secret`: [from script output]
-
-**zitadel-mealie-oidc:**
-- `client-id`: [from script output] (public client, no secret)
-
-### 3. Deploy Configuration Changes
-
-The following changes have been made:
-
-**Grafana** (`@/Users/damacus/repos/damacus/home-ops/kubernetes/apps/monitoring/grafana/app/helmrelease.yaml`):
-- Added `auth.generic_oauth` configuration
-- Configured Zitadel endpoints
-- Added secret mount for OIDC credentials
-- Enabled PKCE for security
-
-**Paperless** (`@/Users/damacus/repos/damacus/home-ops/kubernetes/apps/home-automation/paperless/app/helmrelease.yaml`):
-- Updated `PAPERLESS_SOCIALACCOUNT_PROVIDERS` to use Zitadel
-- Created ExternalSecret to sync credentials from 1Password
-- Provider ID changed from `dex` to `zitadel`
-
-**Mealie** (`@/Users/damacus/repos/damacus/home-ops/kubernetes/apps/home/mealie/app/helmrelease.yaml`):
-- Updated `OIDC_CONFIGURATION_URL` to Zitadel
-- Changed provider name from `Dex` to `Zitadel`
-- Updated scopes to match Zitadel claims
-- Added ExternalSecret for client ID
-
-### 4. Verify ExternalSecrets Sync
-
-After deploying, verify that ExternalSecrets have synced:
-
-```bash
-# Check Grafana OIDC secret
-kubectl get externalsecret -n authentication zitadel-grafana-oidc
-kubectl get secret -n authentication zitadel-grafana-oidc
-
-# Check Paperless OIDC secret
-kubectl get externalsecret -n home-automation paperless-zitadel-oidc
-kubectl get secret -n home-automation paperless-zitadel-oidc
-
-# Check Mealie OIDC secret
-kubectl get externalsecret -n home mealie-zitadel-oidc
-kubectl get secret -n home mealie-zitadel-oidc
+```console
+kubectl -n monitoring get externalsecret zitadel-grafana-oidc
+kubectl -n home-automation get externalsecret paperless
+kubectl -n home get externalsecret mealie-zitadel-oidc
 ```
 
-### 5. Run Mondoo Tests
+Verify the relevant application through its currently configured public URL:
 
-Test OIDC authentication for each application:
+1. Start with a signed-out browser and follow the Zitadel sign-in flow.
+2. Sign in with an existing authorised account and verify its application role.
+3. Verify that an account outside the allowed group or assignment is denied
+   according to that application's configured policy.
+4. Confirm self-registration and unknown Google account creation remain denied.
+5. Record which live cases passed and which remain unverified, without saving
+   credentials, tokens or clinical/user data.
 
-```bash
-# Test Grafana OIDC
-task kubernetes:test-app app=monitoring/grafana
+For changes under development, use the explicit Docker Desktop context and
+synthetic accounts/data. Static checks and an isolated environment do not prove
+production gateway or network-policy behaviour.
 
-# Test Paperless OIDC
-task kubernetes:test-app app=home-automation/paperless
+## Discovery, claims and recovery
 
-# Test Mealie OIDC
-task kubernetes:test-app app=home/mealie
+Applications should use the issuer's discovery document:
+
+```text
+https://zitadel.damacus.io/.well-known/openid-configuration
 ```
 
-### 6. Test Login Flows
+Compare callback URLs, client authentication methods, scopes and expected
+claims against each application's current configuration. Use the maintained
+[Zitadel Actions guide](../../kubernetes/apps/authentication/zitadel/actions/README.md)
+for group and RustFS claim behaviour.
 
-**Grafana:**
-1. Navigate to `https://grafana.ironstone.casa`
-2. Click "Sign in with Zitadel"
-3. Authenticate with Zitadel (local or Google)
-4. Verify successful login and role assignment
-
-**Paperless:**
-1. Navigate to `https://paperless.ironstone.casa`
-2. Click "Sign in with Zitadel"
-3. Authenticate with Zitadel
-4. Verify successful login
-
-**Mealie:**
-1. Navigate to `https://mealie.ironstone.casa`
-2. Click "Sign in with Zitadel"
-3. Authenticate with Zitadel
-4. Verify successful login
-
-## Zitadel OIDC Endpoints
-
-All applications use these Zitadel endpoints:
-
-```yaml
-issuer: https://zitadel.damacus.io
-authorization_endpoint: https://zitadel.damacus.io/oauth/v2/authorize
-token_endpoint: https://zitadel.damacus.io/oauth/v2/token
-userinfo_endpoint: https://zitadel.damacus.io/oidc/v1/userinfo
-jwks_uri: https://zitadel.damacus.io/oauth/v2/keys
-discovery: https://zitadel.damacus.io/.well-known/openid-configuration
-```
-
-## Rollback Plan
-
-If issues occur, rollback by:
-
-1. Reverting the HelmRelease changes
-2. Re-enabling Dex configuration
-3. Deleting Zitadel OIDC secrets
-
-## Decommissioning Dex
-
-Once all applications are successfully migrated and tested:
-
-1. Remove Dex static clients from configuration
-2. Scale down Dex deployment
-3. Remove Dex HelmRelease
-4. Clean up Dex secrets and ConfigMaps
-
-## Troubleshooting
-
-### Login Fails with "Invalid Redirect URI"
-
-- Verify redirect URIs in Zitadel match exactly
-- Check for trailing slashes
-- Ensure HTTPS is used
-
-### Secret Not Found
-
-- Verify ExternalSecret has synced: `kubectl get externalsecret -n <namespace>`
-- Check 1Password item exists and has correct fields
-- Verify ClusterSecretStore is healthy
-
-### OIDC Discovery Fails
-
-- Verify Zitadel is accessible: `curl https://zitadel.damacus.io/.well-known/openid-configuration`
-- Check network policies allow egress to Zitadel
-- Verify DNS resolution
+If a configuration change breaks access, revert the specific reviewed change
+and restore its known-working client configuration. Do not re-enable Dex or
+delete existing OIDC credentials as a generic rollback step.
 
 ## References
 
-- [Zitadel OIDC Documentation](https://zitadel.com/docs/guides/integrate/login/oidc)
-- [Grafana OAuth Documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/generic-oauth/)
-- [Paperless OIDC Documentation](https://docs.paperless-ngx.com/configuration/#oidc)
+- [Zitadel OIDC integration](https://zitadel.com/docs/guides/integrate/login/oidc)
+- [Zitadel APIs](https://zitadel.com/docs/apis/introduction)
+- [Grafana generic OAuth](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/generic-oauth/)
+- [Paperless configuration](https://docs.paperless-ngx.com/configuration/)

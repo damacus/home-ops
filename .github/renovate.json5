@@ -102,7 +102,6 @@
       matchDatasources: ["docker"],
       matchPackageNames: [
         "ghcr.io/damacus/med-tracker-loco",
-        "ghcr.io/damacus/home-ops-medtracker-canary-reset",
       ],
       enabled: false,
     },

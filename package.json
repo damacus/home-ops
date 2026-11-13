@@ -1,0 +1,21 @@
+{
+  "name": "home-ops-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "esbuild": "node esbuild.config.js --minify",
+    "esbuild-dev": "node esbuild.config.js --watch"
+  },
+  "dependencies": {
+    "willamette": "0.10.5"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "postcss": "8.5.32",
+    "postcss-flexbugs-fixes": "5.0.2",
+    "postcss-import": "17.0.1",
+    "postcss-load-config": "6.0.1",
+    "postcss-preset-env": "11.6.2",
+    "read-cache": "1.0.2"
+  }
+}

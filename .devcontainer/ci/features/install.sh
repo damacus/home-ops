@@ -14,8 +14,8 @@ fi
 #
 
 apk add --no-cache \
-    bash bind-tools ca-certificates curl python3 \
-        py3-pip moreutils jq git iputils \
+    bash bind-tools ca-certificates curl ruby ruby-bundler nodejs npm \
+        moreutils jq git iputils \
             openssh-client starship
 
 apk add --no-cache \
