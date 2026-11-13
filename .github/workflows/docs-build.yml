@@ -1,0 +1,39 @@
+name: Build documentation
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0.9"
+          bundler-cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "26.13.1"
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build documentation
+        env:
+          BRIDGETOWN_ENV: production
+        run: bundle exec bin/bridgetown deploy
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./output

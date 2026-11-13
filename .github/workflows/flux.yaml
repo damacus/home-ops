@@ -26,6 +26,7 @@ jobs:
       grounded_docs: ${{ steps.filter.outputs.grounded_docs }}
       unifi_receiver: ${{ steps.filter.outputs.unifi_receiver }}
       spamhaus: ${{ steps.filter.outputs.spamhaus }}
+      docs: ${{ steps.filter.outputs.docs }}
     steps:
       - name: Classify changed paths
         id: filter
@@ -73,6 +74,22 @@ jobs:
               - 'tests/spamhaus/**'
               - '!**/*.md'
               - '!**/*.mdx'
+            docs:
+              - 'site_docs/**'
+              - 'docs/**/*.md'
+              - 'provisioning/**/*.md'
+              - 'kubernetes/apps/**/README.md'
+              - 'config/**'
+              - 'plugins/**'
+              - 'frontend/**'
+              - 'bin/bridgetown'
+              - 'Gemfile*'
+              - 'package*.json'
+              - '*config.js'
+              - 'Rakefile'
+              - '.ruby-version'
+              - '.github/workflows/docs.yml'
+              - '.github/workflows/docs-build.yml'
 
   yaml-lint:
     needs: changes
@@ -305,6 +322,14 @@ jobs:
           message-failure: Unable to post flate diff
           message-path: flate-comment.md
 
+  documentation:
+    name: Documentation
+    needs: changes
+    if: ${{ needs.changes.outputs.docs == 'true' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/docs-build.yml
+
   flate-success:
     if: ${{ always() }}
     needs:
@@ -320,9 +345,27 @@ jobs:
       - grounded-docs-refresh
       - unifi-receiver
       - spamhaus-publisher
+      - documentation
     name: Flate Successful
     runs-on: ubuntu-slim
     steps:
-      - if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
-        name: Check matrix status
-        run: exit 1
+      - name: Require successful selected checks
+        if: >-
+          ${{ needs.changes.result != 'success' ||
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled') ||
+          (needs.changes.outputs.yaml == 'true' && (needs.yaml-lint.result != 'success')) ||
+          (needs.changes.outputs.kubernetes == 'true' && (needs.yayamlls.result != 'success' || needs.flate-test.result != 'success' || needs.flate-diff.result != 'success')) ||
+          (needs.changes.outputs.ruby == 'true' && (needs.ruby-tools.result != 'success')) ||
+          (needs.changes.outputs.audit == 'true' && (needs.gem-audit.result != 'success')) ||
+          (needs.changes.outputs.mondoo == 'true' && (needs.mondoo.result != 'success')) ||
+          (needs.changes.outputs.zitadel == 'true' && (needs.zitadel-policy.result != 'success')) ||
+          (needs.changes.outputs.grounded_docs == 'true' && (needs.grounded-docs-refresh.result != 'success')) ||
+          (needs.changes.outputs.unifi_receiver == 'true' && (needs.unifi-receiver.result != 'success')) ||
+          (needs.changes.outputs.spamhaus == 'true' && (needs.spamhaus-publisher.result != 'success')) ||
+          (needs.changes.outputs.docs == 'true' && (needs.documentation.result != 'success')) }}
+        run: |
+          echo "::error::Change classification or a required selected check did not succeed"
+          exit 1
+      - name: Confirm required checks passed
+        run: echo "All selected checks passed; unselected checks may be skipped"
