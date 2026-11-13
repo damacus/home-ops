@@ -1,0 +1,28 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: longhorn-resources-outside-default
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: default
+    resourceRules:
+      - apiGroups: [longhorn.io]
+        apiVersions: ["*"]
+        operations: [CREATE, UPDATE]
+        resources: ["*"]
+        scope: Namespaced
+  validations:
+    - expression: "false"
+      message: Longhorn resources must not be created in default; use the storage namespace.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: longhorn-resources-outside-default
+spec:
+  policyName: longhorn-resources-outside-default
+  validationActions: [Deny]
