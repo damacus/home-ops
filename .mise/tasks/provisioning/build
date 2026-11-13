@@ -13,4 +13,4 @@ if [[ "${usage_dry_run:-false}" != "true" ]]; then
   mise run provisioning:docker:doctor
   git submodule update --init -- provisioning/armbian-build/armbian-build-repo
 fi
-exec go run ./cmd/provisioning build "${args[@]}"
+exec ruby scripts/provisioning.rb build "${args[@]}"

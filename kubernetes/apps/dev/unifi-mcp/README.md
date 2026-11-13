@@ -31,9 +31,10 @@ meta-tool discovery without advertising hundreds of tools initially.
    `kubernetes/apps/dev/unifi-mcp/ks.yaml` `spec.suspend: false` through GitOps.
    Check ExternalSecrets and both deployments are ready in context `ironstone`.
    Keep LiteLLM startup independent so a UniFi outage cannot hold up other MCPs.
-5. Reconcile the Codex and Claude policies using the existing
-   `scripts/litellm_keys.py` with secrets injected by `op run`. Preserve their
-   existing MCP grants, user identities and `__mcp_only__` model restriction.
+5. Reconcile the Codex and Claude policies through LiteLLM's supported
+   key-management API or administration UI using credentials from 1Password.
+   Preserve existing MCP grants, user identities and the `__mcp_only__` model
+   restriction.
    Application keys remain without MCP grants. Config aliases are registered by
    this change; they are unavailable until the staged backends start.
 6. Complete the live verification below before treating the integration as ready.
@@ -41,7 +42,7 @@ meta-tool discovery without advertising hundreds of tools initially.
 
 ## Verification
 
-Run repository YAML/render/schema/security checks and existing LiteLLM key tests.
+Run repository YAML/render/schema checks and the applicable security checks.
 Static checks do not establish live access. After activation verify:
 
 - Codex and Claude keys discover both aliases, list Network devices and Protect

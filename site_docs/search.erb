@@ -1,0 +1,49 @@
+---
+layout: page
+title: Search
+permalink: /search/
+exclude_from_pagefind: true
+---
+
+<section id="documentation-search">
+  <label for="search-query">Search the operating guides</label>
+  <input id="search-query" type="search" autocomplete="off" placeholder="Search documentation…">
+  <p id="search-status" role="status"></p>
+  <ul id="search-results"></ul>
+</section>
+
+<script type="module">
+  const pagefind = await import("<%= relative_url "/pagefind/pagefind.js" %>")
+  await pagefind.options({ baseUrl: "<%= relative_url "/" %>" })
+  await pagefind.init()
+
+  const query = document.querySelector("#search-query")
+  const status = document.querySelector("#search-status")
+  const results = document.querySelector("#search-results")
+  let request = 0
+
+  query.addEventListener("input", async () => {
+    const current = ++request
+    try {
+      const search = await pagefind.debouncedSearch(query.value)
+      if (current !== request || search === null) return
+      const matches = await Promise.all(search.results.slice(0, 30).map(result => result.data()))
+      if (current !== request) return
+      results.replaceChildren()
+      status.textContent = query.value.trim() ? `${search.results.length} results` : ""
+      for (const match of matches) {
+        const item = document.createElement("li")
+        const link = document.createElement("a")
+        link.href = match.url
+        link.textContent = match.meta.title
+        const excerpt = document.createElement("p")
+        excerpt.textContent = new DOMParser().parseFromString(match.excerpt, "text/html").body.textContent
+        item.append(link, excerpt)
+        results.append(item)
+      }
+    } catch (error) {
+      status.textContent = "Search could not load. Browse the documentation sections instead."
+      console.error(error)
+    }
+  })
+</script>

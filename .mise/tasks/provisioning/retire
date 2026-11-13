@@ -10,4 +10,4 @@ set -euo pipefail
 args=("${usage_node}" "${usage_host}")
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
 cd "${MISE_PROJECT_ROOT}"
-exec go run ./cmd/provisioning retire "${args[@]}"
+exec ruby scripts/provisioning.rb retire "${args[@]}"

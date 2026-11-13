@@ -15,4 +15,4 @@ args=("${usage_host}")
 [[ "${usage_replace:-false}" == "true" ]] && args+=(--replace)
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
 cd "${MISE_PROJECT_ROOT}"
-exec go run ./cmd/provisioning enrol "${args[@]}"
+exec ruby scripts/provisioning.rb enrol "${args[@]}"

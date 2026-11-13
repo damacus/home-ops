@@ -3,8 +3,7 @@
 version: "3"
 
 vars:
-  CLUSTER_HEALTH_BIN: "{{.ROOT_DIR}}/.cache/bin/cluster-health"
-  MONDOO_SCAN_SCRIPT: "{{.SCRIPTS_DIR}}/mondoo_scan.py"
+  CLUSTER_HEALTH_SCRIPT: "{{.SCRIPTS_DIR}}/cluster-health.rb"
   RUSTFS_IAM_LIVE_POLICY: "{{.ROOT_DIR}}/tests/mondoo/rustfs-iam-live.mql.yaml"
   RUSTFS_IAM_LIVE_CHECK_SCRIPT: "{{.SCRIPTS_DIR}}/rustfs_iam_live_check.sh"
 
@@ -49,25 +48,10 @@ tasks:
       - msg: "Unsupported format; use format=text or format=ndjson"
         sh: '[ "{{.FORMAT}}" = "text" ] || [ "{{.FORMAT}}" = "ndjson" ]'
 
-  .cluster-health-build:
-    internal: true
-    silent: true
-    sources:
-      - "{{.ROOT_DIR}}/go.mod"
-      - "{{.ROOT_DIR}}/cmd/cluster-health/**/*.go"
-      - "{{.ROOT_DIR}}/internal/clusterhealth/**/*.go"
-    generates:
-      - "{{.CLUSTER_HEALTH_BIN}}"
-    cmds:
-      - mkdir -p "{{.ROOT_DIR}}/.cache/bin"
-      - go build -trimpath -o "{{.CLUSTER_HEALTH_BIN}}" ./cmd/cluster-health
-    preconditions:
-      - { msg: "Missing Go toolchain; run mise install", sh: "command -v go >/dev/null" }
-
   .cluster-health-report:
     internal: true
     silent: true
-    deps: [.cluster-health-options, .cluster-health-build]
+    deps: [.cluster-health-options]
     vars:
       COMMAND: '{{.command}}'
       FORMAT: '{{.format | default "text"}}'
@@ -82,7 +66,7 @@ tasks:
       ESPHOME_WS_PATH: '{{.esphome_ws_path | default ""}}'
       ESPHOME_WS_CONTAINS: '{{.esphome_ws_contains | default ""}}'
     cmd: >-
-      {{.CLUSTER_HEALTH_BIN}} {{.COMMAND}}
+      ruby "{{.CLUSTER_HEALTH_SCRIPT}}" {{.COMMAND}}
       --format {{.FORMAT}}
       {{if eq .NOTIFY "true"}}--notify{{end}}
       {{if eq .VERBOSE "true"}}--verbose{{end}}
@@ -95,25 +79,8 @@ tasks:
       --top {{.TOP}}
       --timeout {{.TIMEOUT}}s
     preconditions:
-      - { msg: "Missing cluster health binary", sh: "test -x {{.CLUSTER_HEALTH_BIN}}" }
-
-  test-cluster-health:
-    desc: Test cluster health checks, including repeated Flux failures
-    summary: |
-      Runs offline regression tests for the health checker and its CLI.
-      Repeated reconciliation errors must fail even during recent retries.
-    cmd: go test ./internal/clusterhealth ./cmd/cluster-health
-
-  test-medtracker-canary:
-    desc: Test canary target guards, reset failures and Kubernetes authority
-    cmd: go test ./internal/medtrackercanary ./cmd/medtracker-canary-reset
-
-  medtracker-canary-reset:
-    desc: Run the guarded reset for only the isolated disposable Loco demo
-    cmd: >-
-      kubectl --namespace medtracker-canary create job
-      --from=cronjob/medtracker-canary-reset
-      medtracker-canary-reset-{{now | date "20060102-150405"}}
+      - { msg: "Missing Ruby interpreter; run mise install", sh: "command -v ruby >/dev/null" }
+      - { msg: "Missing cluster health script", sh: "test -f {{.CLUSTER_HEALTH_SCRIPT}}" }
 
   health-nodes:
     desc: Report Kubernetes node readiness
@@ -159,7 +126,7 @@ tasks:
         task kubernetes:health verbose=true
         task kubernetes:health notify=true
         task kubernetes:health-nodes raw=true
-    deps: [.cluster-health-options, .cluster-health-build]
+    deps: [.cluster-health-options]
     vars:
       FORMAT: '{{.format | default "text"}}'
       NOTIFY: '{{.notify | default "false"}}'
@@ -270,7 +237,7 @@ tasks:
         task kubernetes:morning-check notify=true
         task kubernetes:morning-check edge_smoke=false
         task kubernetes:morning-check log_noise=true period=6h top=10
-    deps: [.cluster-health-options, .cluster-health-build]
+    deps: [.cluster-health-options]
     vars:
       FORMAT: '{{.format | default "text"}}'
       NOTIFY: '{{.notify | default "false"}}'
@@ -380,73 +347,6 @@ tasks:
     cmds:
       - task: .cluster-health-report
         vars: { command: log-noise }
-
-  test-app:
-    desc: Run Mondoo checks for a Kubernetes application
-    summary: |
-      Runs the migrated application checks with cnspec and local Mondoo
-      policy bundles.
-
-      Examples:
-        task kubernetes:test-app app=authentication/zitadel
-        task kubernetes:test-app app=monitoring/grafana
-        task kubernetes:test-app app=home-automation/paperless
-        task kubernetes:test-app app=home/mealie
-    cmd: >-
-      {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
-      {{if .output}}--output {{.output}}{{end}}
-      {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
-      app --app {{.app}}
-    preconditions:
-      - msg: "Missing app parameter. Usage: task kubernetes:test-app app=<namespace>/<app>"
-        sh: test -n "{{.app}}"
-      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
-      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
-      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
-
-  mondoo-manifests:
-    desc: Run Mondoo checks against rendered Flux Kubernetes manifests
-    summary: |
-      Renders Flux output through the local Flux path, runs the repository
-      custom Kubernetes policy as a failing gate, and optionally collects
-      built-in Mondoo posture output as report-only.
-
-      Examples:
-        task kubernetes:mondoo-manifests
-        task kubernetes:mondoo-manifests path=./kubernetes output=junit report_dir=mondoo-reports
-    vars:
-      PATH_ARG: '{{.path | default "./kubernetes"}}'
-      INCLUDE_POSTURE: '{{.include_posture | default "true"}}'
-    cmd: >-
-      {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
-      {{if .output}}--output {{.output}}{{end}}
-      {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
-      k8s-manifests --path {{.PATH_ARG}}
-      {{if eq .INCLUDE_POSTURE "true"}}--include-posture{{end}}
-    preconditions:
-      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
-      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
-      - { msg: "Missing flate", sh: "command -v flate >/dev/null" }
-      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
-
-  mondoo-live:
-    desc: Run report-only Mondoo posture scan against the current Kubernetes cluster
-    summary: |
-      Uses the current kubeconfig and cnspec's built-in Kubernetes posture
-      policies. This is intentionally report-only during the migration.
-
-      Examples:
-        task kubernetes:mondoo-live
-        task kubernetes:mondoo-live output=junit report_dir=mondoo-reports
-    cmd: >-
-      {{.PYTHON_BIN}} {{.MONDOO_SCAN_SCRIPT}}
-      {{if .output}}--output {{.output}}{{end}}
-      {{if .report_dir}}--report-dir {{.report_dir}}{{end}}
-      k8s-live
-    preconditions:
-      - { msg: "Missing Python interpreter", sh: "command -v {{.PYTHON_BIN}} >/dev/null" }
-      - { msg: "Missing cnspec", sh: "command -v cnspec >/dev/null" }
-      - { msg: "Missing Mondoo wrapper", sh: "test -f {{.MONDOO_SCAN_SCRIPT}}" }
 
   log-noise-by-namespace:
     desc: Identify top log-producing namespaces by volume (requires Loki)

@@ -108,20 +108,16 @@ database recovery; losing it can make encrypted database credentials unusable.
    reconciliation path with the explicit `ironstone` context.
 3. Confirm ExternalSecrets are ready, the database is ready, a backup succeeds,
    both gateway pods are healthy, private DNS resolves and HTTPS is valid.
-4. Preview `python3 scripts/litellm_keys.py mealie` (repeat for the other four
-   clients). Inject `LITELLM_MASTER_KEY` and the appropriate
-   `LITELLM_CLIENT_KEY` using `op run`, then add `--apply`. It creates a missing
-   key or updates policy without submitting a spend reset. A failed request
-   stops; it never falls back to unauthenticated access. Keep the master key
-   out of clients and shell history.
+4. Review the client policies in `keys.json` and apply them through LiteLLM's
+   supported key-management API or administration UI. Retrieve credentials from
+   1Password; do not expose master or client keys in command arguments, logs or
+   shell history. Preserve spend counters and existing client identities.
 5. Verify model requests and MCP allow/deny cases before client cutover. For HA,
    read state, change a reversible test entity and restore its original state.
    For Grafana, read a dashboard and query data; verify write tools are absent.
-6. **Mealie:** inject a group-manager `MEALIE_TOKEN` and its gateway key through
-   `op run`. Run `python3 scripts/mealie_litellm.py` to preview, then `--apply`.
-   It uses Mealie's supported API, preserves model IDs and provider selection,
-   and verifies each endpoint update. Custom headers stop
-   the cutover before any write. Repeat with each group if new groups exist.
+6. **Mealie:** configure the gateway endpoint, key and existing model IDs through
+   Mealie's supported provider settings/API for each group. Preserve provider
+   selection and review custom headers before changing an existing provider.
    Verify text, image and audio operations. Then change the existing Mealie
    Flux Kustomization path to
    `./kubernetes/apps/dev/litellm/rollout/mealie` to remove the obsolete upstream

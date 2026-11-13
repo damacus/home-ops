@@ -9,7 +9,7 @@ set -euo pipefail
 args=("${usage_artifact}")
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
 cd "${MISE_PROJECT_ROOT}"
-validation="$(go run ./cmd/provisioning artifact validate "${usage_artifact}")"
+validation="$(ruby scripts/provisioning.rb artifact validate "${usage_artifact}")"
 image="$(jq -r .image <<<"${validation}")"; checksum="$(jq -r .checksum <<<"${validation}")"; manifest="$(jq -r .manifest <<<"${validation}")"; release_id="$(jq -r .release_id <<<"${validation}")"
 files=("${image}" "${checksum}" "${manifest}")
 if [[ "${usage_dry_run:-false}" == "true" ]]; then

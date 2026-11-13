@@ -1,0 +1,13 @@
+@import "@awesome.me/webawesome/dist/styles/webawesome.css";
+@import "willamette/frontend/styles/theme.css";
+
+:root {
+  --wll-color-brand: var(--wa-color-teal-50);
+}
+
+/* Keep wide operational tables within the article on small screens. */
+article table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}

@@ -5,8 +5,8 @@ This directory builds a hardened, unjoined Armbian image for the Radxa Rock
 start K3s. Joining a host is a separate, explicit SSH operation against an
 existing healthy cluster.
 
-Mise is the stable operator interface. The Go command exposed by
-`cmd/provisioning` and implemented under `internal/provisioning` owns the
+Mise is the stable operator interface. The Ruby command exposed by
+`scripts/provisioning.rb` and implemented under `lib/home_ops/provisioning` owns the
 safety-critical build, artifact, verification, flashing, and lifecycle logic.
 Mise file tasks compose that command and retain the simple Bash boundaries for
 Docker diagnostics, scoped cleanup, status, staging, and release operations.

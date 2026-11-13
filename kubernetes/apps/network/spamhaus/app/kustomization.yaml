@@ -6,4 +6,4 @@ resources:
 configMapGenerator:
   - name: spamhaus-publisher
     files:
-      - publish.py
+      - publish.rb

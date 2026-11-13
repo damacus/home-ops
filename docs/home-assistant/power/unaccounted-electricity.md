@@ -1,19 +1,9 @@
-# Manual unaccounted electricity report
+# Historical unaccounted electricity analysis
 
-Run the read-only report:
-
-```console
-task home-assistant:unaccounted-electricity
-```
-
-Get structured output, including the five-minute graph series:
-
-```console
-task home-assistant:unaccounted-electricity format=json
-```
-
-The task runs the analysis inside the Home Assistant pod. It uses the pod's
-existing recorder connection and does not print or store database credentials.
+The manual electricity report and its Task command have been retired. This
+page retains the calculation method for interpreting earlier reports; it is
+not a current operating procedure. Use Home Assistant's Energy dashboard for
+current consumption data.
 
 ## Method
 
@@ -41,9 +31,8 @@ coverage is below 95%.
 
 ## Limits
 
-The Energy dashboard device list is a checked-in snapshot. Update
-`ACCOUNTED_ENERGY_ENTITIES` and `ACCOUNTED_POWER_ENTITIES` in
-`scripts/home_assistant_unaccounted_electricity.py` when the dashboard changes.
+The retired report used a snapshot of the Energy dashboard device list. Its
+results do not automatically reflect later dashboard or sensor changes.
 
 Unaccounted demand includes genuinely unmetered loads, modelled standby errors,
 meter precision, and remaining timing differences. A reported spike is a reason

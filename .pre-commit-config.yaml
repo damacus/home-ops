@@ -1,6 +1,5 @@
 ---
 fail_fast: false
-files: ^kubernetes/
 repos:
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.35.1
@@ -10,27 +9,34 @@ repos:
           - .yamllint.yaml
           - --strict
         id: yamllint
+        files: ^kubernetes/
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
+        files: ^kubernetes/
       - id: end-of-file-fixer
+        files: ^kubernetes/
       - id: mixed-line-ending
+        files: ^kubernetes/
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
     hooks:
       - id: remove-crlf
+        files: ^kubernetes/
       - id: remove-tabs
+        files: ^kubernetes/
   - repo: https://github.com/k8s-at-home/sops-pre-commit
     rev: v2.1.1
     hooks:
       - id: forbid-secrets
-  # - repo: local
-  #   hooks:
-  #     - id: flate-test
-  #       name: flate test
-  #       entry: flate --no-progress test all --api-versions "policy/v1/PodDisruptionBudget,monitoring.coreos.com/v1/ServiceMonitor,monitoring.coreos.com/v1/PodMonitor,monitoring.coreos.com/v1/PrometheusRule" --path ./kubernetes
-  #       language: system
-  #       pass_filenames: false
-  #       files: ^kubernetes/
-  #       stages: [commit]
+        files: ^kubernetes/
+  - repo: local
+    hooks:
+      - id: bundler-audit
+        name: Audit gem dependencies
+        # Git commit exports repository paths; the advisory updater needs its own Git repository.
+        entry: env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR bundle exec bundle-audit check --update
+        language: system
+        files: '^(Gemfile(\.lock)?|\.pre-commit-config\.yaml)$'
+        pass_filenames: false

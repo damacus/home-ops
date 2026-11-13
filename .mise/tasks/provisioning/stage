@@ -9,7 +9,7 @@ set -euo pipefail
 args=("${usage_artifact}")
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
 cd "${MISE_PROJECT_ROOT}"
-validation="$(go run ./cmd/provisioning artifact validate "${usage_artifact}")"
+validation="$(ruby scripts/provisioning.rb artifact validate "${usage_artifact}")"
 image="$(jq -r .image <<<"${validation}")"
 checksum="$(jq -r .checksum <<<"${validation}")"
 manifest="$(jq -r .manifest <<<"${validation}")"
@@ -26,6 +26,6 @@ temporary="$(mktemp -d "$(dirname "${destination}")/.${release_id}.XXXXXX")"
 cleanup() { rm -rf -- "${temporary}"; }
 trap cleanup EXIT
 for file in "${files[@]}"; do cp -p -- "${file}" "${temporary}/"; done
-go run ./cmd/provisioning artifact validate "${temporary}/$(basename "${image}")" >/dev/null
+ruby scripts/provisioning.rb artifact validate "${temporary}/$(basename "${image}")" >/dev/null
 mv -- "${temporary}" "${destination}"
 trap - EXIT

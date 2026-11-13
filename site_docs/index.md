@@ -1,3 +1,8 @@
+---
+title: "Welcome to Home Ops Documentation"
+layout: documentation
+---
+
 # Welcome to Home Ops Documentation
 
 This site contains documentation for managing the home operations cluster.

@@ -177,9 +177,9 @@ refresh rules; retrying an incomplete initial scrape can rebuild that version.
    Kustomization that manages the same LiteLLM resources. Preserve all existing
    dependencies and add `grounded-docs` to that Kustomization's `dependsOn`.
 7. The reviewed `litellm/keys.json` already contains the Grounded Docs grants.
-   Use the existing `scripts/litellm_keys.py codex` and `claude` preview/apply
-   workflow with secrets injected through `op run`, as documented in the LiteLLM
-   README. Do not reset spend, rotate keys or grant application keys MCP access.
+   Apply those policies through the supported LiteLLM key-management API or
+   administration UI, retrieving credentials from 1Password. Do not reset spend,
+   rotate keys or grant application keys MCP access.
 8. Verify the allow/deny cases below. Keep Context7 configured until these pass;
    replacing global Context7 instructions/client configuration is a later cutover.
 

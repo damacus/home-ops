@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: "YAML, Flate & Mondoo"
+name: "YAML, Flate & Ruby"
 
 on:
   pull_request:
@@ -19,42 +19,60 @@ jobs:
     outputs:
       yaml: ${{ steps.filter.outputs.yaml }}
       kubernetes: ${{ steps.filter.outputs.kubernetes }}
-      go: ${{ steps.filter.outputs.go }}
+      ruby: ${{ steps.filter.outputs.ruby }}
+      audit: ${{ steps.filter.outputs.audit }}
       mondoo: ${{ steps.filter.outputs.mondoo }}
+      zitadel: ${{ steps.filter.outputs.zitadel }}
+      grounded_docs: ${{ steps.filter.outputs.grounded_docs }}
+      unifi_receiver: ${{ steps.filter.outputs.unifi_receiver }}
+      spamhaus: ${{ steps.filter.outputs.spamhaus }}
     steps:
       - name: Classify changed paths
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
+          predicate-quantifier: some-with-excludes
           filters: |
             yaml:
               - '**/*.yaml'
               - '**/*.yml'
               - '.yamllint*'
             kubernetes:
-              - '.github/workflows/flux.yaml'
+              - 'kubernetes/**'
               - '.taskfiles/Flux/**'
-              - 'kubernetes/**'
-              - 'tests/spamhaus/**'
-            go:
-              - '.github/workflows/flux.yaml'
-              - '.taskfiles/Kubernetes/Taskfile.yaml'
-              - 'cmd/cluster-health/**'
-              - 'internal/clusterhealth/**'
-              - 'cmd/provisioning/**'
-              - 'internal/provisioning/**'
-              - '.mise/tasks/provisioning/**'
-              - 'provisioning/**'
-              - 'go.mod'
-              - 'mise.lock'
+              - '!**/*.md'
+              - '!**/*.mdx'
+            ruby:
+              - '**/*.rb'
+              - '.ruby-version'
               - 'mise.toml'
+              - 'mise.lock'
+            audit:
+              - 'Gemfile'
+              - 'Gemfile.lock'
+              - '.ruby-version'
+              - '.pre-commit-config.yaml'
             mondoo:
-              - '.github/workflows/flux.yaml'
-              - 'kubernetes/**'
-              - 'mondoo/**'
-              - 'scripts/mondoo_scan.py'
+              - 'mondoo/policies/*.mql.yaml'
+            zitadel:
+              - 'kubernetes/apps/authentication/zitadel/app/reconcile-access-policy.rb'
+              - 'kubernetes/apps/authentication/zitadel/app/access-policy.yaml'
               - 'tests/test_zitadel_access_policy.rb'
+            grounded_docs:
+              - 'kubernetes/apps/dev/grounded-docs/app/sync.mjs'
+              - 'kubernetes/apps/dev/grounded-docs/app/sources.json'
+              - 'kubernetes/apps/dev/grounded-docs/app/refresh-cronjob.yaml'
+              - 'kubernetes/apps/dev/grounded-docs/app/kustomization.yaml'
               - 'tests/grounded-docs-sync.test.mjs'
+            unifi_receiver:
+              - 'kubernetes/apps/monitoring/unifi-logs/app/receiver.yaml'
+              - 'kubernetes/apps/monitoring/unifi-logs/app/vector.yaml'
+            spamhaus:
+              - 'kubernetes/apps/network/spamhaus/**'
+              - 'kubernetes/apps/monitoring/victoria-metrics/app/prometheusrule.yaml'
+              - 'tests/spamhaus/**'
+              - '!**/*.md'
+              - '!**/*.mdx'
 
   yaml-lint:
     needs: changes
@@ -90,7 +108,7 @@ jobs:
   spamhaus-publisher:
     name: Spamhaus publisher
     needs: changes
-    if: ${{ needs.changes.outputs.kubernetes == 'true' }}
+    if: ${{ needs.changes.outputs.spamhaus == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -106,105 +124,88 @@ jobs:
             victoriametrics/vmalert-tool:v1.155.0@sha256:b03d29d0a11b906a85879a6a4009c9d0a9d5a8b9a744ebb7dd3a7721f1e78f36 \
             unittest -files=/data/test.yaml
 
-  cluster-health:
-    name: Cluster Health CLI
+  ruby-tools:
+    name: Ruby tooling
     needs: changes
-    if: ${{ needs.changes.outputs.go == 'true' }}
+    if: ${{ needs.changes.outputs.ruby == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1
         with:
-          go-version-file: go.mod
-          cache: false
+          ruby-version: .ruby-version
+      - name: Check Ruby syntax
+        run: git ls-files -z '*.rb' | xargs -0 -n1 ruby -c
 
-      - name: Setup Mise
-        uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
+  gem-audit:
+    name: Gem dependency audit
+    needs: changes
+    if: ${{ needs.changes.outputs.audit == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1
         with:
-          version: 2026.11.8
-          install: false
-          cache: false
-
-      - name: Test
-        run: go test ./...
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Build
-        run: go build ./cmd/...
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Audit gem dependencies
+        run: bundle exec bundle-audit check --update
 
   mondoo:
-    name: Mondoo
-    needs: [changes, yaml-lint, yayamlls, flate-test]
-    if: >-
-      ${{ always() && needs.changes.outputs.mondoo == 'true' &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled') }}
+    name: Mondoo policy lint
+    needs: changes
+    if: ${{ needs.changes.outputs.mondoo == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1
-        with:
-          ruby-version: '4.0.9'
-
-      - name: Setup flate
-        uses: home-operations/flate/action@v0.7.3
-        with:
-          base: ""
-          token: ${{ github.token }}
-          cache: "true"
-
-      - name: Setup Workflow Tools
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Set up cnspec
         run: |
           bash -c "$(curl -sSL https://install.mondoo.com/sh)"
           cnspec version
-
-      - name: Verify access-policy behaviour
-        run: ruby tests/test_zitadel_access_policy.rb
-
-      - name: Setup Node for documentation refresh checks
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: '26'
-
-      - name: Verify safe documentation refresh
-        run: node --test tests/grounded-docs-sync.test.mjs
-
       - name: Lint Mondoo policies
         run: cnspec policy lint mondoo/policies/*.mql.yaml
 
+  zitadel-policy:
+    name: Zitadel access policy
+    needs: changes
+    if: ${{ needs.changes.outputs.zitadel == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1
+        with:
+          ruby-version: .ruby-version
+      - name: Verify access-policy behaviour
+        run: ruby tests/test_zitadel_access_policy.rb
+
+  grounded-docs-refresh:
+    name: Grounded Docs refresh
+    needs: changes
+    if: ${{ needs.changes.outputs.grounded_docs == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '26'
+      - name: Verify safe documentation refresh
+        run: node --test tests/grounded-docs-sync.test.mjs
+
+  unifi-receiver:
+    name: UniFi receiver parsing
+    needs: changes
+    if: ${{ needs.changes.outputs.unifi_receiver == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1
+        with:
+          ruby-version: .ruby-version
       - name: Verify UniFi receiver parsing
         run: |
           set -euo pipefail
-          image=$(yq 'select(.kind == "StatefulSet") | .spec.template.spec.containers[0].image' kubernetes/apps/monitoring/unifi-logs/app/receiver.yaml)
+          image=$(ruby -ryaml -e 'puts YAML.load_stream(File.read(ARGV.fetch(0))).find { |doc| doc["kind"] == "StatefulSet" }.fetch("spec").fetch("template").fetch("spec").fetch("containers").first.fetch("image")' kubernetes/apps/monitoring/unifi-logs/app/receiver.yaml)
           docker run --rm -v "$PWD/kubernetes/apps/monitoring/unifi-logs/app/vector.yaml:/etc/vector/vector.yaml:ro" "$image" test /etc/vector/vector.yaml
-
-      - name: Select checked-out Flux source
-        run: git update-ref refs/heads/main HEAD
-
-      - name: Run rendered manifest scans
-        env:
-          FLATE_BASE: ""
-        run: >-
-          python3 scripts/mondoo_scan.py
-          --output junit
-          --report-dir mondoo-reports
-          k8s-manifests --path ./kubernetes --include-posture
-
-      - name: Upload Mondoo reports
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: mondoo-reports
-          path: mondoo-reports
-          if-no-files-found: ignore
 
   flate-test:
     name: Flate Test
@@ -306,7 +307,19 @@ jobs:
 
   flate-success:
     if: ${{ always() }}
-    needs: ["changes", "flate-diff", "flate-test", "mondoo", "spamhaus-publisher"]
+    needs:
+      - changes
+      - yaml-lint
+      - yayamlls
+      - flate-diff
+      - flate-test
+      - ruby-tools
+      - gem-audit
+      - mondoo
+      - zitadel-policy
+      - grounded-docs-refresh
+      - unifi-receiver
+      - spamhaus-publisher
     name: Flate Successful
     runs-on: ubuntu-slim
     steps:

@@ -1,108 +1,91 @@
+---
+title: "Zitadel Setup Guide"
+layout: documentation
+---
+
 # Zitadel Setup Guide
 
-## Overview
+The repository configures Zitadel at
+[the administration console](https://zitadel.damacus.io/ui/console/).
+The Helm release enables the separate Login UI and the HTTPRoute sends
+`/ui/v2/login` to `zitadel-login`. These are declared settings, not a claim that
+a live login has just been verified.
 
-Zitadel is now configured with:
+Use the [application operating guide](../kubernetes/apps/authentication/zitadel/README.md)
+for deployment prerequisites, credential sources and certificate wiring.
 
-- ✅ V2 login UI enabled and routed correctly
-- ✅ Admin user with IAM_OWNER role
-- ✅ Local authentication (username/password)
-- ✅ Google OAuth identity provider
-- ✅ OIDC clients for all applications
+## Administrators and account admission
 
-## Admin Access
+Sign in with an existing instance administrator. An existing owner can grant
+the required administrator role through the console's administrator management.
+Use an organisation or project role for application access; instance-owner
+privileges are for instance administration.
 
-Console URL: <https://zitadel.damacus.io/ui/console/>
-Permissions: IAM_OWNER (full instance administration)
+There are no repository scripts for creating administrators, granting roles or
+creating OIDC clients. Use the supported console workflow or the
+[Zitadel APIs](https://zitadel.com/docs/apis/introduction) for the installed
+server version. Keep API credentials in the secret store; do not write PATs,
+client secrets or service-account keys into temporary credential reports.
 
-## Authentication Options
+The Git-managed
+[access policy](../kubernetes/apps/authentication/zitadel/app/access-policy.yaml)
+allows existing accounts to use local passwords and passkeys, and enables the
+explicitly configured Google provider. It disables self-registration and
+identity-provider account creation. Google may link to an existing account by
+email, but may not create a new one.
 
-### 1. Local Authentication
+The `zitadel-access-policy` CronJob reconciles these settings hourly. Change
+the complete policy in Git rather than relying on console edits that the
+reconciler will overwrite. Do not use the legacy hardening script to replace
+this policy.
 
-Users can register and login with username/password (enabled by default).
+## Configure an OIDC application
 
-### 2. Google OAuth
+1. In the console, select the intended organisation and application project.
+   Create a project if necessary. Do not repurpose Zitadel's built-in default
+   project, which protects its own console and APIs.
+2. Open the project's applications and create or update an OIDC application.
+   Select the application type and authentication method supported by the
+   integrating application.
+3. Register its exact HTTPS callback and logout URLs from that application's
+   current configuration. Do not reuse callback URLs from historical examples.
+4. Store the client ID and, for confidential clients, client secret in the
+   existing 1Password item referenced by the application's ExternalSecret.
+5. Let External Secrets and Flux reconcile the configuration, then verify an
+   allowed login and the intended denied-access case.
 
-Google is configured as an identity provider:
-- Users can login with their Google account
-- Users can link Google to existing local accounts
-- Auto-creation is disabled (requires manual approval)
-- Auto-update is enabled (profile updates from Google)
+Follow [Zitadel's project documentation](https://zitadel.com/docs/guides/manage/console/projects-overview)
+and [OIDC integration guide](https://zitadel.com/docs/guides/integrate/login/oidc)
+for the console/API procedures. For an existing client, update it in place
+rather than deleting and recreating it unnecessarily.
 
-## OIDC Clients
+Where an application relies on custom groups or RustFS policy claims, follow
+the maintained [Actions guide](../kubernetes/apps/authentication/zitadel/actions/README.md)
+as well. Successful authentication alone does not prove the correct role was
+assigned.
 
-OIDC clients can be created using the `zitadel-create-oidc-clients.fish` script or manually through the console UI. Client credentials are saved to `/tmp/zitadel-clients.txt` when using the script - store them securely in 1Password or your secrets management system.
+## Discovery and verification
 
-## OIDC Endpoints
+Use the issuer's discovery document instead of copying endpoint lists:
 
-When configuring applications, use these Zitadel endpoints:
-
-```yaml
-issuer: https://zitadel.damacus.io
-authorization_endpoint: https://zitadel.damacus.io/oauth/v2/authorize
-token_endpoint: https://zitadel.damacus.io/oauth/v2/token
-userinfo_endpoint: https://zitadel.damacus.io/oidc/v1/userinfo
-jwks_uri: https://zitadel.damacus.io/oauth/v2/keys
+```text
+https://zitadel.damacus.io/.well-known/openid-configuration
 ```
 
-## Management Scripts
+Check declared Kubernetes resources without printing secret data:
 
-All scripts are located in `scripts/` and use fish shell syntax:
-
-- `zitadel-create-admin.fish` - Create admin user for console access
-- `zitadel-grant-admin.fish` - Grant IAM_OWNER role to admin user
-- `zitadel-configure-auth.fish` - Configure Google OAuth identity provider
-- `zitadel-create-oidc-clients.fish` - Create OIDC applications
-
-## Deleting OIDC Clients
-
-To delete OIDC clients (for testing/recreation), use the Zitadel console:
-
-1. Navigate to Projects → Default Project
-2. Click on Applications
-3. Select the application to delete
-4. Click Delete
-
-Or use the API:
-
-```fish
-set PAT (kubectl get secret -n authentication zitadel-admin-sa-pat -o jsonpath='{.data.pat}' | base64 -d)
-set PROJECT_ID "355223427969320100"
-set APP_ID "your-app-id"
-
-curl -X DELETE "https://zitadel.damacus.io/management/v1/projects/$PROJECT_ID/apps/$APP_ID" \
-  -H "Authorization: Bearer $PAT"
+```console
+kubectl -n authentication get helmrelease zitadel
+kubectl -n authentication get httproute zitadel
+kubectl -n authentication get service zitadel zitadel-login
+kubectl -n authentication get cronjob zitadel-access-policy
 ```
 
-## Next Steps
+For Login UI failures, inspect the `/ui/v2/login` route, Login UI service and
+`zitadel-login-service-key` certificate wiring documented in the application
+guide. For a rejected callback, compare the exact redirect URL and client
+authentication method. For missing privileges, have an existing owner inspect
+the account's administrator assignment and sign in again after a correction.
 
-1. Create OIDC clients for your applications (via script or console)
-2. Update application configurations with client IDs and secrets
-3. Test authentication flows
-4. Migrate from Dex once all applications are working
-
-## Troubleshooting
-
-### Login UI Returns 404
-
-- Check HTTPRoute has routing rule for `/ui/v2/login`
-- Verify `zitadel-login` service is running
-- Check `login.enabled: true` in HelmRelease
-
-### User Has No Admin Access
-
-- Run `./scripts/zitadel-grant-admin.fish`
-- Log out and log back in to refresh permissions
-
-### OIDC Client Not Working
-
-- Verify redirect URIs match exactly
-- Check client secret is correct
-- Ensure OIDC endpoints are configured correctly
-- Check Zitadel logs: `kubectl logs -n authentication -l app.kubernetes.io/name=zitadel`
-
-## References
-
-- [Zitadel Documentation](https://zitadel.com/docs)
-- [Zitadel Management API](https://zitadel.com/docs/apis/resources/mgmt)
-- [OIDC Configuration Guide](https://zitadel.com/docs/guides/integrate/login/oidc)
+This guide does not assert that Google, local login or any application login
+currently succeeds; those access cases require live verification.

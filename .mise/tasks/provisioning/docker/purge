@@ -11,7 +11,7 @@ if [[ "${usage_dry_run:-false}" == "true" ]]; then
   jq -n --arg compile "${armbian}/compile.sh" --argjson reclaim "${usage_reclaim:-false}" '{before:"docker system df -v",purge:[$compile,"docker-purge"],reclaim:$reclaim,after:"docker system df -v"}'
   exit 0
 fi
-go run ./cmd/provisioning armbian check docker-purge
+ruby scripts/provisioning.rb armbian check docker-purge
 docker system df -v
 (cd "${armbian}" && ./compile.sh docker-purge)
 if [[ "${usage_reclaim:-false}" == "true" ]]; then docker run --rm --privileged --pid=host docker/desktop-reclaim-space; fi

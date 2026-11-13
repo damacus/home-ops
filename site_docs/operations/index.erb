@@ -1,0 +1,13 @@
+---
+title: Operations
+layout: documentation
+permalink: /operations/
+---
+
+<h1>Operations</h1>
+<p>Repository runbooks, published from their maintained Markdown sources.</p>
+<ul>
+<% collections.operations.resources.sort_by { |guide| guide.data.title.to_s }.each do |guide| %>
+  <li><a href="<%= guide.relative_url %>"><%= ERB::Util.html_escape(guide.data.title) %></a></li>
+<% end %>
+</ul>
