@@ -34,6 +34,25 @@ Docker Desktop must allocate at least 8 GiB RAM to an ARM64 daemon. The
 preflight allows up to 512 MiB of that allocation to be reserved by the VM.
 The host must have at least 50 GiB free space.
 
+## Checking shell scripts
+
+Install the pinned ShellHarden and shfmt tools with `mise install`. For a
+changed shell script, run these checks from the repository root:
+
+```console
+mise exec -- shfmt -i 2 -d path/to/script
+mise exec -- shellharden --check path/to/script
+bash -n path/to/script
+```
+
+Use `sh -n` for POSIX shell scripts. `shfmt -d` reports formatting differences;
+`shellharden --suggest` shows proposed quoting and syntax changes. Review each
+suggestion: existing scripts can intentionally split lists into words, and
+ShellHarden can also suggest removing optional variable braces. Do not apply
+`--replace` across the repository without reviewing the resulting behaviour.
+These tools cover formatting, parsing and quoting; they do not reproduce all
+ShellCheck diagnostics.
+
 ## Image workflow
 
 Inspect the complete resolved build plan without network or Docker changes:

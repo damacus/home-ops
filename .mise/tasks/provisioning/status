@@ -22,13 +22,11 @@ for item in "${checks[@]}"; do
   name="${item%%:*}"; remote="${item#*:}"
   if [[ "${usage_raw:-false}" == "true" ]]; then
     printf '== %s ==\n' "${name}"
-    # shellcheck disable=SC2029
     ssh "pi@${usage_host}" "${remote}" || failed=true
     continue
   fi
   output_file="$(mktemp)"; error_file="$(mktemp)"
   set +e
-  # shellcheck disable=SC2029
   ssh "pi@${usage_host}" "${remote}" >"${output_file}" 2>"${error_file}"
   rc=$?
   set -e

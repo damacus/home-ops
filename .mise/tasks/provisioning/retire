@@ -6,7 +6,6 @@
 #USAGE flag "--dry-run" help="Print the destructive lifecycle plan"
 set -euo pipefail
 # Variables are supplied by Mise's usage parser.
-# shellcheck disable=SC2154
 
 args=("${usage_node}" "${usage_host}")
 [[ "${usage_dry_run:-false}" == "true" ]] && args+=(--dry-run)
