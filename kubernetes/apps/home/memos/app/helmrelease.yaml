@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: neosmemo/memos
-              tag: stable
+              tag: "26.11.0"
             env:
               MEMOS_DATA: &datadir /var/opt/memos
               MEMOS_DRIVER: sqlite
@@ -105,6 +105,12 @@ spec:
                 weight: 1
 
     persistence:
+      config:
+        type: secret
+        name: memos-oidc-config
+        globalMounts:
+          - path: /etc/memos/config
+            readOnly: true
       data:
         existingClaim: memos-data
         globalMounts:
