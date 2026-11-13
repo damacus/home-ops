@@ -42,7 +42,8 @@
         "grafana",
         "unifi_network",
         "unifi_protect",
-        "grounded_docs"
+        "grounded_docs",
+        "penpot"
       ]
     },
     "user_id": "mcp-codex"
