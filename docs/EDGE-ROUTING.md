@@ -39,7 +39,7 @@ Supporting references:
 | n8n | `n8n.ironstone.casa`, `n8n-webhooks.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
 | Paperless | `paperless.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
 | Mealie | `mealie.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
-| Med Tracker | `med-tracker.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
+| Med Tracker | `med-tracker.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No hard WS dependency known | No | H1/H2/H3 | Already good |
 | Zitadel | `zitadel.damacus.io` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 edge, h2c backend | Leave as-is |
 | Grafana | `grafana.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | Possible live UI traffic, not a blocker | No | H1/H2/H3 | Already good |
 | Victoria Metrics | `metrics.ironstone.casa` | HTTPRoute | Traefik `traefik-internal` | No | No | H1/H2/H3 | Already good |
