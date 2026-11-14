@@ -1,6 +1,8 @@
 ---
 title: "Zitadel OIDC Migration Guide"
 layout: documentation
+doc_type: history
+description: Earlier Dex-to-Zitadel migration and integration lessons.
 ---
 
 # Zitadel OIDC Migration Guide

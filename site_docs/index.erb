@@ -1,0 +1,26 @@
+---
+title: Home Ops
+layout: documentation
+---
+
+<h1>Mostly working. Always tinkering.</h1>
+<p>This is the Kubernetes cluster running things around my house. These are the notes I want when something breaks, and the history I wish I’d read before trying the same thing again.</p>
+<p>If you’re passing through, <a href="<%= relative_url '/setup/' %>">start with the setup</a>. If you’re me, there’s probably a reason you’re here.</p>
+
+<h2>Find what you came for</h2>
+<ul>
+  <li><a href="<%= relative_url '/debugging/' %>">Debugging</a> — pick the service and get to its checks, recovery notes and previous incidents.</li>
+  <li><a href="<%= relative_url '/in-progress/' %>">In progress</a> — where a project has got to, what remains and what’s stuck.</li>
+  <li><a href="<%= relative_url '/history/' %>">History</a> — completed work, decisions and mistakes worth remembering.</li>
+</ul>
+
+<h2>Currently tinkering with</h2>
+<% active = site.data.guide_index.select { |guide| guide[:doc_type] == 'project' && guide[:status] == 'active' } %>
+<% if active.empty? %>
+  <p>No active project is recorded here yet. <a href="<%= relative_url '/in-progress/' %>">Open proposals and paused work</a> live separately; an old plan isn’t evidence that I’m still working on it.</p>
+<% else %>
+  <%= render 'guide_list', guides: active %>
+<% end %>
+
+<h2>The useful bits</h2>
+<p><a href="<%= relative_url '/applications/' %>">Service guides</a> stay beside their configuration in Git. <a href="<%= relative_url '/provisioning/' %>">Provisioning</a> covers building and looking after nodes. <a href="<%= relative_url '/reference/' %>">Reference</a> has tooling and chart links.</p>

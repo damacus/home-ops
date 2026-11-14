@@ -1,6 +1,15 @@
+---
+doc_type: history
+description: Original quiet-hours implementation and alerting lessons.
+---
+
 # Escalation Policies and DND-Aware Alerting Setup
 
-## Overview
+These are the original alerting implementation notes. The receiver examples
+include the former Pushover route and must not be reused as current config.
+Use the [current OnCall guide](GRAFANA-ONCALL-SETUP.md) for routing and debugging.
+
+## Original approach
 
 This document describes the implementation of Do-Not-Disturb (DND) aware escalation policies for the home-ops cluster's alerting system using Alertmanager.
 
@@ -119,48 +128,6 @@ Escape template delimiters in YAML:
 
 - `{{ "{{" }}` for opening `{{`
 - `{{ "}}" }}` for closing `}}`
-
-### 9. Git Workflow
-
-This project uses:
-
-- **Conventional Commits**: `feat:`, `fix:`, `refactor:`, `test:`
-- **Signed commits**: GPG signing via `git_commit_signed` function
-- **Protected main branch**: Requires GitHub checks before merge
-- **Auto-merge workflow**: `gh pr create -f && gh pr merge -sd --auto`
-
-### 10. Beads Issue Tracking
-
-- Issues blocked by parent epic cannot be closed (use `--force` to override)
-- Use `bd sync` to export beads changes to JSONL
-- Update issue notes when implementation is complete but closure is blocked
-
-## Implementation Checklist
-
-- [x] Add mute time intervals for weekday evenings (18:00-08:00 UTC)
-- [x] Add mute time intervals for weekends (Fri 18:00 - Mon 08:00 UTC)
-- [x] Create severity-based routing rules
-- [x] Create critical-only receiver with high priority
-- [x] Update Pushover templates with severity indicators
-- [x] Commit with Conventional Commits format
-- [x] Create PR and set up auto-merge
-- [ ] Test DND policies with synthetic alerts
-- [ ] Document runbook for testing escalation policies
-- [ ] Verify critical alerts bypass DND in production
-
-## Next Steps
-
-1. **Deploy and verify**: Monitor Alertmanager after Flux syncs the changes
-2. **Test critical alerts**: Fire test alert with `severity="critical"` during DND window
-3. **Test non-critical alerts**: Fire test alert with `severity="warning"` during DND window
-4. **Document runbook**: Create `docs/ESCALATION-TESTING-RUNBOOK.md`
-5. **Monitor**: Watch Pushover notifications and Alertmanager logs for 1 week
-
-## Related Issues
-
-- **home-ops-qyh**: Configure escalation policies and notification channels (COMPLETED)
-- **home-ops-cil**: Grafana On-Call: Core Setup & Configuration (PARENT EPIC)
-- **home-ops-uw0**: Integrate Alertmanager with On-Call
 
 ## References
 

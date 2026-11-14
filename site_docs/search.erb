@@ -6,7 +6,7 @@ exclude_from_pagefind: true
 ---
 
 <section id="documentation-search">
-  <label for="search-query">Search the operating guides</label>
+  <label for="search-query">Search guides, projects and history</label>
   <input id="search-query" type="search" autocomplete="off" placeholder="Search documentation…">
   <p id="search-status" role="status"></p>
   <ul id="search-results"></ul>
@@ -36,9 +36,11 @@ exclude_from_pagefind: true
         const link = document.createElement("a")
         link.href = match.url
         link.textContent = match.meta.title
+        const section = document.createElement("small")
+        section.textContent = match.meta.section ? ` · ${match.meta.section}` : ""
         const excerpt = document.createElement("p")
         excerpt.textContent = new DOMParser().parseFromString(match.excerpt, "text/html").body.textContent
-        item.append(link, excerpt)
+        item.append(link, section, excerpt)
         results.append(item)
       }
     } catch (error) {

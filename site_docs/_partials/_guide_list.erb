@@ -1,0 +1,9 @@
+<ul>
+<% guides.each do |guide| %>
+  <li>
+    <a href="<%= guide[:url] %>"><%= ERB::Util.html_escape(guide[:title]) %></a>
+    <% if guide[:description] %> — <%= ERB::Util.html_escape(guide[:description]) %><% end %>
+    <% if guide[:reviewed] %><small> (notes reviewed <%= ERB::Util.html_escape(guide[:reviewed].to_s) %>)</small><% end %>
+  </li>
+<% end %>
+</ul>

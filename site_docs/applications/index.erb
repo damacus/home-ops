@@ -5,7 +5,7 @@ permalink: /applications/
 ---
 
 <h1>Applications</h1>
-<p>Application operating guides published directly from the repository.</p>
+<p>Pick a service to understand its setup, maintain it or find its recovery notes. These guides live beside the configuration they describe.</p>
 <ul>
 <% collections.applications.resources.sort_by { |guide| guide.data.title.to_s }.each do |guide| %>
   <li><a href="<%= guide.relative_url %>"><%= ERB::Util.html_escape(guide.data.title) %></a></li>

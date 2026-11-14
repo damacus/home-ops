@@ -1,7 +1,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><%= ERB::Util.html_escape(data.title || site.metadata.title) %> · Home Ops</title>
-<meta name="description" content="<%= ERB::Util.html_escape(site.metadata.description) %>">
+<title><%= ERB::Util.html_escape(data.title || site.metadata.title) %><%= ' · Home Ops' unless data.title == site.metadata.title %></title>
+<meta name="description" content="<%= ERB::Util.html_escape(data.description || site.metadata.description) %>">
 <link rel="stylesheet" href="<%= asset_path :css %>">
 <script src="<%= asset_path :js %>" defer></script>
 <%= live_reload_dev_js %>

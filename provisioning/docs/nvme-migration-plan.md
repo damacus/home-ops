@@ -1,4 +1,14 @@
+---
+doc_type: history
+description: Original Radxa NVMe incident and recovery investigation.
+---
+
 # NVMe Migration Recovery Plan
+
+This is the original incident investigation, including machine-specific disk
+identifiers and commands. Do not paste these into another node. Start with the
+[current initramfs fix](initramfs.md) and [provisioning guide](../README.md);
+come back here for the symptoms, failed approaches and reasoning.
 
 ## Problem Summary
 

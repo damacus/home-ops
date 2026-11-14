@@ -9,9 +9,10 @@ module Shared
       @strategy = Willamette.navbar(
         self, logo: nil, site_title: metadata.title, search: true,
         nav_links: [
-          Willamette.link(title: "Getting started", url: "/"),
-          Willamette.link(title: "Applications", url: "/applications/"),
-          Willamette.link(title: "Helm charts", url: "/operations/helm-charts/")
+          Willamette.link(title: "The setup", url: "/setup/"),
+          Willamette.link(title: "In progress", url: "/in-progress/"),
+          Willamette.link(title: "Debugging", url: "/debugging/"),
+          Willamette.link(title: "History", url: "/history/")
         ]
       )
     end
@@ -25,14 +26,15 @@ module Shared
       @strategy = Willamette.sidebar(
         self, description: metadata.description,
         explore_links: [
-          Willamette.link(title: "Getting started", url: "/"),
-          Willamette.link(title: "Operations", url: "/operations/"),
+          Willamette.link(title: "Home", url: "/"),
+          Willamette.link(title: "The setup", url: "/setup/"),
+          Willamette.link(title: "In progress", url: "/in-progress/"),
+          Willamette.link(title: "Debugging", url: "/debugging/"),
+          Willamette.link(title: "History", url: "/history/"),
+          Willamette.link(title: "Service guides", url: "/applications/"),
+          Willamette.link(title: "Operating guides", url: "/operations/"),
           Willamette.link(title: "Provisioning", url: "/provisioning/"),
-          Willamette.link(title: "Applications", url: "/applications/"),
-          Willamette.link(title: "Helm charts", url: "/operations/helm-charts/"),
-          Willamette.link(title: "Flashing Radxa 5B+", url: "/flashing/"),
-          Willamette.link(title: "Zitadel setup", url: "/zitadel-setup/"),
-          Willamette.link(title: "Zitadel migration", url: "/docs/zitadel-migration/")
+          Willamette.link(title: "Reference", url: "/reference/")
         ], subscribe: false
       )
     end

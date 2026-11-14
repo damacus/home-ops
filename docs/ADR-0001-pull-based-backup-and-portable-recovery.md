@@ -1,4 +1,33 @@
+---
+doc_type: project
+status: paused
+reviewed: "2026-11-14"
+description: Proposed garage backup vault and portable recovery; implementation decisions remain open.
+---
+
 # ADR-0001: Pull-based backup and portable recovery
+
+This is the proposal for recovering when the cluster or the house is unavailable.
+It records the design and the decisions needed before implementation.
+
+## Where this stands
+
+Notes reviewed against the repository on 14 November 2026. The proposal below
+has not recorded a completed implementation or independent restore evidence.
+It is listed with paused work, rather than presented as an active rollout.
+
+| Stage | Recorded position |
+| --- | --- |
+| Design and failure scenarios | Proposed in this decision record |
+| Garage NAS and read-only pull transport | Decisions outstanding |
+| Integrity checks and restore-aware retention | Acceptance criteria defined below; completion not recorded |
+| Encrypted cold copy and portable restore | Provider, cost and recovery evidence outstanding |
+
+Next: settle the NAS, transport, retention and spending decisions below before
+calling this an implementation project. The [retired R2 backup history](retired-r2-physical-backups.md)
+explains the previous approach and the existing recovery archive.
+
+## Original decision record
 - Status: Proposed
 - Date: 2026-07-23
 - Decision owner: Dan Webb

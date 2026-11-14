@@ -1,73 +1,71 @@
-# Grafana Cloud OnCall Setup
+# Alerts and Grafana OnCall
 
-## Overview
+Use this when an alert is missing, arrives at the wrong time, or reaches
+Alertmanager but doesn't page. Routing and quiet hours live in Alertmanager;
+Grafana Cloud OnCall handles paging after the webhook arrives.
 
-Grafana Cloud OnCall is configured as a second destination for actionable Alertmanager alerts. The existing Pushover receivers stay in place, and each receiver now fans out to both Grafana OnCall and Pushover.
+## What is configured
 
-The local Grafana instance is managed through GitOps. Do not treat manual Grafana UI changes as authoritative; update the manifests and 1Password items instead.
+Repository configuration checked on 14 November 2026: actionable receivers are
+`oncall` and `oncall-critical`. Both send to the configured OnCall integration.
+The current Alertmanager template has no Pushover receivers. The
+[original escalation notes](ESCALATION-POLICIES-SETUP.md) describe the previous
+Pushover rollout and the quiet-hours design.
 
-## Required 1Password Fields
+The source is the
+[VictoriaMetrics ExternalSecret](../kubernetes/apps/monitoring/victoria-metrics/app/externalsecret.yaml).
+Its template reads the integration webhook from the `grafana-cloud-oncall`
+1Password item, property `GRAFANA_ONCALL_ALERTMANAGER_URL`. Treat the URL as a
+credential. Local Grafana plugin credentials are wired by the Grafana
+ExternalSecrets; keep them aligned with the same Cloud stack.
 
-The `grafana-cloud-oncall` item must expose these fields through External Secrets:
+## Follow a missing alert
 
-- `credential`: Grafana OnCall plugin token. Explicitly mapped to `GRAFANA_ONCALL_TOKEN`, then rendered into `GF_PLUGIN_GRAFANA_ONCALL_APP_ONCALL_TOKEN`.
-- `GRAFANA_ONCALL_ALERTMANAGER_URL`: Alertmanager integration webhook URL copied from Grafana Cloud OnCall. Explicitly mapped into the Alertmanager template. Treat this as sensitive.
+1. Confirm the alert is firing in the rule source and inspect its labels.
+2. Check which Alertmanager route matches, including silences and inhibition.
+3. Check whether a quiet-hours interval applies.
+4. Confirm the relevant ExternalSecrets are Ready without decoding their values.
+5. Check Alertmanager delivery errors, then the Cloud OnCall integration and escalation.
 
-The Grafana OnCall plugin API URL is declared in `kubernetes/apps/monitoring/grafana/app/externalsecret-oncall.yaml`:
-
-```text
-https://oncall-prod-eu-west-0.grafana.net/oncall
-```
-
-## Grafana Cloud Setup
-
-1. In Grafana Cloud OnCall, create or open the `Alertmanager Prometheus` integration for this cluster.
-2. Copy the integration HTTP endpoint into the `GRAFANA_ONCALL_ALERTMANAGER_URL` field in the `grafana-cloud-oncall` 1Password item.
-3. Confirm the plugin token in `credential` is valid for the same Grafana Cloud OnCall stack.
-4. Let External Secrets refresh, or reconcile the relevant Flux resources.
-
-## Verification
-
-Run the static checks before applying changes:
-
-```bash
-task kubernetes:yayamlls
-task flux:flate-build path=./kubernetes/apps/monitoring/grafana
-task flux:flate-build path=./kubernetes/apps/monitoring/victoria-metrics
-```
-
-After Flux sync:
-
-```bash
-kubectl get secret grafana-oncall-secret -n monitoring
-kubectl get secret alertmanager-secret -n monitoring
+```console
+kubectl --context ironstone -n monitoring get externalsecret
 task kubernetes:grafana-alerts
 ```
 
-In Grafana, verify:
+Don't paste a webhook URL, token or rendered Secret into logs or a bug report.
+Change the manifests and 1Password source rather than relying on manual
+Grafana UI edits to persist.
 
-- `grafana-oncall-app` is installed and enabled.
-- Plugin settings use `https://oncall-prod-eu-west-0.grafana.net/oncall`.
-- The plugin token is present in secure JSON fields.
-- Grafana-managed alert policy routes to the `Alertmanager` contact point.
+## Quiet hours and exceptions
 
-In Alertmanager, verify:
+Warning/info alerts use weekday-evening and weekend mute intervals. The
+template has no timezone override, so its interval times are UTC. Don't read
+them as Europe/London wall-clock time across daylight-saving changes.
 
-- Receivers `pushover` and `pushover-critical` include both an OnCall webhook and a Pushover config.
-- `Watchdog` still routes to Gatus heartbeat.
-- `InfoInhibitor` still routes to `null`.
-- Warning/info alerts still respect the DND mute intervals.
-- Critical alerts bypass DND.
+Critical alerts use separate routes that bypass those quiet hours. Watchdog
+goes to the Gatus heartbeat receiver, and InfoInhibitor goes to `null`.
+UniFi radio warning/info alerts also go to `null`; critical radio and OOM
+alerts have their own grouping before the general critical route.
 
-## End-to-End Test
+Read the current template for the exact matchers and intervals. Quiet hours,
+silences, inhibition and downstream escalation can each explain a missing page.
 
-1. Fire a synthetic warning alert.
-2. Confirm it appears in Grafana Cloud OnCall and Pushover receives the rollout duplicate.
-3. Resolve the warning alert and confirm the OnCall alert group autoresolves.
-4. Fire a synthetic critical alert during a DND window.
-5. Confirm it pages through OnCall and still produces the critical Pushover notification.
-6. Resolve the critical alert and confirm the OnCall alert group autoresolves.
+## Verify a routing change
 
-## Rollback
+Run the existing render/schema checks, then use controlled synthetic warning
+and critical alerts after the approved rollout. Check that a warning respects
+quiet hours, a critical alert bypasses them, and resolved groups close in
+OnCall. Confirm Watchdog still reaches Gatus.
 
-Remove the `webhook_configs` blocks from the `pushover` and `pushover-critical` receivers in `kubernetes/apps/monitoring/victoria-metrics/app/externalsecret.yaml`, then reconcile Flux. This returns routing to Pushover-only without changing Grafana dashboards or alert rules.
+Source inspection for this documentation update did not repeat live paging or
+quiet-hours checks. A rendered configuration doesn't prove delivery.
+
+## Recover
+
+Revert the specific reviewed routing change and reconcile it. Restore a known
+working integration credential through the existing secret source if it broke.
+Don't use the historical Pushover-only rollback instructions against today's
+receiver configuration.
+
+References: [Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/)
+and [time intervals](https://prometheus.io/docs/alerting/latest/configuration/#time_interval-0).

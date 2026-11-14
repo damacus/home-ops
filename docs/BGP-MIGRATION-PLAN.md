@@ -1,4 +1,14 @@
+---
+doc_type: history
+description: September BGP rollout notes, test results and cutover procedure.
+---
+
 # Cilium service BGP rollout
+
+These are the September rollout notes, including the test evidence and the
+then-proposed service cutover. They are kept to explain the routing decisions,
+not to report current peer health or authorise another cutover. Use the
+[current routing guide](EDGE-ROUTING.md) and manifests for today's setup.
 
 ## Design
 
