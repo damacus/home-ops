@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: private-secret-files
-          image: ghcr.io/damacus/git-triage@sha256:a232ac333d894e4630db9a7e21921af870b8ac48cf19667c57ef7da5ad33e4cb
+          image: ghcr.io/damacus/git-triage@sha256:df18823aa28a71fe31aa18fda3d75ed8350d6f31edc890b9ab914831ef434ed6
           command: [/bin/sh, -ec]
           args:
             - umask 077; for source in /source/*; do cp "$source" "/run/private/$(basename "$source")"; done
@@ -46,7 +46,7 @@ spec:
               mountPath: /run/private
       containers:
         - name: app
-          image: ghcr.io/damacus/git-triage@sha256:a232ac333d894e4630db9a7e21921af870b8ac48cf19667c57ef7da5ad33e4cb
+          image: ghcr.io/damacus/git-triage@sha256:df18823aa28a71fe31aa18fda3d75ed8350d6f31edc890b9ab914831ef434ed6
           env:
             - {name: PHX_SERVER, value: "true"}
             - {name: ERL_FLAGS, value: "+S 2:2 +Q 65536"}
