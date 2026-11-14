@@ -2,6 +2,15 @@
 layout: default
 ---
 
-<article>
+<% historical = data.doc_type == 'history' || (data.doc_type == 'project' && data.status == 'completed') %>
+<article data-pagefind-meta="section:<%= historical ? 'History' : (data.doc_type == 'project' ? 'Project' : 'Guide') %>">
+  <% if historical %>
+    <p class="guide-note" data-pagefind-ignore>From the <a href="<%= relative_url '/history/' %>">history</a>. Commands and status describe their original context; follow the linked current guide before making changes.</p>
+  <% elsif data.doc_type == 'project' %>
+    <p class="guide-note" data-pagefind-ignore><%= ERB::Util.html_escape(data.status.to_s.capitalize) %> project · notes reviewed <%= ERB::Util.html_escape(data.reviewed.to_s) %>. This records the work, not live cluster health.</p>
+  <% end %>
   <%= yield %>
+  <% if resource.collection.label.to_s == 'applications' %>
+    <p class="guide-note">Chart versions and upstream documentation: <a href="<%= relative_url '/operations/helm-charts/' %>">Helm chart reference</a>.</p>
+  <% end %>
 </article>

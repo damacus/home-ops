@@ -1,3 +1,8 @@
+---
+doc_type: history
+description: Retirement of the bundled OpenEBS logging stack.
+---
+
 # OpenEBS logging retirement
 
 > Historical migration procedure. HDD claim definitions and the stopped HDD

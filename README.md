@@ -2,7 +2,7 @@
 
 Homelab Kubernetes using Flux.
 
-<img width="500" height="500" alt="Gemini_Generated_Image_nlad3gnlad3gnlad" src="https://github.com/user-attachments/assets/2b1fee48-1339-473c-8b6f-786fab6b7fdb" />
+<img width="500" alt="Home Ops terminal saying all good, with a quietly smouldering corner" src="docs/assets/home-ops-all-good.png" />
 
 ## 📖 Project Documentation
 

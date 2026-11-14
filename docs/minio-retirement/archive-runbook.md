@@ -1,3 +1,8 @@
+---
+doc_type: history
+description: Historical object-archive procedure for bundled MinIO.
+---
+
 # Archive bundled OpenEBS MinIO into RustFS
 
 This is a manual Stage 2 procedure. Merging this runbook does not run it.

@@ -1,3 +1,8 @@
+---
+doc_type: history
+description: Calculation method from the retired electricity report.
+---
+
 # Historical unaccounted electricity analysis
 
 The manual electricity report and its Task command have been retired. This

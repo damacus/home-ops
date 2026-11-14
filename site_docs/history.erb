@@ -1,0 +1,8 @@
+---
+title: History
+layout: documentation
+---
+
+<h1>History</h1>
+<p>How we got here: incidents, completed changes and the lessons worth keeping. Historical commands describe their original situation; check the current service guide before reusing them.</p>
+<%= render 'guide_list', guides: site.data.guide_index.select { |guide| guide[:doc_type] == 'history' || (guide[:doc_type] == 'project' && guide[:status] == 'completed') } %>

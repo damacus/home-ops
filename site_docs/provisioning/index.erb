@@ -5,8 +5,9 @@ permalink: /provisioning/
 ---
 
 <h1>Provisioning</h1>
+<p>Build, flash and look after a Radxa node. Start with the main provisioning guide; the <a href="<%= relative_url '/history/' %>">incident history</a> explains the boot problems behind the workarounds.</p>
 <ul>
-<% collections.provisioning.resources.sort_by { |guide| guide.data.title.to_s }.each do |guide| %>
+<% collections.provisioning.resources.reject { |guide| guide.data.doc_type == 'history' }.sort_by { |guide| guide.data.title.to_s }.each do |guide| %>
   <li><a href="<%= guide.relative_url %>"><%= ERB::Util.html_escape(guide.data.title) %></a></li>
 <% end %>
 </ul>

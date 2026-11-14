@@ -1,0 +1,28 @@
+---
+title: Debugging
+layout: documentation
+---
+
+<h1>Debugging</h1>
+<p>Pick the service or component that’s giving you trouble. Its guide should get you to the useful checks, recovery procedure and previous incidents.</p>
+<p>Use an explicit Kubernetes context. Start with status, events and logs; don’t restart or delete things just to see what happens.</p>
+
+<h2>Cluster and infrastructure</h2>
+<ul>
+  <li><a href="<%= relative_url '/provisioning/README/' %>">Nodes and provisioning</a> — image verification, enrolment and zero-cluster recovery.</li>
+  <li><a href="<%= relative_url '/provisioning/docs/initramfs/' %>">Radxa / NVMe boot</a> — the initramfs rescan fix and <a href="<%= relative_url '/provisioning/docs/nvme-migration-plan/' %>">original incident</a>.</li>
+  <li><a href="<%= relative_url '/operations/EDGE-ROUTING/' %>">Traefik and routing</a> — check the edge before changing the application.</li>
+  <li><a href="<%= relative_url '/operations/GRAFANA-ONCALL-SETUP/' %>">Alerts and OnCall</a> — routing, quiet hours and delivery checks.</li>
+  <li><a href="<%= relative_url '/operations/home-assistant-longhorn/' %>">Home Assistant storage</a> — shared volume, attachment and recovery.</li>
+  <li><a href="<%= relative_url '/operations/unifi-os-logging/' %>">UniFi logging</a> and <a href="<%= relative_url '/operations/unifi-radio-monitoring/' %>">radio monitoring</a> — what the feeds cover and where to investigate.</li>
+  <li><a href="<%= relative_url '/operations/spamhaus-blocklist/' %>">Spamhaus feeds</a> — failed publication, stale lists and firewall checks.</li>
+  <li><a href="<%= relative_url '/operations/flate-setup/' %>">Flux rendering</a> — diagnose configuration failures before rollout.</li>
+</ul>
+
+<h2>Applications and shared services</h2>
+<ul>
+<% collections.applications.resources.reject { |guide| guide.data.doc_type == 'history' }.sort_by { |guide| guide.data.title.to_s }.each do |guide| %>
+  <li><a href="<%= guide.relative_url %>"><%= ERB::Util.html_escape(guide.data.title) %></a></li>
+<% end %>
+</ul>
+<p>Can’t find the service? <a href="<%= relative_url '/search/' %>">Search the notes</a>, or use the <a href="<%= relative_url '/operations/helm-charts/' %>">chart catalogue</a> to find its manifests and upstream documentation.</p>

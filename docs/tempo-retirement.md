@@ -1,3 +1,8 @@
+---
+doc_type: history
+description: Why tracing stopped and which recovery data was retained.
+---
+
 # Tempo retirement
 
 Tempo was retired on 22 October 2026. The tracing backend, its scrape and alert

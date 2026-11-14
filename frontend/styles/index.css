@@ -11,3 +11,52 @@ article table {
   max-width: 100%;
   overflow-x: auto;
 }
+
+article {
+  max-inline-size: 76ch;
+}
+
+article h2, article h3 {
+  scroll-margin-block-start: 2rem;
+}
+
+.page-contents {
+  align-self: start;
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.page-contents-mobile {
+  margin-block: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--wa-color-surface-border);
+  border-radius: 0.5rem;
+}
+
+.page-contents-mobile summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.guide-note {
+  padding: 0.75rem 1rem;
+  border-inline-start: 3px solid var(--wll-color-brand);
+}
+
+.navigation-chevron { display: none; }
+
+@media (min-width: 1100px) {
+  .page-contents-mobile { display: none; }
+}
+
+@media (max-width: 1099px) {
+  aside.page-contents { display: none; }
+}
+
+@media (max-width: 767px) {
+  header[slot="header"] > ul[slot="nav"] { display: none; }
+  .navigation-chevron { display: inline-block; }
+  details[open] .navigation-chevron { rotate: 180deg; }
+}

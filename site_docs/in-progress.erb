@@ -1,0 +1,14 @@
+---
+title: In progress
+layout: documentation
+---
+
+<h1>In progress</h1>
+<p>Find where a project has got to before picking it up again. These are dated notes, not live deployment status.</p>
+<h2>Active</h2>
+<% active = site.data.guide_index.select { |guide| guide[:doc_type] == 'project' && guide[:status] == 'active' } %>
+<% if active.empty? %><p>No project is currently marked active. Unfinished work below isn’t automatically a commitment to work on it now.</p><% else %><%= render 'guide_list', guides: active %><% end %>
+<h2>Paused and awaiting decisions</h2>
+<% paused = site.data.guide_index.select { |guide| guide[:doc_type] == 'project' && guide[:status] == 'paused' } %>
+<%= render 'guide_list', guides: paused %>
+<p>When work finishes, its story moves into <a href="<%= relative_url '/history/' %>">History</a>. The instructions needed to operate the result stay in its service guide.</p>

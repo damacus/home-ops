@@ -1,3 +1,8 @@
+---
+doc_type: history
+description: Retired backup jobs and recovery of retained generations.
+---
+
 # Retired standalone R2 database backups
 
 The custom nightly physical-backup CronJobs were removed on 19 October 2026.

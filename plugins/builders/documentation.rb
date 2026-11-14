@@ -17,6 +17,18 @@ class Builders::Documentation < SiteBuilder
           @sources[source_path(resource)] = resource.relative_url
         end
       end
+      site.data.guide_index = site.resources.filter_map do |resource|
+        next unless resource.data.doc_type
+        if resource.data.doc_type == "project" && !%w[active paused completed].include?(resource.data.status)
+          raise "Unknown project status in #{source_path(resource)}: #{resource.data.status.inspect}"
+        end
+
+        {
+          title: resource.data.title, url: resource.relative_url,
+          description: resource.data.description, doc_type: resource.data.doc_type,
+          status: resource.data.status, reviewed: resource.data.reviewed
+        }
+      end.sort_by { |guide| guide[:title].to_s.downcase }
     end
 
     # Resolve repository-relative Markdown links after rendering, leaving code examples unchanged.
@@ -38,14 +50,51 @@ class Builders::Documentation < SiteBuilder
         unless resolved
           relative = target.delete_prefix("#{site.root_dir}/")
           kind = File.directory?(target) ? "tree" : "blob"
-          resolved = "https://github.com/damacus/home-ops/#{kind}/main/#{relative}"
+          resolved = if attribute == "src"
+                       "https://raw.githubusercontent.com/damacus/home-ops/main/#{relative}"
+                     else
+                       "https://github.com/damacus/home-ops/#{kind}/main/#{relative}"
+                     end
         end
         node[attribute] = [resolved, fragment].compact.join("#")
       end
+
+      add_contents(document, article)
     end
   end
 
   private
+
+  def add_contents(document, article)
+    headings = article.css("h2[id]")
+    return if headings.length < 4
+
+    nav = document.create_element("nav", "aria-label": "On this page")
+    list = document.create_element("ul")
+    headings.each do |heading|
+      item = document.create_element("li")
+      # Willamette adds a permalink marker to headings before this inspector runs.
+      title = heading.text.sub(/\s*#\s*\z/, "")
+      item << document.create_element("a", title, href: "##{heading['id']}")
+      list << item
+    end
+    nav << list
+
+    sidebar = document.at_css('aside[slot="sidebar-end"]')
+    sidebar.remove_attribute("hidden")
+    sidebar.inner_html = ""
+    sidebar << document.create_element("h2", "On this page")
+    sidebar << nav
+    sidebar["class"] = "page-contents"
+    sidebar["data-pagefind-ignore"] = ""
+    document.css('main > .show-mid-screen, aside[slot="sidebar-end"] > .show-mid-screen').each(&:remove)
+
+    details = document.create_element("details", class: "page-contents-mobile", "data-pagefind-ignore": "")
+    details << document.create_element("summary", "On this page")
+    details << nav.dup
+    introduction = article.at_css("h1 + p") || article.at_css("h1")
+    introduction.add_next_sibling(details) if introduction
+  end
 
   def source_path(resource)
     origin = resource.model.origin
