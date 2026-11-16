@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: neosmemo/memos
-              tag: "26.11.0"
+              tag: "26.11.1"
             env:
               MEMOS_DATA: &datadir /var/opt/memos
               MEMOS_DRIVER: sqlite
