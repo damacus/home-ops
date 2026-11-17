@@ -1,6 +1,5 @@
+# One-off cleanup; keep completed to avoid reruns. No permissions on live scrape names.
 ---
-# One-off retirement, kept completed so Flux does not rerun it on every reconcile.
-# The CNPG clusters and source PodMonitors have already been removed.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -8,54 +7,33 @@ metadata:
   namespace: monitoring
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: retired-medtracker-scrapes
-  namespace: home
 rules:
-  - apiGroups: [operator.victoriametrics.com]
-    resources: [vmpodscrapes]
-    resourceNames: [med-tracker-blue]
-    verbs: [get, delete]
+- apiGroups:
+  - operator.victoriametrics.com
+  resources:
+  - vmpodscrapes
+  resourceNames:
+  - med-tracker-blue
+  - medtracker-canary
+  verbs:
+  - get
+  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: retired-medtracker-scrapes
-  namespace: home
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: retired-medtracker-scrapes
 subjects:
-  - kind: ServiceAccount
-    name: retired-medtracker-scrapes
-    namespace: monitoring
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
+- kind: ServiceAccount
   name: retired-medtracker-scrapes
-  namespace: medtracker-canary
-rules:
-  - apiGroups: [operator.victoriametrics.com]
-    resources: [vmpodscrapes]
-    resourceNames: [medtracker-canary]
-    verbs: [get, delete]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: retired-medtracker-scrapes
-  namespace: medtracker-canary
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: retired-medtracker-scrapes
-subjects:
-  - kind: ServiceAccount
-    name: retired-medtracker-scrapes
-    namespace: monitoring
+  namespace: monitoring
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -118,32 +96,34 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-        - name: cleanup
-          image: registry.k8s.io/kubectl:v1.37.2@sha256:fe049faa65ae483ac200009a949a68fa4c9985daea12c9cb1195c9c7965301fc
-          command: [kubectl]
-          args:
-            - --kubeconfig=/cleanup/kubeconfig
-            - delete
-            - --filename=/cleanup/retired.yaml
-            - --ignore-not-found=true
-            - --wait=false
-            - --request-timeout=30s
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-            limits:
-              memory: 128Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: [ALL]
-          volumeMounts:
-            - name: retired
-              mountPath: /cleanup
-              readOnly: true
-      volumes:
+      - name: cleanup
+        image: registry.k8s.io/kubectl:v1.37.2@sha256:fe049faa65ae483ac200009a949a68fa4c9985daea12c9cb1195c9c7965301fc
+        command:
+        - kubectl
+        args:
+        - "--kubeconfig=/cleanup/kubeconfig"
+        - delete
+        - "--filename=/cleanup/retired.yaml"
+        - "--ignore-not-found=true"
+        - "--wait=false"
+        - "--request-timeout=30s"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
         - name: retired
-          configMap:
-            name: retired-medtracker-scrapes
+          mountPath: "/cleanup"
+          readOnly: true
+      volumes:
+      - name: retired
+        configMap:
+          name: retired-medtracker-scrapes

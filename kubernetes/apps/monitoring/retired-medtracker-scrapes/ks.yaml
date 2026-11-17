@@ -5,7 +5,7 @@ metadata:
   name: retired-medtracker-scrapes
   namespace: flux-system
 spec:
-  # Keep the two namespace-scoped Roles in their original namespaces.
+  # RBAC remains reconcilable after the retired canary namespace is removed.
   path: ./kubernetes/apps/monitoring/retired-medtracker-scrapes/app
   prune: true
   sourceRef:
