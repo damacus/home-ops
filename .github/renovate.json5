@@ -67,14 +67,6 @@
       versioning: "regex:^(?:main|v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+))$",
     },
     {
-      description: "Read production MedTracker image metadata from Release Mirror",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/damacus/med-tracker"],
-      overrideDatasource: "custom.release-mirror",
-      overridePackageName: "med-tracker",
-      versioning: "semver",
-    },
-    {
       description: "Read Unifi release announcer metadata from Release Mirror",
       matchDatasources: ["docker"],
       matchPackageNames: ["ghcr.io/damacus/unifi-release-announcer"],
