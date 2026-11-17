@@ -23,6 +23,8 @@ spec:
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
+      # Retain diagnostics for at most seven days, including the last failed run.
+      ttlSecondsAfterFinished: 604800
       backoffLimit: 2
       activeDeadlineSeconds: 600
       template:

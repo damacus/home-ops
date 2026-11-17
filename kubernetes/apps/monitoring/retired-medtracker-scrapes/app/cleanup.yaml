@@ -1,0 +1,149 @@
+---
+# One-off retirement, kept completed so Flux does not rerun it on every reconcile.
+# The CNPG clusters and source PodMonitors have already been removed.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: retired-medtracker-scrapes
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: retired-medtracker-scrapes
+  namespace: home
+rules:
+  - apiGroups: [operator.victoriametrics.com]
+    resources: [vmpodscrapes]
+    resourceNames: [med-tracker-blue]
+    verbs: [get, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: retired-medtracker-scrapes
+  namespace: home
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: retired-medtracker-scrapes
+subjects:
+  - kind: ServiceAccount
+    name: retired-medtracker-scrapes
+    namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: retired-medtracker-scrapes
+  namespace: medtracker-canary
+rules:
+  - apiGroups: [operator.victoriametrics.com]
+    resources: [vmpodscrapes]
+    resourceNames: [medtracker-canary]
+    verbs: [get, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: retired-medtracker-scrapes
+  namespace: medtracker-canary
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: retired-medtracker-scrapes
+subjects:
+  - kind: ServiceAccount
+    name: retired-medtracker-scrapes
+    namespace: monitoring
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: retired-medtracker-scrapes
+  namespace: monitoring
+data:
+  kubeconfig: |
+    apiVersion: v1
+    kind: Config
+    current-context: cleanup
+    clusters:
+      - name: cluster
+        cluster:
+          server: https://kubernetes.default.svc
+          certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    contexts:
+      - name: cleanup
+        context:
+          cluster: cluster
+          user: cleanup
+    users:
+      - name: cleanup
+        user:
+          tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+  retired.yaml: |
+    apiVersion: v1
+    kind: List
+    items:
+      - apiVersion: operator.victoriametrics.com/v1beta1
+        kind: VMPodScrape
+        metadata:
+          name: med-tracker-blue
+          namespace: home
+      - apiVersion: operator.victoriametrics.com/v1beta1
+        kind: VMPodScrape
+        metadata:
+          name: medtracker-canary
+          namespace: medtracker-canary
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: retired-medtracker-scrapes-v1
+  namespace: monitoring
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: retired-medtracker-scrapes
+    spec:
+      serviceAccountName: retired-medtracker-scrapes
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: cleanup
+          image: registry.k8s.io/kubectl:v1.37.2@sha256:fe049faa65ae483ac200009a949a68fa4c9985daea12c9cb1195c9c7965301fc
+          command: [kubectl]
+          args:
+            - --kubeconfig=/cleanup/kubeconfig
+            - delete
+            - --filename=/cleanup/retired.yaml
+            - --ignore-not-found=true
+            - --wait=false
+            - --request-timeout=30s
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: retired
+              mountPath: /cleanup
+              readOnly: true
+      volumes:
+        - name: retired
+          configMap:
+            name: retired-medtracker-scrapes

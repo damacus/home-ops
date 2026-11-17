@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: retired-medtracker-scrapes
+  namespace: flux-system
+spec:
+  # Keep the two namespace-scoped Roles in their original namespaces.
+  path: ./kubernetes/apps/monitoring/retired-medtracker-scrapes/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
