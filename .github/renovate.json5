@@ -148,11 +148,6 @@
       ],
     },
     {
-      description: "Enable MedTracker updates",
-      matchPackageNames: ["ghcr.io/damacus/med-tracker"],
-      enabled: true,
-    },
-    {
       description: "Auto-merge non-major updates for selected home-ops assets",
       matchPackageNames: [
         "jdx/mise",
@@ -234,6 +229,15 @@
       ignoreTests: false,
       minimumReleaseAge: "48 hours",
       minimumReleaseAgeBehaviour: "timestamp-required",
+    },
+    {
+      description: "Auto-merge MedTracker releases without an age delay",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/damacus/med-tracker"],
+      enabled: true,
+      automerge: true,
+      ignoreTests: false,
+      minimumReleaseAge: null,
     },
   ],
 }
