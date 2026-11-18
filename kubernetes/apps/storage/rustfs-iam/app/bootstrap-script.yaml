@@ -232,6 +232,11 @@ data:
       exit 0
     fi
 
+    if [ "$scope" = "med-tracker-dmd" ]; then
+      provision_single_bucket_identity "rustfs-med-tracker-dmd" "$RUSTFS_MED_TRACKER_DMD_ACCESS_KEY" "$RUSTFS_MED_TRACKER_DMD_SECRET_KEY" "med-tracker-dmd"
+      exit 0
+    fi
+
     if [ "$scope" = "northops-postgres" ]; then
       provision_single_bucket_identity "rustfs-cnpg-northops-postgres" "$RUSTFS_NORTHOPS_POSTGRES_ACCESS_KEY" "$RUSTFS_NORTHOPS_POSTGRES_SECRET_KEY" "cnpg-northops-postgres"
       exit 0

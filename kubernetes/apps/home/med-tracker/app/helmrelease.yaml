@@ -63,7 +63,12 @@ spec:
                   name: med-tracker-db-runtime
               - secretRef:
                   name: med-tracker-loco-integrations
+              - secretRef:
+                  name: med-tracker-dmd-storage
             env: &runtimeEnvironment
+              S3_ENDPOINT: http://rustfs.storage.svc.cluster.local:9000
+              S3_BUCKET: med-tracker-dmd
+              AWS_REGION: us-east-1
               PGHOST: &postgresHost
                 valueFrom:
                   secretKeyRef:

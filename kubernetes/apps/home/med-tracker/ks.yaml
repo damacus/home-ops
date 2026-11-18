@@ -11,6 +11,7 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: med-tracker-db
+    - name: rustfs-ssd-iam
   path: ./kubernetes/apps/home/med-tracker/app
   prune: true
   sourceRef:
