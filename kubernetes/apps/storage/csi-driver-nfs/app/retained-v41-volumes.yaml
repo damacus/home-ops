@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: unas-spamhaus-data-v41
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes: [ReadWriteMany]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: network
+    name: spamhaus-data-v41
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - node-0b06a7
+                - node-0b0715
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeHandle: unas.ironstone.casa#csi_ssd#pvc-839e89c5-139b-4178-ad4a-39aadbb6e23a
+    volumeAttributes:
+      server: unas.ironstone.casa
+      share: /csi_ssd/pvc-839e89c5-139b-4178-ad4a-39aadbb6e23a
