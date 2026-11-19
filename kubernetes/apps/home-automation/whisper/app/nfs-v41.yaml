@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: whisper-models-ssd-v41
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes: ["ReadWriteOnce"]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: home-automation
+    name: whisper-models-ssd-v41
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - node-0b06a7
+                - node-0b0715
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeHandle: unas.ironstone.casa#/csi_ssd#pvc-4e79eca7-b1ed-4329-88a5-6d1b106f21a8
+    volumeAttributes:
+      server: unas.ironstone.casa
+      # The NFSv4 namespace starts at /var/nfs/shared on the UNAS.
+      # Reuse the original claim's model cache for the cutover and rollback.
+      share: /csi_ssd/pvc-4e79eca7-b1ed-4329-88a5-6d1b106f21a8
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: whisper-models-ssd-v41
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: ""
+  volumeName: whisper-models-ssd-v41
