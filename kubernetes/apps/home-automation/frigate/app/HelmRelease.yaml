@@ -131,7 +131,7 @@ spec:
             subPath: config.yaml
             readOnly: true
       media:
-        existingClaim: frigate-media-ssd
+        existingClaim: frigate-media-ssd-v41
         globalMounts:
           - path: /media
       shm:

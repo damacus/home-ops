@@ -53,3 +53,26 @@ spec:
     volumeAttributes:
       server: unas.ironstone.casa
       share: /csi_ssd/pvc-bd84c02c-3c12-4ec4-90e3-b0a3c84fa31a
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: unas-frigate-media-ssd-v41
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: home-automation
+    name: frigate-media-ssd-v41
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeHandle: unas.ironstone.casa#csi_ssd#pvc-6fa79e77-dac9-4e25-b38d-f604aabe04ce
+    volumeAttributes:
+      server: unas.ironstone.casa
+      share: /csi_ssd/pvc-6fa79e77-dac9-4e25-b38d-f604aabe04ce

@@ -33,3 +33,15 @@ spec:
     requests:
       storage: 100Gi
   storageClassName: nfs-csi-ssd
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-media-ssd-v41
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: ""
+  volumeName: unas-frigate-media-ssd-v41
