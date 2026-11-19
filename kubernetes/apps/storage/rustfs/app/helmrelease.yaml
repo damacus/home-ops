@@ -125,6 +125,6 @@ spec:
 
     persistence:
       data:
-        existingClaim: rustfs-dr-data-ssd
+        existingClaim: rustfs-dr-data-ssd-v41
         globalMounts:
           - path: /data

@@ -13,3 +13,16 @@ spec:
     requests:
       storage: 500Gi
   storageClassName: nfs-csi-ssd
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rustfs-dr-data-ssd-v41
+  namespace: storage
+spec:
+  accessModes: ["ReadWriteMany"]
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: ""
+  volumeName: unas-rustfs-dr-data-ssd-v41
