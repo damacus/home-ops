@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ./HelmRelease.yaml
   - ./StorageClass.yaml
+  - ./retained-v41-volumes.yaml

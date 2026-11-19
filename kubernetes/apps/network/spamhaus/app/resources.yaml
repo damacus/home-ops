@@ -12,6 +12,18 @@ spec:
     requests:
       storage: 1Gi
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spamhaus-data-v41
+spec:
+  accessModes: [ReadWriteMany]
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ""
+  volumeName: unas-spamhaus-data-v41
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -53,7 +65,7 @@ spec:
                 - {name: script, mountPath: /scripts, readOnly: true}
           volumes:
             - name: data
-              persistentVolumeClaim: {claimName: spamhaus-data}
+              persistentVolumeClaim: {claimName: spamhaus-data-v41}
             - name: script
               configMap: {name: spamhaus-publisher}
 ---
@@ -93,7 +105,7 @@ spec:
             - {name: data, mountPath: /data, readOnly: true}
       volumes:
         - name: data
-          persistentVolumeClaim: {claimName: spamhaus-data}
+          persistentVolumeClaim: {claimName: spamhaus-data-v41}
 ---
 apiVersion: v1
 kind: Service
