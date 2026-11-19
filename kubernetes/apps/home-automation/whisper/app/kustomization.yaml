@@ -5,3 +5,4 @@ namespace: home-automation
 resources:
   - HelmRelease.yaml
   - pvc.yaml
+  - nfs-v41.yaml
