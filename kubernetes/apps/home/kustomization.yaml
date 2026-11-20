@@ -8,7 +8,6 @@ resources:
   - ./mealie/ks.yaml
   - ./ledger/ks.yaml
   - ./release-mirror/ks.yaml
-  - ./memos/ks.yaml
   - ./med-tracker-db/ks.yaml
   - ./med-tracker/ks.yaml
   - ./namespace.yaml

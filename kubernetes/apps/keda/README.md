@@ -5,7 +5,7 @@ The HTTPRoute sends traffic through the existing interceptor. Its
 InterceptorRoute selects the application Service, and a ScaledObject owns the
 application's replica count. Authentication filters remain on the HTTPRoute.
 
-Memos, Hubble UI and Longhorn UI run at most one replica and sleep after 30
+Hubble UI and Longhorn UI run at most one replica and sleep after 30
 minutes without traffic. Only the UI deployments sleep: Cilium, Hubble relay
 and Longhorn storage components continue running.
 
@@ -33,7 +33,7 @@ Use an explicit Kubernetes context:
 ```fish
 kubectl --context ironstone get scaledobject -A
 kubectl --context ironstone get interceptorroute -A
-kubectl --context ironstone -n home get deployment memos
+kubectl --context ironstone -n storage get deployment longhorn-ui
 ```
 
 Opening the normal application URL wakes an HTTP-scaled application.
@@ -43,8 +43,8 @@ For maintenance, pause a ScaledObject at one replica and remove the annotation
 afterwards so normal scaling resumes:
 
 ```fish
-kubectl --context ironstone -n home annotate scaledobject memos autoscaling.keda.sh/paused-replicas=1
-kubectl --context ironstone -n home annotate scaledobject memos autoscaling.keda.sh/paused-replicas-
+kubectl --context ironstone -n storage annotate scaledobject longhorn-ui autoscaling.keda.sh/paused-replicas=1
+kubectl --context ironstone -n storage annotate scaledobject longhorn-ui autoscaling.keda.sh/paused-replicas-
 ```
 
 The same override can wake Mealie outside its normal hours. Persist desired
