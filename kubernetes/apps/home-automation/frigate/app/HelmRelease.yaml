@@ -29,7 +29,7 @@ spec:
       imagePullSecrets:
         - name: ghcr-credentials
       securityContext:
-        fsGroup: 568
+        fsGroup: 988
         fsGroupChangePolicy: OnRootMismatch
 
     controllers:
