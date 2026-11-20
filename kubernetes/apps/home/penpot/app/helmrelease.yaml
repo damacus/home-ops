@@ -45,7 +45,7 @@ spec:
           app:
             image:
               repository: penpotapp/frontend
-              tag: 2.19.2
+              tag: 2.19.3
             env:
               PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration enable-mcp disable-registration disable-email-verification disable-onboarding disable-onboarding-team disable-admin-console
               PENPOT_BACKEND_URI: http://penpot-backend.home.svc.cluster.local:6060
@@ -165,7 +165,7 @@ spec:
           app:
             image:
               repository: penpotapp/backend
-              tag: 2.19.2
+              tag: 2.19.3
             env:
               PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team disable-admin-console
               PENPOT_PUBLIC_URI: https://penpot.ironstone.casa
@@ -264,7 +264,7 @@ spec:
           app:
             image:
               repository: penpotapp/exporter
-              tag: 2.19.2
+              tag: 2.19.3
             env:
               PENPOT_FLAGS: enable-login-with-oidc enable-oidc-registration disable-registration disable-email-verification disable-onboarding disable-onboarding-team disable-admin-console
               # Exporter loads pages via headless Chromium; use the internal frontend service
