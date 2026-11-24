@@ -15,5 +15,13 @@ then confirm polling and the absence of duplicate sends. The old Helm-managed
 claim has a Delete reclaim policy; protect its volume before uninstalling the
 old release. Retain the old data until its contents and rollback role are understood.
 
+Before merging the cutover, check that the old Flux Kustomization and HelmRelease
+are both suspended, the old Deployment and its pods are stopped, the target has
+zero replicas, and the old PV's reclaim policy is `Retain`. A suspended
+HelmRelease is not uninstalled by its controller when deleted. After the target
+is healthy, uninstall the old Helm release explicitly, remove any orphaned old
+HelmRelease and ExternalSecret, and verify `default` has no remaining announcer
+pods or PVC. Keep the retained PV and its Longhorn volume for rollback.
+
 The new claim size is 10 MiB, matching the former live claim; `10m` is an
 invalid fractional-byte request.
