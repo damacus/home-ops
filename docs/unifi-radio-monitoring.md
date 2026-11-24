@@ -24,6 +24,10 @@ change. Do not merge until the dedicated credential exists.
 
 ## Alerts
 
+- `UnpollerCollectionUnavailable` follows the normal Alertmanager warning route
+  when no exporter target has a successful scrape, a cache younger than 90
+  seconds and radio readings for five minutes. It runs independently of the
+  Grafana rule group.
 - Warning: five-minute mean above 80% for 10 minutes; no notifications.
 - Critical: five-minute mean above 95% for 5 minutes; existing critical phone route.
 - Telemetry unavailable: failed scrape, cache age >=90 seconds, never-populated

@@ -5,6 +5,7 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./servicemonitor.yaml
+  - ./prometheusrule.yaml
   - ./networkpolicy.yaml
   - ./grafana-alerts.yaml
   - ./grafana-dashboard.yaml
