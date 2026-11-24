@@ -5,6 +5,24 @@ metadata:
   name: miscellaneous-rules
 spec:
   groups:
+    - name: default-namespace
+      rules:
+        - alert: DefaultNamespacePodPresent
+          expr: count by (namespace, pod) (kube_pod_info{namespace="default"}) > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} is in the default namespace"
+            description: "A pod has existed in the default namespace for five minutes. Check whether a workload was deployed without its intended namespace."
+        - alert: DefaultNamespacePersistentVolumeClaimPresent
+          expr: count by (namespace, persistentvolumeclaim) (kube_persistentvolumeclaim_info{namespace="default"}) > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Persistent volume claim {{ $labels.persistentvolumeclaim }} is in the default namespace"
+            description: "A persistent volume claim has existed in the default namespace for five minutes. Identify its owner and data before moving or removing it."
     - name: spamhaus
       rules:
         - alert: SpamhausFeedStale

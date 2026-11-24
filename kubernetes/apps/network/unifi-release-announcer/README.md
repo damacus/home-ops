@@ -1,8 +1,8 @@
 # UniFi release announcer namespace migration
 
-The running announcer is in `default`. The `network` resources are a staging
-configuration: the Deployment has zero replicas. The existing Longhorn claim is
-retained for rollback.
+The announcer runs in `network`. It retains the existing image, chart and
+credentials references. The former Longhorn volume is retained for rollback
+until its contents and legacy role are understood.
 
 The current Rust implementation reads Discord history to suppress duplicates;
 its recent and uncertain send state is held in memory and lost on restart. Its
@@ -15,7 +15,5 @@ then confirm polling and the absence of duplicate sends. The old Helm-managed
 claim has a Delete reclaim policy; protect its volume before uninstalling the
 old release. Retain the old data until its contents and rollback role are understood.
 
-The staged configuration does not move data, start the target or remove the old
-release. Its image, chart and credentials references match the running release;
-the target namespace already has the image-pull secret. The staged claim size is
-10 MiB, matching the live claim; `10m` is an invalid fractional-byte request.
+The new claim size is 10 MiB, matching the former live claim; `10m` is an
+invalid fractional-byte request.
