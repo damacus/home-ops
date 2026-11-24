@@ -21,6 +21,13 @@
   customManagers: [
     {
       customType: "regex",
+      managerFilePatterns: ["/^kubernetes/apps/dev/git-triage/migration/job\\.yaml$/"],
+      matchStrings: ["name: git-triage-migrate-(?<currentValue>build-\\d+\\.\\d+)"],
+      depNameTemplate: "ghcr.io/damacus/git-triage",
+      datasourceTemplate: "docker",
+    },
+    {
+      customType: "regex",
       managerFilePatterns: ["/^kubernetes/apps/dev/forgejo/app/helmrelease\\.yaml$/"],
       matchStrings: [
         "tag: \"(?<currentValue>\\d+\\.\\d+\\.\\d+-rootless)\"",
@@ -40,6 +47,14 @@
     },
   ],
   packageRules: [
+    {
+      description: "Roll out each verified Git Triage build with its migration Job",
+      matchPackageNames: ["ghcr.io/damacus/git-triage"],
+      versioning: "regex:^build-(?<major>\\d+)\\.(?<minor>\\d+)$",
+      groupName: "Git Triage rollout",
+      separateMajorMinor: false,
+      automerge: true,
+    },
     // Keep native manifest parsing/replacement, but never query these registries
     // for the managed images. Public aliases belong only in the feed URL.
     {

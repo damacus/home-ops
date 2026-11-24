@@ -30,8 +30,11 @@ replaying the refresh token. Existing PAT connections remain supported.
 Keep `+Q 65536` in `ERL_FLAGS`: the container runtime's large file-descriptor
 limit can otherwise make Erlang reserve more than 1.5 GB for the port table.
 
-For an update, pin the CI-produced image digest in both `app/resources.yaml` and
-`migration/job.yaml`, and use a new migration Job name for that source revision.
+After the application and browser checks pass on main, CI publishes the ARM64
+image as `build-<run number>.<attempt>`. Renovate groups the application and
+migration image digests with the matching migration Job name and automatically
+merges the update after the repository checks pass. Flux runs the migration
+before rolling out the application.
 Confirm all three Flux Kustomizations are Ready, `/health/ready` returns 200 over
 HTTPS, product pages open without a Basic Auth prompt, and anonymous LiveView
 connections and interactions work. Do not seed demo fixtures in production.
