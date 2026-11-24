@@ -41,7 +41,7 @@ evaluation regresses. Preserve rule ConfigMaps and all S3 contents.
 
 | Alert | Condition | Response |
 | --- | --- | --- |
-| ForgejoMirrorRepeatedFailures | At least three mirror update failures in fifteen minutes, persisting five minutes | Identify affected repositories in Forgejo logs and check upstream availability and credentials. |
+| ForgejoMirrorRepeatedFailures | At least three terminal repository or wiki mirror fetch failures in thirty minutes, persisting five minutes | Identify affected repositories in Forgejo logs and check upstream availability and credentials. |
 | CloudNativePGMetricsCollectionFailing | At least three user query collection errors per instance in each rolling five-minute window, persisting ten minutes | Check the exporter logs and verify query permissions. Check the affected metrics resume after the fix. |
 | FrigateCameraRepeatedFailures | At least three watchdog crash/no-frame messages for one camera in ten minutes, persisting five minutes | Check camera power/network, RTSP availability and Frigate watchdog logs. Restore the stream before changing codec or restart settings. |
 | IronBridgeDeliveryExhausted | A delivery exhausted retries within fifteen minutes | Check IronBridge job history, destination access and provider response. Confirm delivery state before retrying to avoid duplicates. |
@@ -51,6 +51,9 @@ Frigate counts watchdog messages, not every FFmpeg stderr line. Logger formats c
 change across upgrades; recheck camera extraction when upgrading Frigate. Transient
 reconnects below the threshold do not alert. Delivery and storage conditions use
 rolling windows, so notifications remain active until those windows expire.
+
+Forgejo counts final fetch errors after any retries. The thirty-minute window
+allows three failures from one repository at the default ten-minute retry cadence.
 
 Warning severity follows the existing Alertmanager quiet-hours route. Critical
 storage failures follow its critical route. No raw log message, URL, token, error

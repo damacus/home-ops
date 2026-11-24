@@ -1,6 +1,7 @@
 ---
 rule_files:
   - unifi-rules.yaml
+  - unpoller-rules.yaml
 evaluation_interval: 1m
 tests:
   - name: Sustained saturation pages with AP identity and clears on recovery
@@ -45,7 +46,7 @@ tests:
       - series: 'unpoller_device_radio_channel_utilization_total_ratio{job="unpoller",instance="exporter:9130",name="U6-LR",radio="na"}'
         values: '1.01+0x20'
       - series: 'unpoller_prometheus_cache_age_seconds{job="unpoller",instance="exporter:9130"}'
-        values: '300+60x20'
+        values: '300+60x10 10+0x9'
       - series: 'up{job="unpoller",instance="exporter:9130"}'
         values: '1+0x20'
     alert_rule_test:
@@ -56,6 +57,19 @@ tests:
         alertname: unifi-telemetry-unavailable
         exp_alerts:
           - exp_labels: {severity: warning, alertgroup: unifi-radio}
+      - eval_time: 4m
+        alertname: UnpollerCollectionUnavailable
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: UnpollerCollectionUnavailable
+        exp_alerts: &collection_unavailable
+          - exp_labels: {severity: warning}
+            exp_annotations:
+              summary: UnPoller has no fresh UniFi radio telemetry
+              description: No UnPoller target has reported a successful scrape, fresh controller cache and radio metrics for five minutes. Check the exporter, controller connectivity and API credentials.
+      - eval_time: 11m
+        alertname: UnpollerCollectionUnavailable
+        exp_alerts: []
   - name: Missing exporter produces a non-paging telemetry alert
     interval: 1m
     input_series: []
@@ -64,6 +78,9 @@ tests:
         alertname: unifi-telemetry-unavailable
         exp_alerts:
           - exp_labels: {severity: warning, alertgroup: unifi-radio}
+      - eval_time: 6m
+        alertname: UnpollerCollectionUnavailable
+        exp_alerts: *collection_unavailable
   - name: Sustained moderate usage is warning only
     interval: 1m
     input_series:
@@ -84,6 +101,9 @@ tests:
       - eval_time: 11m
         alertname: unifi-telemetry-unavailable
         exp_alerts: []
+      - eval_time: 11m
+        alertname: UnpollerCollectionUnavailable
+        exp_alerts: []
   - name: A disappearing radio is detected while other radios keep reporting
     interval: 1m
     input_series:
@@ -100,3 +120,23 @@ tests:
         alertname: unifi-telemetry-unavailable
         exp_alerts:
           - exp_labels: {severity: warning, alertgroup: unifi-radio}
+      - eval_time: 10m
+        alertname: UnpollerCollectionUnavailable
+        exp_alerts: []
+  - name: Fresh radio samples from a failed scrape cannot cover another exporter
+    interval: 1m
+    input_series:
+      - series: 'up{job="unpoller",instance="exporter-a:9130"}'
+        values: '1+0x10'
+      - series: 'unpoller_prometheus_cache_age_seconds{job="unpoller",instance="exporter-a:9130"}'
+        values: '10+0x10'
+      - series: 'up{job="unpoller",instance="exporter-b:9130"}'
+        values: '0+0x10'
+      - series: 'unpoller_prometheus_cache_age_seconds{job="unpoller",instance="exporter-b:9130"}'
+        values: '10+0x10'
+      - series: 'unpoller_device_radio_channel_utilization_total_ratio{job="unpoller",instance="exporter-b:9130",radio="na"}'
+        values: '0.2+0x10'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: UnpollerCollectionUnavailable
+        exp_alerts: *collection_unavailable

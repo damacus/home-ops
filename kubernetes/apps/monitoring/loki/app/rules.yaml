@@ -17,8 +17,8 @@ data:
                 count_over_time(
                   {app="forgejo"}
                   |= "SyncMirrors"
-                  |= "failed to update mirror repository"
-                  [15m]
+                  |~ "failed to update mirror repository( wiki)?:"
+                  [30m]
                 )
               ) >= 3
             for: 5m
@@ -27,7 +27,7 @@ data:
               alertgroup: home-ops-logs
             annotations:
               summary: "Forgejo repeatedly failed to update repository mirrors"
-              description: "At least three mirror update failures occurred in fifteen minutes and the condition persisted for five minutes. Check Forgejo logs for the affected mirrors and verify upstream access."
+              description: "At least three mirror fetch failures occurred in thirty minutes and the condition persisted for five minutes. Check Forgejo logs for the affected mirrors and verify upstream access."
           - alert: CloudNativePGMetricsCollectionFailing
             expr: |
               sum by (namespace, app, pod) (

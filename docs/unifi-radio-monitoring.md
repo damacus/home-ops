@@ -68,11 +68,13 @@ With `yq`, `promtool` and `amtool` on PATH, run:
 bash tests/monitoring/check-unifi-alerts.sh
 ```
 
-The test translates the provisioned Grafana numeric queries, thresholds and
-pending periods into Prometheus rules. It exercises saturation, recovery,
-brief spikes, warning-only load, stale cache, exporter absence and a missing
-radio, then tests the actual routing tree with inert receivers. This does not
-test Grafana's KeepLast state machine or prove physical phone delivery.
+The test evaluates the UnPoller PrometheusRule directly and translates the
+provisioned Grafana numeric queries, thresholds and pending periods into
+Prometheus rules. It exercises saturation, recovery, brief spikes, warning-only
+load, stale cache, exporter absence, a missing radio and mismatched exporter
+samples. It also checks the Alertmanager routing tree with inert receivers.
+Grafana's KeepLast state machine and physical phone delivery require separate
+verification.
 
 Before enabling notifications, verify ExternalSecret and HelmRelease readiness,
 six current radio series for the three active APs, cache age below 90 seconds,
