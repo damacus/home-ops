@@ -12,3 +12,4 @@ resources:
   - ./external-services/ks.yaml
   - ./spamhaus/ks.yaml
   - ./traefik/ks.yaml
+  - ./unifi-release-announcer/ks.yaml
