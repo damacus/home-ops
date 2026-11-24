@@ -43,7 +43,7 @@ spec:
           app:
             image:
               repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
-              tag: 1a08e438@sha256:7c01ead95b20a47d4b452c4c46bc36fbbb1af994323ac50bde6d1f66b7ba96d8
+              tag: b2476b7a@sha256:7988c50e9f56f270a3f12e495fa7b23120b4772129e2ca157e014132e8300cbf
             args:
             - serve
             envFrom:
@@ -84,6 +84,11 @@ spec:
                   periodSeconds: 10
             env:
               GOMEMLIMIT: 400MiB
+              CINC_SM_SOURCES_FILE: /etc/supermarket/sources/sources.json
+              CINC_SM_PERMISSION_HTTP_ADDR: ":8084"
+              CINC_SM_PERMISSION_CA_FILE: /etc/supermarket/permissions/ca.crt
+              CINC_SM_PERMISSION_CERT_FILE: /etc/supermarket/permissions/tls.crt
+              CINC_SM_PERMISSION_KEY_FILE: /etc/supermarket/permissions/tls.key
       worker:
         type: deployment
         replicas: 1
@@ -93,14 +98,18 @@ spec:
           app:
             image:
               repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
-              tag: 1a08e438@sha256:7c01ead95b20a47d4b452c4c46bc36fbbb1af994323ac50bde6d1f66b7ba96d8
+              tag: b2476b7a@sha256:7988c50e9f56f270a3f12e495fa7b23120b4772129e2ca157e014132e8300cbf
             args:
             - worker
+            env:
+              CINC_SM_SOURCES_FILE: /etc/supermarket/sources/sources.json
             envFrom:
             - configMapRef:
                 name: supermarket
             - secretRef:
                 name: supermarket-runtime
+            - secretRef:
+                name: supermarket-github-source
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -141,9 +150,16 @@ spec:
           app:
             image:
               repository: registry.gitlab.com/cinc-project/distribution/cinc-supermarket
-              tag: 1a08e438@sha256:7c01ead95b20a47d4b452c4c46bc36fbbb1af994323ac50bde6d1f66b7ba96d8
+              tag: b2476b7a@sha256:7988c50e9f56f270a3f12e495fa7b23120b4772129e2ca157e014132e8300cbf
             args:
             - artifact-gateway
+            env:
+              CINC_SM_PUBLISH_TOKEN_ISSUER: https://supermarket.ironstone.casa
+              CINC_SM_PERMISSION_URL: https://supermarket-permissions.dev.svc.cluster.local:8084/internal/v1/permissions
+              CINC_SM_PERMISSION_CA_FILE: /etc/supermarket/permissions/ca.crt
+              CINC_SM_PERMISSION_CERT_FILE: /etc/supermarket/permissions/tls.crt
+              CINC_SM_PERMISSION_KEY_FILE: /etc/supermarket/permissions/tls.key
+              CINC_SM_TRANSFER_PUBLIC_KEY_FILE: /etc/supermarket/verifier/token.crt
             envFrom:
             - configMapRef:
                 name: supermarket-gateway
@@ -191,3 +207,46 @@ spec:
         ports:
           http:
             port: 8082
+      permissions:
+        controller: api
+        type: ClusterIP
+        ports:
+          https:
+            port: 8084
+    persistence:
+      sources:
+        type: configMap
+        name: supermarket-sources
+        advancedMounts:
+          api:
+            app:
+            - path: /etc/supermarket/sources
+              readOnly: true
+          worker:
+            app:
+            - path: /etc/supermarket/sources
+              readOnly: true
+      permission-server:
+        type: secret
+        name: supermarket-permissions-server
+        advancedMounts:
+          api:
+            app:
+            - path: /etc/supermarket/permissions
+              readOnly: true
+      permission-gateway:
+        type: secret
+        name: supermarket-permissions-gateway
+        advancedMounts:
+          gateway:
+            app:
+            - path: /etc/supermarket/permissions
+              readOnly: true
+      transfer-verifier:
+        type: secret
+        name: supermarket-transfer-verifier
+        advancedMounts:
+          gateway:
+            app:
+            - path: /etc/supermarket/verifier
+              readOnly: true

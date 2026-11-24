@@ -1,0 +1,23 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: supermarket-api
+  namespace: dev
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: supermarket
+      app.kubernetes.io/controller: api
+  policyTypes:
+  - Ingress
+  ingress:
+  - ports:
+    - port: 8080
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/instance: supermarket
+          app.kubernetes.io/controller: gateway
+    ports:
+    - port: 8084

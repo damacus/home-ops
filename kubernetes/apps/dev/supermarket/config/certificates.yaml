@@ -1,0 +1,64 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: supermarket-permissions-ca
+spec:
+  secretName: supermarket-permissions-ca
+  commonName: supermarket-permissions-ca
+  duration: 8760h
+  renewBefore: 720h
+  isCA: true
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Never
+  issuerRef:
+    kind: ClusterIssuer
+    name: selfsigned-issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: supermarket-permissions
+spec:
+  ca:
+    secretName: supermarket-permissions-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: supermarket-permissions-server
+spec:
+  secretName: supermarket-permissions-server
+  dnsNames:
+  - supermarket-permissions.dev.svc.cluster.local
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+  - digital signature
+  - server auth
+  issuerRef:
+    kind: Issuer
+    name: supermarket-permissions
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: supermarket-permissions-gateway
+spec:
+  secretName: supermarket-permissions-gateway
+  uris:
+  - spiffe://cinc-registry/artifact-gateway
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+  - digital signature
+  - client auth
+  issuerRef:
+    kind: Issuer
+    name: supermarket-permissions

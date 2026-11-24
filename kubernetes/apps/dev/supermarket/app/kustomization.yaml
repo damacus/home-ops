@@ -5,3 +5,4 @@ namespace: dev
 resources:
 - helmrelease.yaml
 - httproute.yaml
+- networkpolicy.yaml

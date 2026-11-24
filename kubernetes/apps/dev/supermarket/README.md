@@ -2,7 +2,7 @@
 
 Runs in `dev`: one API, one worker, one artifact gateway, a separate Zot
 app-template release, and a dedicated two-instance PostgreSQL 18 CNPG cluster.
-The API, worker, gateway and bootstrap use digest-pinned `1a08e438`.
+The API, worker, gateway and bootstrap use digest-pinned `b2476b7a`.
 The completed trial import retains its original image. Zot uses 2.1.21
 for ARM64, pinned by digest. PostgreSQL 18 is also digest-pinned.
 
@@ -17,7 +17,14 @@ The internal routes follow the existing Traefik Gateway configuration:
 Zot stores OCI data in RustFS. Downloads use a separate S3 copy through the
 credential-free artifact gateway. The database stores universe snapshots;
 the worker regenerates them after ingest. No additional snapshot bucket is needed.
-Human login and CI publishing are not configured for this read/import trial.
+Human login and CI publishing are disabled. The gateway checks download permissions
+over a private mTLS service using a separate cert-manager identity.
+
+The worker indexes public Sous-Chefs cookbook artifacts from GHCR. Provision the
+package discovery credential listed below before rollout. Only the worker
+receives it.
+Check `/api/v2/sources` for sync status. Artifact bytes remain in GHCR, and client
+downloads require no GitHub login.
 
 ## Secrets required before rollout
 
@@ -33,6 +40,7 @@ for each database account and different access keys for each S3 identity.
 | `rustfs-cinc-registry-artifacts` | API Credential | `username`, `password` | Bucket `cinc-registry-artifacts` |
 | `rustfs-cnpg-cinc-registry` | API Credential | `username`, `password` | Bucket `cnpg-cinc-registry` |
 | `cinc-registry-oci-signing` | Secure Note | `signing_key`, `certificate` | Matching private key and public certificate |
+| `CINC Supermarket - GitHub PAT` | API Credential | `credential` | GitHub classic PAT with only `read:packages` |
 
 API Credential items contain their native `credential` field plus a concealed
 `password` compatibility field with the same secret, as required by the existing
@@ -127,8 +135,8 @@ The completed import Job is excluded from Renovate.
 For each source notification, check the successful default-branch pipeline and
 resolve its published tag to a multi-architecture digest with ARM64 support.
 Do not assume the branch tip has finished publishing. The current image is
-`registry.gitlab.com/cinc-project/distribution/cinc-supermarket:1a08e438@sha256:7c01ead95b20a47d4b452c4c46bc36fbbb1af994323ac50bde6d1f66b7ba96d8`,
-published by [pipeline 2845958985](https://gitlab.com/cinc-project/distribution/cinc-supermarket/-/pipelines/2845958985).
+`registry.gitlab.com/cinc-project/distribution/cinc-supermarket:b2476b7a@sha256:7988c50e9f56f270a3f12e495fa7b23120b4772129e2ca157e014132e8300cbf`,
+published by [pipeline 3055730506](https://gitlab.com/cinc-project/distribution/cinc-supermarket/-/pipelines/3055730506).
 For fully automatic image updates, upstream must publish an ordered version or
 moving `main` image tag; a moving tag must still be pinned by digest here.
 
@@ -142,8 +150,10 @@ Kustomization deliberately cannot silently replace a completed Job on image edit
 Merge approval is rollout approval: Flux can automatically run provisioning and
 migrations after merge. A forced reconciliation is a separate live operation.
 Before approving, inspect the source changes and database migrations, then check
-the application and bootstrap use the same candidate. This update from the live
-`fa4e9796` to `1a08e438` adds no migration files.
+the application and bootstrap use the same candidate. The `b2476b7a` bootstrap
+applies migrations before opening the external source catalogue. Keep the
+current API and gateway on the same revision so download links use the same
+permission protocol.
 
 The bucket provisioner has a resource-level Flux force annotation so an image
 update can replace its immutable Job template. Its `cinc-registry` scope reruns
@@ -166,7 +176,7 @@ kubectl kustomize kubernetes/apps/dev
 kubectl kustomize kubernetes/apps/storage
 ```
 
-Render both releases with app-template 5.1.0 and validate the output with
+Render both releases with app-template 5.3.0 and validate the output with
 `kubeconform -strict -summary`. Server-side dry-run the rendered workloads and each
 app Kustomization against the cluster to validate its installed CRD schemas.
 These checks do not prove successful import, backup or artifact delivery; those
