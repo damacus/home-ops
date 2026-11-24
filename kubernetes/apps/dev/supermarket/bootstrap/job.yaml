@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: supermarket-bootstrap-1a08e438
+  name: supermarket-bootstrap-b2476b7a
   namespace: dev
 spec:
   backoffLimit: 4
@@ -23,7 +23,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: generate-universe
-        image: registry.gitlab.com/cinc-project/distribution/cinc-supermarket:1a08e438@sha256:7c01ead95b20a47d4b452c4c46bc36fbbb1af994323ac50bde6d1f66b7ba96d8
+        image: registry.gitlab.com/cinc-project/distribution/cinc-supermarket:b2476b7a@sha256:7988c50e9f56f270a3f12e495fa7b23120b4772129e2ca157e014132e8300cbf
         args:
         - generate-universe
         envFrom:
@@ -45,7 +45,7 @@ spec:
             memory: 512Mi
       initContainers:
       - name: migrate
-        image: registry.gitlab.com/cinc-project/distribution/cinc-supermarket:1a08e438@sha256:7c01ead95b20a47d4b452c4c46bc36fbbb1af994323ac50bde6d1f66b7ba96d8
+        image: registry.gitlab.com/cinc-project/distribution/cinc-supermarket:b2476b7a@sha256:7988c50e9f56f270a3f12e495fa7b23120b4772129e2ca157e014132e8300cbf
         args:
         - migrate
         env:
