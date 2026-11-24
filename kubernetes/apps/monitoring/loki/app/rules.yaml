@@ -11,6 +11,39 @@ data:
       - name: home-ops-log-failures
         interval: 1m
         rules:
+          - alert: ForgejoMirrorRepeatedFailures
+            expr: |
+              sum by (namespace, app) (
+                count_over_time(
+                  {app="forgejo"}
+                  |= "SyncMirrors"
+                  |~ "failed to update mirror repository( wiki)?:"
+                  [30m]
+                )
+              ) >= 3
+            for: 5m
+            labels:
+              severity: warning
+              alertgroup: home-ops-logs
+            annotations:
+              summary: "Forgejo repeatedly failed to update repository mirrors"
+              description: "At least three mirror fetch failures occurred in thirty minutes and the condition persisted for five minutes. Check Forgejo logs for the affected mirrors and verify upstream access."
+          - alert: CloudNativePGMetricsCollectionFailing
+            expr: |
+              sum by (namespace, app, pod) (
+                count_over_time(
+                  {app="postgresql"}
+                  |= "Error collecting user query"
+                  [5m]
+                )
+              ) >= 3
+            for: 10m
+            labels:
+              severity: warning
+              alertgroup: home-ops-logs
+            annotations:
+              summary: "CloudNativePG metrics collection is failing on {{ $labels.pod }}"
+              description: "At least three user query collection errors per five-minute window persisted for ten minutes. Check the exporter logs and monitoring query permissions for this instance."
           - alert: FrigateCameraRepeatedFailures
             expr: |
               sum by (namespace, app, camera) (

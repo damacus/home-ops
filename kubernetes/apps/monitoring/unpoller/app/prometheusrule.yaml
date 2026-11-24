@@ -1,0 +1,25 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: unpoller
+spec:
+  groups:
+    - name: unpoller
+      rules:
+        - alert: UnpollerCollectionUnavailable
+          expr: |
+            absent(
+              (up{job="unpoller"} == 1)
+              and on (job, instance) (
+                (unpoller_prometheus_cache_age_seconds{job="unpoller"} >= 0)
+                and (unpoller_prometheus_cache_age_seconds{job="unpoller"} < 90)
+              )
+              and on (job, instance) unpoller_device_radio_channel_utilization_total_ratio{job="unpoller"}
+            )
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "UnPoller has no fresh UniFi radio telemetry"
+            description: "No UnPoller target has reported a successful scrape, fresh controller cache and radio metrics for five minutes. Check the exporter, controller connectivity and API credentials."

@@ -11,7 +11,7 @@ Flux creates `loki-alert-rules` in monitoring with the `loki_rule` label.
 The Rust watcher discovers labelled ConfigMaps across namespaces and writes unique
 filenames into `/rules/fake`. The local ruler reads `/rules` and sends alerts to
 `vmalertmanager-vm.monitoring.svc.cluster.local:9093`. Updates and deletions flow
-through the watcher. The three alert thresholds and Alertmanager routes are unchanged.
+through the watcher.
 
 Central Loki uses the GitOps-managed `loki-rule-configmaps` ClusterRole granting
 only `get`, `list` and `watch` on ConfigMaps. The API token remains required by
@@ -33,7 +33,7 @@ for the archive acceptance and rollback requirements.
 ## Rollout and rollback
 
 Record the monitoring rule inventory before deployment. Deploy through Flux
-only after the relevant rollout is approved. Compare the three monitoring alerts
+only after the relevant rollout is approved. Compare the monitoring rule inventory
 and verify healthy evaluation. Roll back through a Git revert if discovery or
 evaluation regresses. Preserve rule ConfigMaps and all S3 contents.
 
@@ -41,6 +41,8 @@ evaluation regresses. Preserve rule ConfigMaps and all S3 contents.
 
 | Alert | Condition | Response |
 | --- | --- | --- |
+| ForgejoMirrorRepeatedFailures | At least three terminal repository or wiki mirror fetch failures in thirty minutes, persisting five minutes | Identify affected repositories in Forgejo logs and check upstream availability and credentials. |
+| CloudNativePGMetricsCollectionFailing | At least three user query collection errors per instance in each rolling five-minute window, persisting ten minutes | Check the exporter logs and verify query permissions. Check the affected metrics resume after the fix. |
 | FrigateCameraRepeatedFailures | At least three watchdog crash/no-frame messages for one camera in ten minutes, persisting five minutes | Check camera power/network, RTSP availability and Frigate watchdog logs. Restore the stream before changing codec or restart settings. |
 | IronBridgeDeliveryExhausted | A delivery exhausted retries within fifteen minutes | Check IronBridge job history, destination access and provider response. Confirm delivery state before retrying to avoid duplicates. |
 | ApplicationStorageWriteFailure | Loki, RustFS, PostgreSQL, Frigate, VolSync or Barman reports a full/read-only filesystem or I/O error within ten minutes | Identify the affected mount, check free space/inodes and node storage health, and verify a subsequent successful write. Capacity alerts are separate early warnings. |
@@ -50,6 +52,9 @@ change across upgrades; recheck camera extraction when upgrading Frigate. Transi
 reconnects below the threshold do not alert. Delivery and storage conditions use
 rolling windows, so notifications remain active until those windows expire.
 
+Forgejo counts final fetch errors after any retries. The thirty-minute window
+allows three failures from one repository at the default ten-minute retry cadence.
+
 Warning severity follows the existing Alertmanager quiet-hours route. Critical
 storage failures follow its critical route. No raw log message, URL, token, error
 body or message content is copied into alert labels or annotations.
@@ -57,10 +62,12 @@ body or message content is copied into alert labels or annotations.
 ## Verification after deployment
 
 1. Confirm the monitoring Loki HelmRelease and Loki pod are Ready.
-2. Confirm `/prometheus/api/v1/rules` on monitoring Loki reports the three rules with healthy evaluation.
+2. Confirm `/prometheus/api/v1/rules` on monitoring Loki reports the configured rules with healthy evaluation.
 3. Confirm the central `loki-sc-rules` container is present and its service account can read ConfigMaps but cannot read Secrets.
 4. Confirm existing log queries work and existing VictoriaMetrics alerts remain healthy.
 5. Verify the next real firing alert reaches Alertmanager and the existing notification receiver. Do not inject synthetic production failures.
 
-Notifications depend on the log ingestion path and Loki availability. Metrics-based
-monitoring must continue to cover those services when their own logs cannot arrive.
+Notifications depend on the log ingestion path and Loki availability. The Loki
+ServiceMonitor scrapes Loki. Vector exposes internal metrics without a
+ServiceMonitor, and the Loki canary is disabled. The Loki scrape alone cannot
+verify end-to-end Kubernetes log delivery.

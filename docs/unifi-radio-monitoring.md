@@ -24,6 +24,10 @@ change. Do not merge until the dedicated credential exists.
 
 ## Alerts
 
+- `UnpollerCollectionUnavailable` follows the normal Alertmanager warning route
+  when no exporter target has a successful scrape, a cache younger than 90
+  seconds and radio readings for five minutes. It runs independently of the
+  Grafana rule group.
 - Warning: five-minute mean above 80% for 10 minutes; no notifications.
 - Critical: five-minute mean above 95% for 5 minutes; existing critical phone route.
 - Telemetry unavailable: failed scrape, cache age >=90 seconds, never-populated
@@ -64,11 +68,13 @@ With `yq`, `promtool` and `amtool` on PATH, run:
 bash tests/monitoring/check-unifi-alerts.sh
 ```
 
-The test translates the provisioned Grafana numeric queries, thresholds and
-pending periods into Prometheus rules. It exercises saturation, recovery,
-brief spikes, warning-only load, stale cache, exporter absence and a missing
-radio, then tests the actual routing tree with inert receivers. This does not
-test Grafana's KeepLast state machine or prove physical phone delivery.
+The test evaluates the UnPoller PrometheusRule directly and translates the
+provisioned Grafana numeric queries, thresholds and pending periods into
+Prometheus rules. It exercises saturation, recovery, brief spikes, warning-only
+load, stale cache, exporter absence, a missing radio and mismatched exporter
+samples. It also checks the Alertmanager routing tree with inert receivers.
+Grafana's KeepLast state machine and physical phone delivery require separate
+verification.
 
 Before enabling notifications, verify ExternalSecret and HelmRelease readiness,
 six current radio series for the three active APs, cache age below 90 seconds,
