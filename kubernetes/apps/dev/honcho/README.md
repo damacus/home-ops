@@ -63,7 +63,7 @@ backup. The schedule runs automatically at the next daily slot.
 kubectl -n dev wait --for=condition=ContinuousArchiving cluster/honcho-db --timeout=10m
 kubectl cnpg backup -n dev honcho-db --method=plugin --plugin-name=barman-cloud.cloudnative-pg.io
 kubectl -n dev get scheduledbackup honcho-db
-kubectl -n dev get backups -l cnpg.io/cluster=honcho-db
+kubectl -n dev get backups.postgresql.cnpg.io -l cnpg.io/cluster=honcho-db
 kubectl -n dev get objectstore honcho-rustfs-store
 ```
 
