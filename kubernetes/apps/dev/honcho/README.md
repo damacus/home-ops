@@ -44,6 +44,20 @@ kubectl -n dev exec deploy/honcho -c api -- \
   --workspace my-workspace --expires 7d --print-only
 ```
 
+## Codex memory through LiteLLM
+
+Codex connects to `https://litellm.ironstone.casa/honcho/mcp` with the
+dedicated `litellm-codex-honcho/key` credential from 1Password. The gateway
+exposes `remember` for notes the user asks to save and `recall` for semantic
+search. Conversation capture is opt-in through the save tool. Notes and search
+queries use Honcho's existing LiteLLM embedding route.
+
+The gateway uses the workspace-scoped JWT in `honcho-codex-mcp/jwt`. Prepare the
+`codex` workspace and its `codex` peer before granting client access. Use
+`codex` as both the observer and observed peer when saving and searching.
+Rotate the gateway JWT before it expires and confirm a save and recall after
+External Secrets reloads LiteLLM.
+
 ## Verify a rollout
 
 Check the `honcho-db` Cluster is Ready and the `honcho` Deployment has both
