@@ -35,6 +35,9 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: paperless
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: honcho
       ports:
         - port: 4000
           protocol: TCP

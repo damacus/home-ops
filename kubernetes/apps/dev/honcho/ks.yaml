@@ -1,0 +1,49 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: honcho-db
+  namespace: flux-system
+spec:
+  targetNamespace: dev
+  path: ./kubernetes/apps/dev/honcho/db
+  prune: true
+  dependsOn:
+    - name: cloudnative-pg
+    - name: external-secrets-stores
+    - name: openebs
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
+  healthCheckExprs:
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      current: >-
+        status.conditions.exists(e,
+          e.type == 'Ready' &&
+          e.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: honcho
+  namespace: flux-system
+spec:
+  targetNamespace: dev
+  path: ./kubernetes/apps/dev/honcho/app
+  prune: true
+  dependsOn:
+    - name: external-secrets-stores
+    - name: honcho-db
+    - name: litellm
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m

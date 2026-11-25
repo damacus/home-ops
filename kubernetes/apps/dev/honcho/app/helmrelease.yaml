@@ -1,0 +1,112 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: honcho
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 5.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  values:
+    controllers:
+      honcho:
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        initContainers:
+          migrate:
+            image: &honcho-image
+              repository: ghcr.io/plastic-labs/honcho
+              tag: v3.6.2@sha256:3860692fb036b2453a2c14e2cee02ce57170b4e58d95250b73fddf956a2747c5
+            command: [/app/.venv/bin/python, scripts/provision_db.py]
+            env:
+              DB_CONNECTION_URI: &db-uri
+                valueFrom:
+                  secretKeyRef:
+                    name: honcho-db-owner
+                    key: DB_CONNECTION_URI
+            securityContext: &security-context
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              runAsNonRoot: true
+              runAsUser: 999
+              seccompProfile:
+                type: RuntimeDefault
+            resources: &resources
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+        containers:
+          api:
+            image: *honcho-image
+            command: [/app/.venv/bin/fastapi, run, --host, 0.0.0.0, src/main.py]
+            env:
+              <<: &inference-env
+                DB_CONNECTION_URI: *db-uri
+                CACHE_ENABLED: 'false'
+                TELEMETRY_ENABLED: 'false'
+                LLM_OPENAI_API_KEY:
+                  valueFrom:
+                    secretKeyRef:
+                      name: honcho
+                      key: LLM_OPENAI_API_KEY
+                DERIVER_MODEL_CONFIG__OVERRIDES__BASE_URL: &gateway http://litellm:4000/v1
+                SUMMARY_MODEL_CONFIG__OVERRIDES__BASE_URL: *gateway
+                DIALECTIC_LEVELS__minimal__MODEL_CONFIG__OVERRIDES__BASE_URL: *gateway
+                DIALECTIC_LEVELS__low__MODEL_CONFIG__OVERRIDES__BASE_URL: *gateway
+                DIALECTIC_LEVELS__medium__MODEL_CONFIG__OVERRIDES__BASE_URL: *gateway
+                DIALECTIC_LEVELS__high__MODEL_CONFIG__OVERRIDES__BASE_URL: *gateway
+                DIALECTIC_LEVELS__max__MODEL_CONFIG__OVERRIDES__BASE_URL: *gateway
+                DREAM_DEDUCTION_MODEL_CONFIG__OVERRIDES__BASE_URL: *gateway
+                DREAM_INDUCTION_MODEL_CONFIG__OVERRIDES__BASE_URL: *gateway
+                EMBEDDING_MODEL_CONFIG__OVERRIDES__BASE_URL: *gateway
+              AUTH_USE_AUTH: 'true'
+              AUTH_JWT_SECRET:
+                valueFrom:
+                  secretKeyRef:
+                    name: honcho
+                    key: AUTH_JWT_SECRET
+            securityContext: *security-context
+            resources: *resources
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: &http-health
+                    path: /health
+                    port: 8000
+                  periodSeconds: 5
+                  failureThreshold: 30
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *http-health
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *http-health
+          deriver:
+            image: *honcho-image
+            command: [/app/.venv/bin/python, -m, src.deriver]
+            env: *inference-env
+            securityContext: *security-context
+            resources: *resources
+    defaultPodOptions:
+      automountServiceAccountToken: false
+    service:
+      app:
+        controller: honcho
+        ports:
+          http:
+            port: 8000

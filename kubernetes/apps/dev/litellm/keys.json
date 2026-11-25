@@ -31,6 +31,16 @@
       "mcp_servers": []
     }
   },
+  "honcho": {
+    "key_alias": "honcho",
+    "models": [
+      "gpt-5.4-mini",
+      "text-embedding-3-small"
+    ],
+    "object_permission": {
+      "mcp_servers": []
+    }
+  },
   "codex": {
     "key_alias": "codex-mcp",
     "models": [
