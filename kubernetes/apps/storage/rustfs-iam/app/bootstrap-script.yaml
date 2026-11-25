@@ -232,6 +232,11 @@ data:
       exit 0
     fi
 
+    if [ "$scope" = "honcho" ]; then
+      provision_single_bucket_identity "rustfs-cnpg-honcho" "$RUSTFS_HONCHO_ACCESS_KEY" "$RUSTFS_HONCHO_SECRET_KEY" "cnpg-honcho"
+      exit 0
+    fi
+
     if [ "$scope" = "med-tracker-dmd" ]; then
       provision_single_bucket_identity "rustfs-med-tracker-dmd" "$RUSTFS_MED_TRACKER_DMD_ACCESS_KEY" "$RUSTFS_MED_TRACKER_DMD_SECRET_KEY" "med-tracker-dmd"
       exit 0

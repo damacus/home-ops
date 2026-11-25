@@ -1,0 +1,114 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: honcho-buckets-v1
+  namespace: storage
+  annotations:
+    kustomize.toolkit.fluxcd.io/force: enabled
+spec:
+  backoffLimit: 4
+  # Initial provisioning may wait for External Secrets; Flux bounds each health check.
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: rc
+          image: rustfs/rc:v0.1.38@sha256:3c080aff53f0d3b06554fd08711d05c80be40bd7e56001874d7df5e18d5ec88a
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
+          env:
+            - name: RUSTFS_ENDPOINT
+              value: http://rustfs.storage.svc.cluster.local:9000
+            - name: HOME
+              value: /tmp
+          envFrom:
+            - secretRef:
+                name: rustfs-credentials
+            - secretRef:
+                name: rustfs-honcho
+          command: [/bin/sh, /scripts/bootstrap.sh, honcho]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: bootstrap-script
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: bootstrap-script
+          configMap:
+            name: rustfs-iam-bootstrap
+            defaultMode: 0555
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: honcho-buckets-sync
+  namespace: storage
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      # Retain diagnostics for at most seven days, including the last failed run.
+      ttlSecondsAfterFinished: 604800
+      backoffLimit: 4
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: rc
+              image: rustfs/rc:v0.1.38@sha256:3c080aff53f0d3b06554fd08711d05c80be40bd7e56001874d7df5e18d5ec88a
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              env:
+                - name: RUSTFS_ENDPOINT
+                  value: http://rustfs.storage.svc.cluster.local:9000
+                - name: HOME
+                  value: /tmp
+              envFrom:
+                - secretRef:
+                    name: rustfs-credentials
+                - secretRef:
+                    name: rustfs-honcho
+              command: [/bin/sh, /scripts/bootstrap.sh, honcho]
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+                - name: bootstrap-script
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: tmp
+              emptyDir: {}
+            - name: bootstrap-script
+              configMap:
+                name: rustfs-iam-bootstrap
+                defaultMode: 0555
