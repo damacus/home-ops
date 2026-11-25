@@ -20,6 +20,12 @@ spec:
   storage:
     size: 5Gi
     storageClass: openebs-hostpath
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: honcho-rustfs-store
+        serverName: honcho-db
   resources:
     requests:
       cpu: 50m

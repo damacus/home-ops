@@ -15,3 +15,4 @@ resources:
   - ./northops-postgres-buckets/ks.yaml
   - ./rustfs-ssd-iam/ks.yaml
   - ./litellm-buckets/ks.yaml
+  - ./honcho-buckets/ks.yaml
