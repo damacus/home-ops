@@ -16,5 +16,6 @@ resources:
   - ./supermarket/ks.yaml
   - ./litellm-db/ks.yaml
   - ./litellm/ks.yaml
+  - ./honcho/ks.yaml
   - ./unifi-mcp/ks.yaml
   - ./grounded-docs/ks.yaml
