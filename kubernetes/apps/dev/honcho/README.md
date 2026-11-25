@@ -55,10 +55,13 @@ changing the database and preserve its volumes.
 
 ## Check backups and restore
 
-Check that the first backup completes and WAL archiving is active after enabling
-the schedule. The backup resources are in `dev`.
+When enabling backups on an existing cluster, wait for the database rollout
+and check that continuous archiving is healthy before starting the first
+backup. The schedule runs automatically at the next daily slot.
 
 ```sh
+kubectl -n dev wait --for=condition=ContinuousArchiving cluster/honcho-db --timeout=10m
+kubectl cnpg backup -n dev honcho-db --method=plugin --plugin-name=barman-cloud.cloudnative-pg.io
 kubectl -n dev get scheduledbackup honcho-db
 kubectl -n dev get backups -l cnpg.io/cluster=honcho-db
 kubectl -n dev get objectstore honcho-rustfs-store
