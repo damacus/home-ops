@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: git-triage-migrate-build-303.1
+  name: git-triage-migrate-build-305.1
   namespace: dev
 spec:
   backoffLimit: 0
@@ -21,7 +21,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: private-secret-files
-          image: ghcr.io/damacus/git-triage:build-303.1@sha256:6cdf0a6f588c81641a1c2c4ebc0ba28600358b56963e7477e46fe80281c636d5
+          image: ghcr.io/damacus/git-triage:build-305.1@sha256:168a0b37c8c57df67676176955a11c385b73d7b6f25d4e537e52d796221a5864
           command: [/bin/sh, -ec]
           args:
             - umask 077; for source in /source/*; do cp "$source" "/run/private/$(basename "$source")"; done
@@ -35,7 +35,7 @@ spec:
             - {name: private-secrets, mountPath: /run/private}
       containers:
         - name: migrate
-          image: ghcr.io/damacus/git-triage:build-303.1@sha256:6cdf0a6f588c81641a1c2c4ebc0ba28600358b56963e7477e46fe80281c636d5
+          image: ghcr.io/damacus/git-triage:build-305.1@sha256:168a0b37c8c57df67676176955a11c385b73d7b6f25d4e537e52d796221a5864
           args: [eval, GitTriage.Release.migrate()]
           env:
             - {name: GIT_TRIAGE_RUNTIME_MODE, value: migrate}
