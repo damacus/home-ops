@@ -57,6 +57,12 @@ litellm_settings:
   request_timeout: 120
   num_retries: 1
 mcp_servers:
+  honcho:
+    url: http://honcho.dev.svc.cluster.local:8000
+    spec_path: /etc/litellm/honcho-openapi.yaml
+    auth_type: bearer_token
+    auth_value: os.environ/HONCHO_CODEX_JWT
+    allow_all_keys: false
   home_assistant:
     url: https://home-assistant.ironstone.casa/api/mcp
     transport: http

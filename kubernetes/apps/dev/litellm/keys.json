@@ -58,6 +58,18 @@
     },
     "user_id": "mcp-codex"
   },
+  "codex_honcho": {
+    "key_alias": "codex-honcho-mcp",
+    "models": [
+      "__mcp_only__"
+    ],
+    "object_permission": {
+      "mcp_servers": [
+        "honcho"
+      ]
+    },
+    "user_id": "mcp-codex"
+  },
   "claude": {
     "key_alias": "claude-mcp",
     "models": [

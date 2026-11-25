@@ -12,6 +12,9 @@ spec:
     - from:
         - podSelector:
             matchLabels:
+              app.kubernetes.io/name: litellm
+        - podSelector:
+            matchLabels:
               honcho-client: 'true'
       ports:
         - port: 8000

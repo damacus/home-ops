@@ -10,5 +10,6 @@ configMapGenerator:
   - name: litellm-config
     files:
       - config.yaml
+      - honcho-openapi.yaml
 generatorOptions:
   disableNameSuffixHash: true

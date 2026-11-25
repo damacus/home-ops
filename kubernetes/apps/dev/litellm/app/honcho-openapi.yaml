@@ -1,0 +1,76 @@
+---
+openapi: 3.0.3
+info:
+  title: Honcho memory for Codex
+  version: '1.0'
+paths:
+  /v3/workspaces/codex/conclusions:
+    post:
+      operationId: remember
+      description: Save short notes that the user has asked Codex to remember for future work.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [conclusions]
+              additionalProperties: false
+              properties:
+                conclusions:
+                  type: array
+                  minItems: 1
+                  maxItems: 5
+                  items:
+                    type: object
+                    required: [content, observer_id, observed_id]
+                    additionalProperties: false
+                    properties:
+                      content:
+                        type: string
+                        minLength: 1
+                        maxLength: 4000
+                      observer_id:
+                        type: string
+                        enum: [codex]
+                      observed_id:
+                        type: string
+                        enum: [codex]
+      responses:
+        '201':
+          description: Saved notes
+  /v3/workspaces/codex/conclusions/query:
+    post:
+      operationId: recall
+      description: Search notes that Codex previously saved in the Codex workspace.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query, filters]
+              additionalProperties: false
+              properties:
+                query:
+                  type: string
+                  minLength: 1
+                  maxLength: 4000
+                top_k:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+                filters:
+                  type: object
+                  required: [observer, observed]
+                  additionalProperties: false
+                  properties:
+                    observer:
+                      type: string
+                      enum: [codex]
+                    observed:
+                      type: string
+                      enum: [codex]
+      responses:
+        '200':
+          description: Relevant saved notes

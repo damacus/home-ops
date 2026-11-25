@@ -88,6 +88,8 @@ containing keys.
 | `JEV_API_KEY` (shared item) | `credential` |
 | `litellm-mealie`, `litellm-frigate`, `litellm-paperless` | `key` |
 | `litellm-codex`, `litellm-claude` | `key` |
+| `honcho-codex-mcp` | `jwt` |
+| `litellm-codex-honcho` | `key` |
 
 Generate independent random `sk-` master/client keys in 1Password. The salt must
 remain stable across restarts and database restores. Create an HA long-lived
@@ -156,6 +158,9 @@ ObjectStore to a separate cluster, supply the original salt and test keys and
 budgets before directing clients to the recovered gateway.
 
 ## MCP service identities
+
+The separate `codex-honcho-mcp` key grants access to the two
+[Honcho memory tools](../honcho/README.md#codex-memory-through-litellm).
 
 The Codex and Claude keys belong to dedicated non-admin identities
 `mcp-codex` and `mcp-claude`, respectively. Provision them as
