@@ -230,6 +230,18 @@
       minimumReleaseAgeBehaviour: "timestamp-required",
     },
     {
+      description: "Pin public GHCR images and review updates when tags lack timestamps",
+      matchDatasources: ["docker"],
+      matchPackageNames: [
+        "ghcr.io/damacus/unifi-release-announcer",
+        "ghcr.io/damacus/k8s-reflecto-rs",
+      ],
+      minimumReleaseAgeBehaviour: "timestamp-optional",
+      automerge: false,
+      pinDigests: true,
+      digest: { enabled: true },
+    },
+    {
       description: "Auto-merge MedTracker releases without an age delay",
       matchDatasources: ["docker"],
       matchPackageNames: ["ghcr.io/damacus/med-tracker"],
