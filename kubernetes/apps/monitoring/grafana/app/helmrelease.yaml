@@ -20,6 +20,8 @@ spec:
       imagePullSecrets:
         - dockerhub-credentials
     image:
+      # The pinned chart defaults to Grafana 12.3, whose file provider cannot load V2 dashboards.
+      tag: "13.3.2"
       pullSecrets:
         - dockerhub-credentials
 
@@ -70,7 +72,8 @@ spec:
         tls_skip_verify_insecure: false
 
     deploymentStrategy:
-      type: RollingUpdate
+      # Keep a single writer on the SQLite volume during Grafana migrations.
+      type: Recreate
 
     resources:
       requests:
@@ -838,6 +841,9 @@ spec:
       accessModes:
         - ReadWriteMany
       size: 50Gi
+    # The existing volume belongs to UID 472. The init container cannot traverse Grafana's 0700 directories.
+    initChownData:
+      enabled: false
 
     topologySpreadConstraints:
       - maxSkew: 1
