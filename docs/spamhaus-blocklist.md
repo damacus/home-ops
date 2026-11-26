@@ -6,7 +6,8 @@ IPv4 prefixes broader than /8 and IPv6 prefixes broader than /16 are rejected
 to prevent a single unexpectedly broad entry from cutting off the internet.
 Failed downloads or invalid data leave the previous generation in place. The
 `spamhaus-data` PVC retains that generation across pod restarts. The static
-server is reachable only through the internal Traefik route.
+server has an internal Traefik route for verification and a public route
+through the existing Cloudflare tunnel for the two text feeds.
 
 After the Flux resources are deployed, allow the first scheduled run or start
 one job from the CronJob. Check the job, both text URLs and the metrics URL:
@@ -33,10 +34,17 @@ actual cached list and firewall behaviour; the publisher cannot guarantee it.
 ## UniFi configuration
 
 Verify UniFi OS is at least 6.0.10 and Network supports external Network Lists.
-Confirm the UDM can resolve the internal hostname and trust its certificate.
-Create separate IPv4 and IPv6 external Network Lists using the two text URLs.
+UniFi rejects dynamic feed URLs that resolve to private addresses. Create
+separate IPv4 and IPv6 dynamic Network Lists using the public text URLs:
+
+* `https://spamhaus.damacus.io/current/drop_v4.txt`
+* `https://spamhaus.damacus.io/current/drop_v6.txt`
+
+The public route accepts GET and HEAD requests for these two paths. The JSON feeds and
+metrics are available through the internal route.
+
 Check their imported counts against the current files; confirm a later refresh
-also succeeds. Do not assume the controller supports Spamhaus JSON directly.
+also succeeds using **Update Now** on each list before enabling the policies.
 
 For each IP version, create Block policies with protocol All and the
 corresponding list in the external side of each zone pair:
