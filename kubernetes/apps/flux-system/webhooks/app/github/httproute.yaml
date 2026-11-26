@@ -5,6 +5,8 @@ metadata:
   name: github-webhook
   annotations:
     external-dns.alpha.kubernetes.io/target: "traefik-ext.damacus.io"
+    # The receiver only handles signed deliveries on the generated hook URL.
+    gatus.home-operations.com/enabled: "false"
 spec:
   hostnames: ["flux-webhook.damacus.io"]
   parentRefs:
