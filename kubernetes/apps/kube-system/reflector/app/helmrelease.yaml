@@ -31,6 +31,6 @@ spec:
     # canary: Rust re-implementation (k8s-reflector-rs)
     image:
       repository: ghcr.io/damacus/k8s-reflecto-rs
-      tag: 0.1.5
+      tag: 0.1.5@sha256:c7ffe6f57360a90821452276caca995323653c1f7d9639ce198cb655d15fd652
     imagePullSecrets:
       - name: dockerhub-credentials
