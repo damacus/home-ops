@@ -24,6 +24,9 @@ kind: HTTPRoute
 metadata:
   name: rustfs-dr-s3
   namespace: storage
+  annotations:
+    gatus.home-operations.com/endpoint: |
+      path: /health/ready
 spec:
   hostnames: ["rustfs-dr-s3.ironstone.casa"]
   parentRefs:
@@ -45,6 +48,9 @@ kind: HTTPRoute
 metadata:
   name: rustfs-dr-console
   namespace: storage
+  annotations:
+    gatus.home-operations.com/endpoint: |
+      path: /rustfs/console/health
 spec:
   hostnames: ["rustfs-dr.ironstone.casa"]
   parentRefs:

@@ -123,6 +123,8 @@ metadata:
   name: spamhaus
   annotations:
     external-dns.alpha.kubernetes.io/target: traefik-int.ironstone.casa
+    gatus.home-operations.com/endpoint: |
+      path: /current/drop_v4.txt
 spec:
   hostnames: [spamhaus.ironstone.casa]
   parentRefs:

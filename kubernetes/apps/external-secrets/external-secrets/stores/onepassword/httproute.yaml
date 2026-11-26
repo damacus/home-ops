@@ -6,6 +6,8 @@ metadata:
   namespace: external-secrets
   annotations:
     external-dns.alpha.kubernetes.io/target: "traefik-int.ironstone.casa"
+    gatus.home-operations.com/endpoint: |
+      path: /health
 spec:
   hostnames:
     - onepassword-connect.ironstone.casa

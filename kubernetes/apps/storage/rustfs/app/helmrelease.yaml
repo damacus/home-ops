@@ -103,6 +103,9 @@ spec:
 
     route:
       console:
+        annotations:
+          gatus.home-operations.com/endpoint: |
+            path: /rustfs/console/health
         hostnames: ["rustfs.ironstone.casa"]
         parentRefs:
           - name: traefik-internal
@@ -113,6 +116,9 @@ spec:
               - name: rustfs
                 port: 9001
       s3:
+        annotations:
+          gatus.home-operations.com/endpoint: |
+            path: /health/ready
         hostnames: ["s3.ironstone.casa", "rustfs-s3.ironstone.casa"]
         parentRefs:
           - name: traefik-internal
