@@ -68,7 +68,7 @@ jobs:
             --user-agent 'Renovate/44.226.0 (https://github.com/renovatebot/renovate)' \
             --output "$RUNNER_TEMP/release-mirror.json" https://releases.damacus.io/api/v1/export
           jq -e '.schemaVersion == 1 and (.services | type == "array")' "$RUNNER_TEMP/release-mirror.json" > /dev/null
-          for service in ironbridge usage-ledger northbot unifi-release-announcer k8s-reflecto-rs; do
+          for service in ironbridge usage-ledger northbot; do
             jq --arg service "$service" '{releases: [.services[] | select(.name == $service) | .releases[] | {version, digest, releaseTimestamp: .publishedAt}]}' \
               "$RUNNER_TEMP/release-mirror.json" > "$RENOVATE_REPO_DIR/.renovate-feeds/$service.json"
           done

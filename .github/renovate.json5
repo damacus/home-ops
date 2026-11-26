@@ -83,22 +83,6 @@
       versioning: "regex:^(?:main|v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+))$",
     },
     {
-      description: "Read Unifi release announcer metadata from Release Mirror",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/damacus/unifi-release-announcer"],
-      overrideDatasource: "custom.release-mirror",
-      overridePackageName: "unifi-release-announcer",
-      versioning: "semver",
-    },
-    {
-      description: "Read reflector image metadata from Release Mirror",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/damacus/k8s-reflecto-rs"],
-      overrideDatasource: "custom.release-mirror",
-      overridePackageName: "k8s-reflecto-rs",
-      versioning: "semver",
-    },
-    {
       description: "Pin catalogue image digests",
       matchDatasources: ["custom.release-mirror"],
       pinDigests: true,
@@ -244,6 +228,18 @@
       ignoreTests: false,
       minimumReleaseAge: "48 hours",
       minimumReleaseAgeBehaviour: "timestamp-required",
+    },
+    {
+      description: "Pin public GHCR images and review updates when tags lack timestamps",
+      matchDatasources: ["docker"],
+      matchPackageNames: [
+        "ghcr.io/damacus/unifi-release-announcer",
+        "ghcr.io/damacus/k8s-reflecto-rs",
+      ],
+      minimumReleaseAgeBehaviour: "timestamp-optional",
+      automerge: false,
+      pinDigests: true,
+      digest: { enabled: true },
     },
     {
       description: "Auto-merge MedTracker releases without an age delay",
