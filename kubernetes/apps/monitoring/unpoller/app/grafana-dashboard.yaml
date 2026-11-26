@@ -65,7 +65,7 @@ data:
                             "name": "prometheus"
                           },
                           "spec": {
-                            "expr": "unpoller_device_radio_channel_utilization_total_ratio{job=\"unpoller\",name=~\"${ap:regex}\",band=~\"${band:regex}\"}",
+                            "expr": "unpoller_device_radio_channel_utilization_total_ratio{job=\"unpoller\",name=~\"${ap}\",band=~\"${band}\"}",
                             "legendFormat": "{{name}} {{band}} GHz"
                           }
                         },
@@ -183,7 +183,7 @@ data:
                             "name": "prometheus"
                           },
                           "spec": {
-                            "expr": "avg_over_time(unpoller_device_radio_channel_utilization_total_ratio{job=\"unpoller\",name=~\"${ap:regex}\",band=~\"${band:regex}\"}[5m])",
+                            "expr": "avg_over_time(unpoller_device_radio_channel_utilization_total_ratio{job=\"unpoller\",name=~\"${ap}\",band=~\"${band}\"}[5m])",
                             "legendFormat": "{{name}} {{band}} GHz"
                           }
                         },
@@ -301,7 +301,7 @@ data:
                             "name": "prometheus"
                           },
                           "spec": {
-                            "expr": "unpoller_device_radio_channel_utilization_receive_ratio{job=\"unpoller\",name=~\"${ap:regex}\",band=~\"${band:regex}\"}",
+                            "expr": "unpoller_device_radio_channel_utilization_receive_ratio{job=\"unpoller\",name=~\"${ap}\",band=~\"${band}\"}",
                             "legendFormat": "{{name}} {{band}} GHz"
                           }
                         },
@@ -419,7 +419,7 @@ data:
                             "name": "prometheus"
                           },
                           "spec": {
-                            "expr": "unpoller_device_radio_channel_utilization_transmit_ratio{job=\"unpoller\",name=~\"${ap:regex}\",band=~\"${band:regex}\"}",
+                            "expr": "unpoller_device_radio_channel_utilization_transmit_ratio{job=\"unpoller\",name=~\"${ap}\",band=~\"${band}\"}",
                             "legendFormat": "{{name}} {{band}} GHz"
                           }
                         },
@@ -655,7 +655,7 @@ data:
                             "name": "prometheus"
                           },
                           "spec": {
-                            "expr": "unpoller_device_radio_transmit_retries{job=\"unpoller\",name=~\"${ap:regex}\",band=~\"${band:regex}\"}",
+                            "expr": "unpoller_device_radio_transmit_retries{job=\"unpoller\",name=~\"${ap}\",band=~\"${band}\"}",
                             "legendFormat": "{{name}} {{band}} GHz"
                           }
                         },
@@ -773,7 +773,7 @@ data:
                             "name": "prometheus"
                           },
                           "spec": {
-                            "expr": "unpoller_device_radio_channel{job=\"unpoller\",name=~\"${ap:regex}\",band=~\"${band:regex}\"}",
+                            "expr": "unpoller_device_radio_channel{job=\"unpoller\",name=~\"${ap}\",band=~\"${band}\"}",
                             "legendFormat": "{{name}} {{band}} GHz"
                           }
                         },
@@ -1108,7 +1108,7 @@ data:
         ],
         "timeSettings": {
           "timezone": "browser",
-          "from": "now-5m",
+          "from": "now-6h",
           "to": "now",
           "autoRefresh": "30s",
           "autoRefreshIntervals": [

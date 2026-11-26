@@ -13,8 +13,10 @@ spec:
       retries: -1
   upgrade:
     cleanupOnFail: true
-    remediation:
-      retries: 3
+    # A previous Grafana version requires restoring SQLite after a storage migration.
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 5m
   values:
     global:
       imagePullSecrets:
