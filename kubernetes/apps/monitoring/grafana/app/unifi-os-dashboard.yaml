@@ -10,15 +10,16 @@ data:
       "title": "UniFi OS Logs",
       "tags": ["network", "unifi", "logs"],
       "schemaVersion": 39,
-      "version": 1,
+      "version": 2,
       "timezone": "browser",
       "time": {"from": "now-6h", "to": "now"},
       "panels": [
         {
           "id": 1, "title": "OS and kernel errors", "type": "logs",
+          "description": "Shows the event name and message without the transport headers. Use All UniFi OS logs for the full record.",
           "datasource": {"type": "loki", "uid": "loki"},
           "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
-          "targets": [{"refId": "A", "expr": "{job=\"unifi-os\"} |~ \"(?i)(kernel|error|failure|critical|panic)\""}]
+          "targets": [{"refId": "A", "expr": "{job=\"unifi-os\"} | json event_raw=\"raw\" | line_format \"{{ $raw := default (__line__) .event_raw }}{{ $cef := \\\"(?s)^.*?CEF:[^|]*(?:[|][^|]*){4}[|]([^|]+)[|][^|]*[|](.*)$\\\" }}{{ $name := regexReplaceAll $cef $raw \\\"${1}\\\" }}{{ if ne $name $raw }}{{ $ext := regexReplaceAll $cef $raw \\\"${2}\\\" }}{{ $msg := \\\"(?s)^.*?(?:^|[[:space:]])msg=(.*?)(?:[[:space:]]+UNIFI[A-Za-z0-9_]+=.*)?$\\\" }}{{ $name }}{{ $body := regexReplaceAll $msg $ext \\\"${1}\\\" }}{{ if ne $body $ext }}: {{ $body }}{{ end }}{{ else }}{{ $syslog := regexReplaceAll `^<[0-9]+>1 +\\\\S+ +\\\\S+ +(\\\\S+) +\\\\S+ +\\\\S+ +(?:-|(?:\\\\[[^\\\\r\\\\n]*?\\\\])+)[ ]+` $raw \\\"${1}: \\\" }}{{ regexReplaceAll `^[0-9]{4}-[0-9]{2}-[0-9]{2}T\\\\S+ +\\\\S+ +` $syslog \\\"\\\" }}{{ end }}\" |~ \"(?i)(kernel|error|failure|critical|panic)\""}]
         },
         {
           "id": 2, "title": "Filesystem errors", "type": "logs",
